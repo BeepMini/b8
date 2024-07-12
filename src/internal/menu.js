@@ -132,7 +132,7 @@
 	 * @param {string} options.selFgColor - The foreground color of the selected choice.
 	 * @returns {void}
 	 */
-	function printChoices( choices, selIndex, options ) {
+	beep8.printChoices = function( choices, selIndex, options ) {
 
 		const origBg = main.drawState.bgColor;
 		const origFg = main.drawState.fgColor;
@@ -148,6 +148,5 @@
 	}
 
 	beep8.menu = menu;
-	beep8.printChoices = printChoices;
 
 } )( beep8 || ( beep8 = {} ) );

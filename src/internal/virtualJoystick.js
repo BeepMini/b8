@@ -294,9 +294,11 @@
 
 	}
 
-	beep8.setup = setup;
-	beep8.continueSetup = continueSetup;
-	beep8.setUpButton = setUpButton;
-	beep8.handleButtonEvent = handleButtonEvent;
+	beep8.joystick = {
+		setup,
+		continueSetup,
+		setUpButton,
+		handleButtonEvent
+	};
 
 } )( beep8 || ( beep8 = {} ) );

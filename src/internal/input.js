@@ -3,7 +3,7 @@
 	/**
 	 * InputSys class handles keyboard input and provides methods to check key states.
 	 */
-	class InputSys {
+	beep8.Input = class {
 
 		constructor() {
 			// Keys currently held down (set of strings).
@@ -149,7 +149,5 @@
 			}
 		}
 	}
-
-	beep8.InputSys = InputSys;
 
 } )( beep8 || ( beep8 = {} ) );

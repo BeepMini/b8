@@ -3,7 +3,7 @@
 	/**
 	 * CursorRenderer class handles the rendering and blinking of the cursor.
 	 */
-	class CursorRenderer {
+	beep8.CursorRenderer = class {
 
 		constructor() {
 			this.blinkCycle_ = 0;
@@ -91,7 +91,5 @@
 			);
 		}
 	}
-
-	beep8.CursorRenderer = CursorRenderer;
 
 } )( beep8 || ( beep8 = {} ) );
