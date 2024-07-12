@@ -16,7 +16,7 @@
   <script type="module">
     import * as beep8 from "./beep8/beep8.js";
     import * as beep8a from "./beep8/beep8a.js";
-    import * as qut from "./beep8/qut.js";
+    import * as qut from "./beep8/beep8.utilities.js";
 
     const MAZE = [
       "                                ".split(''),
@@ -78,7 +78,7 @@
           const cell = MAZE[y][x];
 
           // Choose the draw color based on the distance to the player.
-          const distToPlayer = qut.dist2d(px, py, x, y);
+          const distToPlayer = beep8.utilities.dist2d(px, py, x, y);
           beep8.color(distToPlayer < 2 ? 15 :
             distToPlayer < 3 ? 7 : distToPlayer < 4 ? 8 : 0);
 
