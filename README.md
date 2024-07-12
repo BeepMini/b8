@@ -4,4 +4,4 @@ BEEP8 is a tiny Javascript engine that lets you create games and experiences ins
 
 ## Inspired by QX82
 
-beep8 is a fork of the QX82 engine by [btco](https://github.com/btco/qx82). For more information, check out the [QX82 site](https://btco.github.io/qx82).
+beep8 is a fork of the [QX82](https://github.com/btco/qx82) engine by btco. For more information, check out the [QX82 site](https://btco.github.io/qx82).
