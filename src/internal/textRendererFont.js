@@ -3,7 +3,7 @@
 	/**
 	 * Represents an individual font that can be used with TextRenderer.
 	 */
-	class TextRendererFont {
+	beep8.TextRendererFont = class {
 		/**
 		 * Constructs a font. NOTE: after construction, you must call await initAsync() to
 		 * initialize the font.
@@ -92,7 +92,5 @@
 			}
 		}
 	}
-
-	beep8.TextRendererFont = TextRendererFont;
 
 } )( beep8 || ( beep8 = {} ) );

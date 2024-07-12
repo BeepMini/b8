@@ -3,7 +3,7 @@
 	/**
 	 * TextRenderer class handles the rendering of text using various fonts.
 	 */
-	class TextRenderer {
+	beep8.TextRenderer = class {
 
 		constructor() {
 			// TextRendererFont for each font, keyed by font name. The default font is called "default".
