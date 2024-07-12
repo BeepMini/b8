@@ -174,9 +174,9 @@
 	 *
 	 * @returns {void}
 	 */
-	function setup() {
+	beep.joystick.setup = function() {
 
-		qut.log( "Setting up virtual joystick..." );
+		beep8.utilities.log( "Setting up virtual joystick..." );
 
 		const styleEl = document.createElement( "style" );
 		styleEl.setAttribute( "type", "text/css" );
@@ -208,7 +208,7 @@
 	 *
 	 * @returns {void}
 	 */
-	function continueSetup() {
+	beep.joystick.continueSetup = function() {
 
 		setUpButton( "vjoy-button-up", "ArrowUp" );
 		setUpButton( "vjoy-button-down", "ArrowDown" );
@@ -234,9 +234,9 @@
 	 * @param {string} buttonKeyName - The key name to simulate
 	 * @returns {void}
 	 */
-	function setUpButton( buttonId, buttonKeyName ) {
+	beep8.joystick.setUpButton = function( buttonId, buttonKeyName ) {
 
-		const button = qut.assert(
+		const button = beep8.utilities.assert(
 			document.getElementById( buttonId ),
 			"Could not find button ID " + buttonId
 		);
@@ -274,6 +274,7 @@
 
 	}
 
+
 	/**
 	 * Handles a button event.
 	 *
@@ -282,7 +283,7 @@
 	 * @param {Event} evt - The event object
 	 * @returns {void}
 	 */
-	function handleButtonEvent( buttonKeyName, down, evt ) {
+	beep.joystick.handleButtonEvent = function( buttonKeyName, down, evt ) {
 
 		if ( down ) {
 			inputSys.onKeyDown( { key: buttonKeyName } );
@@ -293,12 +294,5 @@
 		evt.preventDefault();
 
 	}
-
-	beep8.joystick = {
-		setup,
-		continueSetup,
-		setUpButton,
-		handleButtonEvent
-	};
 
 } )( beep8 || ( beep8 = {} ) );

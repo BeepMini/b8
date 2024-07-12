@@ -18,14 +18,14 @@
 		 * @returns {void}
 		 */
 		setCursorVisible( visible ) {
-			qut.checkBoolean( "visible", visible );
+			beep8.utilities.checkBoolean( "visible", visible );
 
 			// If the cursor is already in the desired state, do nothing.
-			if ( main.drawState.cursorVisible === visible ) return;
+			if ( beep8.core.drawState.cursorVisible === visible ) return;
 
-			main.drawState.cursorVisible = visible;
+			beep8.core.drawState.cursorVisible = visible;
 			this.blinkCycle_ = 0;
-			main.render();
+			beep8.core.render();
 
 			if ( this.toggleBlinkHandle_ !== null ) {
 				clearInterval( this.toggleBlinkHandle_ );
@@ -48,7 +48,7 @@
 		 */
 		advanceBlink_() {
 			this.blinkCycle_ = ( this.blinkCycle_ + 1 ) % 2;
-			main.render();
+			beep8.core.render();
 		}
 
 		/**
@@ -63,27 +63,27 @@
 		 * @returns {void}
 		 */
 		drawCursor( targetCtx, canvasWidth, canvasHeight ) {
-			qut.checkInstanceOf( "targetCtx", targetCtx, CanvasRenderingContext2D );
-			qut.checkNumber( "canvasWidth", canvasWidth );
-			qut.checkNumber( "canvasHeight", canvasHeight );
+			beep8.utilities.checkInstanceOf( "targetCtx", targetCtx, CanvasRenderingContext2D );
+			beep8.utilities.checkNumber( "canvasWidth", canvasWidth );
+			beep8.utilities.checkNumber( "canvasHeight", canvasHeight );
 
 			// If the cursor is not visible or it is not time to blink, do nothing.
-			if ( !main.drawState.cursorVisible || this.blinkCycle_ <= 0 ) return;
+			if ( !beep8.core.drawState.cursorVisible || this.blinkCycle_ <= 0 ) return;
 
-			const ratio = canvasWidth / main.canvas.width;
+			const ratio = canvasWidth / beep8.core.canvas.width;
 
 			// Calculate the real position of the cursor.
 			const realX = Math.round(
-				( main.drawState.cursorCol + 0.5 - CONFIG.CURSOR.WIDTH_F / 2 + CONFIG.CURSOR.OFFSET_H ) *
+				( beep8.core.drawState.cursorCol + 0.5 - CONFIG.CURSOR.WIDTH_F / 2 + CONFIG.CURSOR.OFFSET_H ) *
 				CONFIG.CHR_WIDTH * ratio
 			);
 			const realY = Math.round(
-				( main.drawState.cursorRow + 1 - CONFIG.CURSOR.HEIGHT_F - CONFIG.CURSOR.OFFSET_V ) *
+				( beep8.core.drawState.cursorRow + 1 - CONFIG.CURSOR.HEIGHT_F - CONFIG.CURSOR.OFFSET_V ) *
 				CONFIG.CHR_HEIGHT * ratio
 			);
 
 			// Draw the cursor.
-			targetCtx.fillStyle = main.getColorHex( main.drawState.fgColor );
+			targetCtx.fillStyle = beep8.core.getColorHex( beep8.core.drawState.fgColor );
 			targetCtx.fillRect(
 				realX, realY,
 				Math.round( CONFIG.CURSOR.WIDTH_F * CONFIG.CHR_WIDTH * ratio ),

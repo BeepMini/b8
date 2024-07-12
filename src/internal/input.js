@@ -57,8 +57,8 @@
 			this.keysJustPressed_.add( e.key.toUpperCase() );
 			this.keysHeld_.add( e.key.toUpperCase() );
 
-			if ( main.hasPendingAsync( "beep8a.key" ) ) {
-				main.resolveAsync( "beep8a.key", e.key );
+			if ( beep8.core.hasPendingAsync( "beep8a.key" ) ) {
+				beep8.core.resolveAsync( "beep8a.key", e.key );
 			}
 		}
 
@@ -79,7 +79,7 @@
 		 */
 		readKeyAsync() {
 			return new Promise( ( resolve, reject ) => {
-				main.startAsync( "beep8a.key", resolve, reject );
+				beep8.core.startAsync( "beep8a.key", resolve, reject );
 			} );
 		}
 
@@ -94,21 +94,21 @@
 		 */
 		async readLine( initString, maxLen, maxWidth = -1 ) {
 
-			const startCol = main.drawState.cursorCol;
-			const startRow = main.drawState.cursorRow;
+			const startCol = beep8.core.drawState.cursorCol;
+			const startRow = beep8.core.drawState.cursorRow;
 
 			let curCol = startCol;
 			let curRow = startRow;
 			let curStrings = [ initString ];
 			let curPos = 0;
 
-			const cursorWasVisible = main.drawState.cursorVisible;
-			main.cursorRenderer.setCursorVisible( true );
+			const cursorWasVisible = beep8.core.drawState.cursorVisible;
+			beep8.core.cursorRenderer.setCursorVisible( true );
 
 			// Loop until the user presses Enter.
 			while ( true ) {
-				main.setCursorLocation( curCol, curRow );
-				main.textRenderer.print( curStrings[ curPos ] || "" );
+				beep8.core.setCursorLocation( curCol, curRow );
+				beep8.core.textRenderer.print( curStrings[ curPos ] || "" );
 				const key = await this.readKeyAsync();
 
 				if ( key === "Backspace" ) {
@@ -122,14 +122,14 @@
 						curRow--;
 					}
 					curStrings[ curPos ] = curStrings[ curPos ].length > 0 ? curStrings[ curPos ].substring( 0, curStrings[ curPos ].length - 1 ) : curStrings[ curPos ];
-					main.setCursorLocation( curCol + curStrings[ curPos ].length, curRow );
-					main.textRenderer.print( " " );
+					beep8.core.setCursorLocation( curCol + curStrings[ curPos ].length, curRow );
+					beep8.core.textRenderer.print( " " );
 
 				} else if ( key === "Enter" ) {
 
 					// Handle enter: submit the text.
-					main.setCursorLocation( 1, curRow + 1 );
-					main.cursorRenderer.setCursorVisible( cursorWasVisible );
+					beep8.core.setCursorLocation( 1, curRow + 1 );
+					beep8.core.cursorRenderer.setCursorVisible( cursorWasVisible );
 					return curStrings.join( "" );
 
 				} else if ( key.length === 1 ) {
@@ -138,7 +138,7 @@
 						curStrings[ curPos ] += key;
 
 						if ( maxWidth !== -1 && curStrings[ curPos ].length >= maxWidth ) {
-							main.textRenderer.print( curStrings[ curPos ].charAt( curStrings[ curPos ].length - 1 ) );
+							beep8.core.textRenderer.print( curStrings[ curPos ].charAt( curStrings[ curPos ].length - 1 ) );
 							curCol = startCol;
 							curPos++;
 							curStrings[ curPos ] = "";

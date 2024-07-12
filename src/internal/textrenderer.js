@@ -21,14 +21,14 @@
 		 * @returns {Promise<void>}
 		 */
 		async initAsync() {
-			qut.log( "TextRenderer init." );
+			beep8.utilities.log( "TextRenderer init." );
 			const defaultFont = new TextRendererFont( "default", CONFIG.CHR_FILE );
 			await defaultFont.initAsync();
 
 			const actualCharWidth = defaultFont.getCharWidth();
 			const actualCharHeight = defaultFont.getCharHeight();
 
-			qut.assert(
+			beep8.utilities.assert(
 				actualCharWidth === defaultFont.getCharWidth() &&
 				actualCharHeight === defaultFont.getCharHeight(),
 				`The character image ${CONFIG.CHR_FILE} should be a 16x16 grid of characters with ` +
@@ -47,8 +47,8 @@
 		 * @returns {Promise<void>}
 		 */
 		async loadFontAsync( fontName, fontImageFile ) {
-			qut.checkString( "fontName", fontName );
-			qut.checkString( "fontImageFile", fontImageFile );
+			beep8.utilities.checkString( "fontName", fontName );
+			beep8.utilities.checkString( "fontImageFile", fontImageFile );
 			const font = new TextRendererFont( fontName, fontImageFile );
 			await font.initAsync();
 			this.fonts_[ fontName ] = font;
@@ -61,11 +61,11 @@
 		 * @throws {Error} If the font is not found or its dimensions are not compatible.
 		 */
 		setFont( fontName ) {
-			qut.checkString( "fontName", fontName );
+			beep8.utilities.checkString( "fontName", fontName );
 			const font = this.fonts_[ fontName ];
 
 			if ( !font ) {
-				qut.fatal( `setFont(): font not found: ${fontName}` );
+				beep8.utilities.fatal( `setFont(): font not found: ${fontName}` );
 				return;
 			}
 
@@ -73,7 +73,7 @@
 			const ch = font.getCharHeight();
 
 			if ( cw % CONFIG.CHR_WIDTH !== 0 || ch % CONFIG.CHR_HEIGHT !== 0 ) {
-				qut.fatal(
+				beep8.utilities.fatal(
 					`setFont(): font ${fontName} has character size ${cw}x${ch}, ` +
 					`which is not an integer multiple of CONFIG.CHR_WIDTH x CONFIG.CHR_HEIGHT = ` +
 					`${CONFIG.CHR_WIDTH}x${CONFIG.CHR_HEIGHT}, so it can't be set as the ` +
@@ -92,14 +92,14 @@
 		 * @returns {void}
 		 */
 		print( text ) {
-			qut.checkString( "text", text );
+			beep8.utilities.checkString( "text", text );
 
-			let col = main.drawState.cursorCol;
-			let row = main.drawState.cursorRow;
+			let col = beep8.core.drawState.cursorCol;
+			let row = beep8.core.drawState.cursorRow;
 
 			// Store a backup of foreground/background colors.
-			this.origFgColor_ = main.drawState.fgColor;
-			this.origBgColor_ = main.drawState.bgColor;
+			this.origFgColor_ = beep8.core.drawState.fgColor;
+			this.origBgColor_ = beep8.core.drawState.bgColor;
 
 			const colInc = Math.floor( this.curFont_.getCharWidth() / CONFIG.CHR_WIDTH );
 			const rowInc = Math.floor( this.curFont_.getCharHeight() / CONFIG.CHR_HEIGHT );
@@ -114,16 +114,16 @@
 					col = initialCol;
 					row += rowInc;
 				} else {
-					this.put_( ch, col, row, main.drawState.fgColor, main.drawState.bgColor );
+					this.put_( ch, col, row, beep8.core.drawState.fgColor, beep8.core.drawState.bgColor );
 					col += colInc;
 				}
 			}
 
-			main.drawState.cursorCol = col;
-			main.drawState.cursorRow = row;
-			main.drawState.fgColor = this.origFgColor_;
-			main.drawState.bgColor = this.origBgColor_;
-			main.markDirty();
+			beep8.core.drawState.cursorCol = col;
+			beep8.core.drawState.cursorRow = row;
+			beep8.core.drawState.fgColor = this.origFgColor_;
+			beep8.core.drawState.bgColor = this.origBgColor_;
+			beep8.core.markDirty();
 		}
 
 		/**
@@ -133,16 +133,16 @@
 		 * @returns {void}
 		 */
 		printCentered( text, width ) {
-			qut.checkString( "text", text );
-			qut.checkNumber( "width", width );
+			beep8.utilities.checkString( "text", text );
+			beep8.utilities.checkNumber( "width", width );
 			text = text.split( "\n" )[ 0 ];
 
 			if ( !text ) return;
 
 			const textWidth = this.measure( text ).cols;
-			const col = Math.floor( main.drawState.cursorCol + ( width - textWidth ) / 2 );
+			const col = Math.floor( beep8.core.drawState.cursorCol + ( width - textWidth ) / 2 );
 
-			main.drawState.cursorCol = col;
+			beep8.core.drawState.cursorCol = col;
 			this.print( text );
 		}
 
@@ -154,21 +154,21 @@
 		 */
 		printChar( ch, n ) {
 			if ( n === undefined || isNaN( n ) ) n = 1;
-			qut.checkNumber( "ch", ch );
-			qut.checkNumber( "n", n );
+			beep8.utilities.checkNumber( "ch", ch );
+			beep8.utilities.checkNumber( "n", n );
 
 			while ( n-- > 0 ) {
 				this.put_(
 					ch,
-					main.drawState.cursorCol,
-					main.drawState.cursorRow,
-					main.drawState.fgColor,
-					main.drawState.bgColor
+					beep8.core.drawState.cursorCol,
+					beep8.core.drawState.cursorRow,
+					beep8.core.drawState.fgColor,
+					beep8.core.drawState.bgColor
 				);
-				main.drawState.cursorCol++;
+				beep8.core.drawState.cursorCol++;
 			}
 
-			main.markDirty();
+			beep8.core.markDirty();
 		}
 
 		/**
@@ -179,10 +179,10 @@
 		 * @returns {void}
 		 */
 		spr( ch, x, y ) {
-			qut.checkNumber( "ch", ch );
-			qut.checkNumber( "x", x );
-			qut.checkNumber( "y", y );
-			this.putxy_( ch, x, y, main.drawState.fgColor, main.drawState.bgColor );
+			beep8.utilities.checkNumber( "ch", ch );
+			beep8.utilities.checkNumber( "x", x );
+			beep8.utilities.checkNumber( "y", y );
+			this.putxy_( ch, x, y, beep8.core.drawState.fgColor, beep8.core.drawState.bgColor );
 		}
 
 		/**
@@ -194,17 +194,17 @@
 		 * @returns {void}
 		 */
 		drawText( x, y, text, fontName ) {
-			qut.checkNumber( "x", x );
-			qut.checkNumber( "y", y );
-			qut.checkString( "text", text );
+			beep8.utilities.checkNumber( "x", x );
+			beep8.utilities.checkNumber( "y", y );
+			beep8.utilities.checkString( "text", text );
 
-			if ( fontName ) qut.checkString( "fontName", fontName );
+			if ( fontName ) beep8.utilities.checkString( "fontName", fontName );
 
 			const x0 = x;
 			const font = fontName ? ( this.fonts_[ fontName ] || this.curFont_ ) : this.curFont_;
 
 			if ( !font ) {
-				qut.warn( `Requested font '${fontName}' not found: not drawing text.` );
+				beep8.utilities.warn( `Requested font '${fontName}' not found: not drawing text.` );
 				return;
 			}
 
@@ -218,8 +218,8 @@
 					this.putxy_(
 						ch,
 						x, y,
-						main.drawState.fgColor,
-						main.drawState.bgColor,
+						beep8.core.drawState.fgColor,
+						beep8.core.drawState.bgColor,
 						font
 					);
 					x += font.getCharWidth();
@@ -233,7 +233,7 @@
 		 * @returns {{cols: number, rows: number}} The dimensions of the text.
 		 */
 		measure( text ) {
-			qut.checkString( "text", text );
+			beep8.utilities.checkString( "text", text );
 
 			if ( text === "" ) return { cols: 0, rows: 0 }; // Special case
 
@@ -265,21 +265,21 @@
 		 * @returns {void}
 		 */
 		printRect( width, height, ch ) {
-			qut.checkNumber( "width", width );
-			qut.checkNumber( "height", height );
-			qut.checkNumber( "ch", ch );
+			beep8.utilities.checkNumber( "width", width );
+			beep8.utilities.checkNumber( "height", height );
+			beep8.utilities.checkNumber( "ch", ch );
 
-			const startCol = main.drawState.cursorCol;
-			const startRow = main.drawState.cursorRow;
+			const startCol = beep8.core.drawState.cursorCol;
+			const startRow = beep8.core.drawState.cursorRow;
 
 			for ( let i = 0; i < height; i++ ) {
-				main.drawState.cursorCol = startCol;
-				main.drawState.cursorRow = startRow + i;
+				beep8.core.drawState.cursorCol = startCol;
+				beep8.core.drawState.cursorRow = startRow + i;
 				this.printChar( ch, width );
 			}
 
-			main.drawState.cursorCol = startCol;
-			main.drawState.cursorRow = startRow;
+			beep8.core.drawState.cursorCol = startCol;
+			beep8.core.drawState.cursorRow = startRow;
 		}
 
 		/**
@@ -298,17 +298,17 @@
 			const borderV = borderCh + 4;
 			const borderH = borderCh + 5;
 
-			qut.checkNumber( "width", width );
-			qut.checkNumber( "height", height );
-			qut.checkBoolean( "fill", fill );
-			qut.checkNumber( "borderCh", borderCh );
+			beep8.utilities.checkNumber( "width", width );
+			beep8.utilities.checkNumber( "height", height );
+			beep8.utilities.checkBoolean( "fill", fill );
+			beep8.utilities.checkNumber( "borderCh", borderCh );
 
-			const startCol = main.drawState.cursorCol;
-			const startRow = main.drawState.cursorRow;
+			const startCol = beep8.core.drawState.cursorCol;
+			const startRow = beep8.core.drawState.cursorRow;
 
 			for ( let i = 0; i < height; i++ ) {
-				main.drawState.cursorCol = startCol;
-				main.drawState.cursorRow = startRow + i;
+				beep8.core.drawState.cursorCol = startCol;
+				beep8.core.drawState.cursorRow = startRow + i;
 				if ( i === 0 ) {
 					// Top border
 					this.printChar( borderNW );
@@ -322,19 +322,19 @@
 				} else {
 					// Middle.
 					this.printChar( borderV );
-					main.drawState.cursorCol = startCol + width - 1;
+					beep8.core.drawState.cursorCol = startCol + width - 1;
 					this.printChar( borderV );
 				}
 			}
 
 			if ( fill && width > 2 && height > 2 ) {
-				main.drawState.cursorCol = startCol + 1;
-				main.drawState.cursorRow = startRow + 1;
+				beep8.core.drawState.cursorCol = startCol + 1;
+				beep8.core.drawState.cursorRow = startRow + 1;
 				this.printRect( width - 2, height - 2, 32 );
 			}
 
-			main.drawState.cursorCol = startCol;
-			main.drawState.cursorRow = startRow;
+			beep8.core.drawState.cursorCol = startCol;
+			beep8.core.drawState.cursorRow = startRow;
 		}
 
 		/**
@@ -377,14 +377,14 @@
 			y = Math.round( y );
 
 			if ( bgColor >= 0 ) {
-				main.ctx.fillStyle = main.getColorHex( bgColor );
-				main.ctx.fillRect( x, y, chrW, chrH );
+				beep8.core.ctx.fillStyle = beep8.core.getColorHex( bgColor );
+				beep8.core.ctx.fillRect( x, y, chrW, chrH );
 			}
 
-			const color = qut.clamp( fgColor, 0, CONFIG.COLORS.length - 1 );
+			const color = beep8.utilities.clamp( fgColor, 0, CONFIG.COLORS.length - 1 );
 			const img = font.getImageForColor( color );
 
-			main.ctx.drawImage(
+			beep8.core.ctx.drawImage(
 				img,
 				fontCol * chrW,
 				fontRow * chrH,
@@ -392,7 +392,7 @@
 				x, y,
 				chrW, chrH
 			);
-			main.markDirty();
+			beep8.core.markDirty();
 		}
 
 		/**
@@ -454,16 +454,16 @@
 			switch ( verb ) {
 				case "f":
 				case "c": // Set foreground color.
-					main.drawState.fgColor = arg !== "" ? argNum : this.origFgColor_;
+					beep8.core.drawState.fgColor = arg !== "" ? argNum : this.origFgColor_;
 					break;
 
 				case "b": // Set background color.
-					main.drawState.bgColor = arg !== "" ? argNum : this.origBgColor_;
+					beep8.core.drawState.bgColor = arg !== "" ? argNum : this.origBgColor_;
 					break;
 
 				case "z": // Reset state.
-					main.drawState.fgColor = this.origFgColor_;
-					main.drawState.bgColor = this.origBgColor_;
+					beep8.core.drawState.fgColor = this.origFgColor_;
+					beep8.core.drawState.bgColor = this.origBgColor_;
 					break;
 
 				default:

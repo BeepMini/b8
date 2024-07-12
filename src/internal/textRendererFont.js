@@ -11,8 +11,8 @@
 		 * @param {string} fontImageFile - The URL of the image file for the font.
 		 */
 		constructor( fontName, fontImageFile ) {
-			qut.checkString( "fontName", fontName );
-			qut.checkString( "fontImageFile", fontImageFile );
+			beep8.utilities.checkString( "fontName", fontName );
+			beep8.utilities.checkString( "fontImageFile", fontImageFile );
 			this.fontName_ = fontName;
 			this.fontImageFile_ = fontImageFile;
 			this.origImg_ = null;
@@ -49,9 +49,9 @@
 		 * @returns {Promise<void>}
 		 */
 		async initAsync() {
-			qut.log( `Building font ${this.fontName_} from image ${this.fontImageFile_}` );
-			this.origImg_ = await qut.loadImageAsync( this.fontImageFile_ );
-			qut.assert( this.origImg_.width % 16 === 0 && this.origImg_.height % 16 === 0,
+			beep8.utilities.log( `Building font ${this.fontName_} from image ${this.fontImageFile_}` );
+			this.origImg_ = await beep8.utilities.loadImageAsync( this.fontImageFile_ );
+			beep8.utilities.assert( this.origImg_.width % 16 === 0 && this.origImg_.height % 16 === 0,
 				`Font ${this.fontName_}: image ${this.fontImageFile_} has dimensions ` +
 				`${this.origImg_.width}x${this.origImg_.height}. It must ` +
 				`have dimensions that are multiples of 16 (16x16 grid of characters).` );
@@ -72,7 +72,7 @@
 			this.chrImages_ = [];
 
 			for ( let c = 0; c < CONFIG.COLORS.length; c++ ) {
-				qut.log( `Initializing font ${this.fontName_}, color ${c} = ${CONFIG.COLORS[ c ]}` );
+				beep8.utilities.log( `Initializing font ${this.fontName_}, color ${c} = ${CONFIG.COLORS[ c ]}` );
 
 				// Draw the font image to the temp canvas (white over transparent background).
 				ctx.clearRect( 0, 0, this.origImg_.width, this.origImg_.height );
