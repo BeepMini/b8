@@ -1,5 +1,22 @@
 ( function( beep8 ) {
 
+	/**
+	 * Virtual joystick setup.
+	 *
+	 * This module sets up a virtual joystick for mobile devices.
+	 * The joystick has two parts: a directional pad on the left side of the screen,
+	 * and three buttons on the right side of the screen.
+	 * The directional pad has up, down, left, and right buttons.
+	 * The right side has three buttons, labeled A, B, and =.
+	 */
+
+
+	/**
+	 * The HTML for the left side of the virtual joystick.
+	 * This includes the up, down, left, and right buttons.
+	 *
+	 * @type {string}
+	 */
 	const LEFT_VJOY_HTML = `
 		<div id='vjoy-button-up' class='vjoy-button'></div>
 		<div id='vjoy-button-down' class='vjoy-button'></div>
@@ -7,12 +24,25 @@
 		<div id='vjoy-button-right' class='vjoy-button'></div>
 	`;
 
+
+	/**
+	 * The HTML for the right side of the virtual joystick.
+	 * This includes the A, B, and = buttons.
+	 *
+	 * @type {string}
+	 */
 	const RIGHT_VJOY_HTML = `
 		<div id='vjoy-button-pri' class='vjoy-button'>A</div>
 		<div id='vjoy-button-sec' class='vjoy-button'>B</div>
 		<div id='vjoy-button-ter' class='vjoy-button'>=</div>
 	`;
 
+
+	/**
+	 * The CSS for the virtual joystick.
+	 *
+	 * @type {string}
+	 */
 	const VJOY_CSS = `
 		* {
 			user-select: none;
@@ -138,6 +168,12 @@
 		}
 	`;
 
+
+	/**
+	 * Sets up the virtual joystick.
+	 *
+	 * @returns {void}
+	 */
 	function setup() {
 
 		qut.log( "Setting up virtual joystick..." );
@@ -166,6 +202,12 @@
 
 	}
 
+
+	/**
+	 * Continues setting up the virtual joystick.
+	 *
+	 * @returns {void}
+	 */
 	function continueSetup() {
 
 		setUpButton( "vjoy-button-up", "ArrowUp" );
@@ -182,6 +224,16 @@
 
 	}
 
+
+	/**
+	 * Sets up a virtual joystick button.
+	 * If buttonKeyName is null, the button will be hidden.
+	 * Otherwise, the button will be set up to simulate the given key.
+	 *
+	 * @param {string} buttonId - The ID of the button element
+	 * @param {string} buttonKeyName - The key name to simulate
+	 * @returns {void}
+	 */
 	function setUpButton( buttonId, buttonKeyName ) {
 
 		const button = qut.assert(
@@ -222,6 +274,14 @@
 
 	}
 
+	/**
+	 * Handles a button event.
+	 *
+	 * @param {string} buttonKeyName - The key name to simulate
+	 * @param {boolean} down - Whether the button is being pressed or released
+	 * @param {Event} evt - The event object
+	 * @returns {void}
+	 */
 	function handleButtonEvent( buttonKeyName, down, evt ) {
 
 		if ( down ) {
