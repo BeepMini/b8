@@ -1,5 +1,25 @@
 ( function( beep8 ) {
 
+	/**
+	 * Displays a menu with the given choices and returns the index of the selected choice.
+	 *
+	 *
+	 * @param {string[]} choices - The choices to display.
+	 * @param {object} [options] - Options for the menu.
+	 * @param {string} [options.title=""] - The title of the menu.
+	 * @param {string} [options.prompt=""] - The prompt to display above the choices.
+	 * @param {string} [options.selBgColor=main.drawState.fgColor] - The background color of the selected choice.
+	 * @param {string} [options.selFgColor=main.drawState.bgColor] - The foreground color of the selected choice.
+	 * @param {number} [options.bgChar=32] - The character to use for the background.
+	 * @param {number} [options.borderChar=0x80] - The character to use for the border.
+	 * @param {boolean} [options.center=false] - Whether to center the menu horizontally and vertically.
+	 * @param {boolean} [options.centerH=false] - Whether to center the menu horizontally.
+	 * @param {boolean} [options.centerV=false] - Whether to center the menu vertically.
+	 * @param {number} [options.padding=1] - The padding around the prompt and choices.
+	 * @param {number} [options.selIndex=0] - The index of the initially selected choice.
+	 * @param {boolean} [options.cancelable=false] - Whether the menu can be canceled with the Escape key.
+	 * @returns {Promise<number>} A promise that resolves to the index of the selected choice.
+	 */
 	async function menu( choices, options ) {
 
 		options = options || {};
@@ -101,6 +121,17 @@
 
 	}
 
+
+	/**
+	 * Prints the choices for a menu.
+	 *
+	 * @param {string[]} choices - The choices to print.
+	 * @param {number} selIndex - The index of the selected choice.
+	 * @param {object} options - Options for the menu.
+	 * @param {string} options.selBgColor - The background color of the selected choice.
+	 * @param {string} options.selFgColor - The foreground color of the selected choice.
+	 * @returns {void}
+	 */
 	function printChoices( choices, selIndex, options ) {
 
 		const origBg = main.drawState.bgColor;
