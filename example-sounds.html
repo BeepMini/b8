@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Example - Hello</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <!-- Replace with a separate style.css file if you want -->
+  <style type="text/css">
+  body {
+    background: black;
+    color: white;
+  }
+  </style>
+
+  <script type="module">
+    import * as beep8 from "./beep8/beep8.js";
+    import * as beep8a from "./beep8/beep8a.js";
+
+    let selFg = 7;
+    let selBg = 1;
+
+    async function main() {
+      const loopSound = await beep8a.loadSound('./assets/loop.ogg');
+
+      while (true) {
+        const k = await beep8a.key();
+
+        beep8.color(7, 0);
+        beep8.cls();
+        beep8.locate(7, 1);
+        beep8.color(14);
+        beep8.print(`Test sound methods\n`);
+        beep8.color(1, 7);
+        beep8.locate(7, 3);
+        const choice = await beep8a.menu(["Play on loop", "Play only once", "Stop playing"]);
+
+        switch (choice) {
+          case 0: beep8.playSound(loopSound, 0.8, true); break;
+          case 1:
+            beep8.stopSound(loopSound)
+            beep8.playSound(loopSound, 0.8);
+            break;
+          case 2: beep8.stopSound(loopSound); break;
+        }
+      }
+    }
+
+    window.addEventListener("load", () => beep8.init(main));
+  </script>
+</head>
+<body>
+</body>
+</html>

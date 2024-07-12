@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Example - Hello</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <!-- Replace with a separate style.css file if you want -->
+  <style type="text/css">
+  body {
+    background: black;
+    color: white;
+  }
+  </style>
+
+  <script type="module">
+    import * as beep8 from "./src/beep8.js";
+    import * as beep8a from "./src/beep8a.js";
+
+    const MAX_COLORS = 16;
+
+    let selFg = 7;
+    let selBg = 1;
+
+    async function main() {
+      while (true) {
+        render();
+        const k = await beep8a.key();
+        if (k === "ArrowLeft") selFg = Math.max(0, selFg - 1);
+        if (k === "ArrowRight") selFg = Math.min(MAX_COLORS - 1, selFg + 1);
+        if (k === "ArrowUp") selBg = Math.max(0, selBg - 1);
+        if (k === "ArrowDown") selBg = Math.min(MAX_COLORS - 1, selBg + 1);
+      }
+    }
+
+    function render() {
+      beep8.color(7, 0);
+      beep8.cls();
+      beep8.locate(1, 1);
+      beep8.print("COLORS");
+      beep8.locate(1, 21);
+      beep8.print("Use arrow keys to change.");
+      for (let i = 0; i < 16; i++) {
+        const ch = "0123456789abcdef".substring(i, i + 1);
+        beep8.color(7, 0);
+        beep8.locate(i + 2, 3);
+        beep8.print(ch);
+        beep8.locate(1, i + 4);
+        beep8.print(ch);
+      }
+      for (let i = 0; i < 16; i++) {
+        for (let j = 0; j < 16; j++) {
+          beep8.locate(i + 2, 4 + j);
+          beep8.color(i, j);
+          beep8.print(i === selFg && j === selBg ? "*" : ".");
+        }
+      }
+      beep8.locate(19, 3);
+      beep8.color(selFg, selBg);
+      beep8.printBox(11, 17);
+      beep8.locate(20, 7);
+      beep8.print(`FG: ${selFg}\nBG: ${selBg}\n\n` +
+        `Lorem\nipsum\ndolor\nsit amet`);
+    }
+
+    window.addEventListener("load", () => beep8.init(main));
+  </script>
+</head>
+<body>
+</body>
+</html>

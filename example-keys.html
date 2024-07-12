@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Example - Hello</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+
+  <!-- Replace with a separate style.css file if you want -->
+  <style type="text/css">
+  body {
+    background: black;
+    color: white;
+  }
+  </style>
+
+  <script type="module">
+    import * as beep8 from "./beep8/beep8.js";
+    import * as beep8a from "./beep8/beep8a.js";
+
+    async function main() {
+      // Clear screen.
+      beep8.color(7, 1);
+      beep8.cls();
+      beep8.locate(1, 8);
+      beep8.print("Type a key to show its name:\n");
+      while (true) {
+        const keyName = await beep8a.key();
+        beep8.locate(1, 10);
+        beep8.color(14);
+        beep8.print(keyName + "        ");
+      }
+    }
+
+    window.addEventListener("load", () => beep8.init(main));
+  </script>
+</head>
+<body>
+</body>
+</html>

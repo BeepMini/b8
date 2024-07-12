@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Example - Image</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+
+  <!-- Replace with a separate style.css file if you want -->
+  <style type="text/css">
+  body {
+    background: black;
+    color: white;
+  }
+  </style>
+
+  <script type="module">
+    import * as beep8 from "./beep8/beep8.js";
+    import * as beep8a from "./beep8/beep8a.js";
+
+    async function main() {
+      beep8.color(7, 0);
+      beep8.cls();
+      beep8.locate(1, 1);
+      beep8.print("Loading...");
+      const img = await beep8a.loadImage("assets/castle.png");
+
+      beep8.cls();
+      beep8.drawImage(8, 24, img);
+      beep8.locate(1, 1);
+
+      beep8.print("You stand in front of the\ncastle. Will you enter?");
+
+      beep8.locate(22, 14);
+      const choice = await beep8a.menu(["Enter", "Leave", "Look", "Cast", "Rest"]);
+
+      // TODO: do something interesting based on the choice.
+      // Here we just print a fascinating ending according to what the user did:
+
+      beep8.cls();
+      beep8.locate(1, 1);
+      switch (choice) {
+        case 0: beep8.print("You enter the castle.\nThe evil villain flees.\n\nTHE END"); break;
+        case 1: beep8.print("You leave the area.\nAnother hero saves the\nkingdom.\n\nTHE END"); break;
+        case 2: beep8.print("As you're looking around,\na dragon eats you.\nYou died.\n\nTHE END"); break;
+        case 3: beep8.print("You try to cast a spell,\nthen you remember you're\nnot a wizard.\n\nTHE END"); break;
+        case 4: beep8.print("You lie down and rest.\nSomeone else saves the\nkingdom.\n\nTHE END"); break;
+      }
+    }
+
+    window.addEventListener("load", () => beep8.init(main));
+  </script>
+</head>
+<body>
+</body>
+</html>

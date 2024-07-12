@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Example - Sokoban</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <!-- Replace with a separate style.css file if you want -->
+  <style type="text/css">
+  body {
+    background: black;
+    color: white;
+  }
+  </style>
+
+  <script type="module">
+    import * as beep8 from "./beep8/beep8.js";
+    import * as beep8a from "./beep8/beep8a.js";
+    import * as qut from "./beep8/qut.js";
+
+    const LEVELS = [
+      [
+        "  ##########".split(''),
+        " ##.bp     #".split(''),
+        " #..   b ###".split(''),
+        " #      ##  ".split(''),
+        " #      ##  ".split(''),
+        " #       #  ".split(''),
+        " #       #  ".split(''),
+        " #       #  ".split(''),
+        " #  ###  #  ".split(''),
+        " #### #b #  ".split(''),
+        "      #  #  ".split(''),
+        "      ####  ".split(''),
+      ],
+      [
+        " ####       ".split(''),
+        " #  ####### ".split(''),
+        " #     b  # ".split(''),
+        " #.#####  # ".split(''),
+        " #    p   # ".split(''),
+        " #   ##  ## ".split(''),
+        " #   ##  #  ".split(''),
+        " #.  ##  #  ".split(''),
+        " #  .## b#  ".split(''),
+        " # b ##  #  ".split(''),
+        " ##  #####  ".split(''),
+        "   ###      ".split(''),
+      ],
+      [
+        "  #####     ".split(''),
+        "###  .######".split(''),
+        "#   b.   b #".split(''),
+        "#       #  #".split(''),
+        "##  ### # ##".split(''),
+        " #b # # # # ".split(''),
+        " #  # #.# # ".split(''),
+        " #  # ### # ".split(''),
+        " ####   # # ".split(''),
+        "        #p# ".split(''),
+        "        # # ".split(''),
+        "        ### ".split(''),
+      ],
+      [
+        "     ####   ".split(''),
+        "  ####  ##  ".split(''),
+        " ##.#.   #  ".split(''),
+        "##  ###  #  ".split(''),
+        "##b ### ##  ".split(''),
+        "# b  .. ####".split(''),
+        "#  p## b   #".split(''),
+        "##b.##   b #".split(''),
+        " #      ####".split(''),
+        " #   ####   ".split(''),
+        " #   #      ".split(''),
+        " #####      ".split(''),
+      ],
+      [
+        " ####       ".split(''),
+        "##  #####   ".split(''),
+        "# b .#  ### ".split(''),
+        "#    b    # ".split(''),
+        "#### #   .# ".split(''),
+        "  ##    . # ".split(''),
+        "###. b .b # ".split(''),
+        "# b b   .b# ".split(''),
+        "# #  ###  # ".split(''),
+        "# p .# #### ".split(''),
+        "######      ".split(''),
+        "            ".split(''),
+      ]
+    ];
+
+    const TILES = {
+      "#": { color: 8, char: 0x87 },   // Wall
+      ".": { color: 4, char: 0x8b },   // Target
+      // NOTE: the remaining stuff (boxes, player) are objects, they are not tiles in the map.
+    }
+
+    const LEVEL_SIZE = 12;
+    const DRAW_OFFSET_X = 10;
+    const DRAW_OFFSET_Y = 5;
+
+    // Current level number.
+    let curLevelNumber = 0;
+    // Current level object (LEVELS[curLevelNumber])
+    let curLevel = null;
+    // Player position.
+    let px = 3, py = 3;
+    // If true, the player is facing left instead of right.
+    let facingLeft = false;
+    // Positions of boxes. Each is an object with {x,y}
+    let boxes = [];
+    // Sound effects
+    let sfxStep = null, sfxPush = null, sfxLevelUp = null;
+
+    async function main() {
+      beep8.cls();
+      beep8.print("Loading...");
+      sfxStep = await beep8a.loadSound("assets/step.wav");
+      sfxPush = await beep8a.loadSound("assets/push.wav");
+      sfxLevelUp = await beep8a.loadSound("assets/levelup.wav");
+      setUpLevel(0);
+      while (true) {
+        drawEverything();
+        await movePlayer();
+        await checkEndOfLevel();
+      }
+    }
+
+    function drawEverything() {
+      beep8.cls();
+      drawMap();
+      drawBoxes();
+      drawPlayer();
+    }
+
+    function drawMap() {
+      beep8.color(7, 0);
+      beep8.cls();
+      beep8.locate(13, 1);
+      beep8.color(14);
+      beep8.print(`SOKOBAN\n`);
+      beep8.color(8);
+      beep8.print(`LEVEL ${curLevelNumber+1}`);
+      beep8.locate(1, 20);
+      beep8.print("Push boxes (\x89) onto dots (\x8b)\nPress B to reset level.");
+      for (let y = 0; y < LEVEL_SIZE; y++) {
+        beep8.locate(DRAW_OFFSET_X, DRAW_OFFSET_Y + y);
+        for (let x = 0; x < LEVEL_SIZE; x++) {
+          const cell = curLevel[y][x];
+          const tile = TILES[cell];
+          beep8.color(tile ? tile.color : 0);
+          beep8.printChar(tile ? tile.char : 0x20);
+        }
+      }
+    }
+
+    function drawBoxes() {
+      boxes.forEach(box => {
+        beep8.locate(DRAW_OFFSET_X + box.x, DRAW_OFFSET_Y + box.y);
+        // If the box is on a target, make it green; otherwise, black.
+        beep8.color(curLevel[box.y][box.x] === "." ? 12 : 14);
+        beep8.printChar(0x89);
+      });
+    }
+
+    function drawPlayer() {
+      beep8.locate(DRAW_OFFSET_X + px, DRAW_OFFSET_Y + py);
+      beep8.color(15);
+      beep8.printChar(facingLeft ? 0xc1 : 0xc0); // 0xc0 is the player facing right, 0xc1 is left.
+    }
+
+    async function movePlayer() {
+      const keyName = await beep8a.key();
+      if (keyName === "ButtonB" || keyName === "b") setUpLevel(curLevelNumber); // Reset level
+      if (keyName === "ArrowLeft") facingLeft = true;
+      if (keyName === "ArrowRight") facingLeft = false;
+
+      // Where does the player want to go?
+      const candX = px + (keyName === "ArrowRight" ? 1 : 0) + (keyName === "ArrowLeft" ? -1 : 0);
+      const candY = py + (keyName === "ArrowDown" ? 1 : 0) + (keyName === "ArrowUp" ? -1 : 0);
+      if (candX === px && candY === py) return; // Player doesn't want to move.
+
+      const boxToPush = boxes.find(box => box.x === candX && box.y === candY);
+      let pushed = false, moved = false;
+      if (boxToPush) pushed = tryPushBox(boxToPush);
+      if (isCellFree(candX, candY)) {
+        px = candX, py = candY;
+        moved = true;
+      }
+      if (pushed) beep8.playSound(sfxPush);
+      else if (moved) beep8.playSound(sfxStep);
+    }
+
+    function tryPushBox(box) {
+      const newX = box.x + Math.sign(box.x - px), newY = box.y + Math.sign(box.y - py);
+      if (isCellFree(newX, newY)) {
+        box.x = newX, box.y = newY;
+        return true;
+      }
+      return false;
+    }
+
+    function isCellFree(x, y) {
+      return curLevel[y][x] !== "#" && !boxes.find(box => box.x === x && box.y === y);
+    }
+
+    function setUpLevel(levelNumber) {
+      curLevelNumber = levelNumber;
+      curLevel = LEVELS[curLevelNumber];
+      boxes = [];
+      for (let y = 0; y < LEVEL_SIZE; y++) {
+        for (let x = 0; x < LEVEL_SIZE; x++) {
+          const thisCell = curLevel[y][x];
+          if (thisCell === "p") px = x, py = y;  // Player start position.
+          else if (thisCell === "b") boxes.push({x,y});  // Box
+        }
+      }
+    }
+
+    async function checkEndOfLevel() {
+      // If there are any boxes that are not on a target, the level hasn't ended.
+      if (boxes.find(box => curLevel[box.y][box.x] !== ".")) return;
+      drawEverything();
+      // Otherwise, congratulate and move on to the next one.
+      beep8.color(15, 4);
+      beep8.locate(0, 19);
+      beep8.printBox(32, 4);
+      beep8.locate(1, 20);
+      beep8.print("Level complete.\nPress ENTER to continue.");
+      beep8.playSound(sfxLevelUp);
+      while (true) {
+        const key = await beep8a.key();
+        if (key === "Enter" || key === "ButtonA") break;
+      }
+      if (curLevelNumber + 1 < LEVELS.length) {
+        // Advance to next level.
+        setUpLevel(curLevelNumber + 1);
+      } else {
+        // User has beat all the levels.
+        beep8.cls();
+        beep8.locate(1, 10);
+        beep8.print("CONGRATULATIONS!\nYou beat all the levels!");
+        while ("Enter" !== await beep8a.key()) {}
+        setUpLevel(0);
+      }
+    }
+
+    window.addEventListener("load", () => beep8.init(main));
+  </script>
+</head>
+<body>
+</body>
+</html>

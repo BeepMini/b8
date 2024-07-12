@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Example - Overworld</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <!-- Replace with a separate style.css file if you want -->
+  <style type="text/css">
+  body {
+    background: black;
+    color: white;
+  }
+  </style>
+
+  <script type="module">
+    import * as beep8 from "./beep8/beep8.js";
+    import * as beep8a from "./beep8/beep8a.js";
+    import * as qut from "./beep8/qut.js";
+
+    const MAPS = {
+      "OVERWORLD": [
+        "                                ".split(''),
+        " ~~~~~~~     ^^^     ~~   ^^    ".split(''),
+        " ~~~~~~|,   ^^^^     ~~ ^^^||   ".split(''),
+        " ~~~~||| ,   ,^^     ~,^^||     ".split(''),
+        " |||||     ,^^^     ~~  ||      ".split(''),
+        " |||,   ||,   ^^    ~~ ,        ".split(''),
+        "      |||||||^^    ~~     || ^^ ".split(''),
+        " ^     ,||||^^^^|, ~~    |||^^^ ".split(''),
+        "  ^^^|    ,     ,  ==        ^^ ".split(''),
+        "   ^|| ,     |^^   ~~   ,,  ^^^ ".split(''),
+        "  ^^^^|      ^^^^ ~~     , ^^^^ ".split(''),
+        "  ^^^^        ^^^~~          ~  ".split(''),
+        "    ^    ,       ~~         ~~  ".split(''),
+        "             ,  ~~       ||~~~  ".split(''),
+        "     ,      ,  ~~      ,||||~~  ".split(''),
+        "      |        ~~     ,,  |     ".split(''),
+        "   | ,|||T|^  ~~~    ,,      ^^ ".split(''),
+        "  |||   ^^^^ ~~~          ^^^^^ ".split(''),
+        " ^^^||      ~~~~        ^^^^^^^ ".split(''),
+        "  ^^^,     ~~~~      ^^^^^^^^^^ ".split(''),
+        "                                ".split(''),
+      ],
+      "TOWN": [
+        "                                ".split(''),
+        "               OO               ".split(''),
+        " ##############..############## ".split(''),
+        " #         ,   ..     #     ] # ".split(''),
+        " # ##########  .      #     ] # ".split(''),
+        " # # ]      #   .     +     ]2# ".split(''),
+        " # # ]      #   .     ######### ".split(''),
+        " # #0]      +  .    , #     ] # ".split(''),
+        " # # ]      #  ..     +     ]1# ".split(''),
+        " # ##########  ..     #     ] # ".split(''),
+        " #.... ...   ...      ######### ".split(''),
+        " #.. ,.   .. . ..   ,         # ".split(''),
+        " #######       .          2   # ".split(''),
+        " #     +     ......           # ".split(''),
+        " #  ####     ..~~..  ....  ...# ".split(''),
+        " #0 #  ,     ..~~.... ,. .....# ".split(''),
+        " ####    1   ......           # ".split(''),
+        " #     0              ,    1 |# ".split(''),
+        " #||||    2    ||| ,     |||||# ".split(''),
+        " #||||| ,,   ||||||  , |||||||# ".split(''),
+        " ############################## ".split(''),
+      ],
+    };
+
+    const TILES = {
+      "~": { color: 5, char: 0xcd, solid: true },
+      "|": { color: 4, char: 0xdf, solid: true },
+      "^": { color: 8, char: 0xce, solid: true },
+      "=": { color: 6, char: 0xdd, solid: false },
+      ",": { color: 6, char: 0xcc, solid: false },
+      " ": { color: 1, char: 0x20, solid: false },
+      "T": { color: 15, char: 0xcb, solid: false },
+      "O": { color: 0, char: 0x20, solid: false },
+      "#": { color: 8, char: 0x87, solid: true },
+      ".": { color: 8, char: 0xdc, solid: false },
+      "+": { color: 6, char: 0xc9, solid: false },
+      "]": { color: 6, char: 0x84, solid: true },
+      "0": { color: 15, char: 0xd0, solid: true, talk: true },
+      "1": { color: 15, char: 0xd3, solid: true, talk: true },
+      "2": { color: 15, char: 0xd5, solid: true, talk: true },
+    }
+
+    const MAP_WIDTH = 32, MAP_HEIGHT = 21;
+
+    const GREETINGS = [
+      "Greetings, traveler!", "Welcome, adventurer!",
+      "I'm a placeholder\ncharacter in an\nexample game.",
+    ];
+
+    let curMap = "OVERWORLD";  // Current map name
+    let px = 10, py = 10;      // Current player position.
+    let facingLeft = false;    // If true, player is looking to the left.
+
+    async function main() {
+      while (true) {
+        drawMap();
+        drawPlayer();
+        await movePlayer();
+      }
+    }
+
+    function drawPlayer() {
+      beep8.locate(px, py);
+      beep8.color(15, 0);
+      beep8.printChar(facingLeft ? 0xc1 : 0xc0); // 0xc0 is the player facing right, 0xc1 is left.
+    }
+
+    function drawMap() {
+      const map = MAPS[curMap];
+      beep8.color(7, 0);
+      beep8.cls();
+      for (let y = 0; y < MAP_HEIGHT; y++) {
+        beep8.locate(0, y);
+        for (let x = 0; x < MAP_WIDTH; x++) {
+          const tile = TILES[map[y][x]];
+          beep8.color(tile ? tile.color: 7);
+          beep8.printChar(tile ? tile.char : 0x3f);
+        }
+      }
+      beep8.locate(1, 21);
+      beep8.color(8, 0);
+      beep8.print(
+        "ROBIN      HP 34/34    Gold:72\n" +
+        "Paladin Lvl 6        XP:18,390");
+    }
+
+    async function movePlayer() {
+
+      const keyName = await beep8a.key();
+
+	  if (keyName === "ArrowLeft") facingLeft = true;
+      if (keyName === "ArrowRight") facingLeft = false;
+
+	  // Where does the player want to go?
+      const candX = px + (keyName === "ArrowRight" ? 1 : 0) + (keyName === "ArrowLeft" ? -1 : 0);
+      const candY = py + (keyName === "ArrowDown" ? 1 : 0) + (keyName === "ArrowUp" ? -1 : 0);
+
+	  // Don't let player go beyond edges.
+      if (candX <= 0 || candX >= MAP_WIDTH - 1) return;
+      if (candY <= 0 || candY >= MAP_HEIGHT - 1) return;
+
+	  // What tile is the player trying to enter?
+      const tile = MAPS[curMap][candY][candX];
+      if (TILES[tile].talk) await randomGreeting();
+      if (TILES[tile].solid) return; // Can't walk over a solid tile.
+
+	  px = candX, py = candY;
+
+	  // Change maps?
+      if (tile === "T") goToMap("TOWN", 15, 3);
+      if (tile === "O") goToMap("OVERWORLD", 9, 15);
+
+	}
+
+    function goToMap(mapName, x, y) { curMap = mapName, px = x, py = y; }
+
+    async function randomGreeting() {
+      await beep8a.dialog("VILLAGER:\n" + GREETINGS[Math.floor(Math.random() * GREETINGS.length)]);
+    }
+
+    window.addEventListener("load", () => beep8.init(main));
+  </script>
+</head>
+<body>
+</body>
+</html>

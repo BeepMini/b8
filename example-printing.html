@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Example - Hello</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <!-- Replace with a separate style.css file if you want -->
+  <style type="text/css">
+  body {
+    background: black;
+    color: white;
+  }
+  </style>
+
+  <script type="module">
+    import * as beep8 from "./beep8/beep8.js";
+    import * as beep8a from "./beep8/beep8a.js";
+
+    async function main() {
+      // Load the custom fonts.
+      beep8.cls();
+      beep8.print("Loading fonts...");
+      const boldFont = await beep8a.loadFont("assets/bold-font.png");
+      const bigFont = await beep8a.loadFont("assets/big-font2.png");
+      const fantasyFont = await beep8a.loadFont("assets/fantasy-font.png");
+      const image = await beep8a.loadImage("assets/writer.png");
+      beep8.color(7, 0);
+      beep8.cls();
+      beep8.printBox(32, 24);
+      beep8.locate(1, 1);
+      beep8.color(0, 7);
+      beep8.print("PRINTING/FONTS DEMO\n\n");
+      beep8.color(7, 0);
+      beep8.print("This is the normal font.\n");
+      beep8.setFont(boldFont);
+      beep8.print("This is the bold font.\n");
+      beep8.setFont(bigFont);
+      beep8.print("Big font.\n");
+
+      beep8.setFont(null);  // Return to default font.
+      beep8.print("\nEscape sequences can be used:\n");
+      // {{c12}} sets the foreground color to 12 (green).
+      // {{z}} resets the color.
+      beep8.print("You can have a {{c12}}green{{z}} word.\n");
+      // {{c0}} sets the color to 0 (black) and {{b3}} sets the background to 3 (magenta).
+      // You can combine them in the same sequence: {{c0,b3}}.
+      beep8.print("Or say an {{c0,b3}}important{{z}} thing.\n");
+
+      beep8.setFont(fantasyFont);
+      beep8.print(
+		"\nHere's a fantasy font.\n" +
+        "The quick brown fox\n" +
+        "jumps over the lazy dog."
+	);
+
+      beep8.drawImage(180, 130, image);
+      beep8.locate(2, 16);
+      beep8.color(15, 2);
+      beep8.printBox(20, 7);
+      beep8.locate(3, 17);
+      await beep8a.typewriter(
+        "What sayest thou?\n" +
+        "Why doth the swift\n" +
+        "auburn fox leap\n" +
+        "o'er the slothful\n" +
+        "dog?");
+    }
+
+    window.addEventListener("load", () => beep8.init(main));
+  </script>
+</head>
+<body>
+</body>
+</html>

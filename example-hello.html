@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Example - Hello</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <!-- Replace with a separate style.css file if you want -->
+  <style type="text/css">
+  body {
+    background: black;
+    color: white;
+  }
+  </style>
+
+  <script type="module">
+    import * as beep8 from "./beep8/beep8.js";
+    import * as beep8a from "./beep8/beep8a.js";
+
+    async function main() {
+      // Clear screen using white foreground (7) over blue background (1).
+      beep8.color(7, 1);
+      beep8.cls();
+      // Print greeting at position 1,1.
+      beep8.locate(1, 1);
+      beep8.print("Hello world!\n\n");
+      // Ask the user's name.
+      beep8.print("What is your name?\n> ");
+      // Don't forget: beep8a.* functions need to be called with await:
+      const name = await beep8a.readLine();
+      // Print it back, but in yellow (14).
+      beep8.color(14);
+      beep8.print("\n\nHi, " + name + ".");
+    }
+
+    window.addEventListener("load", () => beep8.init(main));
+  </script>
+</head>
+<body>
+</body>
+</html>
