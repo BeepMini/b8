@@ -15,7 +15,7 @@
   <script type="module">
     import * as beep8 from "./beep8/beep8.js";
     import * as beep8a from "./beep8/beep8a.js";
-    import * as qut from "./beep8/beep8.utilities.js";
+    import * as qut from "./beep8/beep8.Utilities.js";
 
     const CH_SPACESHIP = 0xf0;
     const CH_ENEMY_LEFT = 0xf1;
@@ -121,9 +121,9 @@
       playerSpeed = playerSpeed > 0 ?
         Math.max(0, playerSpeed - FRICTION) : Math.min(0, playerSpeed + FRICTION);
       // Cap speed to maximum.
-      playerSpeed = beep8.utilities.clamp(playerSpeed, -MAX_SPEED, MAX_SPEED);
+      playerSpeed = beep8.Utilities.clamp(playerSpeed, -MAX_SPEED, MAX_SPEED);
       // Apply speed to position.
-      playerX = beep8.utilities.clamp(playerX + playerSpeed, MIN_X, MAX_X);
+      playerX = beep8.Utilities.clamp(playerX + playerSpeed, MIN_X, MAX_X);
       // Draw the spaceship.
       beep8.color(15);
       beep8.spr(CH_SPACESHIP, playerX, playerY);
@@ -181,7 +181,7 @@
       e.y = Math.min(e.y, playerY);
 
       // Hit by laser?
-      if (laser && beep8.utilities.intersectRects(LASER_COLL_RECT, ENEMY_COLL_RECT, laser.x, laser.y, e.x, e.y)) {
+      if (laser && beep8.Utilities.intersectRects(LASER_COLL_RECT, ENEMY_COLL_RECT, laser.x, laser.y, e.x, e.y)) {
         e.dead = true;
         laser = null;
         partFx = {x: e.x, y: e.y, ticks: 0, color: e.color};
@@ -190,7 +190,7 @@
       }
 
       // Hit player?
-      if (beep8.utilities.intersectRects(ENEMY_COLL_RECT, PLAYER_COLL_RECT, e.x, e.y, playerX, playerY)) {
+      if (beep8.Utilities.intersectRects(ENEMY_COLL_RECT, PLAYER_COLL_RECT, e.x, e.y, playerX, playerY)) {
         if (!gameOver) beep8.playSound(sfxBlast);
         gameOver = true;
       }
