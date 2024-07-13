@@ -1,7 +1,7 @@
 ( function( beep8 ) {
 
 	/**
-	 * InputSys class handles keyboard input and provides methods to check key states.
+	 * Input class handles keyboard input and provides methods to check key states.
 	 */
 	beep8.Input = class {
 
@@ -57,8 +57,8 @@
 			this.keysJustPressed_.add( e.key.toUpperCase() );
 			this.keysHeld_.add( e.key.toUpperCase() );
 
-			if ( beep8.core.hasPendingAsync( "beep8a.key" ) ) {
-				beep8.core.resolveAsync( "beep8a.key", e.key );
+			if ( beep8.Core.hasPendingAsync( "beep8a.key" ) ) {
+				beep8.Core.resolveAsync( "beep8a.key", e.key );
 			}
 		}
 
@@ -79,7 +79,7 @@
 		 */
 		readKeyAsync() {
 			return new Promise( ( resolve, reject ) => {
-				beep8.core.startAsync( "beep8a.key", resolve, reject );
+				beep8.Core.startAsync( "beep8a.key", resolve, reject );
 			} );
 		}
 
@@ -94,21 +94,21 @@
 		 */
 		async readLine( initString, maxLen, maxWidth = -1 ) {
 
-			const startCol = beep8.core.drawState.cursorCol;
-			const startRow = beep8.core.drawState.cursorRow;
+			const startCol = beep8.Core.drawState.cursorCol;
+			const startRow = beep8.Core.drawState.cursorRow;
 
 			let curCol = startCol;
 			let curRow = startRow;
 			let curStrings = [ initString ];
 			let curPos = 0;
 
-			const cursorWasVisible = beep8.core.drawState.cursorVisible;
-			beep8.core.cursorRenderer.setCursorVisible( true );
+			const cursorWasVisible = beep8.Core.drawState.cursorVisible;
+			beep8.Core.cursorRenderer.setCursorVisible( true );
 
 			// Loop until the user presses Enter.
 			while ( true ) {
-				beep8.core.setCursorLocation( curCol, curRow );
-				beep8.core.textRenderer.print( curStrings[ curPos ] || "" );
+				beep8.Core.setCursorLocation( curCol, curRow );
+				beep8.Core.textRenderer.print( curStrings[ curPos ] || "" );
 				const key = await this.readKeyAsync();
 
 				if ( key === "Backspace" ) {
@@ -122,14 +122,14 @@
 						curRow--;
 					}
 					curStrings[ curPos ] = curStrings[ curPos ].length > 0 ? curStrings[ curPos ].substring( 0, curStrings[ curPos ].length - 1 ) : curStrings[ curPos ];
-					beep8.core.setCursorLocation( curCol + curStrings[ curPos ].length, curRow );
-					beep8.core.textRenderer.print( " " );
+					beep8.Core.setCursorLocation( curCol + curStrings[ curPos ].length, curRow );
+					beep8.Core.textRenderer.print( " " );
 
 				} else if ( key === "Enter" ) {
 
 					// Handle enter: submit the text.
-					beep8.core.setCursorLocation( 1, curRow + 1 );
-					beep8.core.cursorRenderer.setCursorVisible( cursorWasVisible );
+					beep8.Core.setCursorLocation( 1, curRow + 1 );
+					beep8.Core.cursorRenderer.setCursorVisible( cursorWasVisible );
 					return curStrings.join( "" );
 
 				} else if ( key.length === 1 ) {
@@ -138,7 +138,7 @@
 						curStrings[ curPos ] += key;
 
 						if ( maxWidth !== -1 && curStrings[ curPos ].length >= maxWidth ) {
-							beep8.core.textRenderer.print( curStrings[ curPos ].charAt( curStrings[ curPos ].length - 1 ) );
+							beep8.Core.textRenderer.print( curStrings[ curPos ].charAt( curStrings[ curPos ].length - 1 ) );
 							curCol = startCol;
 							curPos++;
 							curStrings[ curPos ] = "";

@@ -1,6 +1,6 @@
 ( function( beep8 ) {
 
-	const CONFIG = {
+	beep8.CONFIG = {
 		// Enable debug?
 		DEBUG: true,
 		// Canvas settings
@@ -78,7 +78,5 @@
 		PRINT_ESCAPE_START: "{{",
 		PRINT_ESCAPE_END: "}}",
 	};
-
-	beep8.CONFIG = CONFIG;
 
 } )( beep8 || ( beep8 = {} ) );

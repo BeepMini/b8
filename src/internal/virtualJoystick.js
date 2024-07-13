@@ -9,6 +9,7 @@
 	 * The directional pad has up, down, left, and right buttons.
 	 * The right side has three buttons, labeled A, B, and =.
 	 */
+	beep8.Joystick = {};
 
 
 	/**
@@ -174,9 +175,9 @@
 	 *
 	 * @returns {void}
 	 */
-	beep.joystick.setup = function() {
+	beep8.Joystick.setup = function() {
 
-		beep8.utilities.log( "Setting up virtual joystick..." );
+		beep8.Utilities.log( "Setting up virtual joystick..." );
 
 		const styleEl = document.createElement( "style" );
 		styleEl.setAttribute( "type", "text/css" );
@@ -208,7 +209,7 @@
 	 *
 	 * @returns {void}
 	 */
-	beep.joystick.continueSetup = function() {
+	beep8.Joystick.continueSetup = function() {
 
 		setUpButton( "vjoy-button-up", "ArrowUp" );
 		setUpButton( "vjoy-button-down", "ArrowDown" );
@@ -234,9 +235,9 @@
 	 * @param {string} buttonKeyName - The key name to simulate
 	 * @returns {void}
 	 */
-	beep8.joystick.setUpButton = function( buttonId, buttonKeyName ) {
+	beep8.Joystick.setUpButton = function( buttonId, buttonKeyName ) {
 
-		const button = beep8.utilities.assert(
+		const button = beep8.Utilities.assert(
 			document.getElementById( buttonId ),
 			"Could not find button ID " + buttonId
 		);
@@ -283,7 +284,7 @@
 	 * @param {Event} evt - The event object
 	 * @returns {void}
 	 */
-	beep.joystick.handleButtonEvent = function( buttonKeyName, down, evt ) {
+	beep8.Joystick.handleButtonEvent = function( buttonKeyName, down, evt ) {
 
 		if ( down ) {
 			inputSys.onKeyDown( { key: buttonKeyName } );

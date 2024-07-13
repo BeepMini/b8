@@ -1,5 +1,7 @@
 ( function( beep8 ) {
 
+	beep8.Core = {};
+
 	let _textRenderer = null;
 	let _inputSys = null;
 	let _cursorRenderer = null;
@@ -10,7 +12,7 @@
 	let _deltaTime = 0;
 
 	Object.defineProperty(
-		beep8.core,
+		beep8.Core,
 		'textRenderer',
 		{
 			get() { return _textRenderer; },
@@ -19,7 +21,7 @@
 	);
 
 	Object.defineProperty(
-		beep8.core,
+		beep8.Core,
 		'inputSys',
 		{
 			get() { return _inputSys; },
@@ -28,7 +30,7 @@
 	);
 
 	Object.defineProperty(
-		beep8.core,
+		beep8.Core,
 		'cursorRenderer',
 		{
 			get() { return _cursorRenderer; },
@@ -37,7 +39,7 @@
 	);
 
 	Object.defineProperty(
-		beep8.core,
+		beep8.Core,
 		'realCanvas',
 		{
 			get() { return _realCanvas; },
@@ -46,7 +48,7 @@
 	);
 
 	Object.defineProperty(
-		beep8.core,
+		beep8.Core,
 		'realCtx',
 		{
 			get() { return _realCtx; },
@@ -55,7 +57,7 @@
 	);
 
 	Object.defineProperty(
-		beep8.core,
+		beep8.Core,
 		'canvas',
 		{
 			get() { return _canvas; },
@@ -64,7 +66,7 @@
 	);
 
 	Object.defineProperty(
-		beep8.core,
+		beep8.Core,
 		'ctx',
 		{
 			get() { return _ctx; },
@@ -73,7 +75,7 @@
 	);
 
 	Object.defineProperty(
-		beep8.core,
+		beep8.Core,
 		'deltaTime',
 		{
 			get() { return _deltaTime; },
@@ -84,7 +86,7 @@
 	let lastFrameTime = null;
 	let crashed = false;
 
-	beep8.core.drawState = {
+	beep8.Core.drawState = {
 		fgColor: 7,
 		bgColor: 0,  // -1 means transparent
 
@@ -106,9 +108,15 @@
 	let dirty = false;
 
 
-	beep8.core.init = function( callback ) {
+	/**
+	 * Initializes the engine.
+	 *
+	 * @param {Function} callback - The function to call when the engine is initialized.
+	 * @return {void}
+	 */
+	beep8.Core.init = function( callback ) {
 
-		beep8.utilities.checkFunction( "callback", callback );
+		beep8.Utilities.checkFunction( "callback", callback );
 		asyncInit( callback );
 
 	}
@@ -116,18 +124,18 @@
 
 	async function asyncInit( callback ) {
 
-		beep8.utilities.log( "Sys init." );
+		beep8.Utilities.log( "Sys init." );
 
-		CONFIG.SCREEN_WIDTH = CONFIG.SCREEN_COLS * CONFIG.CHR_WIDTH;
-		CONFIG.SCREEN_HEIGHT = CONFIG.SCREEN_ROWS * CONFIG.CHR_HEIGHT;
+		beep8.CONFIG.SCREEN_WIDTH = beep8.CONFIG.SCREEN_COLS * beep8.CONFIG.CHR_WIDTH;
+		beep8.CONFIG.SCREEN_HEIGHT = beep8.CONFIG.SCREEN_ROWS * beep8.CONFIG.CHR_HEIGHT;
 
 		_realCanvas = document.createElement( "canvas" );
-		if ( CONFIG.CANVAS_SETTINGS && CONFIG.CANVAS_SETTINGS.CANVAS_ID ) {
-			_realCanvas.setAttribute( "id", CONFIG.CANVAS_SETTINGS.CANVAS_ID );
+		if ( beep8.CONFIG.CANVAS_SETTINGS && beep8.CONFIG.CANVAS_SETTINGS.CANVAS_ID ) {
+			_realCanvas.setAttribute( "id", beep8.CONFIG.CANVAS_SETTINGS.CANVAS_ID );
 		}
 
-		if ( CONFIG.CANVAS_SETTINGS && CONFIG.CANVAS_SETTINGS.CANVAS_CLASSES ) {
-			for ( const className of CONFIG.CANVAS_SETTINGS.CANVAS_CLASSES ) {
+		if ( beep8.CONFIG.CANVAS_SETTINGS && beep8.CONFIG.CANVAS_SETTINGS.CANVAS_CLASSES ) {
+			for ( const className of beep8.CONFIG.CANVAS_SETTINGS.CANVAS_CLASSES ) {
 				_realCanvas.classList.add( className );
 			}
 		}
@@ -136,8 +144,8 @@
 
 		let container = document.body;
 
-		if ( CONFIG.CANVAS_SETTINGS && CONFIG.CANVAS_SETTINGS.CONTAINER ) {
-			const containerSpec = CONFIG.CANVAS_SETTINGS.CONTAINER;
+		if ( beep8.CONFIG.CANVAS_SETTINGS && beep8.CONFIG.CANVAS_SETTINGS.CONTAINER ) {
+			const containerSpec = beep8.CONFIG.CANVAS_SETTINGS.CONTAINER;
 			if ( typeof ( containerSpec ) === "string" ) {
 				container = document.getElementById( containerSpec );
 				if ( !container ) {
@@ -147,7 +155,7 @@
 			} else if ( containerSpec instanceof HTMLElement ) {
 				container = containerSpec;
 			} else {
-				console.error( "beep8: CONFIG.CANVAS_SETTINGS.CONTAINER must be either an ID of an HTMLElement." );
+				console.error( "beep8: beep8.CONFIG.CANVAS_SETTINGS.CONTAINER must be either an ID of an HTMLElement." );
 				container = document.body;
 			}
 		}
@@ -155,16 +163,16 @@
 		container.appendChild( _realCanvas );
 
 		_canvas = document.createElement( "canvas" );
-		_canvas.width = CONFIG.SCREEN_WIDTH;
-		_canvas.height = CONFIG.SCREEN_HEIGHT;
-		_canvas.style.width = CONFIG.SCREEN_WIDTH + "px";
-		_canvas.style.height = CONFIG.SCREEN_HEIGHT + "px";
+		_canvas.width = beep8.CONFIG.SCREEN_WIDTH;
+		_canvas.height = beep8.CONFIG.SCREEN_HEIGHT;
+		_canvas.style.width = beep8.CONFIG.SCREEN_WIDTH + "px";
+		_canvas.style.height = beep8.CONFIG.SCREEN_HEIGHT + "px";
 		_ctx = _canvas.getContext( "2d" );
 		_ctx.imageSmoothingEnabled = false;
 
-		_textRenderer = new TextRenderer();
-		_inputSys = new InputSys();
-		_cursorRenderer = new CursorRenderer();
+		_textRenderer = new beep8.TextRenderer();
+		_inputSys = new beep8.Input();
+		_cursorRenderer = new beep8.CursorRenderer();
 
 		await _textRenderer.initAsync();
 
@@ -172,7 +180,7 @@
 		window.addEventListener( "resize", () => updateLayout( true ) );
 
 		if ( isMobile() ) {
-			vjoy.setup();
+			beep8.Joystick.setup();
 		}
 
 		initDone = true;
@@ -185,28 +193,28 @@
 	}
 
 
-	beep8.core.getContext = function() {
+	beep8.Core.getContext = function() {
 
 		return _ctx;
 
 	}
 
 
-	beep8.core.preflight = function( apiMethod ) {
+	beep8.Core.preflight = function( apiMethod ) {
 
 		if ( crashed ) {
 			throw new Error( `Can't call API method ${apiMethod}() because the engine has crashed.` );
 		}
 
 		if ( !initDone ) {
-			beep8.utilities.fatal(
+			beep8.Utilities.fatal(
 				`Can't call API method ${apiMethod}(): API not initialized. ` +
 				`Call initAsync() wait until it finishes before calling API methods.`
 			);
 		}
 
 		if ( pendingAsync ) {
-			beep8.utilities.fatal(
+			beep8.Utilities.fatal(
 				`Can't call API method ${apiMethod}() because there is a pending async ` +
 				`call to ${pendingAsync.name}() that hasn't finished running yet. Are you missing ` +
 				`an 'await' keyword to wait for the async method? Use 'await ${pendingAsync.name}()',` +
@@ -217,7 +225,7 @@
 	}
 
 
-	beep8.core.startAsync = function( asyncMethodName, resolve, reject ) {
+	beep8.Core.startAsync = function( asyncMethodName, resolve, reject ) {
 
 		if ( pendingAsync ) {
 
@@ -239,14 +247,14 @@
 	}
 
 
-	beep8.core.hasPendingAsync = function( asyncMethodName ) {
+	beep8.Core.hasPendingAsync = function( asyncMethodName ) {
 
 		return pendingAsync && pendingAsync.name === asyncMethodName;
 
 	}
 
 
-	beep8.core.endAsyncImpl = function( asyncMethodName, isError, result ) {
+	beep8.Core.endAsyncImpl = function( asyncMethodName, isError, result ) {
 
 		if ( !pendingAsync ) {
 			throw new Error( `Internal bug: endAsync(${asyncMethodName}) called with no pendingAsync` );
@@ -264,21 +272,21 @@
 	}
 
 
-	beep8.core.resolveAsync = function( asyncMethodName, result ) {
+	beep8.Core.resolveAsync = function( asyncMethodName, result ) {
 
 		endAsyncImpl( asyncMethodName, false, result );
 
 	}
 
 
-	beep8.core.failAsync = function( asyncMethodName, error ) {
+	beep8.Core.failAsync = function( asyncMethodName, error ) {
 
 		endAsyncImpl( asyncMethodName, true, error );
 
 	}
 
 
-	beep8.core.setFrameHandler = function( callback, targetFps ) {
+	beep8.Core.setFrameHandler = function( callback, targetFps ) {
 
 		frameHandler = callback;
 		frameHandlerTargetInterval = 1.0 / ( targetFps || 30 );
@@ -291,7 +299,7 @@
 	}
 
 
-	beep8.core.render = function() {
+	beep8.Core.render = function() {
 
 		if ( crashed ) return;
 		_realCtx.imageSmoothingEnabled = false;
@@ -308,7 +316,7 @@
 	}
 
 
-	beep8.core.markDirty = function() {
+	beep8.Core.markDirty = function() {
 
 		if ( dirty ) return;
 		dirty = true;
@@ -316,9 +324,9 @@
 
 	}
 
-	beep8.core.cls = function() {
+	beep8.Core.cls = function() {
 
-		_ctx.fillStyle = getColorHex( beep8.core.drawState.bgColor );
+		_ctx.fillStyle = getColorHex( beep8.Core.drawState.bgColor );
 		_ctx.fillRect( 0, 0, _canvas.width, _canvas.height );
 		this.setCursorLocation( 0, 0 );
 		markDirty();
@@ -326,33 +334,33 @@
 	}
 
 
-	beep8.core.defineColors = function( colors ) {
+	beep8.Core.defineColors = function( colors ) {
 
-		beep8.utilities.checkArray( "colors", colors );
-		CONFIG.COLORS = colors.slice();
+		beep8.Utilities.checkArray( "colors", colors );
+		beep8.CONFIG.COLORS = colors.slice();
 		_textRenderer.regenColors();
 
 	}
 
 
-	beep8.core.setColor = function( fg, bg ) {
+	beep8.Core.setColor = function( fg, bg ) {
 
-		beep8.utilities.checkNumber( "fg", fg );
+		beep8.Utilities.checkNumber( "fg", fg );
 		drawState.fgColor = Math.round( fg );
 
 		if ( bg !== undefined ) {
-			beep8.utilities.checkNumber( "bg", bg );
+			beep8.Utilities.checkNumber( "bg", bg );
 			drawState.bgColor = Math.round( bg );
 		}
 
 	}
 
 
-	beep8.core.setCursorLocation = function( col, row ) {
+	beep8.Core.setCursorLocation = function( col, row ) {
 
-		beep8.utilities.checkNumber( "col", col );
+		beep8.Utilities.checkNumber( "col", col );
 
-		if ( row !== undefined ) beep8.utilities.checkNumber( "row", row );
+		if ( row !== undefined ) beep8.Utilities.checkNumber( "row", row );
 
 		drawState.cursorCol = Math.round( col );
 
@@ -361,20 +369,20 @@
 	}
 
 
-	beep8.core.getColorHex = function( c ) {
+	beep8.Core.getColorHex = function( c ) {
 
 		if ( typeof ( c ) !== "number" ) return "#f0f";
 
 		if ( c < 0 ) return "#000";
 
-		c = beep8.utilities.clamp( Math.round( c ), 0, CONFIG.COLORS.length - 1 );
+		c = beep8.Utilities.clamp( Math.round( c ), 0, beep8.CONFIG.COLORS.length - 1 );
 
-		return CONFIG.COLORS[ c ];
+		return beep8.CONFIG.COLORS[ c ];
 
 	}
 
 
-	beep8.core.getNow = function() {
+	beep8.Core.getNow = function() {
 
 		if ( window.performace.now ) {
 			return window.performance.now();
@@ -385,16 +393,16 @@
 	}
 
 
-	beep8.core.drawImage = function( img, x, y, srcX, srcY, width, height ) {
+	beep8.Core.drawImage = function( img, x, y, srcX, srcY, width, height ) {
 
-		beep8.utilities.checkInstanceOf( "img", img, HTMLImageElement );
-		beep8.utilities.checkNumber( "x", x );
-		beep8.utilities.checkNumber( "y", y );
+		beep8.Utilities.checkInstanceOf( "img", img, HTMLImageElement );
+		beep8.Utilities.checkNumber( "x", x );
+		beep8.Utilities.checkNumber( "y", y );
 
-		if ( srcX !== undefined ) beep8.utilities.checkNumber( "srcX", srcX );
-		if ( srcY !== undefined ) beep8.utilities.checkNumber( "srcY", srcY );
-		if ( width !== undefined ) beep8.utilities.checkNumber( "width", width );
-		if ( height !== undefined ) beep8.utilities.checkNumber( "height", height );
+		if ( srcX !== undefined ) beep8.Utilities.checkNumber( "srcX", srcX );
+		if ( srcY !== undefined ) beep8.Utilities.checkNumber( "srcY", srcY );
+		if ( width !== undefined ) beep8.Utilities.checkNumber( "width", width );
+		if ( height !== undefined ) beep8.Utilities.checkNumber( "height", height );
 		if (
 			srcX !== undefined && srcY !== undefined &&
 			width !== undefined && height !== undefined
@@ -407,12 +415,12 @@
 	}
 
 
-	beep8.core.drawRect = function( x, y, width, height ) {
+	beep8.Core.drawRect = function( x, y, width, height ) {
 
-		beep8.utilities.checkNumber( "x", x );
-		beep8.utilities.checkNumber( "y", y );
-		beep8.utilities.checkNumber( "width", width );
-		beep8.utilities.checkNumber( "height", height );
+		beep8.Utilities.checkNumber( "x", x );
+		beep8.Utilities.checkNumber( "y", y );
+		beep8.Utilities.checkNumber( "width", width );
+		beep8.Utilities.checkNumber( "height", height );
 
 		let oldStrokeStyle = _ctx.strokeStyle;
 		_ctx.strokeStyle = getColorHex( drawState.fgColor );
@@ -426,12 +434,12 @@
 	}
 
 
-	beep8.core.fillRect = function( x, y, width, height ) {
+	beep8.Core.fillRect = function( x, y, width, height ) {
 
-		beep8.utilities.checkNumber( "x", x );
-		beep8.utilities.checkNumber( "y", y );
-		beep8.utilities.checkNumber( "width", width );
-		beep8.utilities.checkNumber( "height", height );
+		beep8.Utilities.checkNumber( "x", x );
+		beep8.Utilities.checkNumber( "y", y );
+		beep8.Utilities.checkNumber( "width", width );
+		beep8.Utilities.checkNumber( "height", height );
 
 		_ctx.fillStyle = getColorHex( drawState.fgColor );
 		_ctx.fillRect(
@@ -441,15 +449,15 @@
 	}
 
 
-	beep8.core.saveScreen = function() {
+	beep8.Core.saveScreen = function() {
 
 		return _ctx.getImageData( 0, 0, _canvas.width, _canvas.height );
 
 	}
 
-	beep8.core.restoreScreen = function( screenData ) {
+	beep8.Core.restoreScreen = function( screenData ) {
 
-		beep8.utilities.checkInstanceOf( "screenData", screenData, ImageData );
+		beep8.Utilities.checkInstanceOf( "screenData", screenData, ImageData );
 		_ctx.putImageData( screenData, 0, 0 );
 
 	}
@@ -485,7 +493,7 @@
 	}
 
 
-	beep8.core.updateLayout = function( renderNow ) {
+	beep8.Core.updateLayout = function( renderNow ) {
 
 		updateLayout2d();
 
@@ -494,43 +502,43 @@
 	}
 
 
-	beep8.core.updateLayout2d = function() {
+	beep8.Core.updateLayout2d = function() {
 
-		const autoSize = !CONFIG.CANVAS_SETTINGS || CONFIG.CANVAS_SETTINGS.AUTO_SIZE;
-		const autoPos = !CONFIG.CANVAS_SETTINGS || CONFIG.CANVAS_SETTINGS.AUTO_POSITION;
+		const autoSize = !beep8.CONFIG.CANVAS_SETTINGS || beep8.CONFIG.CANVAS_SETTINGS.AUTO_SIZE;
+		const autoPos = !beep8.CONFIG.CANVAS_SETTINGS || beep8.CONFIG.CANVAS_SETTINGS.AUTO_POSITION;
 
-		let useAutoScale = typeof ( CONFIG.SCREEN_SCALE ) !== 'number';
+		let useAutoScale = typeof ( beep8.CONFIG.SCREEN_SCALE ) !== 'number';
 		let scale;
 
 		if ( useAutoScale ) {
 
-			const frac = CONFIG.MAX_SCREEN_FRACTION || 0.8;
+			const frac = beep8.CONFIG.MAX_SCREEN_FRACTION || 0.8;
 			const availableSize = autoSize ?
 				{ width: frac * window.innerWidth, height: frac * window.innerHeight } :
 				_realCanvas.getBoundingClientRect();
 			scale = Math.floor( Math.min(
-				availableSize.width / CONFIG.SCREEN_WIDTH,
-				availableSize.height / CONFIG.SCREEN_HEIGHT ) );
+				availableSize.width / beep8.CONFIG.SCREEN_WIDTH,
+				availableSize.height / beep8.CONFIG.SCREEN_HEIGHT ) );
 			scale = Math.min( Math.max( scale, 1 ), 5 );
-			beep8.utilities.log( `Auto-scale: available size ${availableSize.width} x ${availableSize.height}, scale ${scale}, dpr ${window.devicePixelRatio}` );
+			beep8.Utilities.log( `Auto-scale: available size ${availableSize.width} x ${availableSize.height}, scale ${scale}, dpr ${window.devicePixelRatio}` );
 
 		} else {
 
-			scale = CONFIG.SCREEN_SCALE;
+			scale = beep8.CONFIG.SCREEN_SCALE;
 
 		}
 
-		CONFIG.SCREEN_EL_WIDTH = CONFIG.SCREEN_WIDTH * scale;
-		CONFIG.SCREEN_EL_HEIGHT = CONFIG.SCREEN_HEIGHT * scale;
-		CONFIG.SCREEN_REAL_WIDTH = CONFIG.SCREEN_WIDTH * scale;
-		CONFIG.SCREEN_REAL_HEIGHT = CONFIG.SCREEN_HEIGHT * scale;
+		beep8.CONFIG.SCREEN_EL_WIDTH = beep8.CONFIG.SCREEN_WIDTH * scale;
+		beep8.CONFIG.SCREEN_EL_HEIGHT = beep8.CONFIG.SCREEN_HEIGHT * scale;
+		beep8.CONFIG.SCREEN_REAL_WIDTH = beep8.CONFIG.SCREEN_WIDTH * scale;
+		beep8.CONFIG.SCREEN_REAL_HEIGHT = beep8.CONFIG.SCREEN_HEIGHT * scale;
 
 		if ( autoSize ) {
 
-			_realCanvas.style.width = CONFIG.SCREEN_EL_WIDTH + "px";
-			_realCanvas.style.height = CONFIG.SCREEN_EL_HEIGHT + "px";
-			_realCanvas.width = CONFIG.SCREEN_REAL_WIDTH;
-			_realCanvas.height = CONFIG.SCREEN_REAL_HEIGHT;
+			_realCanvas.style.width = beep8.CONFIG.SCREEN_EL_WIDTH + "px";
+			_realCanvas.style.height = beep8.CONFIG.SCREEN_EL_HEIGHT + "px";
+			_realCanvas.width = beep8.CONFIG.SCREEN_REAL_WIDTH;
+			_realCanvas.height = beep8.CONFIG.SCREEN_REAL_HEIGHT;
 
 		} else {
 
@@ -551,7 +559,7 @@
 
 		}
 
-		const scanLinesOp = CONFIG.SCAN_LINES_OPACITY || 0;
+		const scanLinesOp = beep8.CONFIG.SCAN_LINES_OPACITY || 0;
 
 		if ( scanLinesOp > 0 ) {
 
@@ -577,7 +585,7 @@
 
 			} else {
 
-				console.error( "beep8: 2D scanlines effect only works if CONFIG.CANVAS_SETTINGS.AUTO_POS and AUTO_SIZE are both on." );
+				console.error( "beep8: 2D scanlines effect only works if beep8.CONFIG.CANVAS_SETTINGS.AUTO_POS and AUTO_SIZE are both on." );
 
 			}
 
@@ -587,12 +595,12 @@
 
 	let crashing = false;
 
-	beep8.core.handleCrash = function( errorMessage = "Fatal error" ) {
+	beep8.Core.handleCrash = function( errorMessage = "Fatal error" ) {
 
 		if ( crashed || crashing ) return;
 		crashing = true;
 
-		setColor( CONFIG.COLORS.length - 1, 0 );
+		setColor( beep8.CONFIG.COLORS.length - 1, 0 );
 		cls();
 
 		drawState.cursorCol = drawState.cursorRow = 1;
@@ -605,21 +613,21 @@
 	}
 
 
-	beep8.core.isMobile = function() {
+	beep8.Core.isMobile = function() {
 
 		return isIOS() || isAndroid();
 
 	}
 
 
-	beep8.core.isIOS = function() {
+	beep8.Core.isIOS = function() {
 
 		return /(ipad|ipod|iphone)/i.test( navigator.userAgent );
 
 	}
 
 
-	beep8.core.isAndroid = function() {
+	beep8.Core.isAndroid = function() {
 
 		return /android/i.test( navigator.userAgent );
 

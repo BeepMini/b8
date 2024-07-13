@@ -10,7 +10,7 @@
 	 */
 	function initTextRenderer() {
 
-		textRenderer = new TextRenderer();
+		textRenderer = new beep8.TextRenderer();
 
 	}
 
@@ -18,7 +18,7 @@
 	/**
 	 * Get the text renderer
 	 *
-	 * @returns {TextRenderer} The text renderer.
+	 * @returns {beep8.TextRenderer} The text renderer.
 	 */
 	function getTextRenderer() {
 
@@ -30,7 +30,7 @@
 	/**
 	 * Set a new text renderer
 	 *
-	 * @param {TextRenderer} renderer - The new text renderer.
+	 * @param {beep8.TextRenderer} renderer - The new text renderer.
 	 * @returns {void}
 	 */
 	function setTextRenderer( renderer ) {
@@ -57,9 +57,9 @@
 	 */
 	async function key() {
 
-		beep8.core.preflight( "beep8a.key" );
+		beep8.Core.preflight( "beep8a.key" );
 
-		return await beep8.core.inputSys.readKeyAsync();
+		return await beep8.Core.inputSys.readKeyAsync();
 	}
 
 
@@ -73,11 +73,11 @@
 	 */
 	async function readLine( initString = "", maxLen = -1, maxWidth = -1 ) {
 
-		beep8.core.preflight( "readLine" );
-		beep8.utilities.checkString( "initString", initString );
-		beep8.utilities.checkNumber( "maxLen", maxLen );
+		beep8.Core.preflight( "readLine" );
+		beep8.Utilities.checkString( "initString", initString );
+		beep8.Utilities.checkNumber( "maxLen", maxLen );
 
-		return await beep8.core.inputSys.readLine( initString, maxLen, maxWidth );
+		return await beep8.Core.inputSys.readLine( initString, maxLen, maxWidth );
 
 	}
 
@@ -91,9 +91,9 @@
 	 */
 	async function menu( choices, options = {} ) {
 
-		beep8.core.preflight( "menu" );
-		beep8.utilities.checkArray( "choices", choices );
-		beep8.utilities.checkObject( "options", options );
+		beep8.Core.preflight( "menu" );
+		beep8.Utilities.checkArray( "choices", choices );
+		beep8.Utilities.checkObject( "options", options );
 
 		return await menuMod.menu( choices, options );
 
@@ -109,9 +109,9 @@
 	 */
 	async function dialog( prompt, choices = [ "OK" ] ) {
 
-		beep8.core.preflight( "dialog" );
-		beep8.utilities.checkString( "prompt", prompt );
-		beep8.utilities.checkArray( "choices", choices );
+		beep8.Core.preflight( "dialog" );
+		beep8.Utilities.checkString( "prompt", prompt );
+		beep8.Utilities.checkArray( "choices", choices );
 
 		return menu( choices, { prompt, center: true } );
 
@@ -126,8 +126,8 @@
 	 */
 	async function wait( seconds ) {
 
-		beep8.core.preflight( "wait" );
-		beep8.utilities.checkNumber( "seconds", seconds );
+		beep8.Core.preflight( "wait" );
+		beep8.Utilities.checkNumber( "seconds", seconds );
 		beep8.render();
 		await new Promise( resolve => setTimeout( resolve, Math.round( seconds * 1000 ) ) );
 
@@ -143,9 +143,9 @@
 	 */
 	async function typewriter( text, delay = 0.05 ) {
 
-		beep8.core.preflight( "typewriter" );
-		beep8.utilities.checkString( "text", text );
-		beep8.utilities.checkNumber( "delay", delay );
+		beep8.Core.preflight( "typewriter" );
+		beep8.Utilities.checkString( "text", text );
+		beep8.Utilities.checkNumber( "delay", delay );
 
 		const startCol = beep8.col();
 		const startRow = beep8.row();
@@ -154,11 +154,11 @@
 
 			// If this is the start of an escape sequence, skip to the end of it.
 			if (
-				CONFIG.PRINT_ESCAPE_START &&
-				text.substring( i, i + CONFIG.PRINT_ESCAPE_START.length ) === CONFIG.PRINT_ESCAPE_START
+				beep8.CONFIG.PRINT_ESCAPE_START &&
+				text.substring( i, i + beep8.CONFIG.PRINT_ESCAPE_START.length ) === beep8.CONFIG.PRINT_ESCAPE_START
 			) {
-				const endPos = text.indexOf( CONFIG.PRINT_ESCAPE_END, i + CONFIG.PRINT_ESCAPE_START.length );
-				if ( endPos >= 0 ) i = endPos + CONFIG.PRINT_ESCAPE_END.length;
+				const endPos = text.indexOf( beep8.CONFIG.PRINT_ESCAPE_END, i + beep8.CONFIG.PRINT_ESCAPE_START.length );
+				if ( endPos >= 0 ) i = endPos + beep8.CONFIG.PRINT_ESCAPE_END.length;
 			}
 
 			const c = text.charCodeAt( i );
@@ -180,7 +180,7 @@
 	 */
 	async function loadImage( url ) {
 
-		beep8.core.preflight( "loadImage" );
+		beep8.Core.preflight( "loadImage" );
 
 		return new Promise(
 			( resolve ) => {
@@ -201,7 +201,7 @@
 	 */
 	async function loadSound( url ) {
 
-		beep8.core.preflight( "loadSound" );
+		beep8.Core.preflight( "loadSound" );
 
 		return new Promise(
 			( resolve ) => {
@@ -225,10 +225,10 @@
 	 */
 	async function loadFont( fontImageFile ) {
 
-		beep8.core.preflight( "loadFont" );
-		beep8.utilities.checkString( "fontImageFile", fontImageFile );
+		beep8.Core.preflight( "loadFont" );
+		beep8.Utilities.checkString( "fontImageFile", fontImageFile );
 		const fontName = "FONT@" + fontImageFile;
-		await beep8.core.textRenderer.loadFontAsync( fontName, fontImageFile );
+		await beep8.Core.textRenderer.loadFontAsync( fontName, fontImageFile );
 
 		return fontName;
 
@@ -250,4 +250,4 @@
 		loadFont,
 	};
 
-} )( beep8 );
+} )( beep8 || ( beep8 = {} ) );

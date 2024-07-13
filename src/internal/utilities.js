@@ -1,17 +1,19 @@
 ( function( beep8 ) {
 
+	beep8.Utilities = {};
+
 	/**
 	 * Shows a fatal error and throws an exception.
 	 *
 	 * @param {string} error - The error to show.
 	 */
-	beep8.utilities.fatal = function( error ) {
+	beep8.Utilities.fatal = function( error ) {
 
 		console.error( "Fatal error: " + error );
 		try {
-			beep8.core.handleCrash( error );
+			beep8.Core.handleCrash( error );
 		} catch ( e ) {
-			console.error( "Error in beep8.core.handleCrash: " + e + " while handling error " + error );
+			console.error( "Error in beep8.Core.handleCrash: " + e + " while handling error " + error );
 		}
 		throw new Error( "Error: " + error );
 
@@ -25,10 +27,10 @@
 	 * @param {string} msg - The error message to show if the condition is false.
 	 * @returns {boolean} The 'cond' parameter.
 	 */
-	beep8.utilities.assert = function( cond, msg ) {
+	beep8.Utilities.assert = function( cond, msg ) {
 
 		if ( !cond ) {
-			fatal( msg || "Assertion Failed" );
+			beep8.Utilities.fatal( msg || "Assertion Failed" );
 		}
 
 		return cond;
@@ -37,17 +39,18 @@
 
 
 	/**
-	 * Same as assert() but only asserts if CONFIG.DEBUG is true.
+	 * Same as beep8.Utilities.assert() but only asserts if beep8.CONFIG.DEBUG is true.
+	 *
 	 * @param {boolean} cond - The condition that you fervently hope will be true.
 	 * @param {string} msg - The error message to show if the condition is false.
 	 * @returns {boolean} The 'cond' parameter.
 	 */
-	beep8.utilities.assertDebug = function( cond, msg ) {
+	beep8.Utilities.assertDebug = function( cond, msg ) {
 		if ( !cond ) {
-			if ( CONFIG.DEBUG ) {
+			if ( beep8.CONFIG.DEBUG ) {
 				warn( "DEBUG ASSERT failed: " + msg );
 			} else {
-				fatal( msg );
+				beep8.Utilities.fatal( msg );
 			}
 		}
 		return cond;
@@ -56,14 +59,15 @@
 
 	/**
 	 * Asserts that two values are equal.
+	 *
 	 * @param {any} expected - What you expect the value to be.
 	 * @param {any} actual - What the value actually is.
 	 * @param {string} what - A description of what the value is.
 	 * @returns {any} The 'actual' parameter.
 	 */
-	beep8.utilities.assertEquals = function( expected, actual, what ) {
+	beep8.Utilities.assertEquals = function( expected, actual, what ) {
 		if ( expected !== actual ) {
-			fatal( `${what}: expected ${expected} but got ${actual}` );
+			beep8.Utilities.fatal( `${what}: expected ${expected} but got ${actual}` );
 		}
 		return actual;
 	}
@@ -77,11 +81,11 @@
 	 * @param {string} varType - The expected type of the variable.
 	 * @returns {any} The 'varValue' parameter.
 	 */
-	beep8.utilities.checkType = function( varName, varValue, varType ) {
+	beep8.Utilities.checkType = function( varName, varValue, varType ) {
 
-		assert( varName, "checkType: varName must be provided." );
-		assert( varType, "checkType: varType must be provided." );
-		assert(
+		beep8.Utilities.assert( varName, "checkType: varName must be provided." );
+		beep8.Utilities.assert( varType, "checkType: varType must be provided." );
+		beep8.Utilities.assert(
 			typeof ( varValue ) === varType,
 			`${varName} should be of type ${varType} but was ${typeof ( varValue )}: ${varValue}`
 		);
@@ -99,24 +103,24 @@
 	 * @param {number} [optMax] - The maximum acceptable value for the variable.
 	 * @returns {number} The 'varValue' parameter.
 	 */
-	beep8.utilities.checkNumber = function( varName, varValue, optMin, optMax ) {
+	beep8.Utilities.checkNumber = function( varName, varValue, optMin, optMax ) {
 
-		checkType( varName, varValue, "number" );
+		beep8.Utilities.checkType( varName, varValue, "number" );
 
 		if ( isNaN( varValue ) ) {
-			fatal( `${varName} should be a number but is NaN` );
+			beep8.Utilities.fatal( `${varName} should be a number but is NaN` );
 		}
 
 		if ( !isFinite( varValue ) ) {
-			fatal( `${varName} should be a number but is infinite: ${varValue}` );
+			beep8.Utilities.fatal( `${varName} should be a number but is infinite: ${varValue}` );
 		}
 
 		if ( optMin !== undefined ) {
-			assert( varValue >= optMin, `${varName} should be >= ${optMin} but is ${varValue}` );
+			beep8.Utilities.assert( varValue >= optMin, `${varName} should be >= ${optMin} but is ${varValue}` );
 		}
 
 		if ( optMax !== undefined ) {
-			assert( varValue <= optMax, `${varName} should be <= ${optMax} but is ${varValue}` );
+			beep8.Utilities.assert( varValue <= optMax, `${varName} should be <= ${optMax} but is ${varValue}` );
 		}
 
 		return varValue;
@@ -131,9 +135,9 @@
 	 * @param {any} varValue - The value of the variable.
 	 * @returns {string} The 'varValue' parameter.
 	 */
-	beep8.utilities.checkString = function( varName, varValue ) {
+	beep8.Utilities.checkString = function( varName, varValue ) {
 
-		return checkType( varName, varValue, "string" );
+		return beep8.Utilities.checkType( varName, varValue, "string" );
 
 	}
 
@@ -145,9 +149,9 @@
 	 * @param {any} varValue - The value of the variable.
 	 * @returns {boolean} The 'varValue' parameter.
 	 */
-	beep8.utilities.checkBoolean = function( varName, varValue ) {
+	beep8.Utilities.checkBoolean = function( varName, varValue ) {
 
-		return checkType( varName, varValue, "boolean" );
+		return beep8.Utilities.checkType( varName, varValue, "boolean" );
 
 	}
 
@@ -159,9 +163,9 @@
 	 * @param {any} varValue - The value of the variable.
 	 * @returns {Function} The 'varValue' parameter.
 	 */
-	beep8.utilities.checkFunction = function( varName, varValue ) {
+	beep8.Utilities.checkFunction = function( varName, varValue ) {
 
-		return checkType( varName, varValue, "function" );
+		return beep8.Utilities.checkType( varName, varValue, "function" );
 
 	}
 
@@ -173,13 +177,13 @@
 	 * @param {any} varValue - The value of the variable.
 	 * @returns {Object} The 'varValue' parameter.
 	 */
-	beep8.utilities.checkObject = function( varName, varValue ) {
+	beep8.Utilities.checkObject = function( varName, varValue ) {
 
 		if ( varValue === null ) {
-			fatal( `${varName} should be an object, but was null` );
+			beep8.Utilities.fatal( `${varName} should be an object, but was null` );
 		}
 
-		return checkType( varName, varValue, "object" );
+		return beep8.Utilities.checkType( varName, varValue, "object" );
 
 	}
 
@@ -192,9 +196,9 @@
 	 * @param {Function} expectedClass - The expected class.
 	 * @returns {any} The 'varValue' parameter.
 	 */
-	beep8.utilities.checkInstanceOf = function( varName, varValue, expectedClass ) {
+	beep8.Utilities.checkInstanceOf = function( varName, varValue, expectedClass ) {
 
-		assert(
+		beep8.Utilities.assert(
 			varValue instanceof expectedClass,
 			`${varName} should be an instance of ${expectedClass.name} but was not, it's: ${varValue}`
 		);
@@ -206,37 +210,41 @@
 
 	/**
 	 * Checks that a variable is an array.
+	 *
 	 * @param {string} varName - The name of the variable.
 	 * @param {any} varValue - The value of the variable.
 	 * @returns {Array} The 'varValue' parameter.
 	 */
-	beep8.utilities.checkArray = function( varName, varValue ) {
+	beep8.Utilities.checkArray = function( varName, varValue ) {
 
-		assert( Array.isArray( varValue ), `${varName} should be an array, but was: ${varValue}` );
+		beep8.Utilities.assert( Array.isArray( varValue ), `${varName} should be an array, but was: ${varValue}` );
 
 		return varValue;
 
 	}
 
 	/**
-	 * Prints a log to the console if CONFIG.DEBUG is true.
+	 * Prints a log to the console if beep8.CONFIG.DEBUG is true.
+	 *
 	 * @param {string} msg - The message to print.
 	 */
-	const log = CONFIG.DEBUG ? console.log : ( () => { } );
+	beep8.Utilities.log = beep8.CONFIG.DEBUG ? console.log : ( () => { } );
 
 
 	/**
 	 * Prints a warning to the console.
+	 *
 	 * @param {string} msg - The message to print.
 	 */
-	const warn = console.warn;
+	beep8.Utilities.warn = console.warn;
 
 
 	/**
 	 * Prints an error to the console.
+	 *
 	 * @param {string} msg - The message to print.
 	 */
-	const error = console.error;
+	beep8.Utilities.error = console.error;
 
 
 	/**
@@ -245,7 +253,7 @@
 	 * @param {string} src - The source URL of the image.
 	 * @returns {Promise<HTMLImageElement>} A promise that resolves to the loaded image.
 	 */
-	beep8.utilities.loadImageAsync = async function( src ) {
+	beep8.Utilities.loadImageAsync = async function( src ) {
 
 		return new Promise(
 			( resolver ) => {
@@ -264,7 +272,7 @@
 	 * @param {string} url - The URL of the file.
 	 * @returns {Promise<string>} A promise that resolves to the file content.
 	 */
-	beep8.utilities.loadFileAsync = function( url ) {
+	beep8.Utilities.loadFileAsync = function( url ) {
 
 		return new Promise(
 			( resolve, reject ) => {
@@ -300,7 +308,7 @@
 	 * @param {number} hi - The maximum value.
 	 * @returns {number} The clamped number.
 	 */
-	beep8.utilities.clamp = function( x, lo, hi ) {
+	beep8.Utilities.clamp = function( x, lo, hi ) {
 
 		return Math.min( Math.max( x, lo ), hi );
 
@@ -314,7 +322,7 @@
 	 * @param {number} highInclusive - The maximum value (inclusive).
 	 * @returns {number} A random integer between lowInclusive and highInclusive.
 	 */
-	beep8.utilities.randomInt = function( lowInclusive, highInclusive ) {
+	beep8.Utilities.randomInt = function( lowInclusive, highInclusive ) {
 
 		checkNumber( "lowInclusive", lowInclusive );
 		checkNumber( "highInclusive", highInclusive );
@@ -340,7 +348,7 @@
 	 * @param {Array} array - The array to pick from.
 	 * @returns {any} A randomly picked element of the array, or null if the array is empty.
 	 */
-	beep8.utilities.randomPick = function( array ) {
+	beep8.Utilities.randomPick = function( array ) {
 		checkArray( "array", array );
 		return array.length > 0 ? array[ randomInt( 0, array.length - 1 ) ] : null;
 	}
@@ -349,10 +357,11 @@
 	/**
 	 * Shuffles an array, randomly reordering the elements.
 	 * Does not modify the original array. Returns the shuffled array.
+	 *
 	 * @param {Array} array - The array to shuffle.
 	 * @returns {Array} The shuffled array.
 	 */
-	beep8.utilities.shuffleArray = function( array ) {
+	beep8.Utilities.shuffleArray = function( array ) {
 
 		checkArray( "array", array );
 
@@ -372,13 +381,14 @@
 
 	/**
 	 * Calculates a 2D distance between points (x0, y0) and (x1, y1).
+	 *
 	 * @param {number} x0 - The x-coordinate of the first point.
 	 * @param {number} y0 - The y-coordinate of the first point.
 	 * @param {number} x1 - The x-coordinate of the second point.
 	 * @param {number} y1 - The y-coordinate of the second point.
 	 * @returns {number} The distance between the two points.
 	 */
-	beep8.utilities.dist2d = function( x0, y0, x1, y1 ) {
+	beep8.Utilities.dist2d = function( x0, y0, x1, y1 ) {
 
 		checkNumber( "x0", x0 );
 		checkNumber( "y0", y0 );
@@ -403,7 +413,7 @@
 	 * @param {Object} [result=null] - If provided, used to return the intersection.
 	 * @returns {boolean} True if there is an intersection, false otherwise.
 	 */
-	beep8.utilities.intersectIntervals = function( as, ae, bs, be, result = null ) {
+	beep8.Utilities.intersectIntervals = function( as, ae, bs, be, result = null ) {
 
 		checkNumber( "as", as );
 		checkNumber( "ae", ae );
@@ -440,7 +450,7 @@
 	 * @param {Object} [result=null] - If provided, used to return the intersection.
 	 * @returns {boolean} True if there is a non-empty intersection, false otherwise.
 	 */
-	beep8.utilities.intersectRects = function( r1, r2, dx1 = 0, dy1 = 0, dx2 = 0, dy2 = 0, result = null ) {
+	beep8.Utilities.intersectRects = function( r1, r2, dx1 = 0, dy1 = 0, dx2 = 0, dy2 = 0, result = null ) {
 
 		checkObject( "r1", r1 );
 		checkObject( "r2", r2 );
@@ -497,32 +507,5 @@
 
 	const intersectRects_xint = {};
 	const intersectRects_yint = {};
-
-	beep8.utilities = {
-		fatal,
-		assert,
-		assertDebug,
-		assertEquals,
-		checkType,
-		checkNumber,
-		checkString,
-		checkBoolean,
-		checkFunction,
-		checkObject,
-		checkInstanceOf,
-		checkArray,
-		log,
-		warn,
-		error,
-		loadImageAsync,
-		loadFileAsync,
-		clamp,
-		randomInt,
-		randomPick,
-		shuffleArray,
-		dist2d,
-		intersectIntervals,
-		intersectRects
-	};
 
 } )( beep8 || ( beep8 = {} ) );
