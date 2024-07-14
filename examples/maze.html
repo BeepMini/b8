@@ -4,6 +4,7 @@
   <title>Example - Maze</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
+  <script src="../dist/beep8.js"></script>
 
   <!-- Replace with a separate style.css file if you want -->
   <style type="text/css">
@@ -13,10 +14,7 @@
   }
   </style>
 
-  <script type="module">
-    import * as beep8 from "./beep8/beep8.js";
-    import * as beep8a from "./beep8/beep8a.js";
-    import * as qut from "./beep8/beep8.Utilities.js";
+  <script>
 
     const MAZE = [
       "                                ".split(''),
@@ -52,12 +50,12 @@
     let sfxStep, sfxWin, sfxDoor;
 
     async function main() {
-      beep8.Core.cls();
+      beep8.cls();
       beep8.print("Loading...");
-      sfxStep = await beep8a.loadSound("assets/step.wav");
-      sfxWin = await beep8a.loadSound("assets/levelup.wav");
-      sfxDoor = await beep8a.loadSound("assets/hit.wav");
-      beep8.Core.cls();
+      sfxStep = await beep8.Async.loadSound("assets/step.wav");
+      sfxWin = await beep8.Async.loadSound("assets/levelup.wav");
+      sfxDoor = await beep8.Async.loadSound("assets/hit.wav");
+      beep8.cls();
 
       while (true) {
         drawMap();
@@ -71,7 +69,7 @@
 
     function drawMap() {
       beep8.color(7, 0);
-      beep8.Core.cls();
+      beep8.cls();
       for (let y = 0; y < MAZE_HEIGHT; y++) {
         beep8.locate(0, y);
         for (let x = 0; x < MAZE_WIDTH; x++) {
@@ -95,7 +93,7 @@
     }
 
     async function movePlayer() {
-      const keyName = await beep8a.key();
+      const keyName = await beep8.Async.key();
       if (keyName === "ArrowLeft") facingLeft = true;
       if (keyName === "ArrowRight") facingLeft = false;
       // Where does the player want to go?
@@ -118,7 +116,7 @@
 
     async function youWon() {
       beep8.playSound(sfxWin);
-      await beep8a.dialog("Congratulations!");
+      await beep8.Async.dialog("Congratulations!");
       // As a reward, you get to play again.
       px = 2; py = 2;
     }

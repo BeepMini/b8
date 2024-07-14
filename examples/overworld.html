@@ -4,6 +4,8 @@
   <title>Example - Overworld</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
+  <script src="../dist/beep8.js"></script>
+
   <!-- Replace with a separate style.css file if you want -->
   <style type="text/css">
   body {
@@ -12,10 +14,7 @@
   }
   </style>
 
-  <script type="module">
-    import * as beep8 from "./beep8/beep8.js";
-    import * as beep8a from "./beep8/beep8a.js";
-    import * as qut from "./beep8/beep8.Utilities.js";
+  <script>
 
     const MAPS = {
       "OVERWORLD": [
@@ -112,7 +111,7 @@
     function drawMap() {
       const map = MAPS[curMap];
       beep8.color(7, 0);
-      beep8.Core.cls();
+      beep8.cls();
       for (let y = 0; y < MAP_HEIGHT; y++) {
         beep8.locate(0, y);
         for (let x = 0; x < MAP_WIDTH; x++) {
@@ -130,7 +129,7 @@
 
     async function movePlayer() {
 
-      const keyName = await beep8a.key();
+      const keyName = await beep8.Async.key();
 
 	  if (keyName === "ArrowLeft") facingLeft = true;
       if (keyName === "ArrowRight") facingLeft = false;
@@ -159,7 +158,7 @@
     function goToMap(mapName, x, y) { curMap = mapName, px = x, py = y; }
 
     async function randomGreeting() {
-      await beep8a.dialog("VILLAGER:\n" + GREETINGS[Math.floor(Math.random() * GREETINGS.length)]);
+      await beep8.Async.dialog("VILLAGER:\n" + GREETINGS[Math.floor(Math.random() * GREETINGS.length)]);
     }
 
     window.addEventListener("load", () => beep8.init(main));

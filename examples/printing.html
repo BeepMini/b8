@@ -4,6 +4,8 @@
   <title>Example - Hello</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
+  <script src="../dist/beep8.js"></script>
+
   <!-- Replace with a separate style.css file if you want -->
   <style type="text/css">
   body {
@@ -12,20 +14,18 @@
   }
   </style>
 
-  <script type="module">
-    import * as beep8 from "./beep8/beep8.js";
-    import * as beep8a from "./beep8/beep8a.js";
+  <script>
 
     async function main() {
       // Load the custom fonts.
-      beep8.Core.cls();
+      beep8.cls();
       beep8.print("Loading fonts...");
-      const boldFont = await beep8a.loadFont("assets/bold-font.png");
-      const bigFont = await beep8a.loadFont("assets/big-font2.png");
-      const fantasyFont = await beep8a.loadFont("assets/fantasy-font.png");
-      const image = await beep8a.loadImage("assets/writer.png");
+      const boldFont = await beep8.Async.loadFont("assets/bold-font.png");
+      const bigFont = await beep8.Async.loadFont("assets/big-font2.png");
+      const fantasyFont = await beep8.Async.loadFont("assets/fantasy-font.png");
+      const image = await beep8.Async.loadImage("assets/writer.png");
       beep8.color(7, 0);
-      beep8.Core.cls();
+      beep8.cls();
       beep8.printBox(32, 24);
       beep8.locate(1, 1);
       beep8.color(0, 7);
@@ -58,7 +58,7 @@
       beep8.color(15, 2);
       beep8.printBox(20, 7);
       beep8.locate(3, 17);
-      await beep8a.typewriter(
+      await beep8.Async.typewriter(
         "What sayest thou?\n" +
         "Why doth the swift\n" +
         "auburn fox leap\n" +

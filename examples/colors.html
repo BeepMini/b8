@@ -22,11 +22,9 @@
 
 		async function main() {
 
-			console.log('main()');
-
 			while (true) {
 
-				render();
+				demo_render();
 
 				const k = await beep8.Async.key();
 
@@ -39,16 +37,10 @@
 
 		}
 
-		function render() {
-
-			console.log('render()');
-
-			// console.log the calling function.
-			// console.log(new Error().stack);
-			console.trace();
+		function demo_render() {
 
 			beep8.color(7, 0);
-			beep8.Core.cls();
+			beep8.cls();
 			beep8.locate(1, 1);
 			beep8.print("COLORS");
 			beep8.locate(1, 21);
@@ -77,7 +69,11 @@
 
 		}
 
-		window.addEventListener("load", () => beep8.init(main));
+
+		window.addEventListener(
+			"load",
+			() => beep8.init( main )
+		);
 
 	</script>
 </head>
