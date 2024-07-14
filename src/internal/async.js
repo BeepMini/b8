@@ -60,7 +60,7 @@
 		beep8.Utilities.checkArray( "choices", choices );
 		beep8.Utilities.checkObject( "options", options );
 
-		return await menuMod.menu( choices, options );
+		return await beep8.menu.display( choices, options );
 
 	}
 

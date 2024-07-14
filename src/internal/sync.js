@@ -1,7 +1,8 @@
 ( function( beep8 ) {
 
 	/**
-	 * Initializes the API. This must be called before other functions and must finish executing before other API functions are called.
+	 * Initializes the API. This must be called before other functions and must
+	 * finish executing before other API functions are called.
 	 * Once the supplied callback is called, you can start using beep8 functions.
 	 *
 	 * @param {Function} callback - The callback to call when initialization is done.
@@ -15,7 +16,8 @@
 
 
 	/**
-	 * Sets the frame handler, that is, the function that will be called on every frame to render the screen.
+	 * Sets the frame handler, that is, the function that will be called on
+	 * every frame to render the screen.
 	 *
 	 * @param {Function} handler - The frame handler function.
 	 * @param {number} [fps=30] - The target frames per second. Recommended: 30.
@@ -37,7 +39,12 @@
 
 
 	/**
-	 * Forces the screen to render right now. Useful for immediate redraw in animations.
+	 * Forces the screen to render right now. Useful for immediate redraw in
+	 * animations.
+	 * Forces the screen to render right now. You only need this if you are
+	 * doing some kind of animation on your own and you want to redraw the
+	 * screen immediately to show the current state.
+	 * Otherwise the screen repaints automatically when waiting for user input.
 	 *
 	 * @returns {void}
 	 */
@@ -86,7 +93,8 @@
 
 
 	/**
-	 * Gets the current background color. -1 means transparent.
+	 * Gets the current background color.
+	 * -1 means transparent.
 	 *
 	 * @returns {number} The current background color.
 	 */
@@ -164,7 +172,8 @@
 	/**
 	 * Shows or hides the cursor.
 	 *
-	 * @param {boolean} visible - If true, show the cursor. If false, hide the cursor.
+	 * @param {boolean} visible - If true, show the cursor. If false, hide the
+	 * cursor.
 	 * @returns {void}
 	 */
 	beep8.cursor = function( visible ) {
@@ -177,7 +186,18 @@
 
 
 	/**
-	 * Prints text at the cursor position, using the current foreground and background colors.
+	 * Prints text at the cursor position, using the current foreground and
+	 * background colors.
+	 *
+	 * The text can contain embedded newlines and they will behave as you expect:
+	 * printing will continue at the next line.
+	 *
+	 * If PRINT_ESCAPE_START and PRINT_ESCAPE_END are defined in CONFIG, then
+	 * you can also use escape sequences. For example {{c1}} sets the color to
+	 * 1, so your string can be "I like the color {{c1}}blue" and the word
+	 * 'blue' would be in blue. The sequence {{b2}} sets the background to 2
+	 * (red). The sequence {{z}} resets the color to the default. See
+	 * example-printing.html for an example.
 	 *
 	 * @param {string} text - The text to print.
 	 * @returns {void}
@@ -194,6 +214,8 @@
 	/**
 	 * Prints text centered horizontally in a field of the given width.
 	 *
+	 * If the text is bigger than the width, it will overflow it.
+	 *
 	 * @param {string} text - The text to print.
 	 * @param {number} width - The width of the field, in characters.
 	 * @returns {void}
@@ -209,7 +231,8 @@
 
 
 	/**
-	 * Draws text at an arbitrary pixel position on the screen, not following the "row and column" system.
+	 * Draws text at an arbitrary pixel position on the screen, not following
+	 * the "row and column" system.
 	 *
 	 * @param {number} x - The X coordinate of the top-left of the text.
 	 * @param {number} y - The Y coordinate of the top-left of the text.
@@ -250,9 +273,11 @@
 
 
 	/**
-	 * Prints a character at the current cursor position, advancing the cursor position.
+	 * Prints a character at the current cursor position, advancing the cursor
+	 * position.
 	 *
-	 * @param {number|string} charCode - The character to print, as an integer (ASCII code) or a one-character string.
+	 * @param {number|string} charCode - The character to print, as an integer
+	 * (ASCII code) or a one-character string.
 	 * @param {number} [numTimes=1] - How many times to print the character.
 	 * @returns {void}
 	 */
@@ -268,10 +293,13 @@
 
 
 	/**
-	 * Prints a rectangle of the given size with the given character, starting at the current cursor position.
+	 * Prints a rectangle of the given size with the given character, starting
+	 * at the current cursor position.
+	 *
 	 * @param {number} widthCols - Width of the rectangle in screen columns.
 	 * @param {number} heightRows - Height of the rectangle in screen rows.
-	 * @param {number|string} [charCode=32] - The character to print, as an integer (ASCII code) or a one-character string.
+	 * @param {number|string} [charCode=32] - The character to print, as an
+	 * integer (ASCII code) or a one-character string.
 	 * @returns {void}
 	 */
 	beep8.printRect = function( widthCols, heightRows, charCode = 32 ) {
@@ -287,12 +315,16 @@
 
 
 	/**
-	 * Prints a box of the given size starting at the cursor position, using border-drawing characters.
+	 * Prints a box of the given size starting at the cursor position, using
+	 * border-drawing characters.
 	 *
-	 * @param {number} widthCols - Width of the box in screen columns, including the border.
-	 * @param {number} heightRows - Height of the box in screen rows, including the border.
+	 * @param {number} widthCols - Width of the box in screen columns, including
+	 * the border.
+	 * @param {number} heightRows - Height of the box in screen rows, including
+	 * the border.
 	 * @param {boolean} [fill=true] - If true, fill the interior with spaces.
-	 * @param {number} [borderChar=0x80] - The first border-drawing character to use.
+	 * @param {number} [borderChar=0x80] - The first border-drawing character to
+	 * use.
 	 * @returns {void}
 	 */
 	beep8.printBox = function( widthCols, heightRows, fill = true, borderChar = 0x80 ) {
@@ -321,21 +353,26 @@
 		beep8.Utilities.checkInstanceOf( "image", image, HTMLImageElement );
 		beep8.Utilities.checkNumber( "x", x );
 		beep8.Utilities.checkNumber( "y", y );
+
 		beep8.Core.drawImage( image, x, y );
 
 	}
 
 
 	/**
-	 * Draws a rectangular part of an image (previously loaded with beep8.loadImage).
+	 * Draws a rectangular part of an image (previously loaded with
+	 * beep8.loadImage).
 	 *
 	 * @param {number} x - The X coordinate of the top-left of the image.
 	 * @param {number} y - The Y coordinate of the top-left of the image.
 	 * @param {HTMLImageElement} image - The image to draw.
-	 * @param {number} srcX - The X coordinate of the top-left of the rectangle to be drawn.
-	 * @param {number} srcY - The Y coordinate of the top-left of the rectangle to be drawn.
+	 * @param {number} srcX - The X coordinate of the top-left of the rectangle
+	 * to be drawn.
+	 * @param {number} srcY - The Y coordinate of the top-left of the rectangle
+	 * to be drawn.
 	 * @param {number} width - The width in pixels of the rectangle to be drawn.
-	 * @param {number} height - The height in pixels of the rectangle to be drawn.
+	 * @param {number} height - The height in pixels of the rectangle to be
+	 * drawn.
 	 * @returns {void}
 	 */
 	beep8.drawImageRect = function( x, y, image, srcX, srcY, width, height ) {
@@ -347,6 +384,7 @@
 		beep8.Utilities.checkNumber( "srcY", srcY );
 		beep8.Utilities.checkNumber( "width", width );
 		beep8.Utilities.checkNumber( "height", height );
+
 		beep8.Core.drawImage( image, x, y, srcX, srcY, width, height );
 
 	}
@@ -367,6 +405,7 @@
 		beep8.Utilities.checkNumber( "y", y );
 		beep8.Utilities.checkNumber( "width", width );
 		beep8.Utilities.checkNumber( "height", height );
+
 		beep8.Core.drawRect( x, y, width, height );
 
 	}
@@ -387,6 +426,7 @@
 		beep8.Utilities.checkNumber( "y", y );
 		beep8.Utilities.checkNumber( "width", width );
 		beep8.Utilities.checkNumber( "height", height );
+
 		beep8.Core.fillRect( x, y, width, height );
 
 	}
@@ -403,9 +443,11 @@
 	beep8.playSound = function( sfx, volume = 1, loop = false ) {
 
 		beep8.Utilities.checkInstanceOf( "sfx", sfx, HTMLAudioElement );
+
 		sfx.currentTime = 0;
 		sfx.volume = volume;
 		sfx.loop = loop;
+
 		sfx.play();
 
 	}
@@ -425,6 +467,7 @@
 		beep8.Utilities.checkNumber( "ch", ch );
 		beep8.Utilities.checkNumber( "x", x );
 		beep8.Utilities.checkNumber( "y", y );
+
 		beep8.Core.textRenderer.spr( ch, x, y );
 
 	}
@@ -440,7 +483,6 @@
 
 		beep8.Core.preflight( "beep8.key" );
 
-		console.log( 'check key', keyName );
 		beep8.Utilities.checkString( "keyName", keyName );
 
 		return beep8.Core.inputSys.keyHeld( keyName );
@@ -482,7 +524,8 @@
 	/**
 	 * Sets the current font for text-based operations.
 	 *
-	 * @param {string} [fontId="default"] - The font ID to set. Pass null or omit to reset to default font.
+	 * @param {string} [fontId="default"] - The font ID to set. Pass null or
+	 * omit to reset to default font.
 	 * @returns {void}
 	 */
 	beep8.setFont = function( fontId ) {
@@ -554,7 +597,8 @@
 	/**
 	 * Restores the contents of the screen using an ImageData object.
 	 *
-	 * @param {ImageData} screenData - The ImageData object with the screen's contents.
+	 * @param {ImageData} screenData - The ImageData object with the screen's
+	 * contents.
 	 * @returns {void}
 	 */
 	beep8.restoreScreen = function( screenData ) {

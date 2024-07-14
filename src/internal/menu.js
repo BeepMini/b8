@@ -1,6 +1,6 @@
 ( function( beep8 ) {
 
-	beep8.Menu = {};
+	beep8.menu = {};
 
 	/**
 	 * Displays a menu with the given choices and returns the index of the selected choice.
@@ -22,7 +22,7 @@
 	 * @param {boolean} [options.cancelable=false] - Whether the menu can be canceled with the Escape key.
 	 * @returns {Promise<number>} A promise that resolves to the index of the selected choice.
 	 */
-	beep8.Menu.add = async function( choices, options ) {
+	beep8.menu.display = async function( choices, options ) {
 
 		options = options || {};
 		beep8.Utilities.checkArray( "choices", choices );
@@ -104,7 +104,7 @@
 				( startCol + border01 + options.padding ) :
 				( startCol + Math.round( ( totalCols - choicesCols ) / 2 ) );
 
-			printChoices( choices, selIndex, options );
+			beep8.menu.printChoices( choices, selIndex, options );
 
 			const k = await beep8.Core.inputSys.readKeyAsync();
 
@@ -134,7 +134,7 @@
 	 * @param {string} options.selFgColor - The foreground color of the selected choice.
 	 * @returns {void}
 	 */
-	beep8.Menu.printChoices = function( choices, selIndex, options ) {
+	beep8.menu.printChoices = function( choices, selIndex, options ) {
 
 		const origBg = beep8.Core.drawState.bgColor;
 		const origFg = beep8.Core.drawState.fgColor;
