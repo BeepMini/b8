@@ -52,12 +52,12 @@
     let sfxStep, sfxWin, sfxDoor;
 
     async function main() {
-      beep8.cls();
+      beep8.Core.cls();
       beep8.print("Loading...");
       sfxStep = await beep8a.loadSound("assets/step.wav");
       sfxWin = await beep8a.loadSound("assets/levelup.wav");
       sfxDoor = await beep8a.loadSound("assets/hit.wav");
-      beep8.cls();
+      beep8.Core.cls();
 
       while (true) {
         drawMap();
@@ -71,7 +71,7 @@
 
     function drawMap() {
       beep8.color(7, 0);
-      beep8.cls();
+      beep8.Core.cls();
       for (let y = 0; y < MAZE_HEIGHT; y++) {
         beep8.locate(0, y);
         for (let x = 0; x < MAZE_WIDTH; x++) {

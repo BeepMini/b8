@@ -114,7 +114,7 @@
     let sfxStep = null, sfxPush = null, sfxLevelUp = null;
 
     async function main() {
-      beep8.cls();
+      beep8.Core.cls();
       beep8.print("Loading...");
       sfxStep = await beep8a.loadSound("assets/step.wav");
       sfxPush = await beep8a.loadSound("assets/push.wav");
@@ -128,7 +128,7 @@
     }
 
     function drawEverything() {
-      beep8.cls();
+      beep8.Core.cls();
       drawMap();
       drawBoxes();
       drawPlayer();
@@ -136,7 +136,7 @@
 
     function drawMap() {
       beep8.color(7, 0);
-      beep8.cls();
+      beep8.Core.cls();
       beep8.locate(13, 1);
       beep8.color(14);
       beep8.print(`SOKOBAN\n`);
@@ -238,7 +238,7 @@
         setUpLevel(curLevelNumber + 1);
       } else {
         // User has beat all the levels.
-        beep8.cls();
+        beep8.Core.cls();
         beep8.locate(1, 10);
         beep8.print("CONGRATULATIONS!\nYou beat all the levels!");
         while ("Enter" !== await beep8a.key()) {}

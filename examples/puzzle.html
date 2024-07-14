@@ -35,7 +35,7 @@
 
     async function main() {
       beep8.color(7, 0);
-      beep8.cls();
+      beep8.Core.cls();
       beep8.locate(1, 1);
       beep8.print("Loading...");
       fullImg = await beep8a.loadImage("assets/colmar.png");
@@ -46,7 +46,7 @@
     }
 
     function drawBoard() {
-      beep8.cls();
+      beep8.Core.cls();
       // Draw each piece.
       for (let i = 0; i < GRID_ROWS; i++) {
         for (let j = 0; j < GRID_COLS; j++) {

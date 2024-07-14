@@ -13,13 +13,11 @@
   </style>
 
   <script type="module">
-    import * as beep8 from "./beep8/beep8.js";
-    import * as beep8a from "./beep8/beep8a.js";
 
     async function main() {
       // Clear screen using white foreground (7) over blue background (1).
       beep8.color(7, 1);
-      beep8.cls();
+      beep8.Core.cls();
       // Print greeting at position 1,1.
       beep8.locate(1, 1);
       beep8.print("Hello world!\n\n");

@@ -112,7 +112,7 @@
     function drawMap() {
       const map = MAPS[curMap];
       beep8.color(7, 0);
-      beep8.cls();
+      beep8.Core.cls();
       for (let y = 0; y < MAP_HEIGHT; y++) {
         beep8.locate(0, y);
         for (let x = 0; x < MAP_WIDTH; x++) {

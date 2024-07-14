@@ -20,7 +20,7 @@
       while (true) {
         // Clear screen using white over blue
         beep8.color(7, 1);
-        beep8.cls();
+        beep8.Core.cls();
         beep8.locate(1, 1);
         beep8.print("System Boot Menu\n\n");
         beep8.color(1, 7);
@@ -41,7 +41,7 @@
 
     async function formatDisk() {
       beep8.color(7, 1);
-      beep8.cls();
+      beep8.Core.cls();
       beep8.locate(1, 2);
       beep8.print("Formating disk...\n");
       for (let i = 0; i <= 80; i += 10) {

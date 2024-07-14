@@ -66,7 +66,7 @@
     let sfxBlast = null;
 
     async function main() {
-      beep8.cls();
+      beep8.Core.cls();
       beep8.print("Loading...");
       backgroundImg = await beep8a.loadImage("assets/city.png");
       sfxLaser = await beep8a.loadSound("assets/laser.wav")
@@ -81,12 +81,12 @@
       beep8.print("Press any button to start.\n\n");
       beep8.print("Controls:\n  SPACE or 'A' button\n  to shoot.");
       await beep8a.key();
-      beep8.cls();
+      beep8.Core.cls();
       beep8.frame(doFrame);
     }
 
     async function doFrame() {
-      beep8.cls();
+      beep8.Core.cls();
       beep8.drawImage(0, 0, backgroundImg);
       // Update and draw everything.
       updateAndDrawPlayer();

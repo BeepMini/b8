@@ -19,12 +19,12 @@
 
     async function main() {
       beep8.color(7, 0);
-      beep8.cls();
+      beep8.Core.cls();
       beep8.locate(1, 1);
       beep8.print("Loading...");
       const img = await beep8a.loadImage("assets/castle.png");
 
-      beep8.cls();
+      beep8.Core.cls();
       beep8.drawImage(8, 24, img);
       beep8.locate(1, 1);
 
@@ -36,7 +36,7 @@
       // TODO: do something interesting based on the choice.
       // Here we just print a fascinating ending according to what the user did:
 
-      beep8.cls();
+      beep8.Core.cls();
       beep8.locate(1, 1);
       switch (choice) {
         case 0: beep8.print("You enter the castle.\nThe evil villain flees.\n\nTHE END"); break;
