@@ -29,7 +29,7 @@
 		// For best results this should be the same as the page's background.
 		BG_COLOR: "#000",
 		// Characters file
-		CHR_FILE: "assets/chr.png",
+		CHR_FILE: "../assets/chr.png",
 		// Character size. The characters file's width must be
 		// 16 * CHR_WIDTH and the height must be 16 * CHR_HEIGHT.
 		CHR_WIDTH: 8,

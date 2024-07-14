@@ -1,14 +1,18 @@
 ( function( beep8 ) {
 
+
 	/**
 	 * beep8.CursorRenderer class handles the rendering and blinking of the cursor.
 	 */
 	beep8.CursorRenderer = class {
 
 		constructor() {
+
 			this.blinkCycle_ = 0;
 			this.toggleBlinkHandle_ = null;
+
 		}
+
 
 		/**
 		 * Sets the visibility of the cursor.
@@ -18,12 +22,14 @@
 		 * @returns {void}
 		 */
 		setCursorVisible( visible ) {
+
 			beep8.Utilities.checkBoolean( "visible", visible );
 
 			// If the cursor is already in the desired state, do nothing.
 			if ( beep8.Core.drawState.cursorVisible === visible ) return;
 
 			beep8.Core.drawState.cursorVisible = visible;
+
 			this.blinkCycle_ = 0;
 			beep8.Core.render();
 
@@ -39,17 +45,23 @@
 					beep8.CONFIG.CURSOR.BLINK_INTERVAL
 				);
 			}
+
 		}
+
 
 		/**
 		 * Advances the cursor blink cycle.
+		 *
 		 * @private
 		 * @returns {void}
 		 */
 		advanceBlink_() {
+
 			this.blinkCycle_ = ( this.blinkCycle_ + 1 ) % 2;
 			beep8.Core.render();
+
 		}
+
 
 		/**
 		 * Draws the cursor.
@@ -63,6 +75,7 @@
 		 * @returns {void}
 		 */
 		drawCursor( targetCtx, canvasWidth, canvasHeight ) {
+
 			beep8.Utilities.checkInstanceOf( "targetCtx", targetCtx, CanvasRenderingContext2D );
 			beep8.Utilities.checkNumber( "canvasWidth", canvasWidth );
 			beep8.Utilities.checkNumber( "canvasHeight", canvasHeight );
@@ -77,6 +90,7 @@
 				( beep8.Core.drawState.cursorCol + 0.5 - beep8.CONFIG.CURSOR.WIDTH_F / 2 + beep8.CONFIG.CURSOR.OFFSET_H ) *
 				beep8.CONFIG.CHR_WIDTH * ratio
 			);
+
 			const realY = Math.round(
 				( beep8.Core.drawState.cursorRow + 1 - beep8.CONFIG.CURSOR.HEIGHT_F - beep8.CONFIG.CURSOR.OFFSET_V ) *
 				beep8.CONFIG.CHR_HEIGHT * ratio
@@ -89,7 +103,10 @@
 				Math.round( beep8.CONFIG.CURSOR.WIDTH_F * beep8.CONFIG.CHR_WIDTH * ratio ),
 				Math.round( beep8.CONFIG.CURSOR.HEIGHT_F * beep8.CONFIG.CHR_HEIGHT * ratio )
 			);
+
 		}
+
 	}
+
 
 } )( beep8 || ( beep8 = {} ) );

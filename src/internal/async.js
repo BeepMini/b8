@@ -1,53 +1,15 @@
 ( function( beep8 ) {
 
-
-	let textRenderer = null;
-
-	/**
-	 * Initialize the text renderer
-	 *
-	 * @returns {void}
-	 */
-	function initTextRenderer() {
-
-		textRenderer = new beep8.TextRenderer();
-
-	}
-
-
-	/**
-	 * Get the text renderer
-	 *
-	 * @returns {beep8.TextRenderer} The text renderer.
-	 */
-	function getTextRenderer() {
-
-		return textRenderer;
-
-	}
-
-
-	/**
-	 * Set a new text renderer
-	 *
-	 * @param {beep8.TextRenderer} renderer - The new text renderer.
-	 * @returns {void}
-	 */
-	function setTextRenderer( renderer ) {
-
-		textRenderer = renderer;
-
-	}
-
-
 	/**
 	 * ASYNC API FUNCTIONS
 	 * These functions must be called with 'await'.
 	 * For example:
 	 *
-	 * const k = await beep8a.key();
+	 * const k = await beep8.Async.key();
 	 * console.log("The user pressed " + k);
 	 */
+
+	beep8.Async = {};
 
 
 	/**
@@ -55,11 +17,12 @@
 	 *
 	 * @returns {Promise<string>} The name of the key that was pressed.
 	 */
-	async function key() {
+	beep8.Async.key = async function() {
 
-		beep8.Core.preflight( "beep8a.key" );
+		beep8.Core.preflight( "beep8.Async.key" );
 
 		return await beep8.Core.inputSys.readKeyAsync();
+
 	}
 
 
@@ -71,9 +34,10 @@
 	 * @param {number} [maxWidth=-1] - The maximum width of the input line in characters. -1 means no wrapping.
 	 * @returns {Promise<string>} The input text.
 	 */
-	async function readLine( initString = "", maxLen = -1, maxWidth = -1 ) {
+	beep8.Async.readLine = async function( initString = "", maxLen = -1, maxWidth = -1 ) {
 
-		beep8.Core.preflight( "readLine" );
+		beep8.Core.preflight( "beep8.Async.readLine" );
+
 		beep8.Utilities.checkString( "initString", initString );
 		beep8.Utilities.checkNumber( "maxLen", maxLen );
 
@@ -89,9 +53,10 @@
 	 * @param {Object} [options={}] - Additional options for the menu.
 	 * @returns {Promise<number>} The index of the selected item or -1 if canceled.
 	 */
-	async function menu( choices, options = {} ) {
+	beep8.Async.menu = async function( choices, options = {} ) {
 
-		beep8.Core.preflight( "menu" );
+		beep8.Core.preflight( "beep8.Async.menu" );
+
 		beep8.Utilities.checkArray( "choices", choices );
 		beep8.Utilities.checkObject( "options", options );
 
@@ -107,9 +72,10 @@
 	 * @param {string[]} [choices=["OK"]] - The choices to present to the user.
 	 * @returns {Promise<number>} The index of the selected item.
 	 */
-	async function dialog( prompt, choices = [ "OK" ] ) {
+	beep8.Async.dialog = async function( prompt, choices = [ "OK" ] ) {
 
-		beep8.Core.preflight( "dialog" );
+		beep8.Core.preflight( "beep8.Async.dialog" );
+
 		beep8.Utilities.checkString( "prompt", prompt );
 		beep8.Utilities.checkArray( "choices", choices );
 
@@ -124,12 +90,14 @@
 	 * @param {number} seconds - The duration to wait.
 	 * @returns {Promise<void>} Resolves after the specified time.
 	 */
-	async function wait( seconds ) {
+	beep8.Async.wait = async function( seconds ) {
 
-		beep8.Core.preflight( "wait" );
+		beep8.Core.preflight( "beep8.Async.wait" );
+
 		beep8.Utilities.checkNumber( "seconds", seconds );
 		beep8.render();
-		await new Promise( resolve => setTimeout( resolve, Math.round( seconds * 1000 ) ) );
+
+		return await new Promise( resolve => setTimeout( resolve, Math.round( seconds * 1000 ) ) );
 
 	}
 
@@ -141,9 +109,10 @@
 	 * @param {number} [delay=0.05] - The delay between characters in seconds.
 	 * @returns {Promise<void>} Resolves after the text is printed.
 	 */
-	async function typewriter( text, delay = 0.05 ) {
+	beep8.Async.typewriter = async function( text, delay = 0.05 ) {
 
-		beep8.Core.preflight( "typewriter" );
+		beep8.Core.preflight( "beep8.Async.typewriter" );
+
 		beep8.Utilities.checkString( "text", text );
 		beep8.Utilities.checkNumber( "delay", delay );
 
@@ -157,15 +126,22 @@
 				beep8.CONFIG.PRINT_ESCAPE_START &&
 				text.substring( i, i + beep8.CONFIG.PRINT_ESCAPE_START.length ) === beep8.CONFIG.PRINT_ESCAPE_START
 			) {
+
 				const endPos = text.indexOf( beep8.CONFIG.PRINT_ESCAPE_END, i + beep8.CONFIG.PRINT_ESCAPE_START.length );
-				if ( endPos >= 0 ) i = endPos + beep8.CONFIG.PRINT_ESCAPE_END.length;
+
+				if ( endPos >= 0 ) {
+					i = endPos + beep8.CONFIG.PRINT_ESCAPE_END.length;
+				}
+
 			}
 
 			const c = text.charCodeAt( i );
 			beep8.locate( startCol, startRow );
 			beep8.print( text.substring( 0, i ) );
 
-			if ( c !== 32 ) await wait( delay );
+			if ( c !== 32 ) {
+				await wait( delay );
+			}
 
 		}
 
@@ -178,9 +154,9 @@
 	 * @param {string} url - The URL of the image.
 	 * @returns {Promise<HTMLImageElement>} The loaded image.
 	 */
-	async function loadImage( url ) {
+	beep8.Async.loadImage = async function( url ) {
 
-		beep8.Core.preflight( "loadImage" );
+		beep8.Core.preflight( "beep8.Async.loadImage" );
 
 		return new Promise(
 			( resolve ) => {
@@ -199,9 +175,9 @@
 	 * @param {string} url - The URL of the sound file.
 	 * @returns {Promise<HTMLAudioElement>} The loaded sound.
 	 */
-	async function loadSound( url ) {
+	beep8.Async.loadSound = async function( url ) {
 
-		beep8.Core.preflight( "loadSound" );
+		beep8.Core.preflight( "beep8.Async.loadSound" );
 
 		return new Promise(
 			( resolve ) => {
@@ -223,9 +199,10 @@
 	 * @param {string} fontImageFile - The URL of the font image file.
 	 * @returns {Promise<string>} The font ID.
 	 */
-	async function loadFont( fontImageFile ) {
+	beep8.Async.loadFont = async function( fontImageFile ) {
 
-		beep8.Core.preflight( "loadFont" );
+		beep8.Core.preflight( "beep8.Async.loadFont" );
+
 		beep8.Utilities.checkString( "fontImageFile", fontImageFile );
 		const fontName = "FONT@" + fontImageFile;
 		await beep8.Core.textRenderer.loadFontAsync( fontName, fontImageFile );
@@ -233,21 +210,5 @@
 		return fontName;
 
 	}
-
-
-	beep8.async = {
-		initTextRenderer,
-		getTextRenderer,
-		setTextRenderer,
-		key,
-		readLine,
-		menu,
-		dialog,
-		wait,
-		typewriter,
-		loadImage,
-		loadSound,
-		loadFont,
-	};
 
 } )( beep8 || ( beep8 = {} ) );

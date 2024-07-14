@@ -92,7 +92,7 @@
 	 */
 	beep8.getBgColor = function() {
 
-		beep8.Core.preflight( "getBgColor" );
+		beep8.Core.preflight( "beep8.getBgColor" );
 
 		return beep8.Core.drawState.bgColor;
 
@@ -106,7 +106,7 @@
 	 */
 	beep8.cls = function() {
 
-		beep8.Core.preflight( "beep8.cls" );
+		beep8.Core.preflight( "beep8.Core.cls" );
 		beep8.Core.cls();
 
 	}
@@ -131,6 +131,7 @@
 		beep8.Core.setCursorLocation( col, row );
 
 	}
+
 
 	/**
 	 * Returns the cursor's current column.
@@ -173,6 +174,7 @@
 		beep8.Core.cursorRenderer.setCursorVisible( visible );
 
 	}
+
 
 	/**
 	 * Prints text at the cursor position, using the current foreground and background colors.
@@ -257,12 +259,13 @@
 	beep8.printChar = function( charCode, numTimes = 1 ) {
 
 		beep8.Core.preflight( "beep8.printChar" );
-		charCode = convChar( charCode );
+		charCode = beep8.convChar( charCode );
 		beep8.Utilities.checkNumber( "charCode", charCode );
 		beep8.Utilities.checkNumber( "numTimes", numTimes );
 		beep8.Core.textRenderer.printChar( charCode, numTimes );
 
 	}
+
 
 	/**
 	 * Prints a rectangle of the given size with the given character, starting at the current cursor position.
@@ -274,7 +277,7 @@
 	beep8.printRect = function( widthCols, heightRows, charCode = 32 ) {
 
 		beep8.Core.preflight( "beep8.printRect" );
-		charCode = convChar( charCode );
+		charCode = beep8.convChar( charCode );
 		beep8.Utilities.checkNumber( "widthCols", widthCols );
 		beep8.Utilities.checkNumber( "heightRows", heightRows );
 		beep8.Utilities.checkNumber( "charCode", charCode );
@@ -295,7 +298,7 @@
 	beep8.printBox = function( widthCols, heightRows, fill = true, borderChar = 0x80 ) {
 
 		beep8.Core.preflight( "beep8.printBox" );
-		borderChar = convChar( borderChar );
+		borderChar = beep8.convChar( borderChar );
 		beep8.Utilities.checkNumber( "widthCols", widthCols );
 		beep8.Utilities.checkNumber( "heightRows", heightRows );
 		beep8.Utilities.checkBoolean( "fill", fill );
@@ -306,7 +309,7 @@
 
 
 	/**
-	 * Draws an image (previously loaded with beep8a.loadImage).
+	 * Draws an image (previously loaded with beep8.loadImage).
 	 *
 	 * @param {number} x - The X coordinate of the top-left of the image.
 	 * @param {number} y - The Y coordinate of the top-left of the image.
@@ -324,7 +327,7 @@
 
 
 	/**
-	 * Draws a rectangular part of an image (previously loaded with beep8a.loadImage).
+	 * Draws a rectangular part of an image (previously loaded with beep8.loadImage).
 	 *
 	 * @param {number} x - The X coordinate of the top-left of the image.
 	 * @param {number} y - The Y coordinate of the top-left of the image.
@@ -390,7 +393,7 @@
 
 
 	/**
-	 * Plays a sound (previously loaded with beep8a.playSound).
+	 * Plays a sound (previously loaded with beep8.playSound).
 	 *
 	 * @param {HTMLAudioElement} sfx - The sound to play.
 	 * @param {number} [volume=1] - The volume to play the sound at.
@@ -418,7 +421,7 @@
 	 */
 	beep8.spr = function( ch, x, y ) {
 
-		ch = convChar( ch );
+		ch = beep8.convChar( ch );
 		beep8.Utilities.checkNumber( "ch", ch );
 		beep8.Utilities.checkNumber( "x", x );
 		beep8.Utilities.checkNumber( "y", y );
@@ -436,6 +439,8 @@
 	beep8.key = function( keyName ) {
 
 		beep8.Core.preflight( "beep8.key" );
+
+		console.log( 'check key', keyName );
 		beep8.Utilities.checkString( "keyName", keyName );
 
 		return beep8.Core.inputSys.keyHeld( keyName );
@@ -508,7 +513,7 @@
 
 
 	/**
-	 * Stops a sound (previously loaded with beep8a.playSound).
+	 * Stops a sound (previously loaded with beep8.playSound).
 	 *
 	 * @param {HTMLAudioElement} sfx - The sound to stop playing.
 	 * @returns {void}
@@ -557,5 +562,6 @@
 		return beep8.Core.restoreScreen( screenData );
 
 	}
+
 
 } )( beep8 || ( beep8 = {} ) );

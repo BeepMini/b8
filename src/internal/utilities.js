@@ -10,11 +10,13 @@
 	beep8.Utilities.fatal = function( error ) {
 
 		console.error( "Fatal error: " + error );
+
 		try {
 			beep8.Core.handleCrash( error );
 		} catch ( e ) {
 			console.error( "Error in beep8.Core.handleCrash: " + e + " while handling error " + error );
 		}
+
 		throw new Error( "Error: " + error );
 
 	}
@@ -46,14 +48,19 @@
 	 * @returns {boolean} The 'cond' parameter.
 	 */
 	beep8.Utilities.assertDebug = function( cond, msg ) {
+
 		if ( !cond ) {
+
 			if ( beep8.CONFIG.DEBUG ) {
 				warn( "DEBUG ASSERT failed: " + msg );
 			} else {
 				beep8.Utilities.fatal( msg );
 			}
+
 		}
+
 		return cond;
+
 	}
 
 
@@ -66,10 +73,13 @@
 	 * @returns {any} The 'actual' parameter.
 	 */
 	beep8.Utilities.assertEquals = function( expected, actual, what ) {
+
 		if ( expected !== actual ) {
 			beep8.Utilities.fatal( `${what}: expected ${expected} but got ${actual}` );
 		}
+
 		return actual;
+
 	}
 
 
@@ -89,6 +99,7 @@
 			typeof ( varValue ) === varType,
 			`${varName} should be of type ${varType} but was ${typeof ( varValue )}: ${varValue}`
 		);
+
 		return varValue;
 
 	}
@@ -295,6 +306,7 @@
 				xhr.send();
 
 			}
+
 		);
 
 	}
@@ -349,8 +361,10 @@
 	 * @returns {any} A randomly picked element of the array, or null if the array is empty.
 	 */
 	beep8.Utilities.randomPick = function( array ) {
+
 		checkArray( "array", array );
 		return array.length > 0 ? array[ randomInt( 0, array.length - 1 ) ] : null;
+
 	}
 
 
@@ -467,7 +481,9 @@
 		checkNumber( "dy1", dy1 );
 		checkNumber( "dy2", dy2 );
 
-		if ( result ) checkObject( "result", result );
+		if ( result ) {
+			checkObject( "result", result );
+		}
 
 		const xint = intersectRects_xint;
 		const yint = intersectRects_yint;
