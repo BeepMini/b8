@@ -67,10 +67,10 @@
     async function main() {
       beep8.cls();
       beep8.print("Loading...");
-      backgroundImg = await beep8.Async.loadImage("assets/city.png");
-      sfxLaser = await beep8.Async.loadSound("assets/laser.wav")
-      sfxHit = await beep8.Async.loadSound("assets/hit.wav")
-      sfxBlast = await beep8.Async.loadSound("assets/blast.wav")
+      backgroundImg = await beep8.Async.loadImage("../assets/city.png");
+      sfxLaser = await beep8.Async.loadSound("../assets/laser.wav")
+      sfxHit = await beep8.Async.loadSound("../assets/hit.wav")
+      sfxBlast = await beep8.Async.loadSound("../assets/blast.wav")
       beep8.drawImage(0, 0, backgroundImg);
       beep8.locate(4, 6);
       beep8.color(14, -1);

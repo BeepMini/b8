@@ -20,9 +20,11 @@
     let selBg = 1;
 
     async function main() {
-      const loopSound = await beep8.Async.loadSound('./assets/loop.ogg');
+
+      const loopSound = await beep8.Async.loadSound('../assets/loop.ogg');
 
       while (true) {
+
         const k = await beep8.Async.key();
 
         beep8.color(7, 0);

@@ -52,9 +52,9 @@
     async function main() {
       beep8.cls();
       beep8.print("Loading...");
-      sfxStep = await beep8.Async.loadSound("assets/step.wav");
-      sfxWin = await beep8.Async.loadSound("assets/levelup.wav");
-      sfxDoor = await beep8.Async.loadSound("assets/hit.wav");
+      sfxStep = await beep8.Async.loadSound("../assets/step.wav");
+      sfxWin = await beep8.Async.loadSound("../assets/levelup.wav");
+      sfxDoor = await beep8.Async.loadSound("../assets/hit.wav");
       beep8.cls();
 
       while (true) {

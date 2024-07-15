@@ -115,9 +115,9 @@
     async function main() {
       beep8.cls();
       beep8.print("Loading...");
-      sfxStep = await beep8.Async.loadSound("assets/step.wav");
-      sfxPush = await beep8.Async.loadSound("assets/push.wav");
-      sfxLevelUp = await beep8.Async.loadSound("assets/levelup.wav");
+      sfxStep = await beep8.Async.loadSound("../assets/step.wav");
+      sfxPush = await beep8.Async.loadSound("../assets/push.wav");
+      sfxLevelUp = await beep8.Async.loadSound("../assets/levelup.wav");
       setUpLevel(0);
       while (true) {
         drawEverything();

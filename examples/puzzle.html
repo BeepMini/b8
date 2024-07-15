@@ -37,7 +37,7 @@
       beep8.cls();
       beep8.locate(1, 1);
       beep8.print("Loading...");
-      fullImg = await beep8.Async.loadImage("assets/colmar.png");
+      fullImg = await beep8.Async.loadImage("../assets/colmar.png");
       while (true) {
         drawBoard();
         await processInput();
