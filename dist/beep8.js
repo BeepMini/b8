@@ -1,13 +1,13 @@
 /*!
  * beep8.js - A Retro Game Library
  *
- * ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
- * ░       ░░        ░        ░       ░░░      ░░░░░        ░░      ░░
- * ▒  ▒▒▒▒  ▒  ▒▒▒▒▒▒▒  ▒▒▒▒▒▒▒  ▒▒▒▒  ▒   ▒▒   ▒▒▒▒▒▒▒▒▒▒  ▒  ▒▒▒▒▒▒▒
- * ▓       ▓▓      ▓▓▓      ▓▓▓       ▓▓▓      ▓▓▓▓▓▓▓▓▓▓▓  ▓▓      ▓▓
- * █  ████  █  ███████  ███████  ███████   ██   ████  ████  ███████  █
- * █       ██        █        █  ████████      ██  ██      ███      ██
- * ███████████████████████████████████████████████████████████████████
+ * ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ * ░░░░       ░░        ░        ░       ░░░     ░░░░░        ░░      ░░░░░
+ * ▒▒▒▒  ▒▒▒▒  ▒  ▒▒▒▒▒▒▒  ▒▒▒▒▒▒▒  ▒▒▒▒  ▒  ▒▒▒  ▒▒▒▒▒▒▒▒▒▒  ▒  ▒▒▒▒▒▒▒▒▒▒
+ * ▓▓▓▓       ▓▓      ▓▓▓      ▓▓▓       ▓▓▓     ▓▓▓▓▓▓▓▓▓▓▓  ▓▓      ▓▓▓▓▓
+ * ████  ████  █  ███████  ███████  ███████  ███  ████  ████  ███████  ████
+ * ████       ██        █        █  ████████     ██  ██      ███      █████
+ * ████████████████████████████████████████████████████████████████████████
  *
  * beep8.js is a retro game library designed to bring
  * the charm and simplicity of classic games to modern
@@ -75,7 +75,7 @@ const beep8 = {};
 		// For best results this should be the same as the page's background.
 		BG_COLOR: "#000",
 		// Characters file
-		CHR_FILE: "assets/chr.png",
+		CHR_FILE: "../assets/chr.png",
 		// Character size. The characters file's width must be
 		// 16 * CHR_WIDTH and the height must be 16 * CHR_HEIGHT.
 		CHR_WIDTH: 8,
@@ -130,615 +130,15 @@ const beep8 = {};
 ( function( beep8 ) {
 
 	/**
-	 * Initializes the API. This must be called before other functions and must finish executing before other API functions are called.
-	 * Once the supplied callback is called, you can start using beep8 functions.
-	 *
-	 * @param {Function} callback - The callback to call when initialization is done.
-	 * @returns {void}
-	 */
-	beep8.init = function( callback ) {
-
-		return beep8.Core.init( callback );
-
-	}
-
-
-	/**
-	 * Sets the frame handler, that is, the function that will be called on every frame to render the screen.
-	 *
-	 * @param {Function} handler - The frame handler function.
-	 * @param {number} [fps=30] - The target frames per second. Recommended: 30.
-	 * @returns {void}
-	 */
-	beep8.frame = function( handler, fps = 30 ) {
-
-		beep8.Core.preflight( "beep8.frame" );
-
-		if ( handler !== null ) {
-			beep8.Utilities.checkFunction( "handler", handler );
-		}
-
-		beep8.Utilities.checkNumber( "fps", fps );
-
-		return beep8.Core.setFrameHandler( handler, fps );
-
-	}
-
-
-	/**
-	 * Forces the screen to render right now. Useful for immediate redraw in animations.
-	 *
-	 * @returns {void}
-	 */
-	beep8.render = function() {
-
-		beep8.Core.preflight( "beep8.render" );
-
-		return beep8.Core.render();
-
-	}
-
-
-	/**
-	 * Sets the foreground and/or background color.
-	 *
-	 * @param {number} fg - The foreground color.
-	 * @param {number} [bg] - The background color (optional).
-	 * @returns {void}
-	 */
-	beep8.color = function( fg, bg ) {
-
-		beep8.Core.preflight( "beep8.color" );
-		beep8.Utilities.checkNumber( "fg", fg );
-
-		if ( bg !== undefined ) {
-			beep8.Utilities.checkNumber( "bg", bg );
-		}
-
-		beep8.Core.setColor( fg, bg );
-
-	}
-
-
-	/**
-	 * Gets the current foreground color.
-	 *
-	 * @returns {number} The current foreground color.
-	 */
-	beep8.getFgColor = function() {
-
-		beep8.Core.preflight( "getFgColor" );
-
-		return beep8.Core.drawState.fgColor;
-
-	}
-
-
-	/**
-	 * Gets the current background color. -1 means transparent.
-	 *
-	 * @returns {number} The current background color.
-	 */
-	beep8.getBgColor = function() {
-
-		beep8.Core.preflight( "getBgColor" );
-
-		return beep8.Core.drawState.bgColor;
-
-	}
-
-
-	/**
-	 * Clears the screen using the current background color.
-	 *
-	 * @returns {void}
-	 */
-	beep8.cls = function() {
-
-		beep8.Core.preflight( "beep8.cls" );
-		beep8.Core.cls();
-
-	}
-
-
-	/**
-	 * Places the cursor at the given screen column and row.
-	 *
-	 * @param {number} col - The column where the cursor is to be placed.
-	 * @param {number} [row] - The row where the cursor is to be placed (optional).
-	 * @returns {void}
-	 */
-	beep8.locate = function( col, row ) {
-
-		beep8.Core.preflight( "beep8.locate" );
-		beep8.Utilities.checkNumber( "col", col );
-
-		if ( row !== undefined ) {
-			beep8.Utilities.checkNumber( "row", row );
-		}
-
-		beep8.Core.setCursorLocation( col, row );
-
-	}
-
-	/**
-	 * Returns the cursor's current column.
-	 *
-	 * @returns {number} The cursor's current column.
-	 */
-	beep8.col = function() {
-
-		beep8.Core.preflight( "col" );
-
-		return beep8.Core.drawState.cursorCol;
-
-	}
-
-
-	/**
-	 * Returns the cursor's current row.
-	 *
-	 * @returns {number} The cursor's current row.
-	 */
-	beep8.row = function() {
-
-		beep8.Core.preflight( "row" );
-
-		return beep8.Core.drawState.cursorRow;
-
-	}
-
-
-	/**
-	 * Shows or hides the cursor.
-	 *
-	 * @param {boolean} visible - If true, show the cursor. If false, hide the cursor.
-	 * @returns {void}
-	 */
-	beep8.cursor = function( visible ) {
-
-		beep8.Core.preflight( "cursor" );
-		beep8.Utilities.checkBoolean( "visible", visible );
-		beep8.Core.cursorRenderer.setCursorVisible( visible );
-
-	}
-
-	/**
-	 * Prints text at the cursor position, using the current foreground and background colors.
-	 *
-	 * @param {string} text - The text to print.
-	 * @returns {void}
-	 */
-	beep8.print = function( text ) {
-
-		beep8.Core.preflight( "beep8.text" );
-		beep8.Utilities.checkString( "text", text );
-		beep8.Core.textRenderer.print( text );
-
-	}
-
-
-	/**
-	 * Prints text centered horizontally in a field of the given width.
-	 *
-	 * @param {string} text - The text to print.
-	 * @param {number} width - The width of the field, in characters.
-	 * @returns {void}
-	 */
-	beep8.printCentered = function( text, width ) {
-
-		beep8.Core.preflight( "beep8.printCentered" );
-		beep8.Utilities.checkString( "text", text );
-		beep8.Utilities.checkNumber( "width", width );
-		beep8.Core.textRenderer.printCentered( text, width );
-
-	}
-
-
-	/**
-	 * Draws text at an arbitrary pixel position on the screen, not following the "row and column" system.
-	 *
-	 * @param {number} x - The X coordinate of the top-left of the text.
-	 * @param {number} y - The Y coordinate of the top-left of the text.
-	 * @param {string} text - The text to print.
-	 * @param {string} [fontId=null] - The font ID to use.
-	 * @returns {void}
-	 */
-	beep8.drawText = function( x, y, text, fontId = null ) {
-
-		beep8.Core.preflight( "beep8.drawText" );
-		beep8.Utilities.checkNumber( "x", x );
-		beep8.Utilities.checkNumber( "y", y );
-		beep8.Utilities.checkString( "text", text );
-
-		if ( fontId ) {
-			beep8.Utilities.checkString( "fontId", fontId );
-		}
-
-		beep8.Core.textRenderer.drawText( x, y, text, fontId );
-
-	}
-
-
-	/**
-	 * Measures the size of the given text without printing it.
-	 *
-	 * @param {string} text - The text to measure.
-	 * @returns {Object} An object with {cols, rows} indicating the dimensions.
-	 */
-	beep8.measure = function( text ) {
-
-		beep8.Core.preflight( "measure" );
-		beep8.Utilities.checkString( "text", text );
-
-		return beep8.Core.textRenderer.measure( text );
-
-	}
-
-
-	/**
-	 * Prints a character at the current cursor position, advancing the cursor position.
-	 *
-	 * @param {number|string} charCode - The character to print, as an integer (ASCII code) or a one-character string.
-	 * @param {number} [numTimes=1] - How many times to print the character.
-	 * @returns {void}
-	 */
-	beep8.printChar = function( charCode, numTimes = 1 ) {
-
-		beep8.Core.preflight( "beep8.printChar" );
-		charCode = convChar( charCode );
-		beep8.Utilities.checkNumber( "charCode", charCode );
-		beep8.Utilities.checkNumber( "numTimes", numTimes );
-		beep8.Core.textRenderer.printChar( charCode, numTimes );
-
-	}
-
-	/**
-	 * Prints a rectangle of the given size with the given character, starting at the current cursor position.
-	 * @param {number} widthCols - Width of the rectangle in screen columns.
-	 * @param {number} heightRows - Height of the rectangle in screen rows.
-	 * @param {number|string} [charCode=32] - The character to print, as an integer (ASCII code) or a one-character string.
-	 * @returns {void}
-	 */
-	beep8.printRect = function( widthCols, heightRows, charCode = 32 ) {
-
-		beep8.Core.preflight( "beep8.printRect" );
-		charCode = convChar( charCode );
-		beep8.Utilities.checkNumber( "widthCols", widthCols );
-		beep8.Utilities.checkNumber( "heightRows", heightRows );
-		beep8.Utilities.checkNumber( "charCode", charCode );
-		beep8.Core.textRenderer.printRect( widthCols, heightRows, charCode );
-
-	}
-
-
-	/**
-	 * Prints a box of the given size starting at the cursor position, using border-drawing characters.
-	 *
-	 * @param {number} widthCols - Width of the box in screen columns, including the border.
-	 * @param {number} heightRows - Height of the box in screen rows, including the border.
-	 * @param {boolean} [fill=true] - If true, fill the interior with spaces.
-	 * @param {number} [borderChar=0x80] - The first border-drawing character to use.
-	 * @returns {void}
-	 */
-	beep8.printBox = function( widthCols, heightRows, fill = true, borderChar = 0x80 ) {
-
-		beep8.Core.preflight( "beep8.printBox" );
-		borderChar = convChar( borderChar );
-		beep8.Utilities.checkNumber( "widthCols", widthCols );
-		beep8.Utilities.checkNumber( "heightRows", heightRows );
-		beep8.Utilities.checkBoolean( "fill", fill );
-		beep8.Utilities.checkNumber( "borderChar", borderChar );
-		beep8.Core.textRenderer.printBox( widthCols, heightRows, fill, borderChar );
-
-	}
-
-
-	/**
-	 * Draws an image (previously loaded with beep8a.loadImage).
-	 *
-	 * @param {number} x - The X coordinate of the top-left of the image.
-	 * @param {number} y - The Y coordinate of the top-left of the image.
-	 * @param {HTMLImageElement} image - The image to draw.
-	 * @returns {void}
-	 */
-	beep8.drawImage = function( x, y, image ) {
-
-		beep8.Utilities.checkInstanceOf( "image", image, HTMLImageElement );
-		beep8.Utilities.checkNumber( "x", x );
-		beep8.Utilities.checkNumber( "y", y );
-		beep8.Core.drawImage( image, x, y );
-
-	}
-
-
-	/**
-	 * Draws a rectangular part of an image (previously loaded with beep8a.loadImage).
-	 *
-	 * @param {number} x - The X coordinate of the top-left of the image.
-	 * @param {number} y - The Y coordinate of the top-left of the image.
-	 * @param {HTMLImageElement} image - The image to draw.
-	 * @param {number} srcX - The X coordinate of the top-left of the rectangle to be drawn.
-	 * @param {number} srcY - The Y coordinate of the top-left of the rectangle to be drawn.
-	 * @param {number} width - The width in pixels of the rectangle to be drawn.
-	 * @param {number} height - The height in pixels of the rectangle to be drawn.
-	 * @returns {void}
-	 */
-	beep8.drawImageRect = function( x, y, image, srcX, srcY, width, height ) {
-
-		beep8.Utilities.checkInstanceOf( "image", image, HTMLImageElement );
-		beep8.Utilities.checkNumber( "x", x );
-		beep8.Utilities.checkNumber( "y", y );
-		beep8.Utilities.checkNumber( "srcX", srcX );
-		beep8.Utilities.checkNumber( "srcY", srcY );
-		beep8.Utilities.checkNumber( "width", width );
-		beep8.Utilities.checkNumber( "height", height );
-		beep8.Core.drawImage( image, x, y, srcX, srcY, width, height );
-
-	}
-
-
-	/**
-	 * Draws a rectangle (border only) using the current foreground color.
-	 *
-	 * @param {number} x - The X coordinate of the top-left corner.
-	 * @param {number} y - The Y coordinate of the top-left corner.
-	 * @param {number} width - The width of the rectangle in pixels.
-	 * @param {number} height - The height of the rectangle in pixels.
-	 * @returns {void}
-	 */
-	beep8.drawRect = function( x, y, width, height ) {
-
-		beep8.Utilities.checkNumber( "x", x );
-		beep8.Utilities.checkNumber( "y", y );
-		beep8.Utilities.checkNumber( "width", width );
-		beep8.Utilities.checkNumber( "height", height );
-		beep8.Core.drawRect( x, y, width, height );
-
-	}
-
-
-	/**
-	 * Draws a filled rectangle using the current foreground color.
-	 *
-	 * @param {number} x - The X coordinate of the top-left corner.
-	 * @param {number} y - The Y coordinate of the top-left corner.
-	 * @param {number} width - The width of the rectangle in pixels.
-	 * @param {number} height - The height of the rectangle in pixels.
-	 * @returns {void}
-	 */
-	beep8.fillRect = function( x, y, width, height ) {
-
-		beep8.Utilities.checkNumber( "x", x );
-		beep8.Utilities.checkNumber( "y", y );
-		beep8.Utilities.checkNumber( "width", width );
-		beep8.Utilities.checkNumber( "height", height );
-		beep8.Core.fillRect( x, y, width, height );
-
-	}
-
-
-	/**
-	 * Plays a sound (previously loaded with beep8a.playSound).
-	 *
-	 * @param {HTMLAudioElement} sfx - The sound to play.
-	 * @param {number} [volume=1] - The volume to play the sound at.
-	 * @param {boolean} [loop=false] - If true, play the sound in a loop.
-	 * @returns {void}
-	 */
-	beep8.playSound = function( sfx, volume = 1, loop = false ) {
-
-		beep8.Utilities.checkInstanceOf( "sfx", sfx, HTMLAudioElement );
-		sfx.currentTime = 0;
-		sfx.volume = volume;
-		sfx.loop = loop;
-		sfx.play();
-
-	}
-
-
-	/**
-	 * Draws a sprite on the screen.
-	 *
-	 * @param {number|string} ch - The character code of the sprite.
-	 * @param {number} x - The X position at which to draw.
-	 * @param {number} y - The Y position at which to draw.
-	 * @returns {void}
-	 */
-	beep8.spr = function( ch, x, y ) {
-
-		ch = convChar( ch );
-		beep8.Utilities.checkNumber( "ch", ch );
-		beep8.Utilities.checkNumber( "x", x );
-		beep8.Utilities.checkNumber( "y", y );
-		beep8.Core.textRenderer.spr( ch, x, y );
-
-	}
-
-
-	/**
-	 * Checks if the given key is currently pressed or not.
-	 *
-	 * @param {string} keyName - The name of the key.
-	 * @returns {boolean} True if the key is pressed, otherwise false.
-	 */
-	beep8.key = function( keyName ) {
-
-		beep8.Core.preflight( "beep8.key" );
-		beep8.Utilities.checkString( "keyName", keyName );
-
-		return beep8.Core.inputSys.keyHeld( keyName );
-
-	}
-
-
-	/**
-	 * Checks if the given key was JUST pressed on this frame.
-	 *
-	 * @param {string} keyName - The name of the key.
-	 * @returns {boolean} True if the key was just pressed, otherwise false.
-	 */
-	beep8.keyp = function( keyName ) {
-
-		beep8.Core.preflight( "beep8.keyp" );
-		beep8.Utilities.checkString( "keyName", keyName );
-
-		return beep8.Core.inputSys.keyJustPressed( keyName );
-
-	}
-
-
-	/**
-	 * Redefines the colors, assigning new RGB values to each color.
-	 *
-	 * @param {Array<number>} colors - An array of RGB values.
-	 * @returns {void}
-	 */
-	beep8.redefineColors = function( colors ) {
-
-		beep8.Core.preflight( "beep8.redefineColors" );
-		beep8.Utilities.checkArray( "colors", colors );
-		beep8.Core.defineColors( colors );
-
-	}
-
-
-	/**
-	 * Sets the current font for text-based operations.
-	 *
-	 * @param {string} [fontId="default"] - The font ID to set. Pass null or omit to reset to default font.
-	 * @returns {void}
-	 */
-	beep8.setFont = function( fontId ) {
-
-		beep8.Core.preflight( "beep8.setFont" );
-		fontId = fontId || "default";
-		beep8.Utilities.checkString( "fontId", fontId );
-		beep8.Core.textRenderer.setFont( fontId );
-
-	}
-
-
-	/**
-	 * Converts a character code to its integer representation if needed.
-	 *
-	 * @param {number|string} charCode - The character code to convert.
-	 * @returns {number} The integer representation of the character code.
-	 */
-	beep8.convChar = function( charCode ) {
-
-		if ( typeof ( charCode ) === "string" && charCode.length > 0 ) {
-			return charCode.charCodeAt( 0 );
-		}
-
-		return charCode;
-
-	}
-
-
-	/**
-	 * Stops a sound (previously loaded with beep8a.playSound).
-	 *
-	 * @param {HTMLAudioElement} sfx - The sound to stop playing.
-	 * @returns {void}
-	 */
-	beep8.stopSound = function( sfx ) {
-
-		beep8.Utilities.checkInstanceOf( "sfx", sfx, HTMLAudioElement );
-		sfx.currentTime = 0;
-		sfx.pause();
-
-	}
-
-
-	/**
-	 * Returns the raw canvas 2D context for drawing.
-	 *
-	 * @returns {CanvasRenderingContext2D} The raw HTML 2D canvas context.
-	 */
-	beep8.getContext = function() {
-
-		return beep8.Core.getContext();
-
-	}
-
-
-	/**
-	 * Saves the contents of the screen into an ImageData object and returns it.
-	 *
-	 * @returns {ImageData} An ImageData object with the screen's contents.
-	 */
-	beep8.saveScreen = function() {
-
-		return beep8.Core.saveScreen();
-
-	}
-
-
-	/**
-	 * Restores the contents of the screen using an ImageData object.
-	 *
-	 * @param {ImageData} screenData - The ImageData object with the screen's contents.
-	 * @returns {void}
-	 */
-	beep8.restoreScreen = function( screenData ) {
-
-		return beep8.Core.restoreScreen( screenData );
-
-	}
-
-} )( beep8 || ( beep8 = {} ) );
-
-( function( beep8 ) {
-
-
-	let textRenderer = null;
-
-	/**
-	 * Initialize the text renderer
-	 *
-	 * @returns {void}
-	 */
-	function initTextRenderer() {
-
-		textRenderer = new beep8.TextRenderer();
-
-	}
-
-
-	/**
-	 * Get the text renderer
-	 *
-	 * @returns {beep8.TextRenderer} The text renderer.
-	 */
-	function getTextRenderer() {
-
-		return textRenderer;
-
-	}
-
-
-	/**
-	 * Set a new text renderer
-	 *
-	 * @param {beep8.TextRenderer} renderer - The new text renderer.
-	 * @returns {void}
-	 */
-	function setTextRenderer( renderer ) {
-
-		textRenderer = renderer;
-
-	}
-
-
-	/**
 	 * ASYNC API FUNCTIONS
 	 * These functions must be called with 'await'.
 	 * For example:
 	 *
-	 * const k = await beep8a.key();
+	 * const k = await beep8.Async.key();
 	 * console.log("The user pressed " + k);
 	 */
+
+	beep8.Async = {};
 
 
 	/**
@@ -746,11 +146,12 @@ const beep8 = {};
 	 *
 	 * @returns {Promise<string>} The name of the key that was pressed.
 	 */
-	async function key() {
+	beep8.Async.key = async function() {
 
-		beep8.Core.preflight( "beep8a.key" );
+		beep8.Core.preflight( "beep8.Async.key" );
 
 		return await beep8.Core.inputSys.readKeyAsync();
+
 	}
 
 
@@ -762,9 +163,10 @@ const beep8 = {};
 	 * @param {number} [maxWidth=-1] - The maximum width of the input line in characters. -1 means no wrapping.
 	 * @returns {Promise<string>} The input text.
 	 */
-	async function readLine( initString = "", maxLen = -1, maxWidth = -1 ) {
+	beep8.Async.readLine = async function( initString = "", maxLen = -1, maxWidth = -1 ) {
 
-		beep8.Core.preflight( "readLine" );
+		beep8.Core.preflight( "beep8.Async.readLine" );
+
 		beep8.Utilities.checkString( "initString", initString );
 		beep8.Utilities.checkNumber( "maxLen", maxLen );
 
@@ -780,13 +182,14 @@ const beep8 = {};
 	 * @param {Object} [options={}] - Additional options for the menu.
 	 * @returns {Promise<number>} The index of the selected item or -1 if canceled.
 	 */
-	async function menu( choices, options = {} ) {
+	beep8.Async.menu = async function( choices, options = {} ) {
 
-		beep8.Core.preflight( "menu" );
+		beep8.Core.preflight( "beep8.Async.menu" );
+
 		beep8.Utilities.checkArray( "choices", choices );
 		beep8.Utilities.checkObject( "options", options );
 
-		return await menuMod.menu( choices, options );
+		return await beep8.Menu.display( choices, options );
 
 	}
 
@@ -798,13 +201,14 @@ const beep8 = {};
 	 * @param {string[]} [choices=["OK"]] - The choices to present to the user.
 	 * @returns {Promise<number>} The index of the selected item.
 	 */
-	async function dialog( prompt, choices = [ "OK" ] ) {
+	beep8.Async.dialog = async function( prompt, choices = [ "OK" ] ) {
 
-		beep8.Core.preflight( "dialog" );
+		beep8.Core.preflight( "beep8.Async.dialog" );
+
 		beep8.Utilities.checkString( "prompt", prompt );
 		beep8.Utilities.checkArray( "choices", choices );
 
-		return menu( choices, { prompt, center: true } );
+		return beep8.Async.menu( choices, { prompt, center: true } );
 
 	}
 
@@ -815,12 +219,14 @@ const beep8 = {};
 	 * @param {number} seconds - The duration to wait.
 	 * @returns {Promise<void>} Resolves after the specified time.
 	 */
-	async function wait( seconds ) {
+	beep8.Async.wait = async function( seconds ) {
 
-		beep8.Core.preflight( "wait" );
+		beep8.Core.preflight( "beep8.Async.wait" );
+
 		beep8.Utilities.checkNumber( "seconds", seconds );
-		beep8.render();
-		await new Promise( resolve => setTimeout( resolve, Math.round( seconds * 1000 ) ) );
+		beep8.Core.render();
+
+		return await new Promise( resolve => setTimeout( resolve, Math.round( seconds * 1000 ) ) );
 
 	}
 
@@ -832,9 +238,10 @@ const beep8 = {};
 	 * @param {number} [delay=0.05] - The delay between characters in seconds.
 	 * @returns {Promise<void>} Resolves after the text is printed.
 	 */
-	async function typewriter( text, delay = 0.05 ) {
+	beep8.Async.typewriter = async function( text, delay = 0.05 ) {
 
-		beep8.Core.preflight( "typewriter" );
+		beep8.Core.preflight( "beep8.Async.typewriter" );
+
 		beep8.Utilities.checkString( "text", text );
 		beep8.Utilities.checkNumber( "delay", delay );
 
@@ -848,15 +255,22 @@ const beep8 = {};
 				beep8.CONFIG.PRINT_ESCAPE_START &&
 				text.substring( i, i + beep8.CONFIG.PRINT_ESCAPE_START.length ) === beep8.CONFIG.PRINT_ESCAPE_START
 			) {
+
 				const endPos = text.indexOf( beep8.CONFIG.PRINT_ESCAPE_END, i + beep8.CONFIG.PRINT_ESCAPE_START.length );
-				if ( endPos >= 0 ) i = endPos + beep8.CONFIG.PRINT_ESCAPE_END.length;
+
+				if ( endPos >= 0 ) {
+					i = endPos + beep8.CONFIG.PRINT_ESCAPE_END.length;
+				}
+
 			}
 
 			const c = text.charCodeAt( i );
 			beep8.locate( startCol, startRow );
 			beep8.print( text.substring( 0, i ) );
 
-			if ( c !== 32 ) await wait( delay );
+			if ( c !== 32 ) {
+				await beep8.Async.wait( delay );
+			}
 
 		}
 
@@ -869,9 +283,9 @@ const beep8 = {};
 	 * @param {string} url - The URL of the image.
 	 * @returns {Promise<HTMLImageElement>} The loaded image.
 	 */
-	async function loadImage( url ) {
+	beep8.Async.loadImage = async function( url ) {
 
-		beep8.Core.preflight( "loadImage" );
+		beep8.Core.preflight( "beep8.Async.loadImage" );
 
 		return new Promise(
 			( resolve ) => {
@@ -890,9 +304,9 @@ const beep8 = {};
 	 * @param {string} url - The URL of the sound file.
 	 * @returns {Promise<HTMLAudioElement>} The loaded sound.
 	 */
-	async function loadSound( url ) {
+	beep8.Async.loadSound = async function( url ) {
 
-		beep8.Core.preflight( "loadSound" );
+		beep8.Core.preflight( "beep8.Async.loadSound" );
 
 		return new Promise(
 			( resolve ) => {
@@ -914,9 +328,10 @@ const beep8 = {};
 	 * @param {string} fontImageFile - The URL of the font image file.
 	 * @returns {Promise<string>} The font ID.
 	 */
-	async function loadFont( fontImageFile ) {
+	beep8.Async.loadFont = async function( fontImageFile ) {
 
-		beep8.Core.preflight( "loadFont" );
+		beep8.Core.preflight( "beep8.Async.loadFont" );
+
 		beep8.Utilities.checkString( "fontImageFile", fontImageFile );
 		const fontName = "FONT@" + fontImageFile;
 		await beep8.Core.textRenderer.loadFontAsync( fontName, fontImageFile );
@@ -925,111 +340,20 @@ const beep8 = {};
 
 	}
 
-
-	beep8.async = {
-		initTextRenderer,
-		getTextRenderer,
-		setTextRenderer,
-		key,
-		readLine,
-		menu,
-		dialog,
-		wait,
-		typewriter,
-		loadImage,
-		loadSound,
-		loadFont,
-	};
-
 } )( beep8 || ( beep8 = {} ) );
 
 ( function( beep8 ) {
 
 	beep8.Core = {};
 
-	let _textRenderer = null;
-	let _inputSys = null;
-	let _cursorRenderer = null;
-	let _realCanvas = null;
-	let _realCtx = null;
-	let _canvas = null;
-	let _ctx = null;
-	let _deltaTime = 0;
-
-	Object.defineProperty(
-		beep8.Core,
-		'textRenderer',
-		{
-			get() { return _textRenderer; },
-			set( value ) { _textRenderer = value; }
-		}
-	);
-
-	Object.defineProperty(
-		beep8.Core,
-		'inputSys',
-		{
-			get() { return _inputSys; },
-			set( value ) { _inputSys = value; }
-		}
-	);
-
-	Object.defineProperty(
-		beep8.Core,
-		'cursorRenderer',
-		{
-			get() { return _cursorRenderer; },
-			set( value ) { _cursorRenderer = value; }
-		}
-	);
-
-	Object.defineProperty(
-		beep8.Core,
-		'realCanvas',
-		{
-			get() { return _realCanvas; },
-			set( value ) { _realCanvas = value; }
-		}
-	);
-
-	Object.defineProperty(
-		beep8.Core,
-		'realCtx',
-		{
-			get() { return _realCtx; },
-			set( value ) { _realCtx = value; }
-		}
-	);
-
-	Object.defineProperty(
-		beep8.Core,
-		'canvas',
-		{
-			get() { return _canvas; },
-			set( value ) { _canvas = value; }
-		}
-	);
-
-	Object.defineProperty(
-		beep8.Core,
-		'ctx',
-		{
-			get() { return _ctx; },
-			set( value ) { _ctx = value; }
-		}
-	);
-
-	Object.defineProperty(
-		beep8.Core,
-		'deltaTime',
-		{
-			get() { return _deltaTime; },
-			set( value ) { _deltaTime = value; }
-		}
-	);
-
-	let lastFrameTime = null;
-	let crashed = false;
+	beep8.Core.textRenderer = null;
+	beep8.Core.inputSys = null;
+	beep8.Core.cursorRenderer = null;
+	beep8.Core.realCanvas = null;
+	beep8.Core.realCtx = null;
+	beep8.Core.canvas = null;
+	beep8.Core.ctx = null;
+	beep8.Core.deltaTime = 0;
 
 	beep8.Core.drawState = {
 		fgColor: 7,
@@ -1041,17 +365,16 @@ const beep8 = {};
 		cursorVisible: false, // Don't change this directly, use cursorRenderer.setCursorVisible()
 	};
 
+	let lastFrameTime = null;
+	let crashed = false;
 	let initDone = false;
 	let frameHandler = null;
 	let frameHandlerTargetInterval = null;
 	let animFrameRequested = false;
 	let timeToNextFrame = 0;
-
 	let scanLinesEl = null;
-
 	let pendingAsync = null;
 	let dirty = false;
-
 
 	/**
 	 * Initializes the engine.
@@ -1062,89 +385,123 @@ const beep8 = {};
 	beep8.Core.init = function( callback ) {
 
 		beep8.Utilities.checkFunction( "callback", callback );
-		asyncInit( callback );
+		beep8.Core.asyncInit( callback );
 
 	}
 
 
-	async function asyncInit( callback ) {
+	/**
+	 * Asynchronously initializes the engine.
+	 *
+	 * @param {Function} callback - The function to call when the engine is initialized.
+	 * @returns {void}
+	 */
+	beep8.Core.asyncInit = async function( callback ) {
 
-		beep8.Utilities.log( "Sys init." );
+		beep8.Utilities.log( "beep8 System initialized" );
 
+		// Computed values: width and height of screen in virtual pixels.
 		beep8.CONFIG.SCREEN_WIDTH = beep8.CONFIG.SCREEN_COLS * beep8.CONFIG.CHR_WIDTH;
 		beep8.CONFIG.SCREEN_HEIGHT = beep8.CONFIG.SCREEN_ROWS * beep8.CONFIG.CHR_HEIGHT;
 
-		_realCanvas = document.createElement( "canvas" );
+		// Set up the real canvas (the one that really exists onscreen).
+		beep8.Core.realCanvas = document.createElement( "canvas" );
+
 		if ( beep8.CONFIG.CANVAS_SETTINGS && beep8.CONFIG.CANVAS_SETTINGS.CANVAS_ID ) {
-			_realCanvas.setAttribute( "id", beep8.CONFIG.CANVAS_SETTINGS.CANVAS_ID );
+			beep8.Core.realCanvas.setAttribute( "id", beep8.CONFIG.CANVAS_SETTINGS.CANVAS_ID );
 		}
 
 		if ( beep8.CONFIG.CANVAS_SETTINGS && beep8.CONFIG.CANVAS_SETTINGS.CANVAS_CLASSES ) {
 			for ( const className of beep8.CONFIG.CANVAS_SETTINGS.CANVAS_CLASSES ) {
-				_realCanvas.classList.add( className );
+				beep8.Core.realCanvas.classList.add( className );
 			}
 		}
 
-		_realCanvas.addEventListener( "touchstart", e => e.preventDefault() );
+		// Prevent default touch events on touch devices.
+		beep8.Core.realCanvas.addEventListener( "touchstart", e => e.preventDefault() );
 
+		// Work out where to put the canvas.
 		let container = document.body;
 
 		if ( beep8.CONFIG.CANVAS_SETTINGS && beep8.CONFIG.CANVAS_SETTINGS.CONTAINER ) {
+
 			const containerSpec = beep8.CONFIG.CANVAS_SETTINGS.CONTAINER;
+
 			if ( typeof ( containerSpec ) === "string" ) {
+
 				container = document.getElementById( containerSpec );
+
 				if ( !container ) {
 					console.error( "beep8: Could not find container element with ID: " + containerSpec );
 					container = document.body;
 				}
+
 			} else if ( containerSpec instanceof HTMLElement ) {
+
 				container = containerSpec;
+
 			} else {
+
 				console.error( "beep8: beep8.CONFIG.CANVAS_SETTINGS.CONTAINER must be either an ID of an HTMLElement." );
 				container = document.body;
+
 			}
+
 		}
 
-		container.appendChild( _realCanvas );
+		// Put the canvas in the container.
+		container.appendChild( beep8.Core.realCanvas );
 
-		_canvas = document.createElement( "canvas" );
-		_canvas.width = beep8.CONFIG.SCREEN_WIDTH;
-		_canvas.height = beep8.CONFIG.SCREEN_HEIGHT;
-		_canvas.style.width = beep8.CONFIG.SCREEN_WIDTH + "px";
-		_canvas.style.height = beep8.CONFIG.SCREEN_HEIGHT + "px";
-		_ctx = _canvas.getContext( "2d" );
-		_ctx.imageSmoothingEnabled = false;
+		// Set up the virtual canvas (the one we render to). This canvas isn't
+		// part of the document( it's not added to document.body), it only
+		// exists off-screen.
+		beep8.Core.canvas = document.createElement( "canvas" );
+		beep8.Core.canvas.width = beep8.CONFIG.SCREEN_WIDTH;
+		beep8.Core.canvas.height = beep8.CONFIG.SCREEN_HEIGHT;
+		beep8.Core.canvas.style.width = beep8.CONFIG.SCREEN_WIDTH + "px";
+		beep8.Core.canvas.style.height = beep8.CONFIG.SCREEN_HEIGHT + "px";
+		beep8.Core.ctx = beep8.Core.canvas.getContext( "2d" );
+		beep8.Core.ctx.imageSmoothingEnabled = false;
 
-		_textRenderer = new beep8.TextRenderer();
-		_inputSys = new beep8.Input();
-		_cursorRenderer = new beep8.CursorRenderer();
+		// Initialize subsystems
+		beep8.Core.textRenderer = new beep8.TextRenderer();
+		beep8.Core.inputSys = new beep8.Input();
+		beep8.Core.cursorRenderer = new beep8.CursorRenderer();
 
-		await _textRenderer.initAsync();
+		await beep8.Core.textRenderer.initAsync();
 
-		updateLayout( false );
-		window.addEventListener( "resize", () => updateLayout( true ) );
+		// Update the positioning and size of the canvas.
+		beep8.Core.updateLayout( false );
+		window.addEventListener(
+			"resize",
+			() => beep8.Core.updateLayout( true )
+		);
 
-		if ( isMobile() ) {
+		if ( beep8.Core.isMobile() ) {
 			beep8.Joystick.setup();
 		}
 
 		initDone = true;
 
+		/**
+		 * Work around an init bug where text would initially not render on
+		 * Firefox. I'm not entirely sure I understand why, but this seems to
+		 * fix it (perhaps waiting 1 frame gives the canvas time to initialize).
+		 */
 		await new Promise( resolve => setTimeout( resolve, 1 ) );
 		await callback();
 
-		render();
+		beep8.Core.render();
 
 	}
 
 
-	beep8.Core.getContext = function() {
-
-		return _ctx;
-
-	}
-
-
+	/**
+	 * Checks if the engine (ans specified method) is ready to run.
+	 *
+	 * @param {string} apiMethod - The name of the API method being called.
+	 * @returns {void}
+	 */
 	beep8.Core.preflight = function( apiMethod ) {
 
 		if ( crashed ) {
@@ -1152,24 +509,36 @@ const beep8 = {};
 		}
 
 		if ( !initDone ) {
+
 			beep8.Utilities.fatal(
 				`Can't call API method ${apiMethod}(): API not initialized. ` +
 				`Call initAsync() wait until it finishes before calling API methods.`
 			);
+
 		}
 
 		if ( pendingAsync ) {
+
 			beep8.Utilities.fatal(
 				`Can't call API method ${apiMethod}() because there is a pending async ` +
 				`call to ${pendingAsync.name}() that hasn't finished running yet. Are you missing ` +
 				`an 'await' keyword to wait for the async method? Use 'await ${pendingAsync.name}()',` +
 				`not just '${pendingAsync.name}()'`
 			);
+
 		}
 
 	}
 
 
+	/**
+	 * Starts an asynchronous operation.
+	 *
+	 * @param {string} asyncMethodName - The name of the asynchronous method.
+	 * @param {Function} resolve - The function to call when the operation is successful.
+	 * @param {Function} reject - The function to call when the operation fails.
+	 * @returns {void}
+	 */
 	beep8.Core.startAsync = function( asyncMethodName, resolve, reject ) {
 
 		if ( pendingAsync ) {
@@ -1185,13 +554,19 @@ const beep8 = {};
 			name: asyncMethodName,
 			resolve,
 			reject,
-		}
+		};
 
-		this.render();
+		beep8.Core.render();
 
 	}
 
 
+	/**
+	 * Checks if there is a pending asynchronous operation.
+	 *
+	 * @param {string} asyncMethodName - The name of the asynchronous method.
+	 * @returns {boolean} True if there is a pending asynchronous operation.
+	 */
 	beep8.Core.hasPendingAsync = function( asyncMethodName ) {
 
 		return pendingAsync && pendingAsync.name === asyncMethodName;
@@ -1199,6 +574,14 @@ const beep8 = {};
 	}
 
 
+	/**
+	 * Ends an asynchronous operation.
+	 *
+	 * @param {string} asyncMethodName - The name of the asynchronous method.
+	 * @param {boolean} isError - Whether the operation failed.
+	 * @param {any} result - The result of the operation.
+	 * @returns {void}
+	 */
 	beep8.Core.endAsyncImpl = function( asyncMethodName, isError, result ) {
 
 		if ( !pendingAsync ) {
@@ -1206,8 +589,10 @@ const beep8 = {};
 		}
 
 		if ( pendingAsync.name !== asyncMethodName ) {
-			throw new Error( `Internal bug: endAsync(${asyncMethodName}) called but pendingAsync.name ` +
-				`is ${pendingAsync.name}` );
+			throw new Error(
+				`Internal bug: endAsync(${asyncMethodName}) called but pendingAsync.name ` +
+				`is ${pendingAsync.name}`
+			);
 		}
 
 		const fun = isError ? pendingAsync.reject : pendingAsync.resolve;
@@ -1217,21 +602,43 @@ const beep8 = {};
 	}
 
 
+	/**
+	 * Resolves an asynchronous operation.
+	 *
+	 * @param {string} asyncMethodName - The name of the asynchronous method.
+	 * @param {any} result - The result of the operation.
+	 * @returns {void}
+	 */
 	beep8.Core.resolveAsync = function( asyncMethodName, result ) {
 
-		endAsyncImpl( asyncMethodName, false, result );
+		beep8.Core.endAsyncImpl( asyncMethodName, false, result );
 
 	}
 
 
+	/**
+	 * Fails an asynchronous operation.
+	 *
+	 * @param {string} asyncMethodName - The name of the asynchronous method.
+	 * @param {any} error - The error that occurred.
+	 * @returns {void}
+	 */
 	beep8.Core.failAsync = function( asyncMethodName, error ) {
 
-		endAsyncImpl( asyncMethodName, true, error );
+		beep8.Core.endAsyncImpl( asyncMethodName, true, error );
 
 	}
 
 
-	beep8.Core.setFrameHandler = function( callback, targetFps ) {
+	/**
+	 * Set the callback function for the game loop. Will be called targetFps
+	 * times per second.
+	 *
+	 * @param {Function} callback - The function to call.
+	 * @param {number} [targetFps=30] - The target frames per second.
+	 * @returns {void}
+	 */
+	beep8.Core.setFrameHandler = function( callback, targetFps = 30 ) {
 
 		frameHandler = callback;
 		frameHandlerTargetInterval = 1.0 / ( targetFps || 30 );
@@ -1244,81 +651,135 @@ const beep8 = {};
 	}
 
 
+	/**
+	 * Renders the screen.
+	 *
+	 * @returns {void}
+	 */
 	beep8.Core.render = function() {
 
 		if ( crashed ) return;
-		_realCtx.imageSmoothingEnabled = false;
-		_realCtx.clearRect( 0, 0, _realCanvas.width, _realCanvas.height );
-		_realCtx.drawImage(
-			_canvas,
+
+		beep8.Core.realCtx.imageSmoothingEnabled = false;
+		beep8.Core.realCtx.clearRect( 0, 0, beep8.Core.realCanvas.width, beep8.Core.realCanvas.height );
+		beep8.Core.realCtx.drawImage(
+			beep8.Core.canvas,
 			0, 0,
-			_realCanvas.width, _realCanvas.height
+			beep8.Core.realCanvas.width, beep8.Core.realCanvas.height
 		);
+
 		dirty = false;
 
-		_cursorRenderer.drawCursor( _realCtx, _realCanvas.width, _realCanvas.height );
+		beep8.Core.cursorRenderer.drawCursor( beep8.Core.realCtx, beep8.Core.realCanvas.width, beep8.Core.realCanvas.height );
 
 	}
 
 
+	/**
+	 * Marks the screen as dirty, so it will be re-rendered on the next frame.
+	 *
+	 * @returns {void}
+	 */
 	beep8.Core.markDirty = function() {
 
 		if ( dirty ) return;
+
 		dirty = true;
-		setTimeout( render, 1 );
+		setTimeout( beep8.Core.render, 1 );
 
 	}
 
+
+	/**
+	 * Clears the screen and resets the cursor to the top-left corner.
+	 *
+	 * @returns {void}
+	 */
 	beep8.Core.cls = function() {
 
-		_ctx.fillStyle = getColorHex( beep8.Core.drawState.bgColor );
-		_ctx.fillRect( 0, 0, _canvas.width, _canvas.height );
+		beep8.Core.ctx.fillStyle = beep8.Core.getColorHex( beep8.Core.drawState.bgColor );
+		beep8.Core.ctx.fillRect( 0, 0, beep8.Core.canvas.width, beep8.Core.canvas.height );
+
 		this.setCursorLocation( 0, 0 );
-		markDirty();
+		beep8.Core.markDirty();
 
 	}
 
 
+	/**
+	 * Sets the colors used for text and background.
+	 *
+	 * @param {array} colors - A list of colours.
+	 * @returns {void}
+	 */
 	beep8.Core.defineColors = function( colors ) {
 
 		beep8.Utilities.checkArray( "colors", colors );
 		beep8.CONFIG.COLORS = colors.slice();
-		_textRenderer.regenColors();
+		beep8.Core.textRenderer.regenColors();
 
 	}
 
 
+	/**
+	 * Sets the colors used for text and background.
+	 *
+	 * @param {number} fg - The foreground color.
+	 * @param {number} bg - The background color.
+	 * @returns {void}
+	 */
 	beep8.Core.setColor = function( fg, bg ) {
 
 		beep8.Utilities.checkNumber( "fg", fg );
-		drawState.fgColor = Math.round( fg );
+		beep8.Core.drawState.fgColor = Math.round( fg );
 
 		if ( bg !== undefined ) {
 			beep8.Utilities.checkNumber( "bg", bg );
-			drawState.bgColor = Math.round( bg );
+			beep8.Core.drawState.bgColor = Math.round( bg );
 		}
 
 	}
 
 
+	/**
+	 * Sets the cursor location.
+	 *
+	 * @param {number} col - The column.
+	 * @param {number} row - The row.
+	 * @returns {void}
+	 */
 	beep8.Core.setCursorLocation = function( col, row ) {
 
 		beep8.Utilities.checkNumber( "col", col );
 
-		if ( row !== undefined ) beep8.Utilities.checkNumber( "row", row );
+		if ( row !== undefined ) {
+			beep8.Utilities.checkNumber( "row", row );
+		}
 
-		drawState.cursorCol = Math.round( col );
+		beep8.Core.drawState.cursorCol = Math.round( col );
 
-		if ( row !== undefined ) drawState.cursorRow = Math.round( row );
+		if ( row !== undefined ) {
+			beep8.Core.drawState.cursorRow = Math.round( row );
+		}
 
 	}
 
 
+	/**
+	 * Gets the color for the specified index.
+	 *
+	 * @param {number} c - The color index.
+	 * @returns {string} The color.
+	 */
 	beep8.Core.getColorHex = function( c ) {
 
-		if ( typeof ( c ) !== "number" ) return "#f0f";
+		if ( typeof ( c ) !== "number" ) {
+			return "#f0f";
+		}
 
-		if ( c < 0 ) return "#000";
+		if ( c < 0 ) {
+			return "#000";
+		}
 
 		c = beep8.Utilities.clamp( Math.round( c ), 0, beep8.CONFIG.COLORS.length - 1 );
 
@@ -1327,6 +788,11 @@ const beep8 = {};
 	}
 
 
+	/**
+	 * Gets the current time.
+	 *
+	 * @returns {number} The current time.
+	 */
 	beep8.Core.getNow = function() {
 
 		if ( window.performace.now ) {
@@ -1338,6 +804,18 @@ const beep8 = {};
 	}
 
 
+	/**
+	 * Draws an image.
+	 *
+	 * @param {HTMLImageElement} img - The image to draw.
+	 * @param {number} x - The x-coordinate of the upper-left corner of the image.
+	 * @param {number} y - The y-coordinate of the upper-left corner of the image.
+	 * @param {number} [srcX] - The x-coordinate of the upper-left corner of the source image.
+	 * @param {number} [srcY] - The y-coordinate of the upper-left corner of the source image.
+	 * @param {number} [width] - The width of the image.
+	 * @param {number} [height] - The height of the image.
+	 * @returns {void}
+	 */
 	beep8.Core.drawImage = function( img, x, y, srcX, srcY, width, height ) {
 
 		beep8.Utilities.checkInstanceOf( "img", img, HTMLImageElement );
@@ -1352,14 +830,23 @@ const beep8 = {};
 			srcX !== undefined && srcY !== undefined &&
 			width !== undefined && height !== undefined
 		) {
-			_ctx.drawImage( img, srcX, srcY, width, height, x, y, width, height );
+			beep8.Core.ctx.drawImage( img, srcX, srcY, width, height, x, y, width, height );
 		} else {
-			_ctx.drawImage( img, x, y );
+			beep8.Core.ctx.drawImage( img, x, y );
 		}
 
 	}
 
 
+	/**
+	 * Draws a rectangle.
+	 *
+	 * @param {number} x - The x-coordinate of the upper-left corner of the rectangle.
+	 * @param {number} y - The y-coordinate of the upper-left corner of the rectangle.
+	 * @param {number} width - The width of the rectangle.
+	 * @param {number} height - The height of the rectangle.
+	 * @returns {void}
+	 */
 	beep8.Core.drawRect = function( x, y, width, height ) {
 
 		beep8.Utilities.checkNumber( "x", x );
@@ -1367,18 +854,27 @@ const beep8 = {};
 		beep8.Utilities.checkNumber( "width", width );
 		beep8.Utilities.checkNumber( "height", height );
 
-		let oldStrokeStyle = _ctx.strokeStyle;
-		_ctx.strokeStyle = getColorHex( drawState.fgColor );
-		_ctx.strokeRect(
+		let oldStrokeStyle = beep8.Core.ctx.strokeStyle;
+		beep8.Core.ctx.strokeStyle = beep8.Core.getColorHex( beep8.Core.drawState.fgColor );
+		beep8.Core.ctx.strokeRect(
 			Math.round( x ) + 0.5, Math.round( y ) + 0.5,
 			Math.round( width ) - 1, Math.round( height ) - 1
 		);
 
-		_ctx.strokeStyle = oldStrokeStyle;
+		beep8.Core.ctx.strokeStyle = oldStrokeStyle;
 
 	}
 
 
+	/**
+	 * Fills a rectangle.
+	 *
+	 * @param {number} x - The x-coordinate of the upper-left corner of the rectangle.
+	 * @param {number} y - The y-coordinate of the upper-left corner of the rectangle.
+	 * @param {number} width - The width of the rectangle.
+	 * @param {number} height - The height of the rectangle.
+	 * @returns {void}
+	 */
 	beep8.Core.fillRect = function( x, y, width, height ) {
 
 		beep8.Utilities.checkNumber( "x", x );
@@ -1386,29 +882,49 @@ const beep8 = {};
 		beep8.Utilities.checkNumber( "width", width );
 		beep8.Utilities.checkNumber( "height", height );
 
-		_ctx.fillStyle = getColorHex( drawState.fgColor );
-		_ctx.fillRect(
+		beep8.Core.ctx.fillStyle = beep8.Core.getColorHex( beep8.Core.drawState.fgColor );
+		beep8.Core.ctx.fillRect(
 			Math.round( x ) + 0.5, Math.round( y ) + 0.5,
 			Math.round( width ) - 1, Math.round( height ) - 1
 		);
 	}
 
 
+	/**
+	 * Saves the current screen.
+	 *
+	 * @returns {ImageData} The saved screen.
+	 */
 	beep8.Core.saveScreen = function() {
 
-		return _ctx.getImageData( 0, 0, _canvas.width, _canvas.height );
+		return beep8.Core.ctx.getImageData(
+			0, 0,
+			beep8.Core.canvas.width, beep8.Core.canvas.height
+		);
 
 	}
 
+
+	/**
+	 * Restores the screen.
+	 *
+	 * @param {ImageData} screenData - The screen to restore.
+	 * @returns {void}
+	 */
 	beep8.Core.restoreScreen = function( screenData ) {
 
 		beep8.Utilities.checkInstanceOf( "screenData", screenData, ImageData );
-		_ctx.putImageData( screenData, 0, 0 );
+		beep8.Core.ctx.putImageData( screenData, 0, 0 );
 
 	}
 
 
-	async function doFrame() {
+	/**
+	 * Run the game loop.
+	 *
+	 * @returns {void}
+	 */
+	beep8.Core.doFrame = async function() {
 
 		animFrameRequested = false;
 
@@ -1423,12 +939,12 @@ const beep8 = {};
 
 		while ( frameHandler && numFramesDone < 4 && timeToNextFrame > frameHandlerTargetInterval ) {
 			await frameHandler();
-			_inputSys.onEndFrame();
+			beep8.Core.inputSys.onEndFrame();
 			timeToNextFrame -= frameHandlerTargetInterval;
 			++numFramesDone;
 		}
 
-		render();
+		beep8.Core.render();
 
 		if ( frameHandler ) {
 			animFrameRequested = true;
@@ -1438,15 +954,28 @@ const beep8 = {};
 	}
 
 
+	/**
+	 * Updates the layout.
+	 *
+	 * @param {boolean} renderNow - Whether to render immediately.
+	 * @returns {void}
+	 */
 	beep8.Core.updateLayout = function( renderNow ) {
 
-		updateLayout2d();
+		beep8.Core.updateLayout2d();
 
-		if ( renderNow ) render();
+		if ( renderNow ) {
+			beep8.Core.render();
+		}
 
 	}
 
 
+	/**
+	 * Updates the layout of the 2D canvas.
+	 *
+	 * @returns {void}
+	 */
 	beep8.Core.updateLayout2d = function() {
 
 		const autoSize = !beep8.CONFIG.CANVAS_SETTINGS || beep8.CONFIG.CANVAS_SETTINGS.AUTO_SIZE;
@@ -1460,12 +989,12 @@ const beep8 = {};
 			const frac = beep8.CONFIG.MAX_SCREEN_FRACTION || 0.8;
 			const availableSize = autoSize ?
 				{ width: frac * window.innerWidth, height: frac * window.innerHeight } :
-				_realCanvas.getBoundingClientRect();
+				beep8.Core.realCanvas.getBoundingClientRect();
 			scale = Math.floor( Math.min(
 				availableSize.width / beep8.CONFIG.SCREEN_WIDTH,
 				availableSize.height / beep8.CONFIG.SCREEN_HEIGHT ) );
 			scale = Math.min( Math.max( scale, 1 ), 5 );
-			beep8.Utilities.log( `Auto-scale: available size ${availableSize.width} x ${availableSize.height}, scale ${scale}, dpr ${window.devicePixelRatio}` );
+			beep8.Utilities.log( `Auto - scale: available size ${availableSize.width} x ${availableSize.height}, scale ${scale}, dpr ${window.devicePixelRatio}` );
 
 		} else {
 
@@ -1480,27 +1009,27 @@ const beep8 = {};
 
 		if ( autoSize ) {
 
-			_realCanvas.style.width = beep8.CONFIG.SCREEN_EL_WIDTH + "px";
-			_realCanvas.style.height = beep8.CONFIG.SCREEN_EL_HEIGHT + "px";
-			_realCanvas.width = beep8.CONFIG.SCREEN_REAL_WIDTH;
-			_realCanvas.height = beep8.CONFIG.SCREEN_REAL_HEIGHT;
+			beep8.Core.realCanvas.style.width = beep8.CONFIG.SCREEN_EL_WIDTH + "px";
+			beep8.Core.realCanvas.style.height = beep8.CONFIG.SCREEN_EL_HEIGHT + "px";
+			beep8.Core.realCanvas.width = beep8.CONFIG.SCREEN_REAL_WIDTH;
+			beep8.Core.realCanvas.height = beep8.CONFIG.SCREEN_REAL_HEIGHT;
 
 		} else {
 
-			const actualSize = _realCanvas.getBoundingClientRect();
-			_realCanvas.width = actualSize.width;
-			_realCanvas.height = actualSize.height;
+			const actualSize = beep8.Core.realCanvas.getBoundingClientRect();
+			beep8.Core.realCanvas.width = actualSize.width;
+			beep8.Core.realCanvas.height = actualSize.height;
 
 		}
 
-		_realCtx = _realCanvas.getContext( "2d" );
-		_realCtx.imageSmoothingEnabled = false;
+		beep8.Core.realCtx = beep8.Core.realCanvas.getContext( "2d" );
+		beep8.Core.realCtx.imageSmoothingEnabled = false;
 
 		if ( autoPos ) {
 
-			_realCanvas.style.position = "absolute";
-			_realCanvas.style.left = Math.round( ( window.innerWidth - _realCanvas.width ) / 2 ) + "px";
-			_realCanvas.style.top = Math.round( ( window.innerHeight - _realCanvas.height ) / 2 ) + "px";
+			beep8.Core.realCanvas.style.position = "absolute";
+			beep8.Core.realCanvas.style.left = Math.round( ( window.innerWidth - beep8.Core.realCanvas.width ) / 2 ) + "px";
+			beep8.Core.realCanvas.style.top = Math.round( ( window.innerHeight - beep8.Core.realCanvas.height ) / 2 ) + "px";
 
 		}
 
@@ -1522,10 +1051,10 @@ const beep8 = {};
 				scanLinesEl.style.backgroundSize = `100% 4px, 3px 100%`;
 				scanLinesEl.style.opacity = scanLinesOp;
 				scanLinesEl.style.position = "absolute";
-				scanLinesEl.style.left = _realCanvas.style.left;
-				scanLinesEl.style.top = _realCanvas.style.top;
-				scanLinesEl.style.width = _realCanvas.style.width;
-				scanLinesEl.style.height = _realCanvas.style.height;
+				scanLinesEl.style.left = beep8.Core.realCanvas.style.left;
+				scanLinesEl.style.top = beep8.Core.realCanvas.style.top;
+				scanLinesEl.style.width = beep8.Core.realCanvas.style.width;
+				scanLinesEl.style.height = beep8.Core.realCanvas.style.height;
 				scanLinesEl.style.zIndex = 1;
 
 			} else {
@@ -1538,19 +1067,29 @@ const beep8 = {};
 
 	}
 
+
+	//
 	let crashing = false;
 
+
+	/**
+	 * Handles a crash.
+	 *
+	 * @param {string} [errorMessage="Fatal error"] - The error message to display.
+	 * @returns {void}
+	 */
 	beep8.Core.handleCrash = function( errorMessage = "Fatal error" ) {
 
 		if ( crashed || crashing ) return;
+
 		crashing = true;
 
-		setColor( beep8.CONFIG.COLORS.length - 1, 0 );
-		cls();
+		beep8.Core.setColor( beep8.CONFIG.COLORS.length - 1, 0 );
+		beep8.Core.cls();
 
-		drawState.cursorCol = drawState.cursorRow = 1;
-		_textRenderer.print( "*** CRASH ***:\n" + errorMessage );
-		render();
+		beep8.Core.drawState.cursorCol = beep8.Core.drawState.cursorRow = 1;
+		beep8.Core.textRenderer.print( "*** CRASH ***:\n" + errorMessage );
+		beep8.Core.render();
 
 		crashing = false;
 		crashed = true;
@@ -1558,13 +1097,23 @@ const beep8 = {};
 	}
 
 
+	/**
+	 * Is this a mobile device?
+	 *
+	 * @returns {boolean} True if this is a mobile device.
+	 */
 	beep8.Core.isMobile = function() {
 
-		return isIOS() || isAndroid();
+		return beep8.Core.isIOS() || beep8.Core.isAndroid();
 
 	}
 
 
+	/**
+	 * Is this an iOS device?
+	 *
+	 * @returns {boolean} True if this is an iOS device.
+	 */
 	beep8.Core.isIOS = function() {
 
 		return /(ipad|ipod|iphone)/i.test( navigator.userAgent );
@@ -1572,6 +1121,11 @@ const beep8 = {};
 	}
 
 
+	/**
+	 * Is this an Android device?
+	 *
+	 * @returns {boolean} True if this is an Android device.
+	 */
 	beep8.Core.isAndroid = function() {
 
 		return /android/i.test( navigator.userAgent );
@@ -1582,15 +1136,19 @@ const beep8 = {};
 
 ( function( beep8 ) {
 
+
 	/**
 	 * beep8.CursorRenderer class handles the rendering and blinking of the cursor.
 	 */
 	beep8.CursorRenderer = class {
 
 		constructor() {
+
 			this.blinkCycle_ = 0;
 			this.toggleBlinkHandle_ = null;
+
 		}
+
 
 		/**
 		 * Sets the visibility of the cursor.
@@ -1600,12 +1158,14 @@ const beep8 = {};
 		 * @returns {void}
 		 */
 		setCursorVisible( visible ) {
+
 			beep8.Utilities.checkBoolean( "visible", visible );
 
 			// If the cursor is already in the desired state, do nothing.
 			if ( beep8.Core.drawState.cursorVisible === visible ) return;
 
 			beep8.Core.drawState.cursorVisible = visible;
+
 			this.blinkCycle_ = 0;
 			beep8.Core.render();
 
@@ -1621,17 +1181,23 @@ const beep8 = {};
 					beep8.CONFIG.CURSOR.BLINK_INTERVAL
 				);
 			}
+
 		}
+
 
 		/**
 		 * Advances the cursor blink cycle.
+		 *
 		 * @private
 		 * @returns {void}
 		 */
 		advanceBlink_() {
+
 			this.blinkCycle_ = ( this.blinkCycle_ + 1 ) % 2;
 			beep8.Core.render();
+
 		}
+
 
 		/**
 		 * Draws the cursor.
@@ -1645,6 +1211,7 @@ const beep8 = {};
 		 * @returns {void}
 		 */
 		drawCursor( targetCtx, canvasWidth, canvasHeight ) {
+
 			beep8.Utilities.checkInstanceOf( "targetCtx", targetCtx, CanvasRenderingContext2D );
 			beep8.Utilities.checkNumber( "canvasWidth", canvasWidth );
 			beep8.Utilities.checkNumber( "canvasHeight", canvasHeight );
@@ -1659,6 +1226,7 @@ const beep8 = {};
 				( beep8.Core.drawState.cursorCol + 0.5 - beep8.CONFIG.CURSOR.WIDTH_F / 2 + beep8.CONFIG.CURSOR.OFFSET_H ) *
 				beep8.CONFIG.CHR_WIDTH * ratio
 			);
+
 			const realY = Math.round(
 				( beep8.Core.drawState.cursorRow + 1 - beep8.CONFIG.CURSOR.HEIGHT_F - beep8.CONFIG.CURSOR.OFFSET_V ) *
 				beep8.CONFIG.CHR_HEIGHT * ratio
@@ -1671,8 +1239,11 @@ const beep8 = {};
 				Math.round( beep8.CONFIG.CURSOR.WIDTH_F * beep8.CONFIG.CHR_WIDTH * ratio ),
 				Math.round( beep8.CONFIG.CURSOR.HEIGHT_F * beep8.CONFIG.CHR_HEIGHT * ratio )
 			);
+
 		}
+
 	}
+
 
 } )( beep8 || ( beep8 = {} ) );
 
@@ -1684,6 +1255,7 @@ const beep8 = {};
 	beep8.Input = class {
 
 		constructor() {
+
 			// Keys currently held down (set of strings).
 			this.keysHeld_ = new Set();
 			// Keys that were just pressed in the current frame.
@@ -1692,7 +1264,9 @@ const beep8 = {};
 			// Bind event listeners to handle keydown and keyup events.
 			window.addEventListener( "keydown", e => this.onKeyDown( e ) );
 			window.addEventListener( "keyup", e => this.onKeyUp( e ) );
+
 		}
+
 
 		/**
 		 * Checks if a key is currently held down.
@@ -1701,8 +1275,11 @@ const beep8 = {};
 		 * @returns {boolean} Whether the key is currently held down.
 		 */
 		keyHeld( keyName ) {
+
 			return this.keysHeld_.has( keyName.toUpperCase() );
+
 		}
+
 
 		/**
 		 * Checks if a key was just pressed in the current frame.
@@ -1711,8 +1288,11 @@ const beep8 = {};
 		 * @returns {boolean} Whether the key was just pressed.
 		 */
 		keyJustPressed( keyName ) {
+
 			return this.keysJustPressed_.has( keyName.toUpperCase() );
+
 		}
+
 
 		/**
 		 * Clears the list of keys that were just pressed.
@@ -1721,8 +1301,11 @@ const beep8 = {};
 		 * @returns {void}
 		 */
 		onEndFrame() {
+
 			this.keysJustPressed_.clear();
+
 		}
+
 
 		/**
 		 * Handles keydown events, adding the key to the just pressed and held sets.
@@ -1732,13 +1315,16 @@ const beep8 = {};
 		 * @returns {void}
 		 */
 		onKeyDown( e ) {
+
 			this.keysJustPressed_.add( e.key.toUpperCase() );
 			this.keysHeld_.add( e.key.toUpperCase() );
 
-			if ( beep8.Core.hasPendingAsync( "beep8a.key" ) ) {
-				beep8.Core.resolveAsync( "beep8a.key", e.key );
+			if ( beep8.Core.hasPendingAsync( "beep8.Async.key" ) ) {
+				beep8.Core.resolveAsync( "beep8.Async.key", e.key );
 			}
+
 		}
+
 
 		/**
 		 * Handles keyup events, removing the key from the held set.
@@ -1747,8 +1333,11 @@ const beep8 = {};
 		 * @returns {void}
 		 */
 		onKeyUp( e ) {
+
 			this.keysHeld_.delete( e.key.toUpperCase() );
+
 		}
+
 
 		/**
 		 * Reads a key asynchronously. Returns a promise that resolves to the key that was pressed.
@@ -1756,10 +1345,15 @@ const beep8 = {};
 		 * @returns {Promise<string>} A promise that resolves to the key that was pressed.
 		 */
 		readKeyAsync() {
-			return new Promise( ( resolve, reject ) => {
-				beep8.Core.startAsync( "beep8a.key", resolve, reject );
-			} );
+
+			return new Promise(
+				( resolve, reject ) => {
+					beep8.Core.startAsync( "beep8.Async.key", resolve, reject );
+				}
+			);
+
 		}
+
 
 		/**
 		 * Reads a line of text asynchronously.
@@ -1785,6 +1379,7 @@ const beep8 = {};
 
 			// Loop until the user presses Enter.
 			while ( true ) {
+
 				beep8.Core.setCursorLocation( curCol, curRow );
 				beep8.Core.textRenderer.print( curStrings[ curPos ] || "" );
 				const key = await this.readKeyAsync();
@@ -1799,6 +1394,7 @@ const beep8 = {};
 						curPos--;
 						curRow--;
 					}
+
 					curStrings[ curPos ] = curStrings[ curPos ].length > 0 ? curStrings[ curPos ].substring( 0, curStrings[ curPos ].length - 1 ) : curStrings[ curPos ];
 					beep8.Core.setCursorLocation( curCol + curStrings[ curPos ].length, curRow );
 					beep8.Core.textRenderer.print( " " );
@@ -1811,6 +1407,7 @@ const beep8 = {};
 					return curStrings.join( "" );
 
 				} else if ( key.length === 1 ) {
+
 					// Handle regular character input.
 					if ( curStrings.join( "" ).length < maxLen || maxLen === -1 ) {
 						curStrings[ curPos ] += key;
@@ -1823,6 +1420,7 @@ const beep8 = {};
 							curRow++;
 						}
 					}
+
 				}
 			}
 		}
@@ -1854,7 +1452,7 @@ const beep8 = {};
 	 * @param {boolean} [options.cancelable=false] - Whether the menu can be canceled with the Escape key.
 	 * @returns {Promise<number>} A promise that resolves to the index of the selected choice.
 	 */
-	beep8.Menu.add = async function( choices, options ) {
+	beep8.Menu.display = async function( choices, options ) {
 
 		options = options || {};
 		beep8.Utilities.checkArray( "choices", choices );
@@ -1936,7 +1534,7 @@ const beep8 = {};
 				( startCol + border01 + options.padding ) :
 				( startCol + Math.round( ( totalCols - choicesCols ) / 2 ) );
 
-			printChoices( choices, selIndex, options );
+			beep8.Menu.printChoices( choices, selIndex, options );
 
 			const k = await beep8.Core.inputSys.readKeyAsync();
 
@@ -1980,6 +1578,618 @@ const beep8 = {};
 		beep8.Core.setColor( origFg, origBg );
 
 	}
+
+} )( beep8 || ( beep8 = {} ) );
+
+( function( beep8 ) {
+
+	/**
+	 * Initializes the API. This must be called before other functions and must
+	 * finish executing before other API functions are called.
+	 * Once the supplied callback is called, you can start using beep8 functions.
+	 *
+	 * @param {Function} callback - The callback to call when initialization is done.
+	 * @returns {void}
+	 */
+	beep8.init = function( callback ) {
+
+		return beep8.Core.init( callback );
+
+	}
+
+
+	/**
+	 * Sets the frame handler, that is, the function that will be called on
+	 * every frame to render the screen.
+	 *
+	 * @param {Function} handler - The frame handler function.
+	 * @param {number} [fps=30] - The target frames per second. Recommended: 30.
+	 * @returns {void}
+	 */
+	beep8.frame = function( handler, fps = 30 ) {
+
+		beep8.Core.preflight( "beep8.frame" );
+
+		if ( handler !== null ) {
+			beep8.Utilities.checkFunction( "handler", handler );
+		}
+
+		beep8.Utilities.checkNumber( "fps", fps );
+
+		return beep8.Core.setFrameHandler( handler, fps );
+
+	}
+
+
+	/**
+	 * Forces the screen to render right now. Useful for immediate redraw in
+	 * animations.
+	 * Forces the screen to render right now. You only need this if you are
+	 * doing some kind of animation on your own and you want to redraw the
+	 * screen immediately to show the current state.
+	 * Otherwise the screen repaints automatically when waiting for user input.
+	 *
+	 * @returns {void}
+	 */
+	beep8.render = function() {
+
+		beep8.Core.preflight( "beep8.render" );
+
+		return beep8.Core.render();
+
+	}
+
+
+	/**
+	 * Sets the foreground and/or background color.
+	 *
+	 * @param {number} fg - The foreground color.
+	 * @param {number} [bg] - The background color (optional).
+	 * @returns {void}
+	 */
+	beep8.color = function( fg, bg ) {
+
+		beep8.Core.preflight( "beep8.color" );
+		beep8.Utilities.checkNumber( "fg", fg );
+
+		if ( bg !== undefined ) {
+			beep8.Utilities.checkNumber( "bg", bg );
+		}
+
+		beep8.Core.setColor( fg, bg );
+
+	}
+
+
+	/**
+	 * Gets the current foreground color.
+	 *
+	 * @returns {number} The current foreground color.
+	 */
+	beep8.getFgColor = function() {
+
+		beep8.Core.preflight( "getFgColor" );
+
+		return beep8.Core.drawState.fgColor;
+
+	}
+
+
+	/**
+	 * Gets the current background color.
+	 * -1 means transparent.
+	 *
+	 * @returns {number} The current background color.
+	 */
+	beep8.getBgColor = function() {
+
+		beep8.Core.preflight( "beep8.getBgColor" );
+
+		return beep8.Core.drawState.bgColor;
+
+	}
+
+
+	/**
+	 * Clears the screen using the current background color.
+	 *
+	 * @returns {void}
+	 */
+	beep8.cls = function() {
+
+		beep8.Core.preflight( "beep8.Core.cls" );
+		beep8.Core.cls();
+
+	}
+
+
+	/**
+	 * Places the cursor at the given screen column and row.
+	 *
+	 * @param {number} col - The column where the cursor is to be placed.
+	 * @param {number} [row] - The row where the cursor is to be placed (optional).
+	 * @returns {void}
+	 */
+	beep8.locate = function( col, row ) {
+
+		beep8.Core.preflight( "beep8.locate" );
+		beep8.Utilities.checkNumber( "col", col );
+
+		if ( row !== undefined ) {
+			beep8.Utilities.checkNumber( "row", row );
+		}
+
+		beep8.Core.setCursorLocation( col, row );
+
+	}
+
+
+	/**
+	 * Returns the cursor's current column.
+	 *
+	 * @returns {number} The cursor's current column.
+	 */
+	beep8.col = function() {
+
+		beep8.Core.preflight( "col" );
+
+		return beep8.Core.drawState.cursorCol;
+
+	}
+
+
+	/**
+	 * Returns the cursor's current row.
+	 *
+	 * @returns {number} The cursor's current row.
+	 */
+	beep8.row = function() {
+
+		beep8.Core.preflight( "row" );
+
+		return beep8.Core.drawState.cursorRow;
+
+	}
+
+
+	/**
+	 * Shows or hides the cursor.
+	 *
+	 * @param {boolean} visible - If true, show the cursor. If false, hide the
+	 * cursor.
+	 * @returns {void}
+	 */
+	beep8.cursor = function( visible ) {
+
+		beep8.Core.preflight( "cursor" );
+		beep8.Utilities.checkBoolean( "visible", visible );
+		beep8.Core.cursorRenderer.setCursorVisible( visible );
+
+	}
+
+
+	/**
+	 * Prints text at the cursor position, using the current foreground and
+	 * background colors.
+	 *
+	 * The text can contain embedded newlines and they will behave as you expect:
+	 * printing will continue at the next line.
+	 *
+	 * If PRINT_ESCAPE_START and PRINT_ESCAPE_END are defined in CONFIG, then
+	 * you can also use escape sequences. For example {{c1}} sets the color to
+	 * 1, so your string can be "I like the color {{c1}}blue" and the word
+	 * 'blue' would be in blue. The sequence {{b2}} sets the background to 2
+	 * (red). The sequence {{z}} resets the color to the default. See
+	 * example-printing.html for an example.
+	 *
+	 * @param {string} text - The text to print.
+	 * @returns {void}
+	 */
+	beep8.print = function( text ) {
+
+		beep8.Core.preflight( "beep8.text" );
+		beep8.Utilities.checkString( "text", text );
+		beep8.Core.textRenderer.print( text );
+
+	}
+
+
+	/**
+	 * Prints text centered horizontally in a field of the given width.
+	 *
+	 * If the text is bigger than the width, it will overflow it.
+	 *
+	 * @param {string} text - The text to print.
+	 * @param {number} width - The width of the field, in characters.
+	 * @returns {void}
+	 */
+	beep8.printCentered = function( text, width ) {
+
+		beep8.Core.preflight( "beep8.printCentered" );
+		beep8.Utilities.checkString( "text", text );
+		beep8.Utilities.checkNumber( "width", width );
+		beep8.Core.textRenderer.printCentered( text, width );
+
+	}
+
+
+	/**
+	 * Draws text at an arbitrary pixel position on the screen, not following
+	 * the "row and column" system.
+	 *
+	 * @param {number} x - The X coordinate of the top-left of the text.
+	 * @param {number} y - The Y coordinate of the top-left of the text.
+	 * @param {string} text - The text to print.
+	 * @param {string} [fontId=null] - The font ID to use.
+	 * @returns {void}
+	 */
+	beep8.drawText = function( x, y, text, fontId = null ) {
+
+		beep8.Core.preflight( "beep8.drawText" );
+		beep8.Utilities.checkNumber( "x", x );
+		beep8.Utilities.checkNumber( "y", y );
+		beep8.Utilities.checkString( "text", text );
+
+		if ( fontId ) {
+			beep8.Utilities.checkString( "fontId", fontId );
+		}
+
+		beep8.Core.textRenderer.drawText( x, y, text, fontId );
+
+	}
+
+
+	/**
+	 * Measures the size of the given text without printing it.
+	 *
+	 * @param {string} text - The text to measure.
+	 * @returns {Object} An object with {cols, rows} indicating the dimensions.
+	 */
+	beep8.measure = function( text ) {
+
+		beep8.Core.preflight( "measure" );
+		beep8.Utilities.checkString( "text", text );
+
+		return beep8.Core.textRenderer.measure( text );
+
+	}
+
+
+	/**
+	 * Prints a character at the current cursor position, advancing the cursor
+	 * position.
+	 *
+	 * @param {number|string} charCode - The character to print, as an integer
+	 * (ASCII code) or a one-character string.
+	 * @param {number} [numTimes=1] - How many times to print the character.
+	 * @returns {void}
+	 */
+	beep8.printChar = function( charCode, numTimes = 1 ) {
+
+		beep8.Core.preflight( "beep8.printChar" );
+		charCode = beep8.convChar( charCode );
+		beep8.Utilities.checkNumber( "charCode", charCode );
+		beep8.Utilities.checkNumber( "numTimes", numTimes );
+		beep8.Core.textRenderer.printChar( charCode, numTimes );
+
+	}
+
+
+	/**
+	 * Prints a rectangle of the given size with the given character, starting
+	 * at the current cursor position.
+	 *
+	 * @param {number} widthCols - Width of the rectangle in screen columns.
+	 * @param {number} heightRows - Height of the rectangle in screen rows.
+	 * @param {number|string} [charCode=32] - The character to print, as an
+	 * integer (ASCII code) or a one-character string.
+	 * @returns {void}
+	 */
+	beep8.printRect = function( widthCols, heightRows, charCode = 32 ) {
+
+		beep8.Core.preflight( "beep8.printRect" );
+		charCode = beep8.convChar( charCode );
+		beep8.Utilities.checkNumber( "widthCols", widthCols );
+		beep8.Utilities.checkNumber( "heightRows", heightRows );
+		beep8.Utilities.checkNumber( "charCode", charCode );
+		beep8.Core.textRenderer.printRect( widthCols, heightRows, charCode );
+
+	}
+
+
+	/**
+	 * Prints a box of the given size starting at the cursor position, using
+	 * border-drawing characters.
+	 *
+	 * @param {number} widthCols - Width of the box in screen columns, including
+	 * the border.
+	 * @param {number} heightRows - Height of the box in screen rows, including
+	 * the border.
+	 * @param {boolean} [fill=true] - If true, fill the interior with spaces.
+	 * @param {number} [borderChar=0x80] - The first border-drawing character to
+	 * use.
+	 * @returns {void}
+	 */
+	beep8.printBox = function( widthCols, heightRows, fill = true, borderChar = 0x80 ) {
+
+		beep8.Core.preflight( "beep8.printBox" );
+		borderChar = beep8.convChar( borderChar );
+		beep8.Utilities.checkNumber( "widthCols", widthCols );
+		beep8.Utilities.checkNumber( "heightRows", heightRows );
+		beep8.Utilities.checkBoolean( "fill", fill );
+		beep8.Utilities.checkNumber( "borderChar", borderChar );
+		beep8.Core.textRenderer.printBox( widthCols, heightRows, fill, borderChar );
+
+	}
+
+
+	/**
+	 * Draws an image (previously loaded with beep8.loadImage).
+	 *
+	 * @param {number} x - The X coordinate of the top-left of the image.
+	 * @param {number} y - The Y coordinate of the top-left of the image.
+	 * @param {HTMLImageElement} image - The image to draw.
+	 * @returns {void}
+	 */
+	beep8.drawImage = function( x, y, image ) {
+
+		beep8.Utilities.checkInstanceOf( "image", image, HTMLImageElement );
+		beep8.Utilities.checkNumber( "x", x );
+		beep8.Utilities.checkNumber( "y", y );
+
+		beep8.Core.drawImage( image, x, y );
+
+	}
+
+
+	/**
+	 * Draws a rectangular part of an image (previously loaded with
+	 * beep8.loadImage).
+	 *
+	 * @param {number} x - The X coordinate of the top-left of the image.
+	 * @param {number} y - The Y coordinate of the top-left of the image.
+	 * @param {HTMLImageElement} image - The image to draw.
+	 * @param {number} srcX - The X coordinate of the top-left of the rectangle
+	 * to be drawn.
+	 * @param {number} srcY - The Y coordinate of the top-left of the rectangle
+	 * to be drawn.
+	 * @param {number} width - The width in pixels of the rectangle to be drawn.
+	 * @param {number} height - The height in pixels of the rectangle to be
+	 * drawn.
+	 * @returns {void}
+	 */
+	beep8.drawImageRect = function( x, y, image, srcX, srcY, width, height ) {
+
+		beep8.Utilities.checkInstanceOf( "image", image, HTMLImageElement );
+		beep8.Utilities.checkNumber( "x", x );
+		beep8.Utilities.checkNumber( "y", y );
+		beep8.Utilities.checkNumber( "srcX", srcX );
+		beep8.Utilities.checkNumber( "srcY", srcY );
+		beep8.Utilities.checkNumber( "width", width );
+		beep8.Utilities.checkNumber( "height", height );
+
+		beep8.Core.drawImage( image, x, y, srcX, srcY, width, height );
+
+	}
+
+
+	/**
+	 * Draws a rectangle (border only) using the current foreground color.
+	 *
+	 * @param {number} x - The X coordinate of the top-left corner.
+	 * @param {number} y - The Y coordinate of the top-left corner.
+	 * @param {number} width - The width of the rectangle in pixels.
+	 * @param {number} height - The height of the rectangle in pixels.
+	 * @returns {void}
+	 */
+	beep8.drawRect = function( x, y, width, height ) {
+
+		beep8.Utilities.checkNumber( "x", x );
+		beep8.Utilities.checkNumber( "y", y );
+		beep8.Utilities.checkNumber( "width", width );
+		beep8.Utilities.checkNumber( "height", height );
+
+		beep8.Core.drawRect( x, y, width, height );
+
+	}
+
+
+	/**
+	 * Draws a filled rectangle using the current foreground color.
+	 *
+	 * @param {number} x - The X coordinate of the top-left corner.
+	 * @param {number} y - The Y coordinate of the top-left corner.
+	 * @param {number} width - The width of the rectangle in pixels.
+	 * @param {number} height - The height of the rectangle in pixels.
+	 * @returns {void}
+	 */
+	beep8.fillRect = function( x, y, width, height ) {
+
+		beep8.Utilities.checkNumber( "x", x );
+		beep8.Utilities.checkNumber( "y", y );
+		beep8.Utilities.checkNumber( "width", width );
+		beep8.Utilities.checkNumber( "height", height );
+
+		beep8.Core.fillRect( x, y, width, height );
+
+	}
+
+
+	/**
+	 * Plays a sound (previously loaded with beep8.playSound).
+	 *
+	 * @param {HTMLAudioElement} sfx - The sound to play.
+	 * @param {number} [volume=1] - The volume to play the sound at.
+	 * @param {boolean} [loop=false] - If true, play the sound in a loop.
+	 * @returns {void}
+	 */
+	beep8.playSound = function( sfx, volume = 1, loop = false ) {
+
+		beep8.Utilities.checkInstanceOf( "sfx", sfx, HTMLAudioElement );
+
+		sfx.currentTime = 0;
+		sfx.volume = volume;
+		sfx.loop = loop;
+
+		sfx.play();
+
+	}
+
+
+	/**
+	 * Draws a sprite on the screen.
+	 *
+	 * @param {number|string} ch - The character code of the sprite.
+	 * @param {number} x - The X position at which to draw.
+	 * @param {number} y - The Y position at which to draw.
+	 * @returns {void}
+	 */
+	beep8.spr = function( ch, x, y ) {
+
+		ch = beep8.convChar( ch );
+		beep8.Utilities.checkNumber( "ch", ch );
+		beep8.Utilities.checkNumber( "x", x );
+		beep8.Utilities.checkNumber( "y", y );
+
+		beep8.Core.textRenderer.spr( ch, x, y );
+
+	}
+
+
+	/**
+	 * Checks if the given key is currently pressed or not.
+	 *
+	 * @param {string} keyName - The name of the key.
+	 * @returns {boolean} True if the key is pressed, otherwise false.
+	 */
+	beep8.key = function( keyName ) {
+
+		beep8.Core.preflight( "beep8.key" );
+
+		beep8.Utilities.checkString( "keyName", keyName );
+
+		return beep8.Core.inputSys.keyHeld( keyName );
+
+	}
+
+
+	/**
+	 * Checks if the given key was JUST pressed on this frame.
+	 *
+	 * @param {string} keyName - The name of the key.
+	 * @returns {boolean} True if the key was just pressed, otherwise false.
+	 */
+	beep8.keyp = function( keyName ) {
+
+		beep8.Core.preflight( "beep8.keyp" );
+		beep8.Utilities.checkString( "keyName", keyName );
+
+		return beep8.Core.inputSys.keyJustPressed( keyName );
+
+	}
+
+
+	/**
+	 * Redefines the colors, assigning new RGB values to each color.
+	 *
+	 * @param {Array<number>} colors - An array of RGB values.
+	 * @returns {void}
+	 */
+	beep8.redefineColors = function( colors ) {
+
+		beep8.Core.preflight( "beep8.redefineColors" );
+		beep8.Utilities.checkArray( "colors", colors );
+		beep8.Core.defineColors( colors );
+
+	}
+
+
+	/**
+	 * Sets the current font for text-based operations.
+	 *
+	 * @param {string} [fontId="default"] - The font ID to set. Pass null or
+	 * omit to reset to default font.
+	 * @returns {void}
+	 */
+	beep8.setFont = function( fontId ) {
+
+		beep8.Core.preflight( "beep8.setFont" );
+		fontId = fontId || "default";
+		beep8.Utilities.checkString( "fontId", fontId );
+		beep8.Core.textRenderer.setFont( fontId );
+
+	}
+
+
+	/**
+	 * Converts a character code to its integer representation if needed.
+	 *
+	 * @param {number|string} charCode - The character code to convert.
+	 * @returns {number} The integer representation of the character code.
+	 */
+	beep8.convChar = function( charCode ) {
+
+		if ( typeof ( charCode ) === "string" && charCode.length > 0 ) {
+			return charCode.charCodeAt( 0 );
+		}
+
+		return charCode;
+
+	}
+
+
+	/**
+	 * Stops a sound (previously loaded with beep8.playSound).
+	 *
+	 * @param {HTMLAudioElement} sfx - The sound to stop playing.
+	 * @returns {void}
+	 */
+	beep8.stopSound = function( sfx ) {
+
+		beep8.Utilities.checkInstanceOf( "sfx", sfx, HTMLAudioElement );
+		sfx.currentTime = 0;
+		sfx.pause();
+
+	}
+
+
+	/**
+	 * Returns the raw canvas 2D context for drawing.
+	 *
+	 * @returns {CanvasRenderingContext2D} The raw HTML 2D canvas context.
+	 */
+	beep8.getContext = function() {
+
+		return beep8.Core.getContext();
+
+	}
+
+
+	/**
+	 * Saves the contents of the screen into an ImageData object and returns it.
+	 *
+	 * @returns {ImageData} An ImageData object with the screen's contents.
+	 */
+	beep8.saveScreen = function() {
+
+		return beep8.Core.saveScreen();
+
+	}
+
+
+	/**
+	 * Restores the contents of the screen using an ImageData object.
+	 *
+	 * @param {ImageData} screenData - The ImageData object with the screen's
+	 * contents.
+	 * @returns {void}
+	 */
+	beep8.restoreScreen = function( screenData ) {
+
+		return beep8.Core.restoreScreen( screenData );
+
+	}
+
 
 } )( beep8 || ( beep8 = {} ) );
 
@@ -2579,11 +2789,13 @@ const beep8 = {};
 	beep8.Utilities.fatal = function( error ) {
 
 		console.error( "Fatal error: " + error );
+
 		try {
 			beep8.Core.handleCrash( error );
 		} catch ( e ) {
 			console.error( "Error in beep8.Core.handleCrash: " + e + " while handling error " + error );
 		}
+
 		throw new Error( "Error: " + error );
 
 	}
@@ -2615,14 +2827,19 @@ const beep8 = {};
 	 * @returns {boolean} The 'cond' parameter.
 	 */
 	beep8.Utilities.assertDebug = function( cond, msg ) {
+
 		if ( !cond ) {
+
 			if ( beep8.CONFIG.DEBUG ) {
 				warn( "DEBUG ASSERT failed: " + msg );
 			} else {
 				beep8.Utilities.fatal( msg );
 			}
+
 		}
+
 		return cond;
+
 	}
 
 
@@ -2635,10 +2852,13 @@ const beep8 = {};
 	 * @returns {any} The 'actual' parameter.
 	 */
 	beep8.Utilities.assertEquals = function( expected, actual, what ) {
+
 		if ( expected !== actual ) {
 			beep8.Utilities.fatal( `${what}: expected ${expected} but got ${actual}` );
 		}
+
 		return actual;
+
 	}
 
 
@@ -2658,6 +2878,7 @@ const beep8 = {};
 			typeof ( varValue ) === varType,
 			`${varName} should be of type ${varType} but was ${typeof ( varValue )}: ${varValue}`
 		);
+
 		return varValue;
 
 	}
@@ -2864,6 +3085,7 @@ const beep8 = {};
 				xhr.send();
 
 			}
+
 		);
 
 	}
@@ -2893,13 +3115,15 @@ const beep8 = {};
 	 */
 	beep8.Utilities.randomInt = function( lowInclusive, highInclusive ) {
 
-		checkNumber( "lowInclusive", lowInclusive );
-		checkNumber( "highInclusive", highInclusive );
+		beep8.Utilities.checkNumber( "lowInclusive", lowInclusive );
+		beep8.Utilities.checkNumber( "highInclusive", highInclusive );
 
 		lowInclusive = Math.round( lowInclusive );
 		highInclusive = Math.round( highInclusive );
 
-		if ( highInclusive <= lowInclusive ) return lowInclusive;
+		if ( highInclusive <= lowInclusive ) {
+			return lowInclusive;
+		}
 
 		return clamp(
 			Math.floor(
@@ -2918,8 +3142,11 @@ const beep8 = {};
 	 * @returns {any} A randomly picked element of the array, or null if the array is empty.
 	 */
 	beep8.Utilities.randomPick = function( array ) {
-		checkArray( "array", array );
+
+		beep8.Utilities.checkArray( "array", array );
+
 		return array.length > 0 ? array[ randomInt( 0, array.length - 1 ) ] : null;
+
 	}
 
 
@@ -2932,7 +3159,7 @@ const beep8 = {};
 	 */
 	beep8.Utilities.shuffleArray = function( array ) {
 
-		checkArray( "array", array );
+		beep8.Utilities.checkArray( "array", array );
 
 		array = array.slice();
 
@@ -2959,10 +3186,10 @@ const beep8 = {};
 	 */
 	beep8.Utilities.dist2d = function( x0, y0, x1, y1 ) {
 
-		checkNumber( "x0", x0 );
-		checkNumber( "y0", y0 );
-		checkNumber( "x1", x1 );
-		checkNumber( "y1", y1 );
+		beep8.Utilities.checkNumber( "x0", x0 );
+		beep8.Utilities.checkNumber( "y0", y0 );
+		beep8.Utilities.checkNumber( "x1", x1 );
+		beep8.Utilities.checkNumber( "y1", y1 );
 
 		const dx = x0 - x1;
 		const dy = y0 - y1;
@@ -2984,10 +3211,10 @@ const beep8 = {};
 	 */
 	beep8.Utilities.intersectIntervals = function( as, ae, bs, be, result = null ) {
 
-		checkNumber( "as", as );
-		checkNumber( "ae", ae );
-		checkNumber( "bs", bs );
-		checkNumber( "be", be );
+		beep8.Utilities.checkNumber( "as", as );
+		beep8.Utilities.checkNumber( "ae", ae );
+		beep8.Utilities.checkNumber( "bs", bs );
+		beep8.Utilities.checkNumber( "be", be );
 
 		if ( result ) checkObject( "result", result );
 
@@ -3021,22 +3248,24 @@ const beep8 = {};
 	 */
 	beep8.Utilities.intersectRects = function( r1, r2, dx1 = 0, dy1 = 0, dx2 = 0, dy2 = 0, result = null ) {
 
-		checkObject( "r1", r1 );
-		checkObject( "r2", r2 );
-		checkNumber( "r1.x", r1.x );
-		checkNumber( "r1.y", r1.y );
-		checkNumber( "r1.w", r1.w );
-		checkNumber( "r1.h", r1.h );
-		checkNumber( "r2.x", r2.x );
-		checkNumber( "r2.y", r2.y );
-		checkNumber( "r2.w", r2.w );
-		checkNumber( "r2.h", r2.h );
-		checkNumber( "dx1", dx1 );
-		checkNumber( "dx2", dx2 );
-		checkNumber( "dy1", dy1 );
-		checkNumber( "dy2", dy2 );
+		beep8.Utilities.checkObject( "r1", r1 );
+		beep8.Utilities.checkObject( "r2", r2 );
+		beep8.Utilities.checkNumber( "r1.x", r1.x );
+		beep8.Utilities.checkNumber( "r1.y", r1.y );
+		beep8.Utilities.checkNumber( "r1.w", r1.w );
+		beep8.Utilities.checkNumber( "r1.h", r1.h );
+		beep8.Utilities.checkNumber( "r2.x", r2.x );
+		beep8.Utilities.checkNumber( "r2.y", r2.y );
+		beep8.Utilities.checkNumber( "r2.w", r2.w );
+		beep8.Utilities.checkNumber( "r2.h", r2.h );
+		beep8.Utilities.checkNumber( "dx1", dx1 );
+		beep8.Utilities.checkNumber( "dx2", dx2 );
+		beep8.Utilities.checkNumber( "dy1", dy1 );
+		beep8.Utilities.checkNumber( "dy2", dy2 );
 
-		if ( result ) checkObject( "result", result );
+		if ( result ) {
+			checkObject( "result", result );
+		}
 
 		const xint = intersectRects_xint;
 		const yint = intersectRects_yint;
