@@ -645,7 +645,7 @@ const beep8 = {};
 		timeToNextFrame = 0;
 
 		if ( !animFrameRequested ) {
-			window.requestAnimationFrame( doFrame );
+			window.requestAnimationFrame( beep8.Core.doFrame );
 		}
 
 	}
@@ -795,7 +795,7 @@ const beep8 = {};
 	 */
 	beep8.Core.getNow = function() {
 
-		if ( window.performace.now ) {
+		if ( window.performance && window.performance.now ) {
 			return window.performance.now();
 		}
 
@@ -921,34 +921,57 @@ const beep8 = {};
 
 	/**
 	 * Run the game loop.
+	 * This function ensures we stay as close to the target frame rate as
+	 * possible.
 	 *
 	 * @returns {void}
 	 */
 	beep8.Core.doFrame = async function() {
 
+		// Flag to track if an animation frame has been requested is reset
 		animFrameRequested = false;
 
-		const now = getNow();
-		_deltaTime = lastFrameTime !== null ? 0.001 * ( now - lastFrameTime ) : ( 1 / 60.0 );
-		_deltaTime = Math.min( _deltaTime, 0.05 );
+		// Get the current time
+		const now = beep8.Core.getNow();
+
+		// Calculate the time difference between the current and last frame, or use a default value if this is the first frame
+		beep8.Core.deltaTime = lastFrameTime !== null ? 0.001 * ( now - lastFrameTime ) : ( 1 / 60.0 );
+
+		// Cap the delta time to prevent large time steps (e.g., if the browser tab was inactive)
+		beep8.Core.deltaTime = Math.min( beep8.Core.deltaTime, 0.05 );
+
+		// Update the last frame time to the current time
 		lastFrameTime = now;
 
-		timeToNextFrame += _deltaTime;
+		// Accumulate the time to the next frame
+		timeToNextFrame += beep8.Core.deltaTime;
 
+		// Initialize the counter for the number of frames processed in this loop
 		let numFramesDone = 0;
 
+		// Process frames while there is a frame handler, the number of processed frames is less than 4, and the accumulated time exceeds the target interval
+		// This helps to catch up with missed frames.
 		while ( frameHandler && numFramesDone < 4 && timeToNextFrame > frameHandlerTargetInterval ) {
+			// Await the frame handler's completion
 			await frameHandler();
+
+			// Call the input system's end frame handler
 			beep8.Core.inputSys.onEndFrame();
+
+			// Decrease the accumulated time by the target interval
 			timeToNextFrame -= frameHandlerTargetInterval;
+
+			// Increment the count of processed frames
 			++numFramesDone;
 		}
 
+		// Call the render function to update the visuals
 		beep8.Core.render();
 
+		// If there is a frame handler, request the next animation frame
 		if ( frameHandler ) {
 			animFrameRequested = true;
-			window.requestAnimationFrame( doFrame );
+			window.requestAnimationFrame( beep8.Core.doFrame );
 		}
 
 	}
@@ -3145,7 +3168,7 @@ const beep8 = {};
 
 		beep8.Utilities.checkArray( "array", array );
 
-		return array.length > 0 ? array[ randomInt( 0, array.length - 1 ) ] : null;
+		return array.length > 0 ? array[ beep8.Utilities.randomInt( 0, array.length - 1 ) ] : null;
 
 	}
 
@@ -3164,7 +3187,7 @@ const beep8 = {};
 		array = array.slice();
 
 		for ( let i = 0; i < array.length; i++ ) {
-			const j = randomInt( 0, array.length - 1 );
+			const j = beep8.Utilities.randomInt( 0, array.length - 1 );
 			const tmp = array[ i ];
 			array[ i ] = array[ j ];
 			array[ j ] = tmp;
@@ -3216,7 +3239,9 @@ const beep8 = {};
 		beep8.Utilities.checkNumber( "bs", bs );
 		beep8.Utilities.checkNumber( "be", be );
 
-		if ( result ) checkObject( "result", result );
+		if ( result ) {
+			beep8.Utilities.checkObject( "result", result );
+		}
 
 		const start = Math.max( as, bs );
 		const end = Math.min( ae, be );
@@ -3271,7 +3296,7 @@ const beep8 = {};
 		const yint = intersectRects_yint;
 
 		if (
-			!intersectIntervals(
+			!beep8.Utilities.intersectIntervals(
 				r1.x + dx1,
 				r1.x + dx1 + r1.w - 1,
 				r2.x + dx2,
@@ -3282,7 +3307,7 @@ const beep8 = {};
 		}
 
 		if (
-			!intersectIntervals(
+			!beep8.Utilities.intersectIntervals(
 				r1.y + dy1,
 				r1.y + dy1 + r1.h - 1,
 				r2.y + dy2,
@@ -3329,10 +3354,10 @@ const beep8 = {};
 	 * @type {string}
 	 */
 	const LEFT_VJOY_HTML = `
-		<div id='vjoy-button-up' class='vjoy-button'></div>
-		<div id='vjoy-button-down' class='vjoy-button'></div>
-		<div id='vjoy-button-left' class='vjoy-button'></div>
-		<div id='vjoy-button-right' class='vjoy-button'></div>
+<div id='vjoy-button-up' class='vjoy-button'></div>
+<div id='vjoy-button-down' class='vjoy-button'></div>
+<div id='vjoy-button-left' class='vjoy-button'></div>
+<div id='vjoy-button-right' class='vjoy-button'></div>
 	`;
 
 
@@ -3343,9 +3368,9 @@ const beep8 = {};
 	 * @type {string}
 	 */
 	const RIGHT_VJOY_HTML = `
-		<div id='vjoy-button-pri' class='vjoy-button'>A</div>
-		<div id='vjoy-button-sec' class='vjoy-button'>B</div>
-		<div id='vjoy-button-ter' class='vjoy-button'>=</div>
+<div id='vjoy-button-pri' class='vjoy-button'>A</div>
+<div id='vjoy-button-sec' class='vjoy-button'>B</div>
+<div id='vjoy-button-ter' class='vjoy-button'>=</div>
 	`;
 
 
@@ -3355,128 +3380,128 @@ const beep8 = {};
 	 * @type {string}
 	 */
 	const VJOY_CSS = `
-		* {
-			user-select: none;
-			-webkit-user-select: none;
-			-webkit-touch-callout: none;
-		}
+* {
+	user-select: none;
+	-webkit-user-select: none;
+	-webkit-touch-callout: none;
+}
 
-		#vjoy-scrim {
-			position: fixed;
-			left: 0;
-			right: 0;
-			bottom: 0;
-			top: 0;
-			pointer-events: all;
-		}
+#vjoy-scrim {
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	top: 0;
+	pointer-events: all;
+}
 
-		#vjoy-container-left {
-			box-sizing: border-box;
-			position: fixed;
-			bottom: 16px;
-			left: 16px;
-			width: 40vmin;
-			height: 40vmin;
-			user-select: none;
-			touch-callout: none;
-			-webkit-user-select: none;
-			-webkit-touch-callout: none;
-		}
+#vjoy-container-left {
+	box-sizing: border-box;
+	position: fixed;
+	bottom: 16px;
+	left: 16px;
+	width: 40vmin;
+	height: 40vmin;
+	user-select: none;
+	touch-callout: none;
+	-webkit-user-select: none;
+	-webkit-touch-callout: none;
+}
 
-		#vjoy-container-right {
-			box-sizing: border-box;
-			position: fixed;
-			bottom: 16px;
-			right: 16px;
-			width: 40vmin;
-			height: 40vmin;
-			user-select: none;
-			touch-callout: none;
-			-webkit-user-select: none;
-			-webkit-touch-callout: none;
-		}
+#vjoy-container-right {
+	box-sizing: border-box;
+	position: fixed;
+	bottom: 16px;
+	right: 16px;
+	width: 40vmin;
+	height: 40vmin;
+	user-select: none;
+	touch-callout: none;
+	-webkit-user-select: none;
+	-webkit-touch-callout: none;
+}
 
-		.vjoy-button {
-			display: flex;
-			flex-direction: row;
-			align-items: center;
-			justify-content: center;
-			background: #444;
-			border: none;
-			font: bold 14px monospace;
-			color: #888;
-			user-select: none;
-			touch-callout: none;
-			-webkit-user-select: none;
-			-webkit-touch-callout: none;
-		}
-		.vjoy-button:active {
-			background: #888;
-		}
+.vjoy-button {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	background: #444;
+	border: none;
+	font: bold 14px monospace;
+	color: #888;
+	user-select: none;
+	touch-callout: none;
+	-webkit-user-select: none;
+	-webkit-touch-callout: none;
+}
+.vjoy-button:active {
+	background: #888;
+}
 
-		#vjoy-button-up {
-			position: absolute;
-			left: 30%;
-			top: 0px;
-			width: 40%;
-			height: 45%;
-			border-radius: 0px 0px 50% 50%;
-		}
+#vjoy-button-up {
+	position: absolute;
+	left: 30%;
+	top: 0px;
+	width: 40%;
+	height: 45%;
+	border-radius: 0px 0px 50% 50%;
+}
 
-		#vjoy-button-down {
-			position: absolute;
-			left: 30%;
-			bottom: 0px;
-			width: 40%;
-			height: 45%;
-			border-radius: 50% 50% 0px 0px;
-		}
+#vjoy-button-down {
+	position: absolute;
+	left: 30%;
+	bottom: 0px;
+	width: 40%;
+	height: 45%;
+	border-radius: 50% 50% 0px 0px;
+}
 
-		#vjoy-button-left {
-			position: absolute;
-			left: 0px;
-			bottom: 30%;
-			width: 45%;
-			height: 40%;
-			border-radius: 0px 50% 50% 0px;
-		}
+#vjoy-button-left {
+	position: absolute;
+	left: 0px;
+	bottom: 30%;
+	width: 45%;
+	height: 40%;
+	border-radius: 0px 50% 50% 0px;
+}
 
-		#vjoy-button-right {
-			position: absolute;
-			right: 0px;
-			bottom: 30%;
-			width: 45%;
-			height: 40%;
-			border-radius: 50% 0px 0px 50%;
-		}
+#vjoy-button-right {
+	position: absolute;
+	right: 0px;
+	bottom: 30%;
+	width: 45%;
+	height: 40%;
+	border-radius: 50% 0px 0px 50%;
+}
 
-		#vjoy-button-pri {
-			position: absolute;
-			right: 0px;
-			top: 30%;
-			width: 50%;
-			height: 50%;
-			border-radius: 50%;
-		}
+#vjoy-button-pri {
+	position: absolute;
+	right: 0px;
+	top: 30%;
+	width: 50%;
+	height: 50%;
+	border-radius: 50%;
+}
 
-		#vjoy-button-sec {
-			position: absolute;
-			left: 0px;
-			top: 30%;
-			width: 50%;
-			height: 50%;
-			border-radius: 50%;
-		}
+#vjoy-button-sec {
+	position: absolute;
+	left: 0px;
+	top: 30%;
+	width: 50%;
+	height: 50%;
+	border-radius: 50%;
+}
 
-		#vjoy-button-ter {
-			position: fixed;
-			right: 0px;
-			bottom: 0px;
-			width: 10vw;
-			height: 8vmin;
-			border-radius: 8px;
-			opacity: 0.5;
-		}
+#vjoy-button-ter {
+	position: fixed;
+	right: 0px;
+	bottom: 0px;
+	width: 10vw;
+	height: 8vmin;
+	border-radius: 8px;
+	opacity: 0.5;
+}
 	`;
 
 
