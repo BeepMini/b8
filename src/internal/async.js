@@ -95,7 +95,7 @@
 		beep8.Core.preflight( "beep8.Async.wait" );
 
 		beep8.Utilities.checkNumber( "seconds", seconds );
-		beep8.render();
+		beep8.Core.render();
 
 		return await new Promise( resolve => setTimeout( resolve, Math.round( seconds * 1000 ) ) );
 
@@ -140,7 +140,7 @@
 			beep8.print( text.substring( 0, i ) );
 
 			if ( c !== 32 ) {
-				await wait( delay );
+				await beep8.Async.wait( delay );
 			}
 
 		}
