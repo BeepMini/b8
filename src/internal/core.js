@@ -301,7 +301,7 @@
 		timeToNextFrame = 0;
 
 		if ( !animFrameRequested ) {
-			window.requestAnimationFrame( doFrame );
+			window.requestAnimationFrame( beep8.Core.doFrame );
 		}
 
 	}
@@ -451,7 +451,7 @@
 	 */
 	beep8.Core.getNow = function() {
 
-		if ( window.performace.now ) {
+		if ( window.performance && window.performance.now ) {
 			return window.performance.now();
 		}
 
@@ -604,7 +604,7 @@
 
 		if ( frameHandler ) {
 			animFrameRequested = true;
-			window.requestAnimationFrame( doFrame );
+			window.requestAnimationFrame( beep8.Core.doFrame );
 		}
 
 	}

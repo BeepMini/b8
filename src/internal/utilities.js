@@ -366,7 +366,7 @@
 
 		beep8.Utilities.checkArray( "array", array );
 
-		return array.length > 0 ? array[ randomInt( 0, array.length - 1 ) ] : null;
+		return array.length > 0 ? array[ beep8.Utilities.randomInt( 0, array.length - 1 ) ] : null;
 
 	}
 
@@ -385,7 +385,7 @@
 		array = array.slice();
 
 		for ( let i = 0; i < array.length; i++ ) {
-			const j = randomInt( 0, array.length - 1 );
+			const j = beep8.Utilities.randomInt( 0, array.length - 1 );
 			const tmp = array[ i ];
 			array[ i ] = array[ j ];
 			array[ j ] = tmp;
@@ -437,7 +437,9 @@
 		beep8.Utilities.checkNumber( "bs", bs );
 		beep8.Utilities.checkNumber( "be", be );
 
-		if ( result ) checkObject( "result", result );
+		if ( result ) {
+			beep8.Utilities.checkObject( "result", result );
+		}
 
 		const start = Math.max( as, bs );
 		const end = Math.min( ae, be );
@@ -492,7 +494,7 @@
 		const yint = intersectRects_yint;
 
 		if (
-			!intersectIntervals(
+			!beep8.Utilities.intersectIntervals(
 				r1.x + dx1,
 				r1.x + dx1 + r1.w - 1,
 				r2.x + dx2,
@@ -503,7 +505,7 @@
 		}
 
 		if (
-			!intersectIntervals(
+			!beep8.Utilities.intersectIntervals(
 				r1.y + dy1,
 				r1.y + dy1 + r1.h - 1,
 				r2.y + dy2,
