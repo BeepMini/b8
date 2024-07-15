@@ -60,7 +60,7 @@
 		beep8.Utilities.checkArray( "choices", choices );
 		beep8.Utilities.checkObject( "options", options );
 
-		return await beep8.menu.display( choices, options );
+		return await beep8.Menu.display( choices, options );
 
 	}
 
@@ -79,7 +79,7 @@
 		beep8.Utilities.checkString( "prompt", prompt );
 		beep8.Utilities.checkArray( "choices", choices );
 
-		return menu( choices, { prompt, center: true } );
+		return beep8.Async.menu( choices, { prompt, center: true } );
 
 	}
 
