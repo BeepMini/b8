@@ -147,7 +147,7 @@
 		await new Promise( resolve => setTimeout( resolve, 1 ) );
 		await callback();
 
-		beep8.render();
+		beep8.Core.render();
 
 	}
 
@@ -287,9 +287,14 @@
 
 
 	/**
+	 * Set the callback function for the game loop. Will be called targetFps
+	 * times per second.
 	 *
+	 * @param {Function} callback - The function to call.
+	 * @param {number} [targetFps=30] - The target frames per second.
+	 * @returns {void}
 	 */
-	beep8.Core.setFrameHandler = function( callback, targetFps ) {
+	beep8.Core.setFrameHandler = function( callback, targetFps = 30 ) {
 
 		frameHandler = callback;
 		frameHandlerTargetInterval = 1.0 / ( targetFps || 30 );
@@ -571,7 +576,9 @@
 
 
 	/**
+	 * Run the game loop.
 	 *
+	 * @returns {void}
 	 */
 	beep8.Core.doFrame = async function() {
 
@@ -593,7 +600,7 @@
 			++numFramesDone;
 		}
 
-		beep8.render();
+		beep8.Core.render();
 
 		if ( frameHandler ) {
 			animFrameRequested = true;
@@ -738,7 +745,7 @@
 
 		beep8.Core.drawState.cursorCol = beep8.Core.drawState.cursorRow = 1;
 		beep8.Core.textRenderer.print( "*** CRASH ***:\n" + errorMessage );
-		beep8.render();
+		beep8.Core.render();
 
 		crashing = false;
 		crashed = true;
