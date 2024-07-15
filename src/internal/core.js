@@ -577,31 +577,54 @@
 
 	/**
 	 * Run the game loop.
+	 * This function ensures we stay as close to the target frame rate as
+	 * possible.
 	 *
 	 * @returns {void}
 	 */
 	beep8.Core.doFrame = async function() {
 
+		// Flag to track if an animation frame has been requested is reset
 		animFrameRequested = false;
 
-		const now = getNow();
-		_deltaTime = lastFrameTime !== null ? 0.001 * ( now - lastFrameTime ) : ( 1 / 60.0 );
-		_deltaTime = Math.min( _deltaTime, 0.05 );
+		// Get the current time
+		const now = beep8.Core.getNow();
+
+		// Calculate the time difference between the current and last frame, or use a default value if this is the first frame
+		beep8.Core.deltaTime = lastFrameTime !== null ? 0.001 * ( now - lastFrameTime ) : ( 1 / 60.0 );
+
+		// Cap the delta time to prevent large time steps (e.g., if the browser tab was inactive)
+		beep8.Core.deltaTime = Math.min( beep8.Core.deltaTime, 0.05 );
+
+		// Update the last frame time to the current time
 		lastFrameTime = now;
 
-		timeToNextFrame += _deltaTime;
+		// Accumulate the time to the next frame
+		timeToNextFrame += beep8.Core.deltaTime;
 
+		// Initialize the counter for the number of frames processed in this loop
 		let numFramesDone = 0;
 
+		// Process frames while there is a frame handler, the number of processed frames is less than 4, and the accumulated time exceeds the target interval
+		// This helps to catch up with missed frames.
 		while ( frameHandler && numFramesDone < 4 && timeToNextFrame > frameHandlerTargetInterval ) {
+			// Await the frame handler's completion
 			await frameHandler();
+
+			// Call the input system's end frame handler
 			beep8.Core.inputSys.onEndFrame();
+
+			// Decrease the accumulated time by the target interval
 			timeToNextFrame -= frameHandlerTargetInterval;
+
+			// Increment the count of processed frames
 			++numFramesDone;
 		}
 
+		// Call the render function to update the visuals
 		beep8.Core.render();
 
+		// If there is a frame handler, request the next animation frame
 		if ( frameHandler ) {
 			animFrameRequested = true;
 			window.requestAnimationFrame( beep8.Core.doFrame );
