@@ -336,13 +336,15 @@
 	 */
 	beep8.Utilities.randomInt = function( lowInclusive, highInclusive ) {
 
-		checkNumber( "lowInclusive", lowInclusive );
-		checkNumber( "highInclusive", highInclusive );
+		beep8.Utilities.checkNumber( "lowInclusive", lowInclusive );
+		beep8.Utilities.checkNumber( "highInclusive", highInclusive );
 
 		lowInclusive = Math.round( lowInclusive );
 		highInclusive = Math.round( highInclusive );
 
-		if ( highInclusive <= lowInclusive ) return lowInclusive;
+		if ( highInclusive <= lowInclusive ) {
+			return lowInclusive;
+		}
 
 		return clamp(
 			Math.floor(
@@ -362,7 +364,8 @@
 	 */
 	beep8.Utilities.randomPick = function( array ) {
 
-		checkArray( "array", array );
+		beep8.Utilities.checkArray( "array", array );
+
 		return array.length > 0 ? array[ randomInt( 0, array.length - 1 ) ] : null;
 
 	}
@@ -377,7 +380,7 @@
 	 */
 	beep8.Utilities.shuffleArray = function( array ) {
 
-		checkArray( "array", array );
+		beep8.Utilities.checkArray( "array", array );
 
 		array = array.slice();
 
@@ -404,10 +407,10 @@
 	 */
 	beep8.Utilities.dist2d = function( x0, y0, x1, y1 ) {
 
-		checkNumber( "x0", x0 );
-		checkNumber( "y0", y0 );
-		checkNumber( "x1", x1 );
-		checkNumber( "y1", y1 );
+		beep8.Utilities.checkNumber( "x0", x0 );
+		beep8.Utilities.checkNumber( "y0", y0 );
+		beep8.Utilities.checkNumber( "x1", x1 );
+		beep8.Utilities.checkNumber( "y1", y1 );
 
 		const dx = x0 - x1;
 		const dy = y0 - y1;
@@ -429,10 +432,10 @@
 	 */
 	beep8.Utilities.intersectIntervals = function( as, ae, bs, be, result = null ) {
 
-		checkNumber( "as", as );
-		checkNumber( "ae", ae );
-		checkNumber( "bs", bs );
-		checkNumber( "be", be );
+		beep8.Utilities.checkNumber( "as", as );
+		beep8.Utilities.checkNumber( "ae", ae );
+		beep8.Utilities.checkNumber( "bs", bs );
+		beep8.Utilities.checkNumber( "be", be );
 
 		if ( result ) checkObject( "result", result );
 
@@ -466,20 +469,20 @@
 	 */
 	beep8.Utilities.intersectRects = function( r1, r2, dx1 = 0, dy1 = 0, dx2 = 0, dy2 = 0, result = null ) {
 
-		checkObject( "r1", r1 );
-		checkObject( "r2", r2 );
-		checkNumber( "r1.x", r1.x );
-		checkNumber( "r1.y", r1.y );
-		checkNumber( "r1.w", r1.w );
-		checkNumber( "r1.h", r1.h );
-		checkNumber( "r2.x", r2.x );
-		checkNumber( "r2.y", r2.y );
-		checkNumber( "r2.w", r2.w );
-		checkNumber( "r2.h", r2.h );
-		checkNumber( "dx1", dx1 );
-		checkNumber( "dx2", dx2 );
-		checkNumber( "dy1", dy1 );
-		checkNumber( "dy2", dy2 );
+		beep8.Utilities.checkObject( "r1", r1 );
+		beep8.Utilities.checkObject( "r2", r2 );
+		beep8.Utilities.checkNumber( "r1.x", r1.x );
+		beep8.Utilities.checkNumber( "r1.y", r1.y );
+		beep8.Utilities.checkNumber( "r1.w", r1.w );
+		beep8.Utilities.checkNumber( "r1.h", r1.h );
+		beep8.Utilities.checkNumber( "r2.x", r2.x );
+		beep8.Utilities.checkNumber( "r2.y", r2.y );
+		beep8.Utilities.checkNumber( "r2.w", r2.w );
+		beep8.Utilities.checkNumber( "r2.h", r2.h );
+		beep8.Utilities.checkNumber( "dx1", dx1 );
+		beep8.Utilities.checkNumber( "dx2", dx2 );
+		beep8.Utilities.checkNumber( "dy1", dy1 );
+		beep8.Utilities.checkNumber( "dy2", dy2 );
 
 		if ( result ) {
 			checkObject( "result", result );
