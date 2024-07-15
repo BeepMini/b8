@@ -6,9 +6,18 @@
 	 * Once the supplied callback is called, you can start using beep8 functions.
 	 *
 	 * @param {Function} callback - The callback to call when initialization is done.
+	 * @param {Object} [options] - Optional options object.
 	 * @returns {void}
 	 */
-	beep8.init = function( callback ) {
+	beep8.init = function( callback, options = {} ) {
+
+		beep8.Utilities.checkFunction( "callback", callback );
+		beep8.Utilities.checkObject( "options", options );
+
+		// Combine options with beep8.CONFIG.
+		if ( options !== null ) {
+			beep8.CONFIG = Object.assign( beep8.CONFIG, options );
+		}
 
 		return beep8.Core.init( callback );
 
