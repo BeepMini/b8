@@ -9,185 +9,41 @@
 	 * @type {Object}
 	 */
 	const sfxLibrary = {
-		coin: {
-			staccato: 0.55,
-			notes: [
-				"E5 e",
-				"E6 q"
-			]
-		},
-		coin2: {
-			notes: [
-				'G5 e',
-				'G6 q',
-			]
-		},
-		jump: {
-			smoothing: 1,
-			notes: [
-				"E4 e",
-				"E3 q"
-			]
-		},
-		change: {
-			notes: [
-				"B3 e",
-				"D4b e",
-				"D4 e",
-				"E4 e"
-			]
-		},
-		die: {
-			staccato: 0.55,
-			gain: 0.4,
-			notes: [
-				"E0 e",
-				"F0 e",
-				"E0 h",
-			]
-		},
-		knockout: {
-			staccato: 0.2,
-			notes: [
-				"E6 e",
-				"E5 e",
-				"E4 e",
-				"E3 q",
-			]
-		},
-		dash: {
-			smoothing: 1,
-			notes: [
-				"E2 q",
-				"E5 q"
-			]
-		},
-		beep: {
-			staccato: 0.55,
-			waveType: 'sine',
-			gain: 0.8,
-			notes: [
-				'G3 e',
-			]
-		},
-		beep2: {
-			staccato: 0.55,
-			waveType: 'sine',
-			gain: 0.7,
-			notes: [
-				'G4 e',
-			]
-		},
-		beep3: {
-			staccato: 0.55,
-			waveType: 'sine',
-			gain: 0.7,
-			notes: [
-				'G5 e',
-			]
-		},
-		stars: {
-			staccato: 0.2,
-			waveType: 'triangle',
-			gain: 0.5,
-			notes: [
-				'C6 s',
-				'C6 s',
-				'B6 s',
-				'B6 s',
-				'A6 s',
-			]
-		},
-		engine: {
-			customWave: [ [ -1, 1, -1, 1, -1, 1 ], [ 1, 0, 1, 0, 1, 0 ] ],
-			gain: 0.8,
-			notes: [
-				'C1 w',
-				'C1 w'
-			]
-		},
-		next: {
-			customWave: [ -1, -0.9, -0.6, -0.3, 0, 0.3, 0.6, 0.9, 1 ],
-			gain: 0.8,
-			notes: [
-				'C2 e',
-				'C3 e',
-				'D2 e',
-				'D3 e',
-				'E2 e',
-				'E3 e',
-			]
-		},
-		start: {
-			notes: [
-				'D4 h',
-				'- h',
-				'D4 h',
-				'- h',
-				'G4 w',
-			]
-		},
-		buzzbuzzbuzz: {
-			gain: 0.35,
-			notes: [
-				'E1 e',
-				'- s',
-				'E1 e',
-				'- s',
-				'E1 e',
-				'- s',
-				'E1 e',
-				'- s',
-				'E1 e',
-				'- s',
-				'E1 e',
-				'- s',
-				'E1 e',
-				'- s',
-				'E1 e',
-			]
-		},
-		siren: {
-			smoothing: 0.5,
-			notes: [
-				'C4 h',
-				'A3 h',
-				'C4 h',
-				'A3 h',
-				'C4 h',
-				'A3 h',
-				'C4 h',
-				'A3 h',
-				'C4 h',
-				'A3 h',
-			],
-		},
-		click: {
-			staccato: 0.8,
-			notes: [
-				'A5 e',
-			]
-		},
+		coin: [ , 0, 1675, , .06, .24, 1, 1.82, , , 837, .06 ],
+		coin2: [ , 0, 523.2511, .01, .06, .3, 1, 1.82, , , 837, .06 ],
+		hit: [ , 0, 925, .04, .3, .6, 1, .3, , 6.27, -184, .09, .17 ],
+		sparkle: [ , 0, 539, 0, .04, .29, 1, 1.92, , , 567, .02, .02, , , , .04 ],
+		sparkle2: [ , 0, 80, .3, .4, .7, 2, .1, -0.73, 3.42, -430, .09, .17, , , , .19 ],
+		life: [ , 0, 537, .02, .02, .22, 1, 1.59, -6.98, 4.97 ],
+		break: [ , 0, 528, .01, , .48, , .6, -11.6, , , , .32, 4.2 ],
+		life2: [ , 0, 20, .04, , .6, , 1.31, , , -990, .06, .17, , , .04, .07 ],
+		alien: [ , 0, 662, .82, .11, .33, 1, 0, , -0.2, , , , 1.2, , .26, .01 ],
+		beep: [ 1.5, 0, 270, , .1, , 1, 1.5, , , , , , , , .1, .01 ],
+		beep2: [ 1.2, 0, 150, , .1, , 1, 1.5, , , , , , , , .1, .01 ],
+		beep3: [ 1.5, 0, 200, , .1, , 1, 1.5, , , , , , , , .1, .01 ],
+		drum: [ , 0, 129, .01, , .15, , , , , , , , 5 ],
+		explode: [ , 0, 333, .01, 0, .9, 4, 1.9, , , , , , .5, , .6 ],
+		explode2: [ , 0, 418, 0, .02, .2, 4, 1.15, -8.5, , , , , .7, , .1 ],
+		squeak1: [ , 0, 1975, .08, .56, .02, , , -0.4, , -322, .56, .41, , , , .25 ],
+		squeak2: [ , 0, 75, .03, .08, .17, 1, 1.88, 7.83, , , , , .4 ],
+		squeak3: [ , 0, 1306, .8, .08, .02, 1, , , , , , .48, , -0.1, .11, .25 ],
+		squeak4: [ , 0, 1e3, .02, , .01, 2, , 18, , 475, .01, .01 ],
+		bell: [ 2, 0, 999, , , , , 1.5, , .3, -99, .1, 1.63, , , .11, .22 ],
+		satellite: [ , 0, 847, .02, .3, .9, 1, 1.67, , , -294, .04, .13, , , , .1 ],
+		phone: [ , 0, 1600, .13, .52, .61, 1, 1.1, , , , , , .1, , .14 ],
+		pop: [ , 0, 224, .02, .02, .08, 1, 1.7, -13.9, , , , , , 6.7 ],
+		rocket: [ , 0, 941, .8, , .8, 4, .74, -222, , , , , .8, , 1 ],
+		rocket2: [ , 0, 172, .8, , .8, 1, .76, 7.7, 3.73, -482, .08, .15, , .14 ],
+		squirt: [ , 0, 448, .01, .1, .3, 3, .39, -0.5, , , , , , .2, .1, .08 ],
+		swing: [ , 0, 150, .05, , .05, , 1.3, , , , , , 3 ],
+		wave: [ , 0, 40, .5, , 1.5, , 11, , , , , , 199 ],
+		siren: [ , 0, 960, , 1, .01, , .8, -0.01, , -190, .5, , .05, , , 1 ],
+		car_horn: [ 1.5, 0, 250, .02, .02, .2, 2, 2, , , , , .02, , , .02, .01, , , .1 ],
+		engine2: [ , 0, 25, .05, .3, .5, 3, 9, -0.01, , , , , , 13, .1, .2 ],
+		thunder: [ , 0, 471, , .09, .47, 4, 1.06, -6.7, , , , , .9, 61, .1, , .82, .09, .13 ],
+		sparkle3: [ , 0, 63, , 1, , 1, 1.5, , , , , , , , 3.69, .08 ],
+		sweep: [ , 0, 9220, .01, , , , 5, , , , , , 9 ],
 	};
-
-
-	/**
-	 * Cached sequence objects.
-	 *
-	 * @type {Object}
-	 */
-	const sfxSequence = {};
-
-
-	/**
-	 * AudioContext object.
-	 *
-	 * @type {AudioContext}
-	 */
-	const audioContext = typeof AudioContext !== 'undefined' ? new AudioContext : new webkitAudioContext;
-
-
-	beep8.Sfx = {};
 
 
 	/**
@@ -198,57 +54,35 @@
 	 */
 	beep8.Sfx.play = function( sfx ) {
 
-		// AudioContext is not supported.
-		if ( !audioContext ) {
-			return;
-		}
-
 		beep8.Utilities.checkString( 'sfx', sfx );
+
+		console.log( `[${sfxLibrary[ sfx ].toString().replace( ' ', '' )}]` );
 
 		// SFX not found.
 		if ( !sfxLibrary[ sfx ] ) {
 			beep8.Utilities.error( `SFX ${sfx} not found.` );
 		}
 
-		// Setup the sfx sequence if it doesn't exist.
-		if ( !sfxSequence[ sfx ] ) {
+		zzfx( ...sfxLibrary[ sfx ] );
 
-			sfxSequence[ sfx ] = new TinyMusic.Sequence(
-				audioContext,
-				sfxLibrary[ sfx ].tempo || 300,
-				sfxLibrary[ sfx ].notes
-			);
+	}
 
-			sfxSequence[ sfx ].loop = false;
-			sfxSequence[ sfx ].gain.gain.value = sfxLibrary[ sfx ].gain || 0.1;
 
-			if ( sfxLibrary[ sfx ].staccato ) {
-				sfxSequence[ sfx ].staccato = sfxLibrary[ sfx ].staccato;
-			}
+	/**
+	 * Add a sound effect to the library.
+	 *
+	 * @param {string} sfxName The name of the sound effect.
+	 * @param {Array} sfxArray The sound effect array.
+	 * @throws {Error} If the sfxName is not a string.
+	 * @throws {Error} If the sfxArray is not an array.
+	 * @return {void}
+	 */
+	beep8.Sfx.add = function( sfxName, sfxArray ) {
 
-			if ( sfxLibrary[ sfx ].smoothing ) {
-				sfxSequence[ sfx ].smoothing = sfxLibrary[ sfx ].smoothing;
-			}
+		beep8.Utilities.checkString( 'sfxName', sfxName );
+		beep8.Utilities.checkArray( 'sfxArray', sfxArray );
 
-			if ( sfxLibrary[ sfx ].waveType ) {
-				sfxSequence[ sfx ].waveType = sfxLibrary[ sfx ].waveType;
-			}
-
-			if ( sfxLibrary[ sfx ].customWave ) {
-
-				beep8.Utilities.checkArray( 'customWave', sfxLibrary[ sfx ].customWave );
-
-				if ( sfxLibrary[ sfx ].customWave.length === 2 ) {
-					sfxSequence[ sfx ].createCustomWave( sfxLibrary[ sfx ].customWave[ 0 ], sfxLibrary[ sfx ].customWave[ 1 ] );
-				} else {
-					sfxSequence[ sfx ].createCustomWave( sfxLibrary[ sfx ].customWave );
-				}
-
-			}
-
-		}
-
-		sfxSequence[ sfx ].play( audioContext.currentTime );
+		sfxLibrary[ sfxName ] = sfxArray;
 
 	}
 
@@ -260,7 +94,6 @@
 	 */
 	beep8.Sfx.get = function() {
 
-		// return sfxLibrary keys.
 		return Object.keys( sfxLibrary );
 
 	}
