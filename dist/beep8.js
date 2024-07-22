@@ -130,6 +130,1113 @@ const beep8 = {};
 ( function( beep8 ) {
 
 	/**
+	 * Initializes the API. This must be called before other functions and must
+	 * finish executing before other API functions are called.
+	 * Once the supplied callback is called, you can start using beep8 functions.
+	 *
+	 * @param {Function} callback - The callback to call when initialization is done.
+	 * @param {Object} [options] - Optional options object.
+	 * @returns {void}
+	 */
+	beep8.init = function( callback, options = {} ) {
+
+		beep8.Utilities.checkFunction( "callback", callback );
+		beep8.Utilities.checkObject( "options", options );
+
+		// Combine options with beep8.CONFIG.
+		if ( options !== null ) {
+			beep8.CONFIG = Object.assign( beep8.CONFIG, options );
+		}
+
+		return beep8.Core.init( callback );
+
+	}
+
+
+	/**
+	 * Sets the frame handler, that is, the function that will be called on
+	 * every frame to render the screen.
+	 *
+	 * @param {Function} handler - The frame handler function.
+	 * @param {number} [fps=30] - The target frames per second. Recommended: 30.
+	 * @returns {void}
+	 */
+	beep8.frame = function( handler, fps = 30 ) {
+
+		beep8.Core.preflight( "beep8.frame" );
+
+		if ( handler !== null ) {
+			beep8.Utilities.checkFunction( "handler", handler );
+		}
+
+		beep8.Utilities.checkNumber( "fps", fps );
+
+		return beep8.Core.setFrameHandler( handler, fps );
+
+	}
+
+
+	/**
+	 * Forces the screen to render right now. Useful for immediate redraw in
+	 * animations.
+	 * Forces the screen to render right now. You only need this if you are
+	 * doing some kind of animation on your own and you want to redraw the
+	 * screen immediately to show the current state.
+	 * Otherwise the screen repaints automatically when waiting for user input.
+	 *
+	 * @returns {void}
+	 */
+	beep8.render = function() {
+
+		beep8.Core.preflight( "beep8.render" );
+
+		return beep8.Core.render();
+
+	}
+
+
+	/**
+	 * Sets the foreground and/or background color.
+	 *
+	 * @param {number} fg - The foreground color.
+	 * @param {number} [bg] - The background color (optional).
+	 * @returns {void}
+	 */
+	beep8.color = function( fg, bg ) {
+
+		beep8.Core.preflight( "beep8.color" );
+		beep8.Utilities.checkNumber( "fg", fg );
+
+		if ( bg !== undefined ) {
+			beep8.Utilities.checkNumber( "bg", bg );
+		}
+
+		beep8.Core.setColor( fg, bg );
+
+	}
+
+
+	/**
+	 * Gets the current foreground color.
+	 *
+	 * @returns {number} The current foreground color.
+	 */
+	beep8.getFgColor = function() {
+
+		beep8.Core.preflight( "getFgColor" );
+
+		return beep8.Core.drawState.fgColor;
+
+	}
+
+
+	/**
+	 * Gets the current background color.
+	 * -1 means transparent.
+	 *
+	 * @returns {number} The current background color.
+	 */
+	beep8.getBgColor = function() {
+
+		beep8.Core.preflight( "beep8.getBgColor" );
+
+		return beep8.Core.drawState.bgColor;
+
+	}
+
+
+	/**
+	 * Clears the screen using the current background color.
+	 *
+	 * @returns {void}
+	 */
+	beep8.cls = function() {
+
+		beep8.Core.preflight( "beep8.Core.cls" );
+		beep8.Core.cls();
+
+	}
+
+
+	/**
+	 * Places the cursor at the given screen column and row.
+	 *
+	 * @param {number} col - The column where the cursor is to be placed.
+	 * @param {number} [row] - The row where the cursor is to be placed (optional).
+	 * @returns {void}
+	 */
+	beep8.locate = function( col, row ) {
+
+		beep8.Core.preflight( "beep8.locate" );
+		beep8.Utilities.checkNumber( "col", col );
+
+		if ( row !== undefined ) {
+			beep8.Utilities.checkNumber( "row", row );
+		}
+
+		beep8.Core.setCursorLocation( col, row );
+
+	}
+
+
+	/**
+	 * Returns the cursor's current column.
+	 *
+	 * @returns {number} The cursor's current column.
+	 */
+	beep8.col = function() {
+
+		beep8.Core.preflight( "col" );
+
+		return beep8.Core.drawState.cursorCol;
+
+	}
+
+
+	/**
+	 * Returns the cursor's current row.
+	 *
+	 * @returns {number} The cursor's current row.
+	 */
+	beep8.row = function() {
+
+		beep8.Core.preflight( "row" );
+
+		return beep8.Core.drawState.cursorRow;
+
+	}
+
+
+	/**
+	 * Shows or hides the cursor.
+	 *
+	 * @param {boolean} visible - If true, show the cursor. If false, hide the
+	 * cursor.
+	 * @returns {void}
+	 */
+	beep8.cursor = function( visible ) {
+
+		beep8.Core.preflight( "cursor" );
+		beep8.Utilities.checkBoolean( "visible", visible );
+		beep8.Core.cursorRenderer.setCursorVisible( visible );
+
+	}
+
+
+	/**
+	 * Prints text at the cursor position, using the current foreground and
+	 * background colors.
+	 *
+	 * The text can contain embedded newlines and they will behave as you expect:
+	 * printing will continue at the next line.
+	 *
+	 * If PRINT_ESCAPE_START and PRINT_ESCAPE_END are defined in CONFIG, then
+	 * you can also use escape sequences. For example {{c1}} sets the color to
+	 * 1, so your string can be "I like the color {{c1}}blue" and the word
+	 * 'blue' would be in blue. The sequence {{b2}} sets the background to 2
+	 * (red). The sequence {{z}} resets the color to the default. See
+	 * example-printing.html for an example.
+	 *
+	 * @param {string} text - The text to print.
+	 * @returns {void}
+	 */
+	beep8.print = function( text ) {
+
+		beep8.Core.preflight( "beep8.text" );
+		beep8.Utilities.checkString( "text", text );
+		beep8.Core.textRenderer.print( text );
+
+	}
+
+
+	/**
+	 * Prints text centered horizontally in a field of the given width.
+	 *
+	 * If the text is bigger than the width, it will overflow it.
+	 *
+	 * @param {string} text - The text to print.
+	 * @param {number} width - The width of the field, in characters.
+	 * @returns {void}
+	 */
+	beep8.printCentered = function( text, width ) {
+
+		beep8.Core.preflight( "beep8.printCentered" );
+		beep8.Utilities.checkString( "text", text );
+		beep8.Utilities.checkNumber( "width", width );
+		beep8.Core.textRenderer.printCentered( text, width );
+
+	}
+
+
+	/**
+	 * Draws text at an arbitrary pixel position on the screen, not following
+	 * the "row and column" system.
+	 *
+	 * @param {number} x - The X coordinate of the top-left of the text.
+	 * @param {number} y - The Y coordinate of the top-left of the text.
+	 * @param {string} text - The text to print.
+	 * @param {string} [fontId=null] - The font ID to use.
+	 * @returns {void}
+	 */
+	beep8.drawText = function( x, y, text, fontId = null ) {
+
+		beep8.Core.preflight( "beep8.drawText" );
+		beep8.Utilities.checkNumber( "x", x );
+		beep8.Utilities.checkNumber( "y", y );
+		beep8.Utilities.checkString( "text", text );
+
+		if ( fontId ) {
+			beep8.Utilities.checkString( "fontId", fontId );
+		}
+
+		beep8.Core.textRenderer.drawText( x, y, text, fontId );
+
+	}
+
+
+	/**
+	 * Measures the size of the given text without printing it.
+	 *
+	 * @param {string} text - The text to measure.
+	 * @returns {Object} An object with {cols, rows} indicating the dimensions.
+	 */
+	beep8.measure = function( text ) {
+
+		beep8.Core.preflight( "measure" );
+		beep8.Utilities.checkString( "text", text );
+
+		return beep8.Core.textRenderer.measure( text );
+
+	}
+
+
+	/**
+	 * Prints a character at the current cursor position, advancing the cursor
+	 * position.
+	 *
+	 * @param {number|string} charCode - The character to print, as an integer
+	 * (ASCII code) or a one-character string.
+	 * @param {number} [numTimes=1] - How many times to print the character.
+	 * @returns {void}
+	 */
+	beep8.printChar = function( charCode, numTimes = 1 ) {
+
+		beep8.Core.preflight( "beep8.printChar" );
+		charCode = beep8.convChar( charCode );
+		beep8.Utilities.checkNumber( "charCode", charCode );
+		beep8.Utilities.checkNumber( "numTimes", numTimes );
+		beep8.Core.textRenderer.printChar( charCode, numTimes );
+
+	}
+
+
+	/**
+	 * Prints a rectangle of the given size with the given character, starting
+	 * at the current cursor position.
+	 *
+	 * @param {number} widthCols - Width of the rectangle in screen columns.
+	 * @param {number} heightRows - Height of the rectangle in screen rows.
+	 * @param {number|string} [charCode=32] - The character to print, as an
+	 * integer (ASCII code) or a one-character string.
+	 * @returns {void}
+	 */
+	beep8.printRect = function( widthCols, heightRows, charCode = 32 ) {
+
+		beep8.Core.preflight( "beep8.printRect" );
+		charCode = beep8.convChar( charCode );
+		beep8.Utilities.checkNumber( "widthCols", widthCols );
+		beep8.Utilities.checkNumber( "heightRows", heightRows );
+		beep8.Utilities.checkNumber( "charCode", charCode );
+		beep8.Core.textRenderer.printRect( widthCols, heightRows, charCode );
+
+	}
+
+
+	/**
+	 * Prints a box of the given size starting at the cursor position, using
+	 * border-drawing characters.
+	 *
+	 * @param {number} widthCols - Width of the box in screen columns, including
+	 * the border.
+	 * @param {number} heightRows - Height of the box in screen rows, including
+	 * the border.
+	 * @param {boolean} [fill=true] - If true, fill the interior with spaces.
+	 * @param {number} [borderChar=0x80] - The first border-drawing character to
+	 * use.
+	 * @returns {void}
+	 */
+	beep8.printBox = function( widthCols, heightRows, fill = true, borderChar = 0x80 ) {
+
+		beep8.Core.preflight( "beep8.printBox" );
+		borderChar = beep8.convChar( borderChar );
+		beep8.Utilities.checkNumber( "widthCols", widthCols );
+		beep8.Utilities.checkNumber( "heightRows", heightRows );
+		beep8.Utilities.checkBoolean( "fill", fill );
+		beep8.Utilities.checkNumber( "borderChar", borderChar );
+		beep8.Core.textRenderer.printBox( widthCols, heightRows, fill, borderChar );
+
+	}
+
+
+	/**
+	 * Draws an image (previously loaded with beep8.loadImage).
+	 *
+	 * @param {number} x - The X coordinate of the top-left of the image.
+	 * @param {number} y - The Y coordinate of the top-left of the image.
+	 * @param {HTMLImageElement} image - The image to draw.
+	 * @returns {void}
+	 */
+	beep8.drawImage = function( x, y, image ) {
+
+		beep8.Utilities.checkInstanceOf( "image", image, HTMLImageElement );
+		beep8.Utilities.checkNumber( "x", x );
+		beep8.Utilities.checkNumber( "y", y );
+
+		beep8.Core.drawImage( image, x, y );
+
+	}
+
+
+	/**
+	 * Draws a rectangular part of an image (previously loaded with
+	 * beep8.loadImage).
+	 *
+	 * @param {number} x - The X coordinate of the top-left of the image.
+	 * @param {number} y - The Y coordinate of the top-left of the image.
+	 * @param {HTMLImageElement} image - The image to draw.
+	 * @param {number} srcX - The X coordinate of the top-left of the rectangle
+	 * to be drawn.
+	 * @param {number} srcY - The Y coordinate of the top-left of the rectangle
+	 * to be drawn.
+	 * @param {number} width - The width in pixels of the rectangle to be drawn.
+	 * @param {number} height - The height in pixels of the rectangle to be
+	 * drawn.
+	 * @returns {void}
+	 */
+	beep8.drawImageRect = function( x, y, image, srcX, srcY, width, height ) {
+
+		beep8.Utilities.checkInstanceOf( "image", image, HTMLImageElement );
+		beep8.Utilities.checkNumber( "x", x );
+		beep8.Utilities.checkNumber( "y", y );
+		beep8.Utilities.checkNumber( "srcX", srcX );
+		beep8.Utilities.checkNumber( "srcY", srcY );
+		beep8.Utilities.checkNumber( "width", width );
+		beep8.Utilities.checkNumber( "height", height );
+
+		beep8.Core.drawImage( image, x, y, srcX, srcY, width, height );
+
+	}
+
+
+	/**
+	 * Draws a rectangle (border only) using the current foreground color.
+	 *
+	 * @param {number} x - The X coordinate of the top-left corner.
+	 * @param {number} y - The Y coordinate of the top-left corner.
+	 * @param {number} width - The width of the rectangle in pixels.
+	 * @param {number} height - The height of the rectangle in pixels.
+	 * @returns {void}
+	 */
+	beep8.drawRect = function( x, y, width, height ) {
+
+		beep8.Utilities.checkNumber( "x", x );
+		beep8.Utilities.checkNumber( "y", y );
+		beep8.Utilities.checkNumber( "width", width );
+		beep8.Utilities.checkNumber( "height", height );
+
+		beep8.Core.drawRect( x, y, width, height );
+
+	}
+
+
+	/**
+	 * Draws a filled rectangle using the current foreground color.
+	 *
+	 * @param {number} x - The X coordinate of the top-left corner.
+	 * @param {number} y - The Y coordinate of the top-left corner.
+	 * @param {number} width - The width of the rectangle in pixels.
+	 * @param {number} height - The height of the rectangle in pixels.
+	 * @returns {void}
+	 */
+	beep8.fillRect = function( x, y, width, height ) {
+
+		beep8.Utilities.checkNumber( "x", x );
+		beep8.Utilities.checkNumber( "y", y );
+		beep8.Utilities.checkNumber( "width", width );
+		beep8.Utilities.checkNumber( "height", height );
+
+		beep8.Core.fillRect( x, y, width, height );
+
+	}
+
+
+	/**
+	 * Plays a sound (previously loaded with beep8.playSound).
+	 *
+	 * @param {HTMLAudioElement} sfx - The sound to play.
+	 * @param {number} [volume=1] - The volume to play the sound at.
+	 * @param {boolean} [loop=false] - If true, play the sound in a loop.
+	 * @returns {void}
+	 */
+	beep8.playSound = function( sfx, volume = 1, loop = false ) {
+
+		beep8.Utilities.checkInstanceOf( "sfx", sfx, HTMLAudioElement );
+
+		sfx.currentTime = 0;
+		sfx.volume = volume;
+		sfx.loop = loop;
+
+		sfx.play();
+
+	}
+
+
+	/**
+	 * Draws a sprite on the screen.
+	 *
+	 * @param {number|string} ch - The character code of the sprite.
+	 * @param {number} x - The X position at which to draw.
+	 * @param {number} y - The Y position at which to draw.
+	 * @returns {void}
+	 */
+	beep8.spr = function( ch, x, y ) {
+
+		ch = beep8.convChar( ch );
+
+		beep8.Utilities.checkNumber( "ch", ch );
+		beep8.Utilities.checkNumber( "x", x );
+		beep8.Utilities.checkNumber( "y", y );
+
+		beep8.Core.textRenderer.spr( ch, x, y );
+
+	}
+
+
+	/**
+	 * Checks if the given key is currently pressed or not.
+	 *
+	 * @param {string} keyName - The name of the key.
+	 * @returns {boolean} True if the key is pressed, otherwise false.
+	 */
+	beep8.key = function( keyName ) {
+
+		beep8.Core.preflight( "beep8.key" );
+
+		beep8.Utilities.checkString( "keyName", keyName );
+
+		return beep8.Core.inputSys.keyHeld( keyName );
+
+	}
+
+
+	beep8.playSong = function( song ) {
+
+		beep8.Utilities.checkString( "song", song );
+
+		beep8.Sound.playSong( song );
+
+	}
+
+
+	/**
+	 * Checks if the given key was JUST pressed on this frame.
+	 *
+	 * @param {string} keyName - The name of the key.
+	 * @returns {boolean} True if the key was just pressed, otherwise false.
+	 */
+	beep8.keyp = function( keyName ) {
+
+		beep8.Core.preflight( "beep8.keyp" );
+		beep8.Utilities.checkString( "keyName", keyName );
+
+		return beep8.Core.inputSys.keyJustPressed( keyName );
+
+	}
+
+
+	/**
+	 * Redefines the colors, assigning new RGB values to each color.
+	 *
+	 * @param {Array<number>} colors - An array of RGB values.
+	 * @returns {void}
+	 */
+	beep8.redefineColors = function( colors ) {
+
+		beep8.Core.preflight( "beep8.redefineColors" );
+		beep8.Utilities.checkArray( "colors", colors );
+		beep8.Core.defineColors( colors );
+
+	}
+
+
+	/**
+	 * Sets the current font for text-based operations.
+	 *
+	 * @param {string} [fontId="default"] - The font ID to set. Pass null or
+	 * omit to reset to default font.
+	 * @returns {void}
+	 */
+	beep8.setFont = function( fontId ) {
+
+		beep8.Core.preflight( "beep8.setFont" );
+		fontId = fontId || "default";
+		beep8.Utilities.checkString( "fontId", fontId );
+		beep8.Core.textRenderer.setFont( fontId );
+
+	}
+
+
+	/**
+	 * Converts a character code to its integer representation if needed.
+	 *
+	 * @param {number|string} charCode - The character code to convert.
+	 * @returns {number} The integer representation of the character code.
+	 */
+	beep8.convChar = function( charCode ) {
+
+		if ( typeof ( charCode ) === "string" && charCode.length > 0 ) {
+			return charCode.charCodeAt( 0 );
+		}
+
+		return charCode;
+
+	}
+
+
+	/**
+	 * Stops a sound (previously loaded with beep8.playSound).
+	 *
+	 * @param {HTMLAudioElement} sfx - The sound to stop playing.
+	 * @returns {void}
+	 */
+	beep8.stopSound = function( sfx ) {
+
+		beep8.Utilities.checkInstanceOf( "sfx", sfx, HTMLAudioElement );
+		sfx.currentTime = 0;
+		sfx.pause();
+
+	}
+
+
+	/**
+	 * Returns the raw canvas 2D context for drawing.
+	 *
+	 * @returns {CanvasRenderingContext2D} The raw HTML 2D canvas context.
+	 */
+	beep8.getContext = function() {
+
+		return beep8.Core.getContext();
+
+	}
+
+
+	/**
+	 * Saves the contents of the screen into an ImageData object and returns it.
+	 *
+	 * @returns {ImageData} An ImageData object with the screen's contents.
+	 */
+	beep8.saveScreen = function() {
+
+		return beep8.Core.saveScreen();
+
+	}
+
+
+	/**
+	 * Restores the contents of the screen using an ImageData object.
+	 *
+	 * @param {ImageData} screenData - The ImageData object with the screen's
+	 * contents.
+	 * @returns {void}
+	 */
+	beep8.restoreScreen = function( screenData ) {
+
+		return beep8.Core.restoreScreen( screenData );
+
+	}
+
+
+} )( beep8 || ( beep8 = {} ) );
+
+( function( beep8 ) {
+
+
+	// Predefined list of start patterns
+	const startPatterns = [
+		"X-X-",
+		"XX--",
+	];
+
+	// Predefined list of follow-up patterns
+	const followPatterns = [
+		"X--X",
+		"X-X-",
+		"XX--",
+		// "X X-",
+		// "-X-X",
+		// "--XX",
+		// "X---",
+		// "-X--",
+		// "X---X---",
+		// "X---    "
+	];
+
+	const bassPatterns = [
+		'X---',
+		'X---X---',
+		'X-------',
+		'X-X-X-X-',
+		'X-------X-------',
+		'X-------        ',
+		'        X-------',
+	];
+
+	const scales = {
+
+		// [ 2, 2, 1, 2, 2, 2, 1 ], // major.
+		// [ 0, 0, 1, 0, 0, -1 ],
+		// [ 1, 1, 1, -2, 1, 1 ],
+		// [ 1, -1, 1, -1, 1, -1 ],
+		// [ 1, -1 ],
+		// [ 1, 2, 3, 4, 5, 6, -5, -4, -3, -2, -1 ],
+
+		minor: [ 2, 1, 2, 2, 1, 2, 2 ],
+		harmonicMinor: [ 2, 1, 2, 2, 1, 3, 1 ],
+		melodicMinorAscending: [ 2, 1, 2, 2, 2, 2, 1 ],
+		melodicMinorDescending: [ 2, 1, 2, 2, 1, 2, 2 ], // Same as natural minor
+		pentatonicMajor: [ 2, 2, 3, 2, 3 ],
+		pentatonicMinor: [ 3, 2, 2, 3, 2 ],
+		blues: [ 3, 2, 1, 1, 3, 2 ],
+		chromatic: [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ],
+		wholeTone: [ 2, 2, 2, 2, 2, 2 ],
+		dorian: [ 2, 1, 2, 2, 2, 1, 2 ],
+		phrygian: [ 1, 2, 2, 2, 1, 2, 2 ],
+		lydian: [ 2, 2, 2, 1, 2, 2, 1 ],
+		mixolydian: [ 2, 2, 1, 2, 2, 1, 2 ],
+		aeolian: [ 2, 1, 2, 2, 1, 2, 2 ], // Same as natural minor
+		locrian: [ 1, 2, 2, 1, 2, 2, 2 ],
+		// Exotic Scales
+		phrygianDominant: [ 1, 3, 1, 2, 1, 2, 2 ],
+		hungarianMinor: [ 2, 1, 3, 1, 1, 3, 1 ],
+		gypsy: [ 1, 3, 1, 2, 1, 3, 1 ],
+		japanese: [ 1, 4, 2, 1, 4 ],
+		arabian: [ 2, 2, 1, 1, 2, 2, 2 ],
+		eastern: [ 1, 2, 2, 1, 1, 3, 1 ],
+	};
+
+	const scaleRangeDistance = [
+		3,
+		2, 2,
+		1, 1, 1,
+		0, 0, 0, 0,
+		-1, -1, -1,
+		-2, -2,
+		-3,
+	];
+
+	const speedRange = [ 75, 100, 150, 200, 250, 300 ];
+	const durationRange = [ 40, 50, 60, 70, 80, 90 ];
+
+
+	const scaleRange = 12;
+	const noteMap = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split( '' );
+
+
+
+	beep8._Music = {};
+
+
+	/**
+	 * Play a song.
+	 *
+	 * @param {string} song The song to play.
+	 * @returns {void}
+	 */
+	beep8._Music.play = function( song ) {
+
+		console.log( 'play song', song );
+		p1( song );
+
+	}
+
+
+	/**
+	 * Create a song.
+	 *
+	 * @returns {string} The song.
+	 */
+	beep8._Music.create = function() {
+
+		let melody = [];
+
+		// Pick a random key from the list of scales.
+		let scaleKeys = Object.keys( scales );
+		let scaleIndex = scaleKeys[ Math.floor( Math.random() * scaleKeys.length ) ];
+
+		// The main 'song' melody.
+		const pattern = generatePattern( 8, startPatterns, followPatterns );
+		melody.push( generateMelody( generateScale( 2, scaleIndex ), pattern ) );
+		melody.push( generateMelody( generateScale( 1, scaleIndex ), pattern ) );
+
+		// Add some BASS.
+		// Number of patterns to add to the bass line.
+		const bassRepeat = Math.floor( Math.random() * 3 ) + 1;
+		// Generate the bass line.
+		melody.push( generateMelody( generateScale( 0, scaleIndex ), generatePattern( bassRepeat, [], bassPatterns ) ) );
+
+		// Return.
+		// Should change this and the p1 player so they accept JSON rather than a weird string.
+		return `${beep8.Utilities.randomPick( speedRange )}.${beep8.Utilities.randomPick( durationRange )}
+${melody.join( '\n' )}`;
+
+	};
+
+
+	/**
+	 * Generate a note scale.
+	 *
+	 * @param {number} noteMapId The group of keys to start from.
+	 * @param {string} scaleIndex The scale pattern to use.
+	 * @returns {string[]} The scale.
+	 */
+	function generateScale( noteMapId, scaleIndex ) {
+
+		const startNote = noteMapId * scaleRange;
+
+		let scale = [];
+		let currentIndex = startNote;
+
+		// Generate the list of notes that can be used.
+		for ( let interval of scales[ scaleIndex ] ) {
+			scale.push( noteMap[ currentIndex ] );
+			console.log( noteMap[ currentIndex ], currentIndex );
+			currentIndex += interval;
+		}
+
+		return scale;
+
+	}
+
+
+	/**
+	 * Generate a rhythmic pattern from predefined patterns
+	 *
+	 * @param {number} totalPatterns The number of patterns to generate.
+	 * @param {string[]} startPatterns The list of start patterns.
+	 * @param {string[]} followPatterns The list of follow patterns.
+	 * @returns {string} The generated pattern.
+	 */
+	function generatePattern( totalPatterns = 4, startPatterns = startPatterns, followPatterns = followPatterns ) {
+
+		if ( totalPatterns < 1 ) {
+			return '';
+		}
+
+		let pattern = [];
+
+		// Ensure there is at least one start pattern
+		if ( startPatterns.length > 0 ) {
+			pattern.push( startPatterns[ Math.floor( Math.random() * startPatterns.length ) ] );
+		}
+
+		if ( followPatterns.length > 0 ) {
+
+			// Add subsequent patterns from the followPatterns list
+			for ( let i = 1; i < totalPatterns; i++ ) {
+				let randomPattern = followPatterns[ Math.floor( Math.random() * followPatterns.length ) ];
+				let patternRepeat = Math.floor( Math.random() * 3 ) + 1;
+
+				for ( let j = 0; j < patternRepeat; j++ ) {
+					pattern.push( randomPattern );
+				}
+			}
+
+		}
+
+		console.log( pattern );
+
+		return pattern.join( '|' );
+
+	}
+
+
+	// Function to generate a melody based on a scale and a rhythmic pattern
+	function generateMelody( scale, rhythmPattern ) {
+
+		let melody = "";
+		// Pick a random index from scale array to start from.
+		let scaleIndex = Math.floor( Math.random() * scale.length );
+
+
+		for ( let i = 0; i < rhythmPattern.length; i++ ) {
+			if ( rhythmPattern[ i ] === '-' ) {
+				melody += '-';
+			}
+
+			if ( rhythmPattern[ i ] === ' ' ) {
+				melody += ' ';
+			}
+
+			if ( rhythmPattern[ i ] === '|' ) {
+				melody += '|';
+			}
+
+			if ( rhythmPattern[ i ] === 'X' ) {
+
+				melody += scale[ scaleIndex ];
+				scaleIndex += scaleRangeDistance[ Math.floor( Math.random() * scaleRangeDistance.length ) ];
+				if ( scaleIndex < 0 ) {
+					scaleIndex = 0;
+				}
+				if ( scaleIndex >= scale.length ) {
+					scaleIndex = scale.length - 1;
+				}
+			}
+		}
+
+		return melody;
+
+	}
+
+
+} )( beep8 || ( beep8 = {} ) );
+
+/* p1.js Piano music player.
+There is only 1 function: p1
+You call it without parenthesis.
+
+EXAMPLE, PLAY JINGLE BELLS:
+p1`c-c-c---|c-c-c---|c-f-Y--a|c-------|d-d-d--d|d-c-c-cc|f-f-d-a-|Y---f---`
+
+TO STOP:
+p1``
+
+WITH BASS TRACK:
+p1`
+|V-Y-c-V-|d---c-a-|
+|M-------|R-------|
+`
+
+Bass track can be shorter and will repeat.
+
+WITH CUSTOM TEMPO (in milliseconds per note):
+p1`70
+V-Y-c-V-d---c-a-
+M-------R-------`
+
+WITH NOTES HELD DOWN LESS LONG = 30 (0 to 100, default is 50):
+p1`70.30
+V-Y-c-V-d---c-a-
+M-------R-------`
+
+Vertical bars are ingored and don't do anything.
+Dashes make the note held longer.
+Spaces are silent space.
+
+Supports 52 notes (4 octaves)
+How to convert from piano notes to p1 letters:
+|Low C      |Tenor C    |Middle C   |Treble C   |High C
+C#D#EF#G#A#BC#D#EF#G#A#BC#D#EF#G#A#BC#D#EF#G#A#BC#D#
+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz
+*/
+!function() {
+
+	const numberOfTracks = 4;
+	const contextsPerTrack = 3;
+	const totalContexts = Math.ceil( numberOfTracks * contextsPerTrack * 1.2 );
+
+	// Object to store generated audio buffers.
+	let buffers = {};
+
+	// Array of 13 AudioContext objects to handle multiple audio channels.
+	let contexts = [ ...Array( totalContexts ).keys() ].map( _ => new AudioContext );
+
+	// Variables for tracks, track length, playback interval, unlocked state, and note index.
+	let tracks;
+	let trackLen;
+	let interval;
+	let unlocked;
+	let noteI;
+
+	// Modulation. Generates a sample of a sinusoidal signal with a specific frequency and amplitude.
+	let b = ( note, add ) => {
+
+		return Math.sin( note * 6.28 + add );
+
+	}
+
+	// Instrument synthesis. Creates a more complex waveform by combining sinusoidal signals.
+	const pianoify = ( note ) => {
+
+		return b( note, b( note, 0 ) ** 2 + b( note, .25 ) * .75 + b( note, .5 ) * .1 );
+
+	}
+
+	const drummify = ( note ) => {
+
+
+	}
+
+	// Create a buffer for a note.
+	var makeNote = ( note, seconds, sampleRate ) => {
+
+		// console.log( note, seconds );
+
+		// Create a unique key for caching the buffer.
+		var key = note + '' + seconds;
+		var buffer = buffers[ key ];
+
+		if ( note >= 0 && !buffer ) {
+
+			// Calculate frequency/pitch. "Low C" is 65.406 Hz.
+			note = 65.406 * 1.06 ** note / sampleRate
+
+			let i = sampleRate * seconds | 0;
+			let sampleRest = sampleRate * ( seconds - .002 );
+			let bufferArray;
+
+			buffer = buffers[ key ] = contexts[ 0 ].createBuffer( 1, i, sampleRate )
+			bufferArray = buffer.getChannelData( 0 )
+
+			// Fill the samples array.
+			for ( ; i--; ) {
+				bufferArray[ i ] =
+					// The first 88 samples represent the note's attack phase.
+					( i < 88 ?
+						i / 88.2
+						// The other samples represent the decay/sustain/release phases.
+						: ( 1 - ( i - 88.2 ) / sampleRest ) ** ( ( Math.log( 1e4 * note ) / 2 ) ** 2 )
+					) * pianoify( i * note )
+			}
+
+			// Safari hack: Play every AudioContext then stop them immediately to "unlock" them on iOS.
+			if ( !unlocked ) {
+
+				contexts.map( context => playBuffer( buffer, context, unlocked = 1 ) )
+
+			}
+
+		}
+
+		return buffer
+
+	}
+
+	/**
+	 * Play a buffer.
+	 *
+	 * @param {AudioBuffer} buffer The buffer to play.
+	 * @param {AudioContext} context The context to play the buffer in.
+	 * @param {boolean} stop If true, stop the buffer.
+	 * @returns {void}
+	 */
+	const playBuffer = ( buffer, context, stop ) => {
+
+		var source = context.createBufferSource();
+
+		source.buffer = buffer;
+		source.connect( context.destination );
+		source.start();
+
+		stop && source.stop();
+
+	};
+
+
+	/**
+	 * Play music in the p1 format.
+	 *
+	 * @param {string} params The music to play.
+	 * @returns {void}
+	 */
+	p1 = ( params ) => {
+
+		let tempo = 125;
+		let noteLen = .5;
+		trackLen = 0;
+
+		// If params is a string, use it, otherwise use the first item from the array.
+		params = typeof params === 'array' ? params[ 0 ] : params;
+
+		// Process the tracks.
+		tracks = params.replace( /[\!\|]/g, '' ).split( '\n' ).map(
+			( track ) => {
+				track = track.trim();
+
+				if (
+					( track[ 0 ] === '[' && track[ track.length - 1 ] === ']' ) ||
+					( !isNaN( parseFloat( track ) ) )
+				) {
+
+					// If starts with [ and ends with ], then it's the tempo and note length.
+					track = track.split( '.' );
+
+					tempo = track[ 0 ];
+					noteLen = track[ 1 ] / 100 || noteLen;
+
+					return undefined;
+
+				}
+
+				if ( track.length === 0 ) {
+
+					return undefined;
+
+				}
+
+				return track.split( '' ).map(
+					( letter, i ) => {
+						let duration = 1;
+						let note = letter.charCodeAt( 0 );
+						note -= note > 90 ? 71 : 65;
+
+						while ( track[ i + duration ] == '-' ) {
+							duration++;
+						}
+
+						if ( trackLen < i ) {
+							trackLen = i + 1;
+						}
+
+						return makeNote( note, duration * noteLen * tempo / 125, 44100 )
+					}
+				);
+			}
+		).filter( ( element ) => element !== undefined );
+
+		// console.log( tracks, tempo );
+		// return;
+
+		noteI = 0;
+		clearInterval( interval );
+
+		interval = setInterval(
+			( j ) => {
+
+				tracks.map(
+					( track, trackI ) => {
+						if ( track[ j = noteI % track.length ] ) {
+							const contextId = ( trackI * contextsPerTrack ) + ( noteI % contextsPerTrack );
+							playBuffer( track[ j ], contexts[ contextId ] )
+						}
+					}
+				);
+
+				// Next note.
+				noteI++;
+
+				// Loop notes.
+				noteI %= trackLen;
+			},
+			tempo
+		);
+	}
+
+}();
+
+( function( beep8 ) {
+
+	/**
 	 * ASYNC API FUNCTIONS
 	 * These functions must be called with 'await'.
 	 * For example:
@@ -1406,6 +2513,7 @@ const beep8 = {};
 				beep8.Core.setCursorLocation( curCol, curRow );
 				beep8.Core.textRenderer.print( curStrings[ curPos ] || "" );
 				const key = await this.readKeyAsync();
+				beep8.Sfx.play( 'click' );
 
 				if ( key === "Backspace" ) {
 
@@ -1562,14 +2670,28 @@ const beep8 = {};
 			const k = await beep8.Core.inputSys.readKeyAsync();
 
 			if ( k === "ArrowUp" ) {
+
+				// Go up the menu.
 				selIndex = selIndex > 0 ? selIndex - 1 : choices.length - 1;
+				if ( choices.length > 1 ) beep8.Sfx.play( "beep3" );
+
 			} else if ( k === "ArrowDown" ) {
+
+				// Go down the menu.
 				selIndex = ( selIndex + 1 ) % choices.length;
+				if ( choices.length > 1 ) beep8.Sfx.play( "beep2" );
+
 			} else if ( k === "Enter" || k === "ButtonA" ) {
-				// TODO: erase menu
+
+				// Select menu item.
+				beep8.Sfx.play( "beep" );
 				return selIndex;
+
 			} else if ( ( k === "Escape" || k === "ButtonB" ) && options.cancelable ) {
+
+				// Close menu.
 				return -1;
+
 			}
 
 		}
@@ -1606,612 +2728,711 @@ const beep8 = {};
 
 ( function( beep8 ) {
 
+	const audioContext = typeof AudioContext !== 'undefined' ? new AudioContext : new webkitAudioContext;
+
+	// Predefined list of start patterns
+	const startPatterns = [
+		"X-X-",
+		"XX--",
+	];
+
+	// Predefined list of follow-up patterns
+	const followPatterns = [
+		"X--X",
+		"X-X-",
+		"XX--",
+		// "X X-",
+		// "-X-X",
+		// "--XX",
+		// "X---",
+		// "-X--",
+		// "X---X---",
+		// "X---    "
+	];
+
+	const bassPatterns = [
+		'X---',
+		'X---X---',
+		'X-------',
+		'X-X-X-X-',
+		'X-------X-------',
+		'X-------        ',
+		'        X-------',
+	];
+
+	const scales = {
+
+		// [ 2, 2, 1, 2, 2, 2, 1 ], // major.
+		// [ 0, 0, 1, 0, 0, -1 ],
+		// [ 1, 1, 1, -2, 1, 1 ],
+		// [ 1, -1, 1, -1, 1, -1 ],
+		// [ 1, -1 ],
+		// [ 1, 2, 3, 4, 5, 6, -5, -4, -3, -2, -1 ],
+
+		minor: [ 2, 1, 2, 2, 1, 2, 2 ],
+		harmonicMinor: [ 2, 1, 2, 2, 1, 3, 1 ],
+		melodicMinorAscending: [ 2, 1, 2, 2, 2, 2, 1 ],
+		melodicMinorDescending: [ 2, 1, 2, 2, 1, 2, 2 ], // Same as natural minor
+		pentatonicMajor: [ 2, 2, 3, 2, 3 ],
+		pentatonicMinor: [ 3, 2, 2, 3, 2 ],
+		blues: [ 3, 2, 1, 1, 3, 2 ],
+		chromatic: [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ],
+		wholeTone: [ 2, 2, 2, 2, 2, 2 ],
+		dorian: [ 2, 1, 2, 2, 2, 1, 2 ],
+		phrygian: [ 1, 2, 2, 2, 1, 2, 2 ],
+		lydian: [ 2, 2, 2, 1, 2, 2, 1 ],
+		mixolydian: [ 2, 2, 1, 2, 2, 1, 2 ],
+		aeolian: [ 2, 1, 2, 2, 1, 2, 2 ], // Same as natural minor
+		locrian: [ 1, 2, 2, 1, 2, 2, 2 ],
+		// Exotic Scales
+		phrygianDominant: [ 1, 3, 1, 2, 1, 2, 2 ],
+		hungarianMinor: [ 2, 1, 3, 1, 1, 3, 1 ],
+		gypsy: [ 1, 3, 1, 2, 1, 3, 1 ],
+		japanese: [ 1, 4, 2, 1, 4 ],
+		arabian: [ 2, 2, 1, 1, 2, 2, 2 ],
+		eastern: [ 1, 2, 2, 1, 1, 3, 1 ],
+	};
+
+	const scaleRangeDistance = [
+		3,
+		2, 2,
+		1, 1, 1,
+		0, 0, 0, 0,
+		-1, -1, -1,
+		-2, -2,
+		-3,
+	];
+
+	const speedRange = [ 75, 100, 150, 200, 250, 300 ];
+	const durationRange = [ 40, 50, 60, 70, 80, 90 ];
+
+
+	const scaleRange = 12;
+	const noteMap = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split( '' );
+
+
+
+	beep8.Music = {};
+
+
 	/**
-	 * Initializes the API. This must be called before other functions and must
-	 * finish executing before other API functions are called.
-	 * Once the supplied callback is called, you can start using beep8 functions.
+	 * Play a song.
 	 *
-	 * @param {Function} callback - The callback to call when initialization is done.
+	 * @param {string} song The song to play.
 	 * @returns {void}
 	 */
-	beep8.init = function( callback ) {
+	beep8.Music.play = function( song ) {
 
-		return beep8.Core.init( callback );
+		console.log( 'play song', song );
+		p1( song );
 
 	}
 
 
 	/**
-	 * Sets the frame handler, that is, the function that will be called on
-	 * every frame to render the screen.
+	 * Create a song.
 	 *
-	 * @param {Function} handler - The frame handler function.
-	 * @param {number} [fps=30] - The target frames per second. Recommended: 30.
-	 * @returns {void}
+	 * @returns {string} The song.
 	 */
-	beep8.frame = function( handler, fps = 30 ) {
+	beep8.Music.create = function() {
 
-		beep8.Core.preflight( "beep8.frame" );
+		let melody = [];
 
-		if ( handler !== null ) {
-			beep8.Utilities.checkFunction( "handler", handler );
+		// Pick a random key from the list of scales.
+		let scaleKeys = Object.keys( scales );
+		let scaleIndex = scaleKeys[ Math.floor( Math.random() * scaleKeys.length ) ];
+
+		// The main 'song' melody.
+		const pattern = generatePattern( 8, startPatterns, followPatterns );
+		melody.push( generateMelody( generateScale( 2, scaleIndex ), pattern ) );
+		melody.push( generateMelody( generateScale( 1, scaleIndex ), pattern ) );
+
+		// Add some BASS.
+		// Number of patterns to add to the bass line.
+		const bassRepeat = Math.floor( Math.random() * 3 ) + 1;
+		// Generate the bass line.
+		melody.push( generateMelody( generateScale( 0, scaleIndex ), generatePattern( bassRepeat, [], bassPatterns ) ) );
+
+		// Return.
+		// Should change this and the p1 player so they accept JSON rather than a weird string.
+		return `${beep8.Utilities.randomPick( speedRange )}.${beep8.Utilities.randomPick( durationRange )}
+${melody.join( '\n' )}`;
+
+	};
+
+
+	/**
+	 * Generate a note scale.
+	 *
+	 * @param {number} noteMapId The group of keys to start from.
+	 * @param {string} scaleIndex The scale pattern to use.
+	 * @returns {string[]} The scale.
+	 */
+	function generateScale( noteMapId, scaleIndex ) {
+
+		const startNote = noteMapId * scaleRange;
+
+		let scale = [];
+		let currentIndex = startNote;
+
+		// Generate the list of notes that can be used.
+		for ( let interval of scales[ scaleIndex ] ) {
+			scale.push( noteMap[ currentIndex ] );
+			console.log( noteMap[ currentIndex ], currentIndex );
+			currentIndex += interval;
 		}
 
-		beep8.Utilities.checkNumber( "fps", fps );
-
-		return beep8.Core.setFrameHandler( handler, fps );
+		return scale;
 
 	}
 
 
 	/**
-	 * Forces the screen to render right now. Useful for immediate redraw in
-	 * animations.
-	 * Forces the screen to render right now. You only need this if you are
-	 * doing some kind of animation on your own and you want to redraw the
-	 * screen immediately to show the current state.
-	 * Otherwise the screen repaints automatically when waiting for user input.
+	 * Generate a rhythmic pattern from predefined patterns
 	 *
-	 * @returns {void}
+	 * @param {number} totalPatterns The number of patterns to generate.
+	 * @param {string[]} startPatterns The list of start patterns.
+	 * @param {string[]} followPatterns The list of follow patterns.
+	 * @returns {string} The generated pattern.
 	 */
-	beep8.render = function() {
+	function generatePattern( totalPatterns = 4, startPatterns = startPatterns, followPatterns = followPatterns ) {
 
-		beep8.Core.preflight( "beep8.render" );
-
-		return beep8.Core.render();
-
-	}
-
-
-	/**
-	 * Sets the foreground and/or background color.
-	 *
-	 * @param {number} fg - The foreground color.
-	 * @param {number} [bg] - The background color (optional).
-	 * @returns {void}
-	 */
-	beep8.color = function( fg, bg ) {
-
-		beep8.Core.preflight( "beep8.color" );
-		beep8.Utilities.checkNumber( "fg", fg );
-
-		if ( bg !== undefined ) {
-			beep8.Utilities.checkNumber( "bg", bg );
+		if ( totalPatterns < 1 ) {
+			return '';
 		}
 
-		beep8.Core.setColor( fg, bg );
+		let pattern = [];
 
-	}
-
-
-	/**
-	 * Gets the current foreground color.
-	 *
-	 * @returns {number} The current foreground color.
-	 */
-	beep8.getFgColor = function() {
-
-		beep8.Core.preflight( "getFgColor" );
-
-		return beep8.Core.drawState.fgColor;
-
-	}
-
-
-	/**
-	 * Gets the current background color.
-	 * -1 means transparent.
-	 *
-	 * @returns {number} The current background color.
-	 */
-	beep8.getBgColor = function() {
-
-		beep8.Core.preflight( "beep8.getBgColor" );
-
-		return beep8.Core.drawState.bgColor;
-
-	}
-
-
-	/**
-	 * Clears the screen using the current background color.
-	 *
-	 * @returns {void}
-	 */
-	beep8.cls = function() {
-
-		beep8.Core.preflight( "beep8.Core.cls" );
-		beep8.Core.cls();
-
-	}
-
-
-	/**
-	 * Places the cursor at the given screen column and row.
-	 *
-	 * @param {number} col - The column where the cursor is to be placed.
-	 * @param {number} [row] - The row where the cursor is to be placed (optional).
-	 * @returns {void}
-	 */
-	beep8.locate = function( col, row ) {
-
-		beep8.Core.preflight( "beep8.locate" );
-		beep8.Utilities.checkNumber( "col", col );
-
-		if ( row !== undefined ) {
-			beep8.Utilities.checkNumber( "row", row );
+		// Ensure there is at least one start pattern
+		if ( startPatterns.length > 0 ) {
+			pattern.push( startPatterns[ Math.floor( Math.random() * startPatterns.length ) ] );
 		}
 
-		beep8.Core.setCursorLocation( col, row );
+		if ( followPatterns.length > 0 ) {
 
-	}
+			// Add subsequent patterns from the followPatterns list
+			for ( let i = 1; i < totalPatterns; i++ ) {
+				let randomPattern = followPatterns[ Math.floor( Math.random() * followPatterns.length ) ];
+				let patternRepeat = Math.floor( Math.random() * 3 ) + 1;
 
+				for ( let j = 0; j < patternRepeat; j++ ) {
+					pattern.push( randomPattern );
+				}
+			}
 
-	/**
-	 * Returns the cursor's current column.
-	 *
-	 * @returns {number} The cursor's current column.
-	 */
-	beep8.col = function() {
-
-		beep8.Core.preflight( "col" );
-
-		return beep8.Core.drawState.cursorCol;
-
-	}
-
-
-	/**
-	 * Returns the cursor's current row.
-	 *
-	 * @returns {number} The cursor's current row.
-	 */
-	beep8.row = function() {
-
-		beep8.Core.preflight( "row" );
-
-		return beep8.Core.drawState.cursorRow;
-
-	}
-
-
-	/**
-	 * Shows or hides the cursor.
-	 *
-	 * @param {boolean} visible - If true, show the cursor. If false, hide the
-	 * cursor.
-	 * @returns {void}
-	 */
-	beep8.cursor = function( visible ) {
-
-		beep8.Core.preflight( "cursor" );
-		beep8.Utilities.checkBoolean( "visible", visible );
-		beep8.Core.cursorRenderer.setCursorVisible( visible );
-
-	}
-
-
-	/**
-	 * Prints text at the cursor position, using the current foreground and
-	 * background colors.
-	 *
-	 * The text can contain embedded newlines and they will behave as you expect:
-	 * printing will continue at the next line.
-	 *
-	 * If PRINT_ESCAPE_START and PRINT_ESCAPE_END are defined in CONFIG, then
-	 * you can also use escape sequences. For example {{c1}} sets the color to
-	 * 1, so your string can be "I like the color {{c1}}blue" and the word
-	 * 'blue' would be in blue. The sequence {{b2}} sets the background to 2
-	 * (red). The sequence {{z}} resets the color to the default. See
-	 * example-printing.html for an example.
-	 *
-	 * @param {string} text - The text to print.
-	 * @returns {void}
-	 */
-	beep8.print = function( text ) {
-
-		beep8.Core.preflight( "beep8.text" );
-		beep8.Utilities.checkString( "text", text );
-		beep8.Core.textRenderer.print( text );
-
-	}
-
-
-	/**
-	 * Prints text centered horizontally in a field of the given width.
-	 *
-	 * If the text is bigger than the width, it will overflow it.
-	 *
-	 * @param {string} text - The text to print.
-	 * @param {number} width - The width of the field, in characters.
-	 * @returns {void}
-	 */
-	beep8.printCentered = function( text, width ) {
-
-		beep8.Core.preflight( "beep8.printCentered" );
-		beep8.Utilities.checkString( "text", text );
-		beep8.Utilities.checkNumber( "width", width );
-		beep8.Core.textRenderer.printCentered( text, width );
-
-	}
-
-
-	/**
-	 * Draws text at an arbitrary pixel position on the screen, not following
-	 * the "row and column" system.
-	 *
-	 * @param {number} x - The X coordinate of the top-left of the text.
-	 * @param {number} y - The Y coordinate of the top-left of the text.
-	 * @param {string} text - The text to print.
-	 * @param {string} [fontId=null] - The font ID to use.
-	 * @returns {void}
-	 */
-	beep8.drawText = function( x, y, text, fontId = null ) {
-
-		beep8.Core.preflight( "beep8.drawText" );
-		beep8.Utilities.checkNumber( "x", x );
-		beep8.Utilities.checkNumber( "y", y );
-		beep8.Utilities.checkString( "text", text );
-
-		if ( fontId ) {
-			beep8.Utilities.checkString( "fontId", fontId );
 		}
 
-		beep8.Core.textRenderer.drawText( x, y, text, fontId );
+		console.log( pattern );
+
+		return pattern.join( '|' );
 
 	}
 
 
-	/**
-	 * Measures the size of the given text without printing it.
-	 *
-	 * @param {string} text - The text to measure.
-	 * @returns {Object} An object with {cols, rows} indicating the dimensions.
-	 */
-	beep8.measure = function( text ) {
-
-		beep8.Core.preflight( "measure" );
-		beep8.Utilities.checkString( "text", text );
-
-		return beep8.Core.textRenderer.measure( text );
-
-	}
-
-
-	/**
-	 * Prints a character at the current cursor position, advancing the cursor
-	 * position.
-	 *
-	 * @param {number|string} charCode - The character to print, as an integer
-	 * (ASCII code) or a one-character string.
-	 * @param {number} [numTimes=1] - How many times to print the character.
-	 * @returns {void}
-	 */
-	beep8.printChar = function( charCode, numTimes = 1 ) {
-
-		beep8.Core.preflight( "beep8.printChar" );
-		charCode = beep8.convChar( charCode );
-		beep8.Utilities.checkNumber( "charCode", charCode );
-		beep8.Utilities.checkNumber( "numTimes", numTimes );
-		beep8.Core.textRenderer.printChar( charCode, numTimes );
-
-	}
-
-
-	/**
-	 * Prints a rectangle of the given size with the given character, starting
-	 * at the current cursor position.
-	 *
-	 * @param {number} widthCols - Width of the rectangle in screen columns.
-	 * @param {number} heightRows - Height of the rectangle in screen rows.
-	 * @param {number|string} [charCode=32] - The character to print, as an
-	 * integer (ASCII code) or a one-character string.
-	 * @returns {void}
-	 */
-	beep8.printRect = function( widthCols, heightRows, charCode = 32 ) {
-
-		beep8.Core.preflight( "beep8.printRect" );
-		charCode = beep8.convChar( charCode );
-		beep8.Utilities.checkNumber( "widthCols", widthCols );
-		beep8.Utilities.checkNumber( "heightRows", heightRows );
-		beep8.Utilities.checkNumber( "charCode", charCode );
-		beep8.Core.textRenderer.printRect( widthCols, heightRows, charCode );
-
-	}
-
-
-	/**
-	 * Prints a box of the given size starting at the cursor position, using
-	 * border-drawing characters.
-	 *
-	 * @param {number} widthCols - Width of the box in screen columns, including
-	 * the border.
-	 * @param {number} heightRows - Height of the box in screen rows, including
-	 * the border.
-	 * @param {boolean} [fill=true] - If true, fill the interior with spaces.
-	 * @param {number} [borderChar=0x80] - The first border-drawing character to
-	 * use.
-	 * @returns {void}
-	 */
-	beep8.printBox = function( widthCols, heightRows, fill = true, borderChar = 0x80 ) {
-
-		beep8.Core.preflight( "beep8.printBox" );
-		borderChar = beep8.convChar( borderChar );
-		beep8.Utilities.checkNumber( "widthCols", widthCols );
-		beep8.Utilities.checkNumber( "heightRows", heightRows );
-		beep8.Utilities.checkBoolean( "fill", fill );
-		beep8.Utilities.checkNumber( "borderChar", borderChar );
-		beep8.Core.textRenderer.printBox( widthCols, heightRows, fill, borderChar );
-
-	}
-
-
-	/**
-	 * Draws an image (previously loaded with beep8.loadImage).
-	 *
-	 * @param {number} x - The X coordinate of the top-left of the image.
-	 * @param {number} y - The Y coordinate of the top-left of the image.
-	 * @param {HTMLImageElement} image - The image to draw.
-	 * @returns {void}
-	 */
-	beep8.drawImage = function( x, y, image ) {
-
-		beep8.Utilities.checkInstanceOf( "image", image, HTMLImageElement );
-		beep8.Utilities.checkNumber( "x", x );
-		beep8.Utilities.checkNumber( "y", y );
-
-		beep8.Core.drawImage( image, x, y );
-
-	}
-
-
-	/**
-	 * Draws a rectangular part of an image (previously loaded with
-	 * beep8.loadImage).
-	 *
-	 * @param {number} x - The X coordinate of the top-left of the image.
-	 * @param {number} y - The Y coordinate of the top-left of the image.
-	 * @param {HTMLImageElement} image - The image to draw.
-	 * @param {number} srcX - The X coordinate of the top-left of the rectangle
-	 * to be drawn.
-	 * @param {number} srcY - The Y coordinate of the top-left of the rectangle
-	 * to be drawn.
-	 * @param {number} width - The width in pixels of the rectangle to be drawn.
-	 * @param {number} height - The height in pixels of the rectangle to be
-	 * drawn.
-	 * @returns {void}
-	 */
-	beep8.drawImageRect = function( x, y, image, srcX, srcY, width, height ) {
-
-		beep8.Utilities.checkInstanceOf( "image", image, HTMLImageElement );
-		beep8.Utilities.checkNumber( "x", x );
-		beep8.Utilities.checkNumber( "y", y );
-		beep8.Utilities.checkNumber( "srcX", srcX );
-		beep8.Utilities.checkNumber( "srcY", srcY );
-		beep8.Utilities.checkNumber( "width", width );
-		beep8.Utilities.checkNumber( "height", height );
-
-		beep8.Core.drawImage( image, x, y, srcX, srcY, width, height );
-
-	}
-
-
-	/**
-	 * Draws a rectangle (border only) using the current foreground color.
-	 *
-	 * @param {number} x - The X coordinate of the top-left corner.
-	 * @param {number} y - The Y coordinate of the top-left corner.
-	 * @param {number} width - The width of the rectangle in pixels.
-	 * @param {number} height - The height of the rectangle in pixels.
-	 * @returns {void}
-	 */
-	beep8.drawRect = function( x, y, width, height ) {
-
-		beep8.Utilities.checkNumber( "x", x );
-		beep8.Utilities.checkNumber( "y", y );
-		beep8.Utilities.checkNumber( "width", width );
-		beep8.Utilities.checkNumber( "height", height );
-
-		beep8.Core.drawRect( x, y, width, height );
-
-	}
-
-
-	/**
-	 * Draws a filled rectangle using the current foreground color.
-	 *
-	 * @param {number} x - The X coordinate of the top-left corner.
-	 * @param {number} y - The Y coordinate of the top-left corner.
-	 * @param {number} width - The width of the rectangle in pixels.
-	 * @param {number} height - The height of the rectangle in pixels.
-	 * @returns {void}
-	 */
-	beep8.fillRect = function( x, y, width, height ) {
-
-		beep8.Utilities.checkNumber( "x", x );
-		beep8.Utilities.checkNumber( "y", y );
-		beep8.Utilities.checkNumber( "width", width );
-		beep8.Utilities.checkNumber( "height", height );
-
-		beep8.Core.fillRect( x, y, width, height );
-
-	}
-
-
-	/**
-	 * Plays a sound (previously loaded with beep8.playSound).
-	 *
-	 * @param {HTMLAudioElement} sfx - The sound to play.
-	 * @param {number} [volume=1] - The volume to play the sound at.
-	 * @param {boolean} [loop=false] - If true, play the sound in a loop.
-	 * @returns {void}
-	 */
-	beep8.playSound = function( sfx, volume = 1, loop = false ) {
-
-		beep8.Utilities.checkInstanceOf( "sfx", sfx, HTMLAudioElement );
-
-		sfx.currentTime = 0;
-		sfx.volume = volume;
-		sfx.loop = loop;
-
-		sfx.play();
-
-	}
-
-
-	/**
-	 * Draws a sprite on the screen.
-	 *
-	 * @param {number|string} ch - The character code of the sprite.
-	 * @param {number} x - The X position at which to draw.
-	 * @param {number} y - The Y position at which to draw.
-	 * @returns {void}
-	 */
-	beep8.spr = function( ch, x, y ) {
-
-		ch = beep8.convChar( ch );
-		beep8.Utilities.checkNumber( "ch", ch );
-		beep8.Utilities.checkNumber( "x", x );
-		beep8.Utilities.checkNumber( "y", y );
-
-		beep8.Core.textRenderer.spr( ch, x, y );
-
-	}
-
-
-	/**
-	 * Checks if the given key is currently pressed or not.
-	 *
-	 * @param {string} keyName - The name of the key.
-	 * @returns {boolean} True if the key is pressed, otherwise false.
-	 */
-	beep8.key = function( keyName ) {
-
-		beep8.Core.preflight( "beep8.key" );
-
-		beep8.Utilities.checkString( "keyName", keyName );
-
-		return beep8.Core.inputSys.keyHeld( keyName );
-
-	}
-
-
-	/**
-	 * Checks if the given key was JUST pressed on this frame.
-	 *
-	 * @param {string} keyName - The name of the key.
-	 * @returns {boolean} True if the key was just pressed, otherwise false.
-	 */
-	beep8.keyp = function( keyName ) {
-
-		beep8.Core.preflight( "beep8.keyp" );
-		beep8.Utilities.checkString( "keyName", keyName );
-
-		return beep8.Core.inputSys.keyJustPressed( keyName );
-
-	}
-
-
-	/**
-	 * Redefines the colors, assigning new RGB values to each color.
-	 *
-	 * @param {Array<number>} colors - An array of RGB values.
-	 * @returns {void}
-	 */
-	beep8.redefineColors = function( colors ) {
-
-		beep8.Core.preflight( "beep8.redefineColors" );
-		beep8.Utilities.checkArray( "colors", colors );
-		beep8.Core.defineColors( colors );
-
-	}
-
-
-	/**
-	 * Sets the current font for text-based operations.
-	 *
-	 * @param {string} [fontId="default"] - The font ID to set. Pass null or
-	 * omit to reset to default font.
-	 * @returns {void}
-	 */
-	beep8.setFont = function( fontId ) {
-
-		beep8.Core.preflight( "beep8.setFont" );
-		fontId = fontId || "default";
-		beep8.Utilities.checkString( "fontId", fontId );
-		beep8.Core.textRenderer.setFont( fontId );
-
-	}
-
-
-	/**
-	 * Converts a character code to its integer representation if needed.
-	 *
-	 * @param {number|string} charCode - The character code to convert.
-	 * @returns {number} The integer representation of the character code.
-	 */
-	beep8.convChar = function( charCode ) {
-
-		if ( typeof ( charCode ) === "string" && charCode.length > 0 ) {
-			return charCode.charCodeAt( 0 );
+	// Function to generate a melody based on a scale and a rhythmic pattern
+	function generateMelody( scale, rhythmPattern ) {
+
+		let melody = "";
+		// Pick a random index from scale array to start from.
+		let scaleIndex = Math.floor( Math.random() * scale.length );
+
+
+		for ( let i = 0; i < rhythmPattern.length; i++ ) {
+			if ( rhythmPattern[ i ] === '-' ) {
+				melody += '-';
+			}
+
+			if ( rhythmPattern[ i ] === ' ' ) {
+				melody += ' ';
+			}
+
+			if ( rhythmPattern[ i ] === '|' ) {
+				melody += '|';
+			}
+
+			if ( rhythmPattern[ i ] === 'X' ) {
+
+				melody += scale[ scaleIndex ];
+				scaleIndex += scaleRangeDistance[ Math.floor( Math.random() * scaleRangeDistance.length ) ];
+				if ( scaleIndex < 0 ) {
+					scaleIndex = 0;
+				}
+				if ( scaleIndex >= scale.length ) {
+					scaleIndex = scale.length - 1;
+				}
+			}
 		}
 
-		return charCode;
+		return melody;
+
+	}
+
+
+} )( beep8 || ( beep8 = {} ) );
+
+( function( beep8 ) {
+
+
+	/**
+	 * Sound effect library.
+	 *
+	 * @see https://codepen.io/KilledByAPixel/pen/BaowKzv?editors=1000
+	 * @see https://codepen.io/KilledByAPixel/pen/BaowKzv?editors=1000
+	 * @type {Object}
+	 */
+	const sfxLibrary = {
+		coin: {
+			staccato: 0.55,
+			notes: [
+				"E5 e",
+				"E6 q"
+			]
+		},
+		coin2: {
+			notes: [
+				'G5 e',
+				'G6 q',
+			]
+		},
+		jump: {
+			smoothing: 1,
+			notes: [
+				"E4 e",
+				"E3 q"
+			]
+		},
+		change: {
+			notes: [
+				"B3 e",
+				"D4b e",
+				"D4 e",
+				"E4 e"
+			]
+		},
+		die: {
+			staccato: 0.55,
+			gain: 0.4,
+			notes: [
+				"E0 e",
+				"F0 e",
+				"E0 h",
+			]
+		},
+		knockout: {
+			staccato: 0.2,
+			notes: [
+				"E6 e",
+				"E5 e",
+				"E4 e",
+				"E3 q",
+			]
+		},
+		dash: {
+			smoothing: 1,
+			notes: [
+				"E2 q",
+				"E5 q"
+			]
+		},
+		beep: {
+			staccato: 0.55,
+			waveType: 'sine',
+			gain: 0.8,
+			notes: [
+				'G3 e',
+			]
+		},
+		beep2: {
+			staccato: 0.55,
+			waveType: 'sine',
+			gain: 0.7,
+			notes: [
+				'G4 e',
+			]
+		},
+		beep3: {
+			staccato: 0.55,
+			waveType: 'sine',
+			gain: 0.7,
+			notes: [
+				'G5 e',
+			]
+		},
+		stars: {
+			staccato: 0.2,
+			waveType: 'triangle',
+			gain: 0.5,
+			notes: [
+				'C6 s',
+				'C6 s',
+				'B6 s',
+				'B6 s',
+				'A6 s',
+			]
+		},
+		engine: {
+			customWave: [ [ -1, 1, -1, 1, -1, 1 ], [ 1, 0, 1, 0, 1, 0 ] ],
+			gain: 0.8,
+			notes: [
+				'C1 w',
+				'C1 w'
+			]
+		},
+		next: {
+			customWave: [ -1, -0.9, -0.6, -0.3, 0, 0.3, 0.6, 0.9, 1 ],
+			gain: 0.8,
+			notes: [
+				'C2 e',
+				'C3 e',
+				'D2 e',
+				'D3 e',
+				'E2 e',
+				'E3 e',
+			]
+		},
+		start: {
+			notes: [
+				'D4 h',
+				'- h',
+				'D4 h',
+				'- h',
+				'G4 w',
+			]
+		},
+		buzzbuzzbuzz: {
+			gain: 0.35,
+			notes: [
+				'E1 e',
+				'- s',
+				'E1 e',
+				'- s',
+				'E1 e',
+				'- s',
+				'E1 e',
+				'- s',
+				'E1 e',
+				'- s',
+				'E1 e',
+				'- s',
+				'E1 e',
+				'- s',
+				'E1 e',
+			]
+		},
+		siren: {
+			smoothing: 0.5,
+			notes: [
+				'C4 h',
+				'A3 h',
+				'C4 h',
+				'A3 h',
+				'C4 h',
+				'A3 h',
+				'C4 h',
+				'A3 h',
+				'C4 h',
+				'A3 h',
+			],
+		},
+		click: {
+			staccato: 0.8,
+			notes: [
+				'A5 e',
+			]
+		},
+	};
+
+
+	/**
+	 * Cached sequence objects.
+	 *
+	 * @type {Object}
+	 */
+	const sfxSequence = {};
+
+
+	/**
+	 * AudioContext object.
+	 *
+	 * @type {AudioContext}
+	 */
+	const audioContext = typeof AudioContext !== 'undefined' ? new AudioContext : new webkitAudioContext;
+
+
+	beep8.Sfx = {};
+
+
+	/**
+	 * Play a sound effect.
+	 *
+	 * @param {string} sfx The sound effect to play.
+	 * @throws {Error} If the sfx is not found.
+	 */
+	beep8.Sfx.play = function( sfx ) {
+
+		// AudioContext is not supported.
+		if ( !audioContext ) {
+			return;
+		}
+
+		beep8.Utilities.checkString( 'sfx', sfx );
+
+		// SFX not found.
+		if ( !sfxLibrary[ sfx ] ) {
+			beep8.Utilities.error( `SFX ${sfx} not found.` );
+		}
+
+		// Setup the sfx sequence if it doesn't exist.
+		if ( !sfxSequence[ sfx ] ) {
+
+			sfxSequence[ sfx ] = new TinyMusic.Sequence(
+				audioContext,
+				sfxLibrary[ sfx ].tempo || 300,
+				sfxLibrary[ sfx ].notes
+			);
+
+			sfxSequence[ sfx ].loop = false;
+			sfxSequence[ sfx ].gain.gain.value = sfxLibrary[ sfx ].gain || 0.1;
+
+			if ( sfxLibrary[ sfx ].staccato ) {
+				sfxSequence[ sfx ].staccato = sfxLibrary[ sfx ].staccato;
+			}
+
+			if ( sfxLibrary[ sfx ].smoothing ) {
+				sfxSequence[ sfx ].smoothing = sfxLibrary[ sfx ].smoothing;
+			}
+
+			if ( sfxLibrary[ sfx ].waveType ) {
+				sfxSequence[ sfx ].waveType = sfxLibrary[ sfx ].waveType;
+			}
+
+			if ( sfxLibrary[ sfx ].customWave ) {
+
+				beep8.Utilities.checkArray( 'customWave', sfxLibrary[ sfx ].customWave );
+
+				if ( sfxLibrary[ sfx ].customWave.length === 2 ) {
+					sfxSequence[ sfx ].createCustomWave( sfxLibrary[ sfx ].customWave[ 0 ], sfxLibrary[ sfx ].customWave[ 1 ] );
+				} else {
+					sfxSequence[ sfx ].createCustomWave( sfxLibrary[ sfx ].customWave );
+				}
+
+			}
+
+		}
+
+		sfxSequence[ sfx ].play( audioContext.currentTime );
 
 	}
 
 
 	/**
-	 * Stops a sound (previously loaded with beep8.playSound).
+	 * Get the list of sfx from the library.
 	 *
-	 * @param {HTMLAudioElement} sfx - The sound to stop playing.
-	 * @returns {void}
+	 * @return {Array} The list of sfx.
 	 */
-	beep8.stopSound = function( sfx ) {
+	beep8.Sfx.get = function() {
 
-		beep8.Utilities.checkInstanceOf( "sfx", sfx, HTMLAudioElement );
-		sfx.currentTime = 0;
-		sfx.pause();
+		// return sfxLibrary keys.
+		return Object.keys( sfxLibrary );
+
+	}
+
+} )( beep8 || ( beep8 = {} ) );
+
+( function( beep8 ) {
+
+	// Define the musical parameters
+	const styles = {
+		classical: {
+			roots: "CDEFGAB".split( "" ),
+			modes: [ "maj", "min" ],
+			len_seqs: [
+				[ 1 ],
+				[ 2, 2 ],
+				[ 2, 4, 4 ],
+				[ 2, 4, 8, 8 ],
+				[ 4, 4, 4, 4 ],
+				[ 2, 8, 8, 8, 8 ],
+				[ 4, 4, 4, 8, 8 ],
+				[ 8, 8, 8, 8, 8, 8, 8, 8 ],
+			],
+			numNotes: 64,
+			numTracks: 4,
+			tempo: 600,
+			sustain: 70,
+		},
+		jazz: {
+			roots: "CDEFGAB".split( "" ),
+			modes: [ "maj", "min", "blues", "pentatonic" ],
+			len_seqs: [
+				[ 2, 2, 2, 2, 2, 2 ],
+				[ 3, 3, 3 ],
+				[ 4, 4, 8 ],
+				[ 8, 8 ],
+			],
+			numNotes: 48,
+			numTracks: 5,
+			tempo: 450,
+			sustain: 60,
+		},
+		rock: {
+			roots: "CDEFGAB".split( "" ),
+			modes: [ "maj", "min", "pentatonic" ],
+			len_seqs: [
+				[ 4, 4, 4, 4 ],
+				[ 8, 8, 8, 8 ],
+				[ 4, 8, 8, 8 ],
+			],
+			numNotes: 32,
+			numTracks: 3,
+			tempo: 500,
+			sustain: 80,
+		},
+		electro: {
+			roots: "CDEFGAB".split( "" ),
+			modes: [ "maj", "min" ],
+			len_seqs: [
+				[ 8, 8, 8, 8, 8, 8, 8, 8 ],
+				[ 16, 16, 16, 16 ],
+				[ 8, 8, 16, 16 ],
+			],
+			numNotes: 32,
+			numTracks: 2,
+			tempo: 400,
+			sustain: 90,
+		}
+	};
+
+	beep8.Sound = {};
+
+
+
+	beep8.Sound.playSong = function( song ) {
+
+		console.log( 'play song', song );
+		p1( song );
+
+	};
+
+	beep8.Sound.stopSong = function() {
+
+		p1( '' );
+
+	};
+
+
+	beep8.Sound.createMusic = function() {
+
+		function generateP1Music( seed, style ) {
+
+			// Set up the seed-based random number generator
+			const generator = new Math.seedrandom( seed );
+
+			const selectedStyle = styles[ style ];
+			const { roots, modes, len_seqs, numNotes, numTracks, tempo, sustain } = selectedStyle;
+
+			// Generate a random key and mode
+			const root = roots[ Math.floor( generator() * roots.length ) ];
+			const mode = modes[ Math.floor( generator() * modes.length ) ];
+
+			// Generate the musical scale
+			const scale = generateScale( root, mode, 2, 5 );
+
+			// Define a simple Markov chain for note transitions
+			const markovChain = {
+				"C": [ "D", "E", "G" ],
+				"D": [ "E", "F", "A" ],
+				"E": [ "F", "G", "C" ],
+				"F": [ "G", "A", "D" ],
+				"G": [ "A", "B", "E" ],
+				"A": [ "B", "C", "F" ],
+				"B": [ "C", "D", "G" ]
+			};
+
+			// Generate the sequences of notes for each track
+			const tracks = [];
+			for ( let t = 0; t < numTracks; t++ ) {
+				const notes = generateNotes( scale, len_seqs, generator, 8, numNotes, markovChain );
+				const p1Music = convertNotesToP1( notes );
+				tracks.push( p1Music );
+			}
+
+			// Combine tracks into the p1 format with tempo and sustain
+			const p1FormattedMusic = `${tempo}.${sustain}\n${tracks.join( '\n' )}`;
+
+			// Return the p1 formatted music string
+			return p1FormattedMusic;
+		}
+
+		// Helper functions
+
+		function generateScale( root, mode, min_oct, max_oct ) {
+			const steps = {
+				maj: [ 2, 2, 1, 2, 2, 2, 1 ],
+				min: [ 2, 1, 2, 2, 1, 2, 2 ],
+				blues: [ 3, 2, 1, 1, 3, 2 ],
+				pentatonic: [ 2, 2, 3, 2, 3 ],
+			}[ mode ];
+			const notes = "CDEFGAB".split( "" );
+			let scale = [];
+			for ( let oct = min_oct; oct <= max_oct; oct++ ) {
+				let noteIndex = notes.indexOf( root );
+				for ( let step of steps ) {
+					scale.push( notes[ noteIndex ] + oct );
+					noteIndex = ( noteIndex + step ) % notes.length;
+				}
+			}
+			return scale;
+		}
+
+		function generateNotes( scale, len_seqs, generator, res, numNotes, markovChain ) {
+			let notes = "";
+			let currentNote = scale[ Math.floor( generator() * scale.length ) ];
+			for ( let i = 0; i < numNotes; i++ ) {
+				const seq = len_seqs[ Math.floor( generator() * len_seqs.length ) ];
+				const len = seq[ Math.floor( generator() * seq.length ) ];
+				const noteLen = res / len;
+				notes += currentNote[ 0 ] + currentNote[ 1 ] + "-".repeat( noteLen - 1 ) + " ";
+				currentNote = getNextNoteUsingMarkovChain( currentNote, markovChain, generator );
+			}
+			return notes.trim();
+		}
+
+		function getNextNoteUsingMarkovChain( currentNote, markovChain, generator ) {
+			const note = currentNote[ 0 ]; // Extract the note (ignoring the octave)
+			const possibleNextNotes = markovChain[ note ];
+			const nextNote = possibleNextNotes[ Math.floor( generator() * possibleNextNotes.length ) ];
+			return nextNote + currentNote[ 1 ]; // Keep the same octave as the current note
+		}
+
+		function convertNotesToP1( notes ) {
+			const p1Letters = {
+				C2: "C", D2: "D", E2: "E", F2: "F", G2: "G", A2: "A", B2: "B",
+				C3: "V", D3: "W", E3: "X", F3: "Y", G3: "Z", A3: "a", B3: "b",
+				C4: "c", D4: "d", E4: "e", F4: "f", G4: "g", A4: "h", B4: "i",
+				C5: "j", D5: "k", E5: "l", F5: "m", G5: "n", A5: "o", B5: "p"
+			};
+
+			let p1String = "";
+			for ( let note of notes.split( " " ) ) {
+				const p1Note = p1Letters[ note[ 0 ] + note[ 1 ] ];
+				p1String += p1Note ? p1Note + note.slice( 2 ) : " ";
+			}
+
+			return p1String.trim();
+		}
+
+		// Example usage
+		const seed = "d12d21ddd";
+		const music = generateP1Music( seed, 'rock' );
+		console.log( music );
+
+
+		return music;
 
 	}
 
 
-	/**
-	 * Returns the raw canvas 2D context for drawing.
-	 *
-	 * @returns {CanvasRenderingContext2D} The raw HTML 2D canvas context.
-	 */
-	beep8.getContext = function() {
-
-		return beep8.Core.getContext();
-
-	}
-
-
-	/**
-	 * Saves the contents of the screen into an ImageData object and returns it.
-	 *
-	 * @returns {ImageData} An ImageData object with the screen's contents.
-	 */
-	beep8.saveScreen = function() {
-
-		return beep8.Core.saveScreen();
-
-	}
-
-
-	/**
-	 * Restores the contents of the screen using an ImageData object.
-	 *
-	 * @param {ImageData} screenData - The ImageData object with the screen's
-	 * contents.
-	 * @returns {void}
-	 */
-	beep8.restoreScreen = function( screenData ) {
-
-		return beep8.Core.restoreScreen( screenData );
-
-	}
 
 
 } )( beep8 || ( beep8 = {} ) );
@@ -2802,7 +4023,9 @@ const beep8 = {};
 
 ( function( beep8 ) {
 
+
 	beep8.Utilities = {};
+
 
 	/**
 	 * Shows a fatal error and throws an exception.
@@ -3148,7 +4371,7 @@ const beep8 = {};
 			return lowInclusive;
 		}
 
-		return clamp(
+		return beep8.Utilities.clamp(
 			Math.floor(
 				Math.random() * ( highInclusive - lowInclusive + 1 )
 			) + lowInclusive,
@@ -3632,3 +4855,539 @@ const beep8 = {};
 	}
 
 } )( beep8 || ( beep8 = {} ) );
+
+function generatePerlinNoise( width, height, options ) {
+
+	options = options || {};
+	var octaveCount = options.octaveCount || 4;
+	var amplitude = options.amplitude || 0.1;
+	var persistence = options.persistence || 0.2;
+	var whiteNoise = generateWhiteNoise( width, height );
+
+	var smoothNoiseList = new Array( octaveCount );
+	var i;
+	for ( i = 0; i < octaveCount; ++i ) {
+		smoothNoiseList[ i ] = generateSmoothNoise( i );
+	}
+	var perlinNoise = new Array( width * height );
+	var totalAmplitude = 0;
+	// blend noise together
+	for ( i = octaveCount - 1; i >= 0; --i ) {
+		amplitude *= persistence;
+		totalAmplitude += amplitude;
+
+		for ( var j = 0; j < perlinNoise.length; ++j ) {
+			perlinNoise[ j ] = perlinNoise[ j ] || 0;
+			perlinNoise[ j ] += smoothNoiseList[ i ][ j ] * amplitude;
+		}
+	}
+	// normalization
+	for ( i = 0; i < perlinNoise.length; ++i ) {
+		perlinNoise[ i ] /= totalAmplitude;
+	}
+
+	return perlinNoise;
+
+	function generateSmoothNoise( octave ) {
+		var noise = new Array( width * height );
+		var samplePeriod = Math.pow( 2, octave );
+		var sampleFrequency = 1 / samplePeriod;
+		var noiseIndex = 0;
+		for ( var y = 0; y < height; ++y ) {
+			var sampleY0 = Math.floor( y / samplePeriod ) * samplePeriod;
+			var sampleY1 = ( sampleY0 + samplePeriod ) % height;
+			var vertBlend = ( y - sampleY0 ) * sampleFrequency;
+			for ( var x = 0; x < width; ++x ) {
+				var sampleX0 = Math.floor( x / samplePeriod ) * samplePeriod;
+				var sampleX1 = ( sampleX0 + samplePeriod ) % width;
+				var horizBlend = ( x - sampleX0 ) * sampleFrequency;
+
+				// blend top two corners
+				var top = interpolate( whiteNoise[ sampleY0 * width + sampleX0 ], whiteNoise[ sampleY1 * width + sampleX0 ], vertBlend );
+				// blend bottom two corners
+				var bottom = interpolate( whiteNoise[ sampleY0 * width + sampleX1 ], whiteNoise[ sampleY1 * width + sampleX1 ], vertBlend );
+				// final blend
+				noise[ noiseIndex ] = interpolate( top, bottom, horizBlend );
+				noiseIndex += 1;
+			}
+		}
+		return noise;
+	}
+}
+/*
+Copyright 2019 David Bau.
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+*/
+
+!( function( global, pool, math ) {
+	//
+	// The following constants are related to IEEE 754 limits.
+	//
+
+	var width = 256,        // each RC4 output is 0 <= x < 256
+		chunks = 6,         // at least six RC4 outputs for each double
+		digits = 52,        // there are 52 significant digits in a double
+		rngname = 'random', // rngname: name for Math.random and Math.seedrandom
+		startdenom = math.pow( width, chunks ),
+		significance = math.pow( 2, digits ),
+		overflow = significance * 2,
+		mask = width - 1,
+		nodecrypto;         // node.js crypto module, initialized at the bottom.
+
+	//
+	// seedrandom()
+	// This is the seedrandom function described above.
+	//
+	function seedrandom( seed, options, callback ) {
+		var key = [];
+		options = ( options == true ) ? { entropy: true } : ( options || {} );
+
+		// Flatten the seed string or build one from local entropy if needed.
+		var shortseed = mixkey( flatten(
+			options.entropy ? [ seed, tostring( pool ) ] :
+				( seed == null ) ? autoseed() : seed, 3 ), key );
+
+		// Use the seed to initialize an ARC4 generator.
+		var arc4 = new ARC4( key );
+
+		// This function returns a random double in [0, 1) that contains
+		// randomness in every bit of the mantissa of the IEEE 754 value.
+		var prng = function() {
+			var n = arc4.g( chunks ),             // Start with a numerator n < 2 ^ 48
+				d = startdenom,                 //   and denominator d = 2 ^ 48.
+				x = 0;                          //   and no 'extra last byte'.
+			while ( n < significance ) {          // Fill up all significant digits by
+				n = ( n + x ) * width;              //   shifting numerator and
+				d *= width;                       //   denominator and generating a
+				x = arc4.g( 1 );                    //   new least-significant-byte.
+			}
+			while ( n >= overflow ) {             // To avoid rounding up, before adding
+				n /= 2;                           //   last byte, shift everything
+				d /= 2;                           //   right using integer math until
+				x >>>= 1;                         //   we have exactly the desired bits.
+			}
+			return ( n + x ) / d;                 // Form the number within [0, 1).
+		};
+
+		prng.int32 = function() { return arc4.g( 4 ) | 0; }
+		prng.quick = function() { return arc4.g( 4 ) / 0x100000000; }
+		prng.double = prng;
+
+		// Mix the randomness into accumulated entropy.
+		mixkey( tostring( arc4.S ), pool );
+
+		// Calling convention: what to return as a function of prng, seed, is_math.
+		return ( options.pass || callback ||
+			function( prng, seed, is_math_call, state ) {
+				if ( state ) {
+					// Load the arc4 state from the given state if it has an S array.
+					if ( state.S ) { copy( state, arc4 ); }
+					// Only provide the .state method if requested via options.state.
+					prng.state = function() { return copy( arc4, {} ); }
+				}
+
+				// If called as a method of Math (Math.seedrandom()), mutate
+				// Math.random because that is how seedrandom.js has worked since v1.0.
+				if ( is_math_call ) { math[ rngname ] = prng; return seed; }
+
+				// Otherwise, it is a newer calling convention, so return the
+				// prng directly.
+				else return prng;
+			} )(
+				prng,
+				shortseed,
+				'global' in options ? options.global : ( this == math ),
+				options.state );
+	}
+
+	//
+	// ARC4
+	//
+	// An ARC4 implementation.  The constructor takes a key in the form of
+	// an array of at most (width) integers that should be 0 <= x < (width).
+	//
+	// The g(count) method returns a pseudorandom integer that concatenates
+	// the next (count) outputs from ARC4.  Its return value is a number x
+	// that is in the range 0 <= x < (width ^ count).
+	//
+	function ARC4( key ) {
+		var t, keylen = key.length,
+			me = this, i = 0, j = me.i = me.j = 0, s = me.S = [];
+
+		// The empty key [] is treated as [0].
+		if ( !keylen ) { key = [ keylen++ ]; }
+
+		// Set up S using the standard key scheduling algorithm.
+		while ( i < width ) {
+			s[ i ] = i++;
+		}
+		for ( i = 0; i < width; i++ ) {
+			s[ i ] = s[ j = mask & ( j + key[ i % keylen ] + ( t = s[ i ] ) ) ];
+			s[ j ] = t;
+		}
+
+		// The "g" method returns the next (count) outputs as one number.
+		( me.g = function( count ) {
+			// Using instance members instead of closure state nearly doubles speed.
+			var t, r = 0,
+				i = me.i, j = me.j, s = me.S;
+			while ( count-- ) {
+				t = s[ i = mask & ( i + 1 ) ];
+				r = r * width + s[ mask & ( ( s[ i ] = s[ j = mask & ( j + t ) ] ) + ( s[ j ] = t ) ) ];
+			}
+			me.i = i; me.j = j;
+			return r;
+			// For robust unpredictability, the function call below automatically
+			// discards an initial batch of values.  This is called RC4-drop[256].
+			// See http://google.com/search?q=rsa+fluhrer+response&btnI
+		} )( width );
+	}
+
+	//
+	// copy()
+	// Copies internal state of ARC4 to or from a plain object.
+	//
+	function copy( f, t ) {
+		t.i = f.i;
+		t.j = f.j;
+		t.S = f.S.slice();
+		return t;
+	};
+
+	//
+	// flatten()
+	// Converts an object tree to nested arrays of strings.
+	//
+	function flatten( obj, depth ) {
+		var result = [], typ = ( typeof obj ), prop;
+		if ( depth && typ == 'object' ) {
+			for ( prop in obj ) {
+				try { result.push( flatten( obj[ prop ], depth - 1 ) ); } catch ( e ) { }
+			}
+		}
+		return ( result.length ? result : typ == 'string' ? obj : obj + '\0' );
+	}
+
+	//
+	// mixkey()
+	// Mixes a string seed into a key that is an array of integers, and
+	// returns a shortened string seed that is equivalent to the result key.
+	//
+	function mixkey( seed, key ) {
+		var stringseed = seed + '', smear, j = 0;
+		while ( j < stringseed.length ) {
+			key[ mask & j ] =
+				mask & ( ( smear ^= key[ mask & j ] * 19 ) + stringseed.charCodeAt( j++ ) );
+		}
+		return tostring( key );
+	}
+
+	//
+	// autoseed()
+	// Returns an object for autoseeding, using window.crypto and Node crypto
+	// module if available.
+	//
+	function autoseed() {
+		try {
+			var out;
+			if ( nodecrypto && ( out = nodecrypto.randomBytes ) ) {
+				// The use of 'out' to remember randomBytes makes tight minified code.
+				out = out( width );
+			} else {
+				out = new Uint8Array( width );
+				( global.crypto || global.msCrypto ).getRandomValues( out );
+			}
+			return tostring( out );
+		} catch ( e ) {
+			var browser = global.navigator,
+				plugins = browser && browser.plugins;
+			return [ +new Date, global, plugins, global.screen, tostring( pool ) ];
+		}
+	}
+
+	//
+	// tostring()
+	// Converts an array of charcodes to a string
+	//
+	function tostring( a ) {
+		return String.fromCharCode.apply( 0, a );
+	}
+
+	//
+	// When seedrandom.js is loaded, we immediately mix a few bits
+	// from the built-in RNG into the entropy pool.  Because we do
+	// not want to interfere with deterministic PRNG state later,
+	// seedrandom will not call math.random on its own again after
+	// initialization.
+	//
+	mixkey( math.random(), pool );
+
+	//
+	// Nodejs and AMD support: export the implementation as a module using
+	// either convention.
+	//
+	if ( ( typeof module ) == 'object' && module.exports ) {
+		module.exports = seedrandom;
+		// When in node.js, try using crypto package for autoseeding.
+		try {
+			nodecrypto = require( 'crypto' );
+		} catch ( ex ) { }
+	} else if ( ( typeof define ) == 'function' && define.amd ) {
+		define( function() { return seedrandom; } );
+	} else {
+		// When included as a plain script, set up Math.seedrandom global.
+		math[ 'seed' + rngname ] = seedrandom;
+	}
+
+	console.log( 'seed random init' );
+
+
+	// End anonymous scope, and pass initial values.
+} )(
+	// global: `self` in browsers (including strict mode and web workers),
+	// otherwise `this` in Node and other environments
+	( typeof self !== 'undefined' ) ? self : this,
+	[],     // pool: entropy pool starts empty
+	Math    // math: package containing random, pow, and seedrandom
+);
+
+// https://github.com/kevincennis/TinyMusic/
+
+( function( root, factory ) {
+	if ( typeof define === 'function' && define.amd ) {
+		define( [ 'exports' ], factory );
+	} else if ( typeof exports === 'object' && typeof exports.nodeName !== 'string' ) {
+		factory( exports );
+	} else {
+		factory( root.TinyMusic = {} );
+	}
+}( this, function( exports ) {
+
+	/*
+	 * Private stuffz
+	 */
+
+	var enharmonics = 'B#-C|C#-Db|D|D#-Eb|E-Fb|E#-F|F#-Gb|G|G#-Ab|A|A#-Bb|B-Cb',
+		middleC = 440 * Math.pow( Math.pow( 2, 1 / 12 ), -9 ),
+		numeric = /^[0-9.]+$/,
+		octaveOffset = 4,
+		space = /\s+/,
+		num = /(\d+)/,
+		offsets = {};
+
+	// populate the offset lookup (note distance from C, in semitones)
+	enharmonics.split( '|' ).forEach( function( val, i ) {
+		val.split( '-' ).forEach( function( note ) {
+			offsets[ note ] = i;
+		} );
+	} );
+
+	/*
+	 * Note class
+	 *
+	 * new Note ('A4 q') === 440Hz, quarter note
+	 * new Note ('- e') === 0Hz (basically a rest), eigth note
+	 * new Note ('A4 es') === 440Hz, dotted eighth note (eighth + sixteenth)
+	 * new Note ('A4 0.0125') === 440Hz, 32nd note (or any arbitrary
+	 * divisor/multiple of 1 beat)
+	 *
+	 */
+
+	// create a new Note instance from a string
+	function Note( str ) {
+		var couple = str.split( space );
+		// frequency, in Hz
+		this.frequency = Note.getFrequency( couple[ 0 ] ) || 0;
+		// duration, as a ratio of 1 beat (quarter note = 1, half note = 0.5, etc.)
+		this.duration = Note.getDuration( couple[ 1 ] ) || 0;
+	}
+
+	// convert a note name (e.g. 'A4') to a frequency (e.g. 440.00)
+	Note.getFrequency = function( name ) {
+		var couple = name.split( num ),
+			distance = offsets[ couple[ 0 ] ],
+			octaveDiff = ( couple[ 1 ] || octaveOffset ) - octaveOffset,
+			freq = middleC * Math.pow( Math.pow( 2, 1 / 12 ), distance );
+		return freq * Math.pow( 2, octaveDiff );
+	};
+
+	// convert a duration string (e.g. 'q') to a number (e.g. 1)
+	// also accepts numeric strings (e.g '0.125')
+	// and compund durations (e.g. 'es' for dotted-eight or eighth plus sixteenth)
+	Note.getDuration = function( symbol ) {
+		return numeric.test( symbol ) ? parseFloat( symbol ) :
+			symbol.toLowerCase().split( '' ).reduce( function( prev, curr ) {
+				return prev + ( curr === 'w' ? 4 : curr === 'h' ? 2 :
+					curr === 'q' ? 1 : curr === 'e' ? 0.5 :
+						curr === 's' ? 0.25 : 0 );
+			}, 0 );
+	};
+
+	/*
+	 * Sequence class
+	 */
+
+	// create a new Sequence
+	function Sequence( ac, tempo, arr ) {
+		this.ac = ac || new AudioContext();
+		this.createFxNodes();
+		this.tempo = tempo || 120;
+		this.loop = true;
+		this.smoothing = 0;
+		this.staccato = 0;
+		this.notes = [];
+		this.push.apply( this, arr || [] );
+	}
+
+	// create gain and EQ nodes, then connect 'em
+	Sequence.prototype.createFxNodes = function() {
+		var eq = [ [ 'bass', 100 ], [ 'mid', 1000 ], [ 'treble', 2500 ] ],
+			prev = this.gain = this.ac.createGain();
+		eq.forEach( function( config, filter ) {
+			filter = this[ config[ 0 ] ] = this.ac.createBiquadFilter();
+			filter.type = 'peaking';
+			filter.frequency.value = config[ 1 ];
+			prev.connect( prev = filter );
+		}.bind( this ) );
+		prev.connect( this.ac.destination );
+		return this;
+	};
+
+	// accepts Note instances or strings (e.g. 'A4 e')
+	Sequence.prototype.push = function() {
+		Array.prototype.forEach.call( arguments, function( note ) {
+			this.notes.push( note instanceof Note ? note : new Note( note ) );
+		}.bind( this ) );
+		return this;
+	};
+
+	// create a custom waveform as opposed to "sawtooth", "triangle", etc
+	Sequence.prototype.createCustomWave = function( real, imag ) {
+		// Allow user to specify only one array and dupe it for imag.
+		if ( !imag ) {
+			imag = real;
+		}
+
+		// Wave type must be custom to apply period wave.
+		this.waveType = 'custom';
+
+		// Reset customWave
+		this.customWave = [ new Float32Array( real ), new Float32Array( imag ) ];
+	};
+
+	// recreate the oscillator node (happens on every play)
+	Sequence.prototype.createOscillator = function() {
+		this.stop();
+		this.osc = this.ac.createOscillator();
+
+		// customWave should be an array of Float32Arrays. The more elements in
+		// each Float32Array, the dirtier (saw-like) the wave is
+		if ( this.customWave ) {
+			this.osc.setPeriodicWave(
+				this.ac.createPeriodicWave.apply( this.ac, this.customWave )
+			);
+		} else {
+			this.osc.type = this.waveType || 'square';
+		}
+
+		this.osc.connect( this.gain );
+		return this;
+	};
+
+	// schedules this.notes[ index ] to play at the given time
+	// returns an AudioContext timestamp of when the note will *end*
+	Sequence.prototype.scheduleNote = function( index, when ) {
+		var duration = 60 / this.tempo * this.notes[ index ].duration,
+			cutoff = duration * ( 1 - ( this.staccato || 0 ) );
+
+		this.setFrequency( this.notes[ index ].frequency, when );
+
+		if ( this.smoothing && this.notes[ index ].frequency ) {
+			this.slide( index, when, cutoff );
+		}
+
+		this.setFrequency( 0, when + cutoff );
+		return when + duration;
+	};
+
+	// get the next note
+	Sequence.prototype.getNextNote = function( index ) {
+		return this.notes[ index < this.notes.length - 1 ? index + 1 : 0 ];
+	};
+
+	// how long do we wait before beginning the slide? (in seconds)
+	Sequence.prototype.getSlideStartDelay = function( duration ) {
+		return duration - Math.min( duration, 60 / this.tempo * this.smoothing );
+	};
+
+	// slide the note at <index> into the next note at the given time,
+	// and apply staccato effect if needed
+	Sequence.prototype.slide = function( index, when, cutoff ) {
+		var next = this.getNextNote( index ),
+			start = this.getSlideStartDelay( cutoff );
+		this.setFrequency( this.notes[ index ].frequency, when + start );
+		this.rampFrequency( next.frequency, when + cutoff );
+		return this;
+	};
+
+	// set frequency at time
+	Sequence.prototype.setFrequency = function( freq, when ) {
+		this.osc.frequency.setValueAtTime( freq, when );
+		return this;
+	};
+
+	// ramp to frequency at time
+	Sequence.prototype.rampFrequency = function( freq, when ) {
+		this.osc.frequency.linearRampToValueAtTime( freq, when );
+		return this;
+	};
+
+	// run through all notes in the sequence and schedule them
+	Sequence.prototype.play = function( when ) {
+		when = typeof when === 'number' ? when : this.ac.currentTime;
+
+		this.createOscillator();
+		this.osc.start( when );
+
+		this.notes.forEach( function( note, i ) {
+			when = this.scheduleNote( i, when );
+		}.bind( this ) );
+
+		this.osc.stop( when );
+		this.osc.onended = this.loop ? this.play.bind( this, when ) : null;
+
+		return this;
+	};
+
+	// stop playback, null out the oscillator, cancel parameter automation
+	Sequence.prototype.stop = function() {
+		if ( this.osc ) {
+			this.osc.onended = null;
+			this.osc.disconnect();
+			this.osc = null;
+		}
+		return this;
+	};
+
+	exports.Note = Note;
+	exports.Sequence = Sequence;
+} ) );
