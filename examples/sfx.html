@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Example - Maze</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <script src="../dist/beep8.js"></script>
+
+  <!-- Replace with a separate style.css file if you want -->
+  <style type="text/css">
+  body {
+    background: black;
+    color: white;
+  }
+  .interface {
+	padding: 5vw;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+  }
+  button {
+	padding: 10px 20px;
+	font-size: 20px;
+	font-weight: 900;
+  }
+  </style>
+
+  <div class="interface"></div>
+
+  <script>
+
+	const buttons = beep8.Sfx.get();
+	// Loop through buttons and add them to the .interface div.
+	buttons.forEach( (button, index) => {
+		const buttonElement = document.createElement('button');
+		buttonElement.innerText = button;
+		buttonElement.addEventListener('click', () => {
+			beep8.Sfx.play(button);
+		});
+		document.querySelector('.interface').appendChild(buttonElement);
+	});
+
+  </script>

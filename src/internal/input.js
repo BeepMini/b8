@@ -134,6 +134,7 @@
 				beep8.Core.setCursorLocation( curCol, curRow );
 				beep8.Core.textRenderer.print( curStrings[ curPos ] || "" );
 				const key = await this.readKeyAsync();
+				beep8.Sfx.play( 'click' );
 
 				if ( key === "Backspace" ) {
 
