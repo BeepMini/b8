@@ -760,482 +760,6 @@ const beep8 = {};
 
 ( function( beep8 ) {
 
-
-	// Predefined list of start patterns
-	const startPatterns = [
-		"X-X-",
-		"XX--",
-	];
-
-	// Predefined list of follow-up patterns
-	const followPatterns = [
-		"X--X",
-		"X-X-",
-		"XX--",
-		// "X X-",
-		// "-X-X",
-		// "--XX",
-		// "X---",
-		// "-X--",
-		// "X---X---",
-		// "X---    "
-	];
-
-	const bassPatterns = [
-		'X---',
-		'X---X---',
-		'X-------',
-		'X-X-X-X-',
-		'X-------X-------',
-		'X-------        ',
-		'        X-------',
-	];
-
-	const scales = {
-
-		// [ 2, 2, 1, 2, 2, 2, 1 ], // major.
-		// [ 0, 0, 1, 0, 0, -1 ],
-		// [ 1, 1, 1, -2, 1, 1 ],
-		// [ 1, -1, 1, -1, 1, -1 ],
-		// [ 1, -1 ],
-		// [ 1, 2, 3, 4, 5, 6, -5, -4, -3, -2, -1 ],
-
-		minor: [ 2, 1, 2, 2, 1, 2, 2 ],
-		harmonicMinor: [ 2, 1, 2, 2, 1, 3, 1 ],
-		melodicMinorAscending: [ 2, 1, 2, 2, 2, 2, 1 ],
-		melodicMinorDescending: [ 2, 1, 2, 2, 1, 2, 2 ], // Same as natural minor
-		pentatonicMajor: [ 2, 2, 3, 2, 3 ],
-		pentatonicMinor: [ 3, 2, 2, 3, 2 ],
-		blues: [ 3, 2, 1, 1, 3, 2 ],
-		chromatic: [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ],
-		wholeTone: [ 2, 2, 2, 2, 2, 2 ],
-		dorian: [ 2, 1, 2, 2, 2, 1, 2 ],
-		phrygian: [ 1, 2, 2, 2, 1, 2, 2 ],
-		lydian: [ 2, 2, 2, 1, 2, 2, 1 ],
-		mixolydian: [ 2, 2, 1, 2, 2, 1, 2 ],
-		aeolian: [ 2, 1, 2, 2, 1, 2, 2 ], // Same as natural minor
-		locrian: [ 1, 2, 2, 1, 2, 2, 2 ],
-		// Exotic Scales
-		phrygianDominant: [ 1, 3, 1, 2, 1, 2, 2 ],
-		hungarianMinor: [ 2, 1, 3, 1, 1, 3, 1 ],
-		gypsy: [ 1, 3, 1, 2, 1, 3, 1 ],
-		japanese: [ 1, 4, 2, 1, 4 ],
-		arabian: [ 2, 2, 1, 1, 2, 2, 2 ],
-		eastern: [ 1, 2, 2, 1, 1, 3, 1 ],
-	};
-
-	const scaleRangeDistance = [
-		3,
-		2, 2,
-		1, 1, 1,
-		0, 0, 0, 0,
-		-1, -1, -1,
-		-2, -2,
-		-3,
-	];
-
-	const speedRange = [ 75, 100, 150, 200, 250, 300 ];
-	const durationRange = [ 40, 50, 60, 70, 80, 90 ];
-
-
-	const scaleRange = 12;
-	const noteMap = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split( '' );
-
-
-
-	beep8._Music = {};
-
-
-	/**
-	 * Play a song.
-	 *
-	 * @param {string} song The song to play.
-	 * @returns {void}
-	 */
-	beep8._Music.play = function( song ) {
-
-		console.log( 'play song', song );
-		p1( song );
-
-	}
-
-
-	/**
-	 * Create a song.
-	 *
-	 * @returns {string} The song.
-	 */
-	beep8._Music.create = function() {
-
-		let melody = [];
-
-		// Pick a random key from the list of scales.
-		let scaleKeys = Object.keys( scales );
-		let scaleIndex = scaleKeys[ Math.floor( Math.random() * scaleKeys.length ) ];
-
-		// The main 'song' melody.
-		const pattern = generatePattern( 8, startPatterns, followPatterns );
-		melody.push( generateMelody( generateScale( 2, scaleIndex ), pattern ) );
-		melody.push( generateMelody( generateScale( 1, scaleIndex ), pattern ) );
-
-		// Add some BASS.
-		// Number of patterns to add to the bass line.
-		const bassRepeat = Math.floor( Math.random() * 3 ) + 1;
-		// Generate the bass line.
-		melody.push( generateMelody( generateScale( 0, scaleIndex ), generatePattern( bassRepeat, [], bassPatterns ) ) );
-
-		// Return.
-		// Should change this and the p1 player so they accept JSON rather than a weird string.
-		return `${beep8.Utilities.randomPick( speedRange )}.${beep8.Utilities.randomPick( durationRange )}
-${melody.join( '\n' )}`;
-
-	};
-
-
-	/**
-	 * Generate a note scale.
-	 *
-	 * @param {number} noteMapId The group of keys to start from.
-	 * @param {string} scaleIndex The scale pattern to use.
-	 * @returns {string[]} The scale.
-	 */
-	function generateScale( noteMapId, scaleIndex ) {
-
-		const startNote = noteMapId * scaleRange;
-
-		let scale = [];
-		let currentIndex = startNote;
-
-		// Generate the list of notes that can be used.
-		for ( let interval of scales[ scaleIndex ] ) {
-			scale.push( noteMap[ currentIndex ] );
-			console.log( noteMap[ currentIndex ], currentIndex );
-			currentIndex += interval;
-		}
-
-		return scale;
-
-	}
-
-
-	/**
-	 * Generate a rhythmic pattern from predefined patterns
-	 *
-	 * @param {number} totalPatterns The number of patterns to generate.
-	 * @param {string[]} startPatterns The list of start patterns.
-	 * @param {string[]} followPatterns The list of follow patterns.
-	 * @returns {string} The generated pattern.
-	 */
-	function generatePattern( totalPatterns = 4, startPatterns = startPatterns, followPatterns = followPatterns ) {
-
-		if ( totalPatterns < 1 ) {
-			return '';
-		}
-
-		let pattern = [];
-
-		// Ensure there is at least one start pattern
-		if ( startPatterns.length > 0 ) {
-			pattern.push( startPatterns[ Math.floor( Math.random() * startPatterns.length ) ] );
-		}
-
-		if ( followPatterns.length > 0 ) {
-
-			// Add subsequent patterns from the followPatterns list
-			for ( let i = 1; i < totalPatterns; i++ ) {
-				let randomPattern = followPatterns[ Math.floor( Math.random() * followPatterns.length ) ];
-				let patternRepeat = Math.floor( Math.random() * 3 ) + 1;
-
-				for ( let j = 0; j < patternRepeat; j++ ) {
-					pattern.push( randomPattern );
-				}
-			}
-
-		}
-
-		console.log( pattern );
-
-		return pattern.join( '|' );
-
-	}
-
-
-	// Function to generate a melody based on a scale and a rhythmic pattern
-	function generateMelody( scale, rhythmPattern ) {
-
-		let melody = "";
-		// Pick a random index from scale array to start from.
-		let scaleIndex = Math.floor( Math.random() * scale.length );
-
-
-		for ( let i = 0; i < rhythmPattern.length; i++ ) {
-			if ( rhythmPattern[ i ] === '-' ) {
-				melody += '-';
-			}
-
-			if ( rhythmPattern[ i ] === ' ' ) {
-				melody += ' ';
-			}
-
-			if ( rhythmPattern[ i ] === '|' ) {
-				melody += '|';
-			}
-
-			if ( rhythmPattern[ i ] === 'X' ) {
-
-				melody += scale[ scaleIndex ];
-				scaleIndex += scaleRangeDistance[ Math.floor( Math.random() * scaleRangeDistance.length ) ];
-				if ( scaleIndex < 0 ) {
-					scaleIndex = 0;
-				}
-				if ( scaleIndex >= scale.length ) {
-					scaleIndex = scale.length - 1;
-				}
-			}
-		}
-
-		return melody;
-
-	}
-
-
-} )( beep8 || ( beep8 = {} ) );
-
-/* p1.js Piano music player.
-There is only 1 function: p1
-You call it without parenthesis.
-
-EXAMPLE, PLAY JINGLE BELLS:
-p1`c-c-c---|c-c-c---|c-f-Y--a|c-------|d-d-d--d|d-c-c-cc|f-f-d-a-|Y---f---`
-
-TO STOP:
-p1``
-
-WITH BASS TRACK:
-p1`
-|V-Y-c-V-|d---c-a-|
-|M-------|R-------|
-`
-
-Bass track can be shorter and will repeat.
-
-WITH CUSTOM TEMPO (in milliseconds per note):
-p1`70
-V-Y-c-V-d---c-a-
-M-------R-------`
-
-WITH NOTES HELD DOWN LESS LONG = 30 (0 to 100, default is 50):
-p1`70.30
-V-Y-c-V-d---c-a-
-M-------R-------`
-
-Vertical bars are ingored and don't do anything.
-Dashes make the note held longer.
-Spaces are silent space.
-
-Supports 52 notes (4 octaves)
-How to convert from piano notes to p1 letters:
-|Low C      |Tenor C    |Middle C   |Treble C   |High C
-C#D#EF#G#A#BC#D#EF#G#A#BC#D#EF#G#A#BC#D#EF#G#A#BC#D#
-ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz
-*/
-!function() {
-
-	const numberOfTracks = 4;
-	const contextsPerTrack = 3;
-	const totalContexts = Math.ceil( numberOfTracks * contextsPerTrack * 1.2 );
-
-	// Object to store generated audio buffers.
-	let buffers = {};
-
-	// Array of 13 AudioContext objects to handle multiple audio channels.
-	let contexts = [ ...Array( totalContexts ).keys() ].map( _ => new AudioContext );
-
-	// Variables for tracks, track length, playback interval, unlocked state, and note index.
-	let tracks;
-	let trackLen;
-	let interval;
-	let unlocked;
-	let noteI;
-
-	// Modulation. Generates a sample of a sinusoidal signal with a specific frequency and amplitude.
-	let b = ( note, add ) => {
-
-		return Math.sin( note * 6.28 + add );
-
-	}
-
-	// Instrument synthesis. Creates a more complex waveform by combining sinusoidal signals.
-	const pianoify = ( note ) => {
-
-		return b( note, b( note, 0 ) ** 2 + b( note, .25 ) * .75 + b( note, .5 ) * .1 );
-
-	}
-
-	const drummify = ( note ) => {
-
-
-	}
-
-	// Create a buffer for a note.
-	var makeNote = ( note, seconds, sampleRate ) => {
-
-		// console.log( note, seconds );
-
-		// Create a unique key for caching the buffer.
-		var key = note + '' + seconds;
-		var buffer = buffers[ key ];
-
-		if ( note >= 0 && !buffer ) {
-
-			// Calculate frequency/pitch. "Low C" is 65.406 Hz.
-			note = 65.406 * 1.06 ** note / sampleRate
-
-			let i = sampleRate * seconds | 0;
-			let sampleRest = sampleRate * ( seconds - .002 );
-			let bufferArray;
-
-			buffer = buffers[ key ] = contexts[ 0 ].createBuffer( 1, i, sampleRate )
-			bufferArray = buffer.getChannelData( 0 )
-
-			// Fill the samples array.
-			for ( ; i--; ) {
-				bufferArray[ i ] =
-					// The first 88 samples represent the note's attack phase.
-					( i < 88 ?
-						i / 88.2
-						// The other samples represent the decay/sustain/release phases.
-						: ( 1 - ( i - 88.2 ) / sampleRest ) ** ( ( Math.log( 1e4 * note ) / 2 ) ** 2 )
-					) * pianoify( i * note )
-			}
-
-			// Safari hack: Play every AudioContext then stop them immediately to "unlock" them on iOS.
-			if ( !unlocked ) {
-
-				contexts.map( context => playBuffer( buffer, context, unlocked = 1 ) )
-
-			}
-
-		}
-
-		return buffer
-
-	}
-
-	/**
-	 * Play a buffer.
-	 *
-	 * @param {AudioBuffer} buffer The buffer to play.
-	 * @param {AudioContext} context The context to play the buffer in.
-	 * @param {boolean} stop If true, stop the buffer.
-	 * @returns {void}
-	 */
-	const playBuffer = ( buffer, context, stop ) => {
-
-		var source = context.createBufferSource();
-
-		source.buffer = buffer;
-		source.connect( context.destination );
-		source.start();
-
-		stop && source.stop();
-
-	};
-
-
-	/**
-	 * Play music in the p1 format.
-	 *
-	 * @param {string} params The music to play.
-	 * @returns {void}
-	 */
-	p1 = ( params ) => {
-
-		let tempo = 125;
-		let noteLen = .5;
-		trackLen = 0;
-
-		// If params is a string, use it, otherwise use the first item from the array.
-		params = typeof params === 'array' ? params[ 0 ] : params;
-
-		// Process the tracks.
-		tracks = params.replace( /[\!\|]/g, '' ).split( '\n' ).map(
-			( track ) => {
-				track = track.trim();
-
-				if (
-					( track[ 0 ] === '[' && track[ track.length - 1 ] === ']' ) ||
-					( !isNaN( parseFloat( track ) ) )
-				) {
-
-					// If starts with [ and ends with ], then it's the tempo and note length.
-					track = track.split( '.' );
-
-					tempo = track[ 0 ];
-					noteLen = track[ 1 ] / 100 || noteLen;
-
-					return undefined;
-
-				}
-
-				if ( track.length === 0 ) {
-
-					return undefined;
-
-				}
-
-				return track.split( '' ).map(
-					( letter, i ) => {
-						let duration = 1;
-						let note = letter.charCodeAt( 0 );
-						note -= note > 90 ? 71 : 65;
-
-						while ( track[ i + duration ] == '-' ) {
-							duration++;
-						}
-
-						if ( trackLen < i ) {
-							trackLen = i + 1;
-						}
-
-						return makeNote( note, duration * noteLen * tempo / 125, 44100 )
-					}
-				);
-			}
-		).filter( ( element ) => element !== undefined );
-
-		// console.log( tracks, tempo );
-		// return;
-
-		noteI = 0;
-		clearInterval( interval );
-
-		interval = setInterval(
-			( j ) => {
-
-				tracks.map(
-					( track, trackI ) => {
-						if ( track[ j = noteI % track.length ] ) {
-							const contextId = ( trackI * contextsPerTrack ) + ( noteI % contextsPerTrack );
-							playBuffer( track[ j ], contexts[ contextId ] )
-						}
-					}
-				);
-
-				// Next note.
-				noteI++;
-
-				// Loop notes.
-				noteI %= trackLen;
-			},
-			tempo
-		);
-	}
-
-}();
-
-( function( beep8 ) {
-
 	/**
 	 * ASYNC API FUNCTIONS
 	 * These functions must be called with 'await'.
@@ -2981,185 +2505,41 @@ ${melody.join( '\n' )}`;
 	 * @type {Object}
 	 */
 	const sfxLibrary = {
-		coin: {
-			staccato: 0.55,
-			notes: [
-				"E5 e",
-				"E6 q"
-			]
-		},
-		coin2: {
-			notes: [
-				'G5 e',
-				'G6 q',
-			]
-		},
-		jump: {
-			smoothing: 1,
-			notes: [
-				"E4 e",
-				"E3 q"
-			]
-		},
-		change: {
-			notes: [
-				"B3 e",
-				"D4b e",
-				"D4 e",
-				"E4 e"
-			]
-		},
-		die: {
-			staccato: 0.55,
-			gain: 0.4,
-			notes: [
-				"E0 e",
-				"F0 e",
-				"E0 h",
-			]
-		},
-		knockout: {
-			staccato: 0.2,
-			notes: [
-				"E6 e",
-				"E5 e",
-				"E4 e",
-				"E3 q",
-			]
-		},
-		dash: {
-			smoothing: 1,
-			notes: [
-				"E2 q",
-				"E5 q"
-			]
-		},
-		beep: {
-			staccato: 0.55,
-			waveType: 'sine',
-			gain: 0.8,
-			notes: [
-				'G3 e',
-			]
-		},
-		beep2: {
-			staccato: 0.55,
-			waveType: 'sine',
-			gain: 0.7,
-			notes: [
-				'G4 e',
-			]
-		},
-		beep3: {
-			staccato: 0.55,
-			waveType: 'sine',
-			gain: 0.7,
-			notes: [
-				'G5 e',
-			]
-		},
-		stars: {
-			staccato: 0.2,
-			waveType: 'triangle',
-			gain: 0.5,
-			notes: [
-				'C6 s',
-				'C6 s',
-				'B6 s',
-				'B6 s',
-				'A6 s',
-			]
-		},
-		engine: {
-			customWave: [ [ -1, 1, -1, 1, -1, 1 ], [ 1, 0, 1, 0, 1, 0 ] ],
-			gain: 0.8,
-			notes: [
-				'C1 w',
-				'C1 w'
-			]
-		},
-		next: {
-			customWave: [ -1, -0.9, -0.6, -0.3, 0, 0.3, 0.6, 0.9, 1 ],
-			gain: 0.8,
-			notes: [
-				'C2 e',
-				'C3 e',
-				'D2 e',
-				'D3 e',
-				'E2 e',
-				'E3 e',
-			]
-		},
-		start: {
-			notes: [
-				'D4 h',
-				'- h',
-				'D4 h',
-				'- h',
-				'G4 w',
-			]
-		},
-		buzzbuzzbuzz: {
-			gain: 0.35,
-			notes: [
-				'E1 e',
-				'- s',
-				'E1 e',
-				'- s',
-				'E1 e',
-				'- s',
-				'E1 e',
-				'- s',
-				'E1 e',
-				'- s',
-				'E1 e',
-				'- s',
-				'E1 e',
-				'- s',
-				'E1 e',
-			]
-		},
-		siren: {
-			smoothing: 0.5,
-			notes: [
-				'C4 h',
-				'A3 h',
-				'C4 h',
-				'A3 h',
-				'C4 h',
-				'A3 h',
-				'C4 h',
-				'A3 h',
-				'C4 h',
-				'A3 h',
-			],
-		},
-		click: {
-			staccato: 0.8,
-			notes: [
-				'A5 e',
-			]
-		},
+		coin: [ , 0, 1675, , .06, .24, 1, 1.82, , , 837, .06 ],
+		coin2: [ , 0, 523.2511, .01, .06, .3, 1, 1.82, , , 837, .06 ],
+		hit: [ , 0, 925, .04, .3, .6, 1, .3, , 6.27, -184, .09, .17 ],
+		sparkle: [ , 0, 539, 0, .04, .29, 1, 1.92, , , 567, .02, .02, , , , .04 ],
+		sparkle2: [ , 0, 80, .3, .4, .7, 2, .1, -0.73, 3.42, -430, .09, .17, , , , .19 ],
+		life: [ , 0, 537, .02, .02, .22, 1, 1.59, -6.98, 4.97 ],
+		break: [ , 0, 528, .01, , .48, , .6, -11.6, , , , .32, 4.2 ],
+		life2: [ , 0, 20, .04, , .6, , 1.31, , , -990, .06, .17, , , .04, .07 ],
+		alien: [ , 0, 662, .82, .11, .33, 1, 0, , -0.2, , , , 1.2, , .26, .01 ],
+		beep: [ 1.5, 0, 270, , .1, , 1, 1.5, , , , , , , , .1, .01 ],
+		beep2: [ 1.2, 0, 150, , .1, , 1, 1.5, , , , , , , , .1, .01 ],
+		beep3: [ 1.5, 0, 200, , .1, , 1, 1.5, , , , , , , , .1, .01 ],
+		drum: [ , 0, 129, .01, , .15, , , , , , , , 5 ],
+		explode: [ , 0, 333, .01, 0, .9, 4, 1.9, , , , , , .5, , .6 ],
+		explode2: [ , 0, 418, 0, .02, .2, 4, 1.15, -8.5, , , , , .7, , .1 ],
+		squeak1: [ , 0, 1975, .08, .56, .02, , , -0.4, , -322, .56, .41, , , , .25 ],
+		squeak2: [ , 0, 75, .03, .08, .17, 1, 1.88, 7.83, , , , , .4 ],
+		squeak3: [ , 0, 1306, .8, .08, .02, 1, , , , , , .48, , -0.1, .11, .25 ],
+		squeak4: [ , 0, 1e3, .02, , .01, 2, , 18, , 475, .01, .01 ],
+		bell: [ 2, 0, 999, , , , , 1.5, , .3, -99, .1, 1.63, , , .11, .22 ],
+		satellite: [ , 0, 847, .02, .3, .9, 1, 1.67, , , -294, .04, .13, , , , .1 ],
+		phone: [ , 0, 1600, .13, .52, .61, 1, 1.1, , , , , , .1, , .14 ],
+		pop: [ , 0, 224, .02, .02, .08, 1, 1.7, -13.9, , , , , , 6.7 ],
+		rocket: [ , 0, 941, .8, , .8, 4, .74, -222, , , , , .8, , 1 ],
+		rocket2: [ , 0, 172, .8, , .8, 1, .76, 7.7, 3.73, -482, .08, .15, , .14 ],
+		squirt: [ , 0, 448, .01, .1, .3, 3, .39, -0.5, , , , , , .2, .1, .08 ],
+		swing: [ , 0, 150, .05, , .05, , 1.3, , , , , , 3 ],
+		wave: [ , 0, 40, .5, , 1.5, , 11, , , , , , 199 ],
+		siren: [ , 0, 960, , 1, .01, , .8, -0.01, , -190, .5, , .05, , , 1 ],
+		car_horn: [ 1.5, 0, 250, .02, .02, .2, 2, 2, , , , , .02, , , .02, .01, , , .1 ],
+		engine2: [ , 0, 25, .05, .3, .5, 3, 9, -0.01, , , , , , 13, .1, .2 ],
+		thunder: [ , 0, 471, , .09, .47, 4, 1.06, -6.7, , , , , .9, 61, .1, , .82, .09, .13 ],
+		sparkle3: [ , 0, 63, , 1, , 1, 1.5, , , , , , , , 3.69, .08 ],
+		sweep: [ , 0, 9220, .01, , , , 5, , , , , , 9 ],
 	};
-
-
-	/**
-	 * Cached sequence objects.
-	 *
-	 * @type {Object}
-	 */
-	const sfxSequence = {};
-
-
-	/**
-	 * AudioContext object.
-	 *
-	 * @type {AudioContext}
-	 */
-	const audioContext = typeof AudioContext !== 'undefined' ? new AudioContext : new webkitAudioContext;
-
-
-	beep8.Sfx = {};
 
 
 	/**
@@ -3170,57 +2550,35 @@ ${melody.join( '\n' )}`;
 	 */
 	beep8.Sfx.play = function( sfx ) {
 
-		// AudioContext is not supported.
-		if ( !audioContext ) {
-			return;
-		}
-
 		beep8.Utilities.checkString( 'sfx', sfx );
+
+		console.log( `[${sfxLibrary[ sfx ].toString().replace( ' ', '' )}]` );
 
 		// SFX not found.
 		if ( !sfxLibrary[ sfx ] ) {
 			beep8.Utilities.error( `SFX ${sfx} not found.` );
 		}
 
-		// Setup the sfx sequence if it doesn't exist.
-		if ( !sfxSequence[ sfx ] ) {
+		zzfx( ...sfxLibrary[ sfx ] );
 
-			sfxSequence[ sfx ] = new TinyMusic.Sequence(
-				audioContext,
-				sfxLibrary[ sfx ].tempo || 300,
-				sfxLibrary[ sfx ].notes
-			);
+	}
 
-			sfxSequence[ sfx ].loop = false;
-			sfxSequence[ sfx ].gain.gain.value = sfxLibrary[ sfx ].gain || 0.1;
 
-			if ( sfxLibrary[ sfx ].staccato ) {
-				sfxSequence[ sfx ].staccato = sfxLibrary[ sfx ].staccato;
-			}
+	/**
+	 * Add a sound effect to the library.
+	 *
+	 * @param {string} sfxName The name of the sound effect.
+	 * @param {Array} sfxArray The sound effect array.
+	 * @throws {Error} If the sfxName is not a string.
+	 * @throws {Error} If the sfxArray is not an array.
+	 * @return {void}
+	 */
+	beep8.Sfx.add = function( sfxName, sfxArray ) {
 
-			if ( sfxLibrary[ sfx ].smoothing ) {
-				sfxSequence[ sfx ].smoothing = sfxLibrary[ sfx ].smoothing;
-			}
+		beep8.Utilities.checkString( 'sfxName', sfxName );
+		beep8.Utilities.checkArray( 'sfxArray', sfxArray );
 
-			if ( sfxLibrary[ sfx ].waveType ) {
-				sfxSequence[ sfx ].waveType = sfxLibrary[ sfx ].waveType;
-			}
-
-			if ( sfxLibrary[ sfx ].customWave ) {
-
-				beep8.Utilities.checkArray( 'customWave', sfxLibrary[ sfx ].customWave );
-
-				if ( sfxLibrary[ sfx ].customWave.length === 2 ) {
-					sfxSequence[ sfx ].createCustomWave( sfxLibrary[ sfx ].customWave[ 0 ], sfxLibrary[ sfx ].customWave[ 1 ] );
-				} else {
-					sfxSequence[ sfx ].createCustomWave( sfxLibrary[ sfx ].customWave );
-				}
-
-			}
-
-		}
-
-		sfxSequence[ sfx ].play( audioContext.currentTime );
+		sfxLibrary[ sfxName ] = sfxArray;
 
 	}
 
@@ -3232,7 +2590,6 @@ ${melody.join( '\n' )}`;
 	 */
 	beep8.Sfx.get = function() {
 
-		// return sfxLibrary keys.
 		return Object.keys( sfxLibrary );
 
 	}
@@ -4856,538 +4213,261 @@ ${melody.join( '\n' )}`;
 
 } )( beep8 || ( beep8 = {} ) );
 
-function generatePerlinNoise( width, height, options ) {
+// ZzFX - Zuper Zmall Zound Zynth - Micro Edition
+// MIT License - Copyright 2019 Frank Force
+// https://github.com/KilledByAPixel/ZzFX
 
-	options = options || {};
-	var octaveCount = options.octaveCount || 4;
-	var amplitude = options.amplitude || 0.1;
-	var persistence = options.persistence || 0.2;
-	var whiteNoise = generateWhiteNoise( width, height );
+// This is a minified build of zzfx for use in size coding projects.
+// You can use zzfxV to set volume.
+// Feel free to minify it further for your own needs!
 
-	var smoothNoiseList = new Array( octaveCount );
-	var i;
-	for ( i = 0; i < octaveCount; ++i ) {
-		smoothNoiseList[ i ] = generateSmoothNoise( i );
-	}
-	var perlinNoise = new Array( width * height );
-	var totalAmplitude = 0;
-	// blend noise together
-	for ( i = octaveCount - 1; i >= 0; --i ) {
-		amplitude *= persistence;
-		totalAmplitude += amplitude;
+'use strict';
 
-		for ( var j = 0; j < perlinNoise.length; ++j ) {
-			perlinNoise[ j ] = perlinNoise[ j ] || 0;
-			perlinNoise[ j ] += smoothNoiseList[ i ][ j ] * amplitude;
-		}
-	}
-	// normalization
-	for ( i = 0; i < perlinNoise.length; ++i ) {
-		perlinNoise[ i ] /= totalAmplitude;
-	}
+///////////////////////////////////////////////////////////////////////////////
 
-	return perlinNoise;
+// ZzFXMicro - Zuper Zmall Zound Zynth - v1.3.1 by Frank Force
 
-	function generateSmoothNoise( octave ) {
-		var noise = new Array( width * height );
-		var samplePeriod = Math.pow( 2, octave );
-		var sampleFrequency = 1 / samplePeriod;
-		var noiseIndex = 0;
-		for ( var y = 0; y < height; ++y ) {
-			var sampleY0 = Math.floor( y / samplePeriod ) * samplePeriod;
-			var sampleY1 = ( sampleY0 + samplePeriod ) % height;
-			var vertBlend = ( y - sampleY0 ) * sampleFrequency;
-			for ( var x = 0; x < width; ++x ) {
-				var sampleX0 = Math.floor( x / samplePeriod ) * samplePeriod;
-				var sampleX1 = ( sampleX0 + samplePeriod ) % width;
-				var horizBlend = ( x - sampleX0 ) * sampleFrequency;
+// ==ClosureCompiler==
+// @compilation_level ADVANCED_OPTIMIZATIONS
+// @output_file_name ZzFXMicro.min.js
+// @js_externs zzfx, zzfxG, zzfxP, zzfxV, zzfxX
+// @language_out ECMASCRIPT_2019
+// ==/ClosureCompiler==
 
-				// blend top two corners
-				var top = interpolate( whiteNoise[ sampleY0 * width + sampleX0 ], whiteNoise[ sampleY1 * width + sampleX0 ], vertBlend );
-				// blend bottom two corners
-				var bottom = interpolate( whiteNoise[ sampleY0 * width + sampleX1 ], whiteNoise[ sampleY1 * width + sampleX1 ], vertBlend );
-				// final blend
-				noise[ noiseIndex ] = interpolate( top, bottom, horizBlend );
-				noiseIndex += 1;
-			}
-		}
-		return noise;
-	}
+const zzfx = ( ...z ) => zzfxP( zzfxG( ...z ) ); // generate and play sound
+const zzfxV = .3;    // volume
+const zzfxR = 44100; // sample rate
+const zzfxX = new AudioContext; // audio context
+const zzfxP = ( ...samples ) =>  // play samples
+{
+	// create buffer and source
+	let buffer = zzfxX.createBuffer( samples.length, samples[ 0 ].length, zzfxR ),
+		source = zzfxX.createBufferSource();
+
+	// copy samples to buffer and play
+	samples.map( ( d, i ) => buffer.getChannelData( i ).set( d ) );
+	source.buffer = buffer;
+	source.connect( zzfxX.destination );
+	source.start();
+	return source;
 }
-/*
-Copyright 2019 David Bau.
+const zzfxG = // generate samples
+	(
+		// parameters
+		volume = 1, randomness = .05, frequency = 220, attack = 0, sustain = 0,
+		release = .1, shape = 0, shapeCurve = 1, slide = 0, deltaSlide = 0,
+		pitchJump = 0, pitchJumpTime = 0, repeatTime = 0, noise = 0, modulation = 0,
+		bitCrush = 0, delay = 0, sustainVolume = 1, decay = 0, tremolo = 0, filter = 0
+	) => {
+		// init parameters
+		let PI2 = Math.PI * 2, sign = v => v < 0 ? -1 : 1,
+			startSlide = slide *= 500 * PI2 / zzfxR / zzfxR,
+			startFrequency = frequency *=
+				( 1 + randomness * 2 * Math.random() - randomness ) * PI2 / zzfxR,
+			b = [], t = 0, tm = 0, i = 0, j = 1, r = 0, c = 0, s = 0, f, length,
 
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
+			// biquad LP/HP filter
+			quality = 2, w = PI2 * Math.abs( filter ) * 2 / zzfxR,
+			cos = Math.cos( w ), alpha = Math.sin( w ) / 2 / quality,
+			a0 = 1 + alpha, a1 = -2 * cos / a0, a2 = ( 1 - alpha ) / a0,
+			b0 = ( 1 + sign( filter ) * cos ) / 2 / a0,
+			b1 = -( sign( filter ) + cos ) / a0, b2 = b0,
+			x2 = 0, x1 = 0, y2 = 0, y1 = 0;
 
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
+		// scale by sample rate
+		attack = attack * zzfxR + 9; // minimum attack to prevent pop
+		decay *= zzfxR;
+		sustain *= zzfxR;
+		release *= zzfxR;
+		delay *= zzfxR;
+		deltaSlide *= 500 * PI2 / zzfxR ** 3;
+		modulation *= PI2 / zzfxR;
+		pitchJump *= PI2 / zzfxR;
+		pitchJumpTime *= zzfxR;
+		repeatTime = repeatTime * zzfxR | 0;
+		volume *= zzfxV;
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+		// generate waveform
+		for ( length = attack + decay + sustain + release + delay | 0;
+			i < length; b[ i++ ] = s * volume )               // sample
+		{
+			if ( !( ++c % ( bitCrush * 100 | 0 ) ) )                   // bit crush
+			{
+				s = shape ? shape > 1 ? shape > 2 ? shape > 3 ?      // wave shape
+					Math.sin( t ** 3 ) :                       // 4 noise
+					Math.max( Math.min( Math.tan( t ), 1 ), -1 ) :  // 3 tan
+					1 - ( 2 * t / PI2 % 2 + 2 ) % 2 :                     // 2 saw
+					1 - 4 * Math.abs( Math.round( t / PI2 ) - t / PI2 ) : // 1 triangle
+					Math.sin( t );                           // 0 sin
 
-*/
+				s = ( repeatTime ?
+					1 - tremolo + tremolo * Math.sin( PI2 * i / repeatTime ) // tremolo
+					: 1 ) *
+					sign( s ) * ( Math.abs( s ) ** shapeCurve ) *      // curve
+					( i < attack ? i / attack :                 // attack
+						i < attack + decay ?                     // decay
+							1 - ( ( i - attack ) / decay ) * ( 1 - sustainVolume ) : // decay falloff
+							i < attack + decay + sustain ?          // sustain
+								sustainVolume :                          // sustain volume
+								i < length - delay ?                     // release
+									( length - i - delay ) / release *           // release falloff
+									sustainVolume :                          // release volume
+									0 );                                      // post release
 
-!( function( global, pool, math ) {
-	//
-	// The following constants are related to IEEE 754 limits.
-	//
+				s = delay ? s / 2 + ( delay > i ? 0 :           // delay
+					( i < length - delay ? 1 : ( length - i ) / delay ) * // release delay
+					b[ i - delay | 0 ] / 2 / volume ) : s;              // sample delay
 
-	var width = 256,        // each RC4 output is 0 <= x < 256
-		chunks = 6,         // at least six RC4 outputs for each double
-		digits = 52,        // there are 52 significant digits in a double
-		rngname = 'random', // rngname: name for Math.random and Math.seedrandom
-		startdenom = math.pow( width, chunks ),
-		significance = math.pow( 2, digits ),
-		overflow = significance * 2,
-		mask = width - 1,
-		nodecrypto;         // node.js crypto module, initialized at the bottom.
-
-	//
-	// seedrandom()
-	// This is the seedrandom function described above.
-	//
-	function seedrandom( seed, options, callback ) {
-		var key = [];
-		options = ( options == true ) ? { entropy: true } : ( options || {} );
-
-		// Flatten the seed string or build one from local entropy if needed.
-		var shortseed = mixkey( flatten(
-			options.entropy ? [ seed, tostring( pool ) ] :
-				( seed == null ) ? autoseed() : seed, 3 ), key );
-
-		// Use the seed to initialize an ARC4 generator.
-		var arc4 = new ARC4( key );
-
-		// This function returns a random double in [0, 1) that contains
-		// randomness in every bit of the mantissa of the IEEE 754 value.
-		var prng = function() {
-			var n = arc4.g( chunks ),             // Start with a numerator n < 2 ^ 48
-				d = startdenom,                 //   and denominator d = 2 ^ 48.
-				x = 0;                          //   and no 'extra last byte'.
-			while ( n < significance ) {          // Fill up all significant digits by
-				n = ( n + x ) * width;              //   shifting numerator and
-				d *= width;                       //   denominator and generating a
-				x = arc4.g( 1 );                    //   new least-significant-byte.
+				if ( filter )                                   // apply filter
+					s = y1 = b2 * x2 + b1 * ( x2 = x1 ) + b0 * ( x1 = s ) - a2 * y2 - a1 * ( y2 = y1 );
 			}
-			while ( n >= overflow ) {             // To avoid rounding up, before adding
-				n /= 2;                           //   last byte, shift everything
-				d /= 2;                           //   right using integer math until
-				x >>>= 1;                         //   we have exactly the desired bits.
+
+			f = ( frequency += slide += deltaSlide ) *// frequency
+				Math.cos( modulation * tm++ );          // modulation
+			t += f + f * noise * Math.sin( i ** 5 );        // noise
+
+			if ( j && ++j > pitchJumpTime )           // pitch jump
+			{
+				frequency += pitchJump;             // apply pitch jump
+				startFrequency += pitchJump;        // also apply to start
+				j = 0;                              // stop pitch jump time
 			}
-			return ( n + x ) / d;                 // Form the number within [0, 1).
-		};
 
-		prng.int32 = function() { return arc4.g( 4 ) | 0; }
-		prng.quick = function() { return arc4.g( 4 ) / 0x100000000; }
-		prng.double = prng;
+			if ( repeatTime && !( ++r % repeatTime ) )  // repeat
+			{
+				frequency = startFrequency;         // reset frequency
+				slide = startSlide;                 // reset slide
+				j = j || 1;                         // reset pitch jump time
+			}
+		}
 
-		// Mix the randomness into accumulated entropy.
-		mixkey( tostring( arc4.S ), pool );
+		return b;
+	}
+/**
+ * ZzFX Music Renderer v2.0.3 by Keith Clark and Frank Force
+ */
 
-		// Calling convention: what to return as a function of prng, seed, is_math.
-		return ( options.pass || callback ||
-			function( prng, seed, is_math_call, state ) {
-				if ( state ) {
-					// Load the arc4 state from the given state if it has an S array.
-					if ( state.S ) { copy( state, arc4 ); }
-					// Only provide the .state method if requested via options.state.
-					prng.state = function() { return copy( arc4, {} ); }
+/**
+ * @typedef Channel
+ * @type {Array.<Number>}
+ * @property {Number} 0 - Channel instrument
+ * @property {Number} 1 - Channel panning (-1 to +1)
+ * @property {Number} 2 - Note
+ */
+
+/**
+ * @typedef Pattern
+ * @type {Array.<Channel>}
+ */
+
+/**
+ * @typedef Instrument
+ * @type {Array.<Number>} ZzFX sound parameters
+ */
+
+/**
+ * Generate a song
+ *
+ * @param {Array.<Instrument>} instruments - Array of ZzFX sound paramaters.
+ * @param {Array.<Pattern>} patterns - Array of pattern data.
+ * @param {Array.<Number>} sequence - Array of pattern indexes.
+ * @param {Number} [speed=125] - Playback speed of the song (in BPM).
+ * @returns {Array.<Array.<Number>>} Left and right channel sample data.
+ */
+
+zzfxM = ( instruments, patterns, sequence, BPM = 125 ) => {
+	let instrumentParameters;
+	let i;
+	let j;
+	let k;
+	let note;
+	let sample;
+	let patternChannel;
+	let notFirstBeat;
+	let stop;
+	let instrument;
+	let pitch;
+	let attenuation;
+	let outSampleOffset;
+	let isSequenceEnd;
+	let sampleOffset = 0;
+	let nextSampleOffset;
+	let sampleBuffer = [];
+	let leftChannelBuffer = [];
+	let rightChannelBuffer = [];
+	let channelIndex = 0;
+	let panning = 0;
+	let hasMore = 1;
+	let sampleCache = {};
+	let beatLength = zzfxR / BPM * 60 >> 2;
+
+	// for each channel in order until there are no more
+	for ( ; hasMore; channelIndex++ ) {
+
+		// reset current values
+		sampleBuffer = [ hasMore = notFirstBeat = pitch = outSampleOffset = 0 ];
+
+		// for each pattern in sequence
+		sequence.map( ( patternIndex, sequenceIndex ) => {
+			// get pattern for current channel, use empty 1 note pattern if none found
+			patternChannel = patterns[ patternIndex ][ channelIndex ] || [ 0, 0, 0 ];
+
+			// check if there are more channels
+			hasMore |= !!patterns[ patternIndex ][ channelIndex ];
+
+			// get next offset, use the length of first channel
+			nextSampleOffset = outSampleOffset + ( patterns[ patternIndex ][ 0 ].length - 2 - !notFirstBeat ) * beatLength;
+			// for each beat in pattern, plus one extra if end of sequence
+			isSequenceEnd = sequenceIndex == sequence.length - 1;
+			for ( i = 2, k = outSampleOffset; i < patternChannel.length + isSequenceEnd; notFirstBeat = ++i ) {
+
+				// <channel-note>
+				note = patternChannel[ i ];
+
+				// stop if end, different instrument or new note
+				stop = i == patternChannel.length + isSequenceEnd - 1 && isSequenceEnd ||
+					instrument != ( patternChannel[ 0 ] || 0 ) | note | 0;
+
+				// fill buffer with samples for previous beat, most cpu intensive part
+				for ( j = 0; j < beatLength && notFirstBeat;
+
+					// fade off attenuation at end of beat if stopping note, prevents clicking
+					j++ > beatLength - 99 && stop ? attenuation += ( attenuation < 1 ) / 99 : 0
+				) {
+					// copy sample to stereo buffers with panning
+					sample = ( 1 - attenuation ) * sampleBuffer[ sampleOffset++ ] / 2 || 0;
+					leftChannelBuffer[ k ] = ( leftChannelBuffer[ k ] || 0 ) - sample * panning + sample;
+					rightChannelBuffer[ k ] = ( rightChannelBuffer[ k++ ] || 0 ) + sample * panning + sample;
 				}
 
-				// If called as a method of Math (Math.seedrandom()), mutate
-				// Math.random because that is how seedrandom.js has worked since v1.0.
-				if ( is_math_call ) { math[ rngname ] = prng; return seed; }
+				// set up for next note
+				if ( note ) {
+					// set attenuation
+					attenuation = note % 1;
+					panning = patternChannel[ 1 ] || 0;
+					if ( note |= 0 ) {
+						// get cached sample
+						sampleBuffer = sampleCache[
+							[
+								instrument = patternChannel[ sampleOffset = 0 ] || 0,
+								note
+							]
+						] = sampleCache[ [ instrument, note ] ] || (
+							// add sample to cache
+							instrumentParameters = [ ...instruments[ instrument ] ],
+							instrumentParameters[ 2 ] *= 2 ** ( ( note - 12 ) / 12 ),
 
-				// Otherwise, it is a newer calling convention, so return the
-				// prng directly.
-				else return prng;
-			} )(
-				prng,
-				shortseed,
-				'global' in options ? options.global : ( this == math ),
-				options.state );
-	}
-
-	//
-	// ARC4
-	//
-	// An ARC4 implementation.  The constructor takes a key in the form of
-	// an array of at most (width) integers that should be 0 <= x < (width).
-	//
-	// The g(count) method returns a pseudorandom integer that concatenates
-	// the next (count) outputs from ARC4.  Its return value is a number x
-	// that is in the range 0 <= x < (width ^ count).
-	//
-	function ARC4( key ) {
-		var t, keylen = key.length,
-			me = this, i = 0, j = me.i = me.j = 0, s = me.S = [];
-
-		// The empty key [] is treated as [0].
-		if ( !keylen ) { key = [ keylen++ ]; }
-
-		// Set up S using the standard key scheduling algorithm.
-		while ( i < width ) {
-			s[ i ] = i++;
-		}
-		for ( i = 0; i < width; i++ ) {
-			s[ i ] = s[ j = mask & ( j + key[ i % keylen ] + ( t = s[ i ] ) ) ];
-			s[ j ] = t;
-		}
-
-		// The "g" method returns the next (count) outputs as one number.
-		( me.g = function( count ) {
-			// Using instance members instead of closure state nearly doubles speed.
-			var t, r = 0,
-				i = me.i, j = me.j, s = me.S;
-			while ( count-- ) {
-				t = s[ i = mask & ( i + 1 ) ];
-				r = r * width + s[ mask & ( ( s[ i ] = s[ j = mask & ( j + t ) ] ) + ( s[ j ] = t ) ) ];
+							// allow negative values to stop notes
+							note > 0 ? zzfxG( ...instrumentParameters ) : []
+						);
+					}
+				}
 			}
-			me.i = i; me.j = j;
-			return r;
-			// For robust unpredictability, the function call below automatically
-			// discards an initial batch of values.  This is called RC4-drop[256].
-			// See http://google.com/search?q=rsa+fluhrer+response&btnI
-		} )( width );
-	}
 
-	//
-	// copy()
-	// Copies internal state of ARC4 to or from a plain object.
-	//
-	function copy( f, t ) {
-		t.i = f.i;
-		t.j = f.j;
-		t.S = f.S.slice();
-		return t;
-	};
-
-	//
-	// flatten()
-	// Converts an object tree to nested arrays of strings.
-	//
-	function flatten( obj, depth ) {
-		var result = [], typ = ( typeof obj ), prop;
-		if ( depth && typ == 'object' ) {
-			for ( prop in obj ) {
-				try { result.push( flatten( obj[ prop ], depth - 1 ) ); } catch ( e ) { }
-			}
-		}
-		return ( result.length ? result : typ == 'string' ? obj : obj + '\0' );
-	}
-
-	//
-	// mixkey()
-	// Mixes a string seed into a key that is an array of integers, and
-	// returns a shortened string seed that is equivalent to the result key.
-	//
-	function mixkey( seed, key ) {
-		var stringseed = seed + '', smear, j = 0;
-		while ( j < stringseed.length ) {
-			key[ mask & j ] =
-				mask & ( ( smear ^= key[ mask & j ] * 19 ) + stringseed.charCodeAt( j++ ) );
-		}
-		return tostring( key );
-	}
-
-	//
-	// autoseed()
-	// Returns an object for autoseeding, using window.crypto and Node crypto
-	// module if available.
-	//
-	function autoseed() {
-		try {
-			var out;
-			if ( nodecrypto && ( out = nodecrypto.randomBytes ) ) {
-				// The use of 'out' to remember randomBytes makes tight minified code.
-				out = out( width );
-			} else {
-				out = new Uint8Array( width );
-				( global.crypto || global.msCrypto ).getRandomValues( out );
-			}
-			return tostring( out );
-		} catch ( e ) {
-			var browser = global.navigator,
-				plugins = browser && browser.plugins;
-			return [ +new Date, global, plugins, global.screen, tostring( pool ) ];
-		}
-	}
-
-	//
-	// tostring()
-	// Converts an array of charcodes to a string
-	//
-	function tostring( a ) {
-		return String.fromCharCode.apply( 0, a );
-	}
-
-	//
-	// When seedrandom.js is loaded, we immediately mix a few bits
-	// from the built-in RNG into the entropy pool.  Because we do
-	// not want to interfere with deterministic PRNG state later,
-	// seedrandom will not call math.random on its own again after
-	// initialization.
-	//
-	mixkey( math.random(), pool );
-
-	//
-	// Nodejs and AMD support: export the implementation as a module using
-	// either convention.
-	//
-	if ( ( typeof module ) == 'object' && module.exports ) {
-		module.exports = seedrandom;
-		// When in node.js, try using crypto package for autoseeding.
-		try {
-			nodecrypto = require( 'crypto' );
-		} catch ( ex ) { }
-	} else if ( ( typeof define ) == 'function' && define.amd ) {
-		define( function() { return seedrandom; } );
-	} else {
-		// When included as a plain script, set up Math.seedrandom global.
-		math[ 'seed' + rngname ] = seedrandom;
-	}
-
-	console.log( 'seed random init' );
-
-
-	// End anonymous scope, and pass initial values.
-} )(
-	// global: `self` in browsers (including strict mode and web workers),
-	// otherwise `this` in Node and other environments
-	( typeof self !== 'undefined' ) ? self : this,
-	[],     // pool: entropy pool starts empty
-	Math    // math: package containing random, pow, and seedrandom
-);
-
-// https://github.com/kevincennis/TinyMusic/
-
-( function( root, factory ) {
-	if ( typeof define === 'function' && define.amd ) {
-		define( [ 'exports' ], factory );
-	} else if ( typeof exports === 'object' && typeof exports.nodeName !== 'string' ) {
-		factory( exports );
-	} else {
-		factory( root.TinyMusic = {} );
-	}
-}( this, function( exports ) {
-
-	/*
-	 * Private stuffz
-	 */
-
-	var enharmonics = 'B#-C|C#-Db|D|D#-Eb|E-Fb|E#-F|F#-Gb|G|G#-Ab|A|A#-Bb|B-Cb',
-		middleC = 440 * Math.pow( Math.pow( 2, 1 / 12 ), -9 ),
-		numeric = /^[0-9.]+$/,
-		octaveOffset = 4,
-		space = /\s+/,
-		num = /(\d+)/,
-		offsets = {};
-
-	// populate the offset lookup (note distance from C, in semitones)
-	enharmonics.split( '|' ).forEach( function( val, i ) {
-		val.split( '-' ).forEach( function( note ) {
-			offsets[ note ] = i;
+			// update the sample offset
+			outSampleOffset = nextSampleOffset;
 		} );
-	} );
-
-	/*
-	 * Note class
-	 *
-	 * new Note ('A4 q') === 440Hz, quarter note
-	 * new Note ('- e') === 0Hz (basically a rest), eigth note
-	 * new Note ('A4 es') === 440Hz, dotted eighth note (eighth + sixteenth)
-	 * new Note ('A4 0.0125') === 440Hz, 32nd note (or any arbitrary
-	 * divisor/multiple of 1 beat)
-	 *
-	 */
-
-	// create a new Note instance from a string
-	function Note( str ) {
-		var couple = str.split( space );
-		// frequency, in Hz
-		this.frequency = Note.getFrequency( couple[ 0 ] ) || 0;
-		// duration, as a ratio of 1 beat (quarter note = 1, half note = 0.5, etc.)
-		this.duration = Note.getDuration( couple[ 1 ] ) || 0;
 	}
 
-	// convert a note name (e.g. 'A4') to a frequency (e.g. 440.00)
-	Note.getFrequency = function( name ) {
-		var couple = name.split( num ),
-			distance = offsets[ couple[ 0 ] ],
-			octaveDiff = ( couple[ 1 ] || octaveOffset ) - octaveOffset,
-			freq = middleC * Math.pow( Math.pow( 2, 1 / 12 ), distance );
-		return freq * Math.pow( 2, octaveDiff );
-	};
-
-	// convert a duration string (e.g. 'q') to a number (e.g. 1)
-	// also accepts numeric strings (e.g '0.125')
-	// and compund durations (e.g. 'es' for dotted-eight or eighth plus sixteenth)
-	Note.getDuration = function( symbol ) {
-		return numeric.test( symbol ) ? parseFloat( symbol ) :
-			symbol.toLowerCase().split( '' ).reduce( function( prev, curr ) {
-				return prev + ( curr === 'w' ? 4 : curr === 'h' ? 2 :
-					curr === 'q' ? 1 : curr === 'e' ? 0.5 :
-						curr === 's' ? 0.25 : 0 );
-			}, 0 );
-	};
-
-	/*
-	 * Sequence class
-	 */
-
-	// create a new Sequence
-	function Sequence( ac, tempo, arr ) {
-		this.ac = ac || new AudioContext();
-		this.createFxNodes();
-		this.tempo = tempo || 120;
-		this.loop = true;
-		this.smoothing = 0;
-		this.staccato = 0;
-		this.notes = [];
-		this.push.apply( this, arr || [] );
-	}
-
-	// create gain and EQ nodes, then connect 'em
-	Sequence.prototype.createFxNodes = function() {
-		var eq = [ [ 'bass', 100 ], [ 'mid', 1000 ], [ 'treble', 2500 ] ],
-			prev = this.gain = this.ac.createGain();
-		eq.forEach( function( config, filter ) {
-			filter = this[ config[ 0 ] ] = this.ac.createBiquadFilter();
-			filter.type = 'peaking';
-			filter.frequency.value = config[ 1 ];
-			prev.connect( prev = filter );
-		}.bind( this ) );
-		prev.connect( this.ac.destination );
-		return this;
-	};
-
-	// accepts Note instances or strings (e.g. 'A4 e')
-	Sequence.prototype.push = function() {
-		Array.prototype.forEach.call( arguments, function( note ) {
-			this.notes.push( note instanceof Note ? note : new Note( note ) );
-		}.bind( this ) );
-		return this;
-	};
-
-	// create a custom waveform as opposed to "sawtooth", "triangle", etc
-	Sequence.prototype.createCustomWave = function( real, imag ) {
-		// Allow user to specify only one array and dupe it for imag.
-		if ( !imag ) {
-			imag = real;
-		}
-
-		// Wave type must be custom to apply period wave.
-		this.waveType = 'custom';
-
-		// Reset customWave
-		this.customWave = [ new Float32Array( real ), new Float32Array( imag ) ];
-	};
-
-	// recreate the oscillator node (happens on every play)
-	Sequence.prototype.createOscillator = function() {
-		this.stop();
-		this.osc = this.ac.createOscillator();
-
-		// customWave should be an array of Float32Arrays. The more elements in
-		// each Float32Array, the dirtier (saw-like) the wave is
-		if ( this.customWave ) {
-			this.osc.setPeriodicWave(
-				this.ac.createPeriodicWave.apply( this.ac, this.customWave )
-			);
-		} else {
-			this.osc.type = this.waveType || 'square';
-		}
-
-		this.osc.connect( this.gain );
-		return this;
-	};
-
-	// schedules this.notes[ index ] to play at the given time
-	// returns an AudioContext timestamp of when the note will *end*
-	Sequence.prototype.scheduleNote = function( index, when ) {
-		var duration = 60 / this.tempo * this.notes[ index ].duration,
-			cutoff = duration * ( 1 - ( this.staccato || 0 ) );
-
-		this.setFrequency( this.notes[ index ].frequency, when );
-
-		if ( this.smoothing && this.notes[ index ].frequency ) {
-			this.slide( index, when, cutoff );
-		}
-
-		this.setFrequency( 0, when + cutoff );
-		return when + duration;
-	};
-
-	// get the next note
-	Sequence.prototype.getNextNote = function( index ) {
-		return this.notes[ index < this.notes.length - 1 ? index + 1 : 0 ];
-	};
-
-	// how long do we wait before beginning the slide? (in seconds)
-	Sequence.prototype.getSlideStartDelay = function( duration ) {
-		return duration - Math.min( duration, 60 / this.tempo * this.smoothing );
-	};
-
-	// slide the note at <index> into the next note at the given time,
-	// and apply staccato effect if needed
-	Sequence.prototype.slide = function( index, when, cutoff ) {
-		var next = this.getNextNote( index ),
-			start = this.getSlideStartDelay( cutoff );
-		this.setFrequency( this.notes[ index ].frequency, when + start );
-		this.rampFrequency( next.frequency, when + cutoff );
-		return this;
-	};
-
-	// set frequency at time
-	Sequence.prototype.setFrequency = function( freq, when ) {
-		this.osc.frequency.setValueAtTime( freq, when );
-		return this;
-	};
-
-	// ramp to frequency at time
-	Sequence.prototype.rampFrequency = function( freq, when ) {
-		this.osc.frequency.linearRampToValueAtTime( freq, when );
-		return this;
-	};
-
-	// run through all notes in the sequence and schedule them
-	Sequence.prototype.play = function( when ) {
-		when = typeof when === 'number' ? when : this.ac.currentTime;
-
-		this.createOscillator();
-		this.osc.start( when );
-
-		this.notes.forEach( function( note, i ) {
-			when = this.scheduleNote( i, when );
-		}.bind( this ) );
-
-		this.osc.stop( when );
-		this.osc.onended = this.loop ? this.play.bind( this, when ) : null;
-
-		return this;
-	};
-
-	// stop playback, null out the oscillator, cancel parameter automation
-	Sequence.prototype.stop = function() {
-		if ( this.osc ) {
-			this.osc.onended = null;
-			this.osc.disconnect();
-			this.osc = null;
-		}
-		return this;
-	};
-
-	exports.Note = Note;
-	exports.Sequence = Sequence;
-} ) );
+	return [ leftChannelBuffer, rightChannelBuffer ];
+}
