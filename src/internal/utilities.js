@@ -1,6 +1,8 @@
 ( function( beep8 ) {
 
+
 	beep8.Utilities = {};
+
 
 	/**
 	 * Shows a fatal error and throws an exception.
@@ -346,7 +348,7 @@
 			return lowInclusive;
 		}
 
-		return clamp(
+		return beep8.Utilities.clamp(
 			Math.floor(
 				Math.random() * ( highInclusive - lowInclusive + 1 )
 			) + lowInclusive,
