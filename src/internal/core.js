@@ -784,6 +784,18 @@
 
 
 	/**
+	 * Is this a touch device?
+	 *
+	 * @returns {boolean} True if this is a touch device.
+	 */
+	beep8.Core.isTouchDevice = function() {
+
+		return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
+
+	}
+
+
+	/**
 	 * Is this a mobile device?
 	 *
 	 * @returns {boolean} True if this is a mobile device.
@@ -817,5 +829,6 @@
 		return /android/i.test( navigator.userAgent );
 
 	}
+
 
 } )( beep8 || ( beep8 = {} ) );
