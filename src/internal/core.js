@@ -39,7 +39,13 @@
 	 * @param {Function} callback - The function to call when the engine is initialized.
 	 * @return {void}
 	 */
-	beep8.Core.init = function( callback ) {
+	beep8.Core.init = function( callback, options ) {
+
+		// Merge the options with the default configuration.
+		beep8.CONFIG = {
+			...beep8.CONFIG,
+			...options,
+		};
 
 		beep8.Utilities.checkFunction( "callback", callback );
 		beep8.Core.asyncInit( callback );
