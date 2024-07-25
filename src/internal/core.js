@@ -32,6 +32,7 @@
 	let pendingAsync = null;
 	let dirty = false;
 
+
 	/**
 	 * Initializes the engine.
 	 *

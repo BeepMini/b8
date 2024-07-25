@@ -98,6 +98,7 @@
 
 			// Draw the cursor.
 			targetCtx.fillStyle = beep8.Core.getColorHex( beep8.Core.drawState.fgColor );
+
 			targetCtx.fillRect(
 				realX, realY,
 				Math.round( beep8.CONFIG.CURSOR.WIDTH_F * beep8.CONFIG.CHR_WIDTH * ratio ),

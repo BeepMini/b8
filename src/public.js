@@ -340,10 +340,12 @@
 
 		beep8.Core.preflight( "beep8.printBox" );
 		borderChar = beep8.convChar( borderChar );
+
 		beep8.Utilities.checkNumber( "widthCols", widthCols );
 		beep8.Utilities.checkNumber( "heightRows", heightRows );
 		beep8.Utilities.checkBoolean( "fill", fill );
 		beep8.Utilities.checkNumber( "borderChar", borderChar );
+
 		beep8.Core.textRenderer.printBox( widthCols, heightRows, fill, borderChar );
 
 	}
