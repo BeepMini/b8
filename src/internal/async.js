@@ -27,6 +27,20 @@
 
 
 	/**
+	 * Waits until the user clicks/ taps the pointer and returns its position.
+	 *
+	 * @returns {Promise<{x: number, y: number}>} The pointer position.
+	 */
+	beep8.Async.pointer = async function() {
+
+		beep8.Core.preflight( "beep8.Async.pointer" );
+
+		return await beep8.Core.inputSys.readPointerAsync();
+
+	}
+
+
+	/**
 	 * Waits until the user inputs a line of text, then returns it.
 	 *
 	 * @param {string} [initString=""] - The initial string presented for the user to edit.
@@ -204,6 +218,7 @@
 		beep8.Core.preflight( "beep8.Async.loadFont" );
 
 		beep8.Utilities.checkString( "fontImageFile", fontImageFile );
+
 		const fontName = "FONT@" + fontImageFile;
 		await beep8.Core.textRenderer.loadFontAsync( fontName, fontImageFile );
 

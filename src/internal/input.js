@@ -78,6 +78,22 @@
 
 
 		/**
+		 * Handles pointerdown events, resolving any pending asynchronous pointer events.
+		 *
+		 * @param {PointerEvent} e - The event object.
+		 * @returns {void}
+		 */
+		onPointerDown( e ) {
+
+			if ( beep8.Core.hasPendingAsync( "beep8.Async.pointer" ) ) {
+				console.log( "Pointer event" );
+				beep8.Core.resolveAsync( "beep8.Async.pointer", { x: e.clientX, y: e.clientY } );
+			}
+
+		}
+
+
+		/**
 		 * Handles keyup events, removing the key from the held set.
 		 *
 		 * @param {KeyboardEvent} e - The event object.
@@ -100,6 +116,22 @@
 			return new Promise(
 				( resolve, reject ) => {
 					beep8.Core.startAsync( "beep8.Async.key", resolve, reject );
+				}
+			);
+
+		}
+
+
+		/**
+		 * Reads a pointer asynchronously. Returns a promise that resolves to the pointer position.
+		 *
+		 * @returns {Promise<{x: number, y: number}>} A promise that resolves to the pointer position.
+		 */
+		readPointerAsync() {
+
+			return new Promise(
+				( resolve, reject ) => {
+					beep8.Core.startAsync( "beep8.Async.pointer", resolve, reject );
 				}
 			);
 
