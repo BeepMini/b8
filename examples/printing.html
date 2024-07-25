@@ -17,6 +17,7 @@
   <script>
 
     async function main() {
+
       // Load the custom fonts.
       beep8.cls();
       beep8.print("Loading fonts...");
@@ -26,7 +27,7 @@
       const image = await beep8.Async.loadImage("../assets/writer.png");
       beep8.color(7, 0);
       beep8.cls();
-      beep8.printBox(32, 24);
+      beep8.printBox(28, 28);
       beep8.locate(1, 1);
       beep8.color(0, 7);
       beep8.print("PRINTING/FONTS DEMO\n\n");
@@ -38,7 +39,7 @@
       beep8.print("Big font.\n");
 
       beep8.setFont(null);  // Return to default font.
-      beep8.print("\nEscape sequences can be used:\n");
+      beep8.print("\nStyle markup can be used:\n");
       // {{c12}} sets the foreground color to 12 (green).
       // {{z}} resets the color.
       beep8.print("You can have a {{c12}}green{{z}} word.\n");
@@ -53,17 +54,18 @@
         "jumps over the lazy dog."
 	);
 
-      beep8.drawImage(180, 130, image);
-      beep8.locate(2, 16);
+      beep8.drawImage(170, 130, image);
+      beep8.locate(1, 16);
       beep8.color(15, 2);
-      beep8.printBox(20, 7);
-      beep8.locate(3, 17);
+      beep8.printBox(20, 11);
+      beep8.locate(2, 19);
       await beep8.Async.typewriter(
         "What sayest thou?\n" +
         "Why doth the swift\n" +
         "auburn fox leap\n" +
         "o'er the slothful\n" +
-        "dog?");
+        "dog?"
+	  );
     }
 
     window.addEventListener("load", () => beep8.init(main));

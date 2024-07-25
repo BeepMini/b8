@@ -18,55 +18,55 @@
 
     const MAPS = {
       "OVERWORLD": [
-        "                                ".split(''),
-        " ~~~~~~~     ^^^     ~~   ^^    ".split(''),
-        " ~~~~~~|,   ^^^^     ~~ ^^^||   ".split(''),
-        " ~~~~||| ,   ,^^     ~,^^||     ".split(''),
-        " |||||     ,^^^     ~~  ||      ".split(''),
-        " |||,   ||,   ^^    ~~ ,        ".split(''),
-        "      |||||||^^    ~~     || ^^ ".split(''),
-        " ^     ,||||^^^^|, ~~    |||^^^ ".split(''),
-        "  ^^^|    ,     ,  ==        ^^ ".split(''),
-        "   ^|| ,     |^^   ~~   ,,  ^^^ ".split(''),
-        "  ^^^^|      ^^^^ ~~     , ^^^^ ".split(''),
-        "  ^^^^        ^^^~~          ~  ".split(''),
-        "    ^    ,       ~~         ~~  ".split(''),
-        "             ,  ~~       ||~~~  ".split(''),
-        "     ,      ,  ~~      ,||||~~  ".split(''),
-        "      |        ~~     ,,  |     ".split(''),
-        "   | ,|||T|^  ~~~    ,,      ^^ ".split(''),
-        "  |||   ^^^^ ~~~          ^^^^^ ".split(''),
-        " ^^^||      ~~~~        ^^^^^^^ ".split(''),
-        "  ^^^,     ~~~~      ^^^^^^^^^^ ".split(''),
-        "                                ".split(''),
+        "                             ".split(''),
+        " ~~~~~     ^^^     ~~   ^^   ".split(''),
+        " ~~~~|,   ^^^^     ~~ ^^^||  ".split(''),
+        " ~~||| ,   ,^^     ~,^^||    ".split(''),
+        " ||||     ,^^^     ~~  ||    ".split(''),
+        " |||,   ||,   ^^    ~~ ,     ".split(''),
+        "      |||||||^^    ~~   ||^^ ".split(''),
+        " ^     ,||||^^^^|, ~~  |||^^ ".split(''),
+        "  ^^^|    ,     ,  ==     ^^ ".split(''),
+        "   ^|| ,     |^^   ~~ ,, ^^^ ".split(''),
+        "  ^^^^|      ^^^^ ~~  , ^^^^ ".split(''),
+        "  ^^^^        ^^^~~       ~  ".split(''),
+        "    ^    ,       ~~      ~~  ".split(''),
+        "             ,  ~~    ||~~~  ".split(''),
+        "     ,      ,  ~~   ,||||~~  ".split(''),
+        "      |        ~~  ,,  |     ".split(''),
+        "   | ,|||T|^  ~~~ ,,      ^^ ".split(''),
+        "  |||   ^^^^ ~~~        ^^^^^ ".split(''),
+        " ^^^||      ~~~~     ^^^^^^^ ".split(''),
+        "  ^^^,     ~~~    ^^^^^^^^^^ ".split(''),
+        "                             ".split(''),
       ],
       "TOWN": [
-        "                                ".split(''),
-        "               OO               ".split(''),
-        " ##############..############## ".split(''),
-        " #         ,   ..     #     ] # ".split(''),
-        " # ##########  .      #     ] # ".split(''),
-        " # # ]      #   .     +     ]2# ".split(''),
-        " # # ]      #   .     ######### ".split(''),
-        " # #0]      +  .    , #     ] # ".split(''),
-        " # # ]      #  ..     +     ]1# ".split(''),
-        " # ##########  ..     #     ] # ".split(''),
-        " #.... ...   ...      ######### ".split(''),
-        " #.. ,.   .. . ..   ,         # ".split(''),
-        " #######       .          2   # ".split(''),
-        " #     +     ......           # ".split(''),
-        " #  ####     ..~~..  ....  ...# ".split(''),
-        " #0 #  ,     ..~~.... ,. .....# ".split(''),
-        " ####    1   ......           # ".split(''),
-        " #     0              ,    1 |# ".split(''),
-        " #||||    2    ||| ,     |||||# ".split(''),
-        " #||||| ,,   ||||||  , |||||||# ".split(''),
-        " ############################## ".split(''),
+        "                             ".split(''),
+        "              OO             ".split(''),
+        " #############..############ ".split(''),
+        " #        ,   ..    #    ] # ".split(''),
+        " # #########  .     #    ] # ".split(''),
+        " # # ]     #   .    +    ]2# ".split(''),
+        " # # ]     #   .    ######## ".split(''),
+        " # #0]     +  .   , #    ] # ".split(''),
+        " # # ]     #  ..    +    ]1# ".split(''),
+        " # #########  ..    #    ] # ".split(''),
+        " #... ...   ...    ######### ".split(''),
+        " #..,.   .. . ..   ,       # ".split(''),
+        " ######       .        2   # ".split(''),
+        " #    +     ......         # ".split(''),
+        " #  ###     ..~~..  ...  ..# ".split(''),
+        " #0 #  ,    ..~~... ,. ....# ".split(''),
+        " ####   1   ......         # ".split(''),
+        " #     0           ,    1 |# ".split(''),
+        " #|||   2    ||| ,    |||||# ".split(''),
+        " #|||| ,,   ||||||  ,||||||# ".split(''),
+        " ########################### ".split(''),
       ],
     };
 
     const TILES = {
-      "~": { color: 5, char: 0xcd, solid: true },
+      "~": { color: 15, bg: 5, char: 0xcd, solid: true },
       "|": { color: 4, char: 0xdf, solid: true },
       "^": { color: 8, char: 0xce, solid: true },
       "=": { color: 6, char: 0xdd, solid: false },
@@ -83,7 +83,7 @@
       "2": { color: 15, char: 0xd5, solid: true, talk: true },
     }
 
-    const MAP_WIDTH = 32, MAP_HEIGHT = 21;
+    const MAP_WIDTH = beep8.CONFIG.SCREEN_COLS+1, MAP_HEIGHT = 21;
 
     const GREETINGS = [
       "Greetings, traveler!", "Welcome, adventurer!",
@@ -116,15 +116,20 @@
         beep8.locate(0, y);
         for (let x = 0; x < MAP_WIDTH; x++) {
           const tile = TILES[map[y][x]];
-          beep8.color(tile ? tile.color: 7);
-          beep8.printChar(tile ? tile.char : 0x3f);
+		  if ( tile ) {
+			beep8.color(
+				tile.color,
+				tile.bg | undefined
+			);
+			beep8.printChar(tile ? tile.char : 0x3f);
+		  }
         }
       }
-      beep8.locate(1, 21);
+      beep8.locate(1, 22);
       beep8.color(8, 0);
       beep8.print(
-        "ROBIN      HP 34/34    Gold:72\n" +
-        "Paladin Lvl 6        XP:18,390");
+        "ROBIN    HP 34/34   Gold:72\n" +
+        "Paladin Lvl 6      XP:18,390");
     }
 
     async function movePlayer() {

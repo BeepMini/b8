@@ -33,7 +33,7 @@
           case 1:
             if (await beep8.Async.dialog("Are you sure?", ["No","Yes"])) await formatDisk();
             break;
-          case 2: await beep8.Async.dialog("Can't eject. Disk in use."); break;
+          case 2: await beep8.Async.dialog("Can't eject.\nDisk in use."); break;
           case 3: await beep8.Async.dialog("No problems detected."); break;
         }
       }
