@@ -15,6 +15,7 @@
 			// Bind event listeners to handle keydown and keyup events.
 			window.addEventListener( "keydown", e => this.onKeyDown( e ) );
 			window.addEventListener( "keyup", e => this.onKeyUp( e ) );
+			window.addEventListener( "pointerdown", e => this.onPointerDown( e ) );
 
 		}
 
@@ -166,7 +167,6 @@
 				beep8.Core.setCursorLocation( curCol, curRow );
 				beep8.Core.textRenderer.print( curStrings[ curPos ] || "" );
 				const key = await this.readKeyAsync();
-				beep8.Sfx.play( 'click' );
 
 				if ( key === "Backspace" ) {
 
@@ -183,11 +183,16 @@
 					beep8.Core.setCursorLocation( curCol + curStrings[ curPos ].length, curRow );
 					beep8.Core.textRenderer.print( " " );
 
+					beep8.Sfx.play( beep8.CONFIG.SFX.TYPING );
+
 				} else if ( key === "Enter" ) {
 
 					// Handle enter: submit the text.
 					beep8.Core.setCursorLocation( 1, curRow + 1 );
 					beep8.Core.cursorRenderer.setCursorVisible( cursorWasVisible );
+
+					beep8.Sfx.play( beep8.CONFIG.SFX.TYPING );
+
 					return curStrings.join( "" );
 
 				} else if ( key.length === 1 ) {
@@ -204,6 +209,8 @@
 							curRow++;
 						}
 					}
+
+					beep8.Sfx.play( beep8.CONFIG.SFX.TYPING );
 
 				}
 			}
