@@ -146,6 +146,10 @@
 
 		initDone = true;
 
+		await beep8.Intro.loading();
+		await beep8.Intro.splash();
+
+
 		/**
 		 * Work around an init bug where text would initially not render on
 		 * Firefox. I'm not entirely sure I understand why, but this seems to
