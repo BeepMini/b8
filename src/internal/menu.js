@@ -2,6 +2,7 @@
 
 	beep8.Menu = {};
 
+
 	/**
 	 * Displays a menu with the given choices and returns the index of the selected choice.
 	 *
@@ -112,18 +113,18 @@
 
 				// Go up the menu.
 				selIndex = selIndex > 0 ? selIndex - 1 : choices.length - 1;
-				if ( choices.length > 1 ) beep8.Sfx.play( "beep3" );
+				if ( choices.length > 1 ) beep8.Sfx.play( beep8.CONFIG.SFX.MENU_UP );
 
 			} else if ( k === "ArrowDown" ) {
 
 				// Go down the menu.
 				selIndex = ( selIndex + 1 ) % choices.length;
-				if ( choices.length > 1 ) beep8.Sfx.play( "beep2" );
+				if ( choices.length > 1 ) beep8.Sfx.play( beep8.CONFIG.SFX.MENU_DOWN );
 
 			} else if ( k === "Enter" || k === "ButtonA" ) {
 
 				// Select menu item.
-				beep8.Sfx.play( "beep" );
+				beep8.Sfx.play( beep8.CONFIG.SFX.MENU_SELECT );
 				return selIndex;
 
 			} else if ( ( k === "Escape" || k === "ButtonB" ) && options.cancelable ) {
