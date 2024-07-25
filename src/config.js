@@ -3,6 +3,10 @@
 	beep8.CONFIG = {
 		// Enable debug?
 		DEBUG: true,
+		// The name of the project.
+		NAME: "beep8 Project",
+		// The version of the project.
+		VERSION: "1.0.0",
 		// Canvas settings
 		CANVAS_SETTINGS: {
 			// The ID to assign to the beep8 canvas.
@@ -17,13 +21,20 @@
 			AUTO_POSITION: true,
 			// If this is true, we will resize the canvas automatically to match the screen. If false,
 			// you're responsible for sizing the canvas to your liking.
-			// NOTE: If you are using 2D mode (THREE_SETTINGS is null) and have AUTO_SIZE set to false,
-			// you probably want to specify a fixed scale in SCREEN_SCALE rather than "auto", so you
+			// You probably want to specify a fixed scale in SCREEN_SCALE rather than "auto", so you
 			// have control over how large the canvas will be.
 			AUTO_SIZE: true,
 			// If this is not null, then this is the element under which to create the rendering canvas.
 			// This can be the ID of an HTML element, or an HTMLElement reference.
 			CONTAINER: null,
+		},
+		// Sound effects settings
+		SFX: {
+			// Key presses whilst using an input dialog.
+			TYPING: 'click',
+			MENU_UP: 'blip',
+			MENU_DOWN: 'blip2',
+			MENU_SELECT: 'blip3',
 		},
 		// Background color to fill the space not used by the screen.
 		// For best results this should be the same as the page's background.
@@ -32,25 +43,27 @@
 		CHR_FILE: "../assets/chr.png",
 		// Character size. The characters file's width must be
 		// 16 * CHR_WIDTH and the height must be 16 * CHR_HEIGHT.
-		CHR_WIDTH: 8,
-		CHR_HEIGHT: 8,
+		CHR_WIDTH: 12,
+		CHR_HEIGHT: 12,
 		// Screen width and height in characters.
-		SCREEN_ROWS: 24,
-		SCREEN_COLS: 32,
+		SCREEN_ROWS: 28,
+		SCREEN_COLS: 28,
 		// Pixel scale (magnification). Can be "auto" or an int >= 1.
 		// If this is "auto", we'll automatically compute this to be the maximum possible size
 		// for the current screen size.
-		// NOTE: This setting is only used for 2D style (if THREE_SETTINGS is null).
 		SCREEN_SCALE: "auto",
 		// Maximum fraction of the screen to occupy with the canvas.
-		// NOTE: This setting is only used for 2D style (if THREE_SETTINGS is null).
 		MAX_SCREEN_FRACTION: 0.95,
 		// If set, this is the opacity of the "scan lines" effect.
 		// If 0 or not set, don't show scan lines.
 		SCAN_LINES_OPACITY: 0.1,
-		// Color palette. This can be as many colors as you want, but each color requires us to
-		// store a scaled copy of the characters image in memory, so more colors = more memory.
-		// You can redefine the colors at runtime with beep8.redefineColors.
+		// Color palette.
+		// Colors count from 0.
+		// The first color is the background color.
+		// This can be as many colors as you want, but each color requires us to
+		// store a scaled copy of the characters image in memory, so more colors
+		// = more memory.
+		// You can redefine the colors at runtime with beep8.redefineColors([]).
 		COLORS: [
 			"#000", "#00A", "#A00", "#A0A", "#0A0", "#0AA", "#AA0", "#DDD",
 			"#666", "#00F", "#F00", "#F0F", "#0F0", "#0FF", "#FF0", "#FFF"
