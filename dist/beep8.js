@@ -49,6 +49,10 @@ const beep8 = {};
 	beep8.CONFIG = {
 		// Enable debug?
 		DEBUG: true,
+		// The name of the project.
+		NAME: "beep8 Project",
+		// The version of the project.
+		VERSION: "1.0.0",
 		// Canvas settings
 		CANVAS_SETTINGS: {
 			// The ID to assign to the beep8 canvas.
@@ -63,13 +67,20 @@ const beep8 = {};
 			AUTO_POSITION: true,
 			// If this is true, we will resize the canvas automatically to match the screen. If false,
 			// you're responsible for sizing the canvas to your liking.
-			// NOTE: If you are using 2D mode (THREE_SETTINGS is null) and have AUTO_SIZE set to false,
-			// you probably want to specify a fixed scale in SCREEN_SCALE rather than "auto", so you
+			// You probably want to specify a fixed scale in SCREEN_SCALE rather than "auto", so you
 			// have control over how large the canvas will be.
 			AUTO_SIZE: true,
 			// If this is not null, then this is the element under which to create the rendering canvas.
 			// This can be the ID of an HTML element, or an HTMLElement reference.
 			CONTAINER: null,
+		},
+		// Sound effects settings
+		SFX: {
+			// Key presses whilst using an input dialog.
+			TYPING: 'click',
+			MENU_UP: 'blip',
+			MENU_DOWN: 'blip2',
+			MENU_SELECT: 'blip3',
 		},
 		// Background color to fill the space not used by the screen.
 		// For best results this should be the same as the page's background.
@@ -78,25 +89,27 @@ const beep8 = {};
 		CHR_FILE: "../assets/chr.png",
 		// Character size. The characters file's width must be
 		// 16 * CHR_WIDTH and the height must be 16 * CHR_HEIGHT.
-		CHR_WIDTH: 8,
-		CHR_HEIGHT: 8,
+		CHR_WIDTH: 12,
+		CHR_HEIGHT: 12,
 		// Screen width and height in characters.
-		SCREEN_ROWS: 24,
-		SCREEN_COLS: 32,
+		SCREEN_ROWS: 28,
+		SCREEN_COLS: 28,
 		// Pixel scale (magnification). Can be "auto" or an int >= 1.
 		// If this is "auto", we'll automatically compute this to be the maximum possible size
 		// for the current screen size.
-		// NOTE: This setting is only used for 2D style (if THREE_SETTINGS is null).
 		SCREEN_SCALE: "auto",
 		// Maximum fraction of the screen to occupy with the canvas.
-		// NOTE: This setting is only used for 2D style (if THREE_SETTINGS is null).
 		MAX_SCREEN_FRACTION: 0.95,
 		// If set, this is the opacity of the "scan lines" effect.
 		// If 0 or not set, don't show scan lines.
 		SCAN_LINES_OPACITY: 0.1,
-		// Color palette. This can be as many colors as you want, but each color requires us to
-		// store a scaled copy of the characters image in memory, so more colors = more memory.
-		// You can redefine the colors at runtime with beep8.redefineColors.
+		// Color palette.
+		// Colors count from 0.
+		// The first color is the background color.
+		// This can be as many colors as you want, but each color requires us to
+		// store a scaled copy of the characters image in memory, so more colors
+		// = more memory.
+		// You can redefine the colors at runtime with beep8.redefineColors([]).
 		COLORS: [
 			"#000", "#00A", "#A00", "#A0A", "#0A0", "#0AA", "#AA0", "#DDD",
 			"#666", "#00F", "#F00", "#F0F", "#0F0", "#0FF", "#FF0", "#FFF"
@@ -469,10 +482,12 @@ const beep8 = {};
 
 		beep8.Core.preflight( "beep8.printBox" );
 		borderChar = beep8.convChar( borderChar );
+
 		beep8.Utilities.checkNumber( "widthCols", widthCols );
 		beep8.Utilities.checkNumber( "heightRows", heightRows );
 		beep8.Utilities.checkBoolean( "fill", fill );
 		beep8.Utilities.checkNumber( "borderChar", borderChar );
+
 		beep8.Core.textRenderer.printBox( widthCols, heightRows, fill, borderChar );
 
 	}
@@ -787,6 +802,20 @@ const beep8 = {};
 
 
 	/**
+	 * Waits until the user clicks/ taps the pointer and returns its position.
+	 *
+	 * @returns {Promise<{x: number, y: number}>} The pointer position.
+	 */
+	beep8.Async.pointer = async function() {
+
+		beep8.Core.preflight( "beep8.Async.pointer" );
+
+		return await beep8.Core.inputSys.readPointerAsync();
+
+	}
+
+
+	/**
 	 * Waits until the user inputs a line of text, then returns it.
 	 *
 	 * @param {string} [initString=""] - The initial string presented for the user to edit.
@@ -964,6 +993,7 @@ const beep8 = {};
 		beep8.Core.preflight( "beep8.Async.loadFont" );
 
 		beep8.Utilities.checkString( "fontImageFile", fontImageFile );
+
 		const fontName = "FONT@" + fontImageFile;
 		await beep8.Core.textRenderer.loadFontAsync( fontName, fontImageFile );
 
@@ -1007,13 +1037,20 @@ const beep8 = {};
 	let pendingAsync = null;
 	let dirty = false;
 
+
 	/**
 	 * Initializes the engine.
 	 *
 	 * @param {Function} callback - The function to call when the engine is initialized.
 	 * @return {void}
 	 */
-	beep8.Core.init = function( callback ) {
+	beep8.Core.init = function( callback, options ) {
+
+		// Merge the options with the default configuration.
+		beep8.CONFIG = {
+			...beep8.CONFIG,
+			...options,
+		};
 
 		beep8.Utilities.checkFunction( "callback", callback );
 		beep8.Core.asyncInit( callback );
@@ -1113,6 +1150,10 @@ const beep8 = {};
 		}
 
 		initDone = true;
+
+		await beep8.Intro.loading();
+		await beep8.Intro.splash();
+
 
 		/**
 		 * Work around an init bug where text would initially not render on
@@ -1752,6 +1793,18 @@ const beep8 = {};
 
 
 	/**
+	 * Is this a touch device?
+	 *
+	 * @returns {boolean} True if this is a touch device.
+	 */
+	beep8.Core.isTouchDevice = function() {
+
+		return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
+
+	}
+
+
+	/**
 	 * Is this a mobile device?
 	 *
 	 * @returns {boolean} True if this is a mobile device.
@@ -1785,6 +1838,7 @@ const beep8 = {};
 		return /android/i.test( navigator.userAgent );
 
 	}
+
 
 } )( beep8 || ( beep8 = {} ) );
 
@@ -1888,6 +1942,7 @@ const beep8 = {};
 
 			// Draw the cursor.
 			targetCtx.fillStyle = beep8.Core.getColorHex( beep8.Core.drawState.fgColor );
+
 			targetCtx.fillRect(
 				realX, realY,
 				Math.round( beep8.CONFIG.CURSOR.WIDTH_F * beep8.CONFIG.CHR_WIDTH * ratio ),
@@ -1918,6 +1973,7 @@ const beep8 = {};
 			// Bind event listeners to handle keydown and keyup events.
 			window.addEventListener( "keydown", e => this.onKeyDown( e ) );
 			window.addEventListener( "keyup", e => this.onKeyUp( e ) );
+			window.addEventListener( "pointerdown", e => this.onPointerDown( e ) );
 
 		}
 
@@ -1981,6 +2037,22 @@ const beep8 = {};
 
 
 		/**
+		 * Handles pointerdown events, resolving any pending asynchronous pointer events.
+		 *
+		 * @param {PointerEvent} e - The event object.
+		 * @returns {void}
+		 */
+		onPointerDown( e ) {
+
+			if ( beep8.Core.hasPendingAsync( "beep8.Async.pointer" ) ) {
+				console.log( "Pointer event" );
+				beep8.Core.resolveAsync( "beep8.Async.pointer", { x: e.clientX, y: e.clientY } );
+			}
+
+		}
+
+
+		/**
 		 * Handles keyup events, removing the key from the held set.
 		 *
 		 * @param {KeyboardEvent} e - The event object.
@@ -2003,6 +2075,22 @@ const beep8 = {};
 			return new Promise(
 				( resolve, reject ) => {
 					beep8.Core.startAsync( "beep8.Async.key", resolve, reject );
+				}
+			);
+
+		}
+
+
+		/**
+		 * Reads a pointer asynchronously. Returns a promise that resolves to the pointer position.
+		 *
+		 * @returns {Promise<{x: number, y: number}>} A promise that resolves to the pointer position.
+		 */
+		readPointerAsync() {
+
+			return new Promise(
+				( resolve, reject ) => {
+					beep8.Core.startAsync( "beep8.Async.pointer", resolve, reject );
 				}
 			);
 
@@ -2037,7 +2125,6 @@ const beep8 = {};
 				beep8.Core.setCursorLocation( curCol, curRow );
 				beep8.Core.textRenderer.print( curStrings[ curPos ] || "" );
 				const key = await this.readKeyAsync();
-				beep8.Sfx.play( 'click' );
 
 				if ( key === "Backspace" ) {
 
@@ -2054,11 +2141,16 @@ const beep8 = {};
 					beep8.Core.setCursorLocation( curCol + curStrings[ curPos ].length, curRow );
 					beep8.Core.textRenderer.print( " " );
 
+					beep8.Sfx.play( beep8.CONFIG.SFX.TYPING );
+
 				} else if ( key === "Enter" ) {
 
 					// Handle enter: submit the text.
 					beep8.Core.setCursorLocation( 1, curRow + 1 );
 					beep8.Core.cursorRenderer.setCursorVisible( cursorWasVisible );
+
+					beep8.Sfx.play( beep8.CONFIG.SFX.TYPING );
+
 					return curStrings.join( "" );
 
 				} else if ( key.length === 1 ) {
@@ -2076,6 +2168,8 @@ const beep8 = {};
 						}
 					}
 
+					beep8.Sfx.play( beep8.CONFIG.SFX.TYPING );
+
 				}
 			}
 		}
@@ -2085,7 +2179,87 @@ const beep8 = {};
 
 ( function( beep8 ) {
 
+	beep8.Intro = {};
+
+	/**
+	 * Play a sound effect.
+	 *
+	 * @param {string} sfx The sound effect to play.
+	 * @throws {Error} If the sfx is not found.
+	 */
+	beep8.Intro.loading = async function( sfx ) {
+
+		// Colour count.
+		const colourCount = beep8.CONFIG.COLORS.length;
+		const prefix = "8> ";
+
+		for ( let i = 0; i < colourCount; i++ ) {
+
+			beep8.color( i, i );
+			beep8.cls();
+			await beep8.Async.wait( 0.03 );
+
+		}
+
+		// Loop through all colours.
+		beep8.color( 7, 1 );
+		beep8.cls();
+		beep8.locate( 1, 1 );
+		beep8.print( prefix + "beep8 Loading...\n" );
+
+		await beep8.Async.wait( 1 );
+
+		beep8.print( prefix + "Let's 'a go!" );
+
+		await beep8.Async.wait( 0.5 );
+
+	}
+
+
+	/**
+	 * Display a splash screen.
+	 *
+	 * @param {string} [name="beep8 Project"] The name of the project.
+	 * @returns {Promise<void>} A promise that resolves when the splash screen is dismissed.
+	 */
+	beep8.Intro.splash = async function() {
+
+		let name = beep8.CONFIG.NAME;
+		let startCol = 2;
+
+		beep8.color( 7, 1 );
+		beep8.cls();
+
+		// Border.
+		beep8.locate( 1, 1 );
+		beep8.printBox( beep8.CONFIG.SCREEN_COLS - 2, beep8.CONFIG.SCREEN_ROWS - 2 );
+
+		// Project title.
+		startCol = Math.floor( ( beep8.CONFIG.SCREEN_COLS - name.length ) / 2 );
+		beep8.locate( startCol, Math.floor( beep8.CONFIG.SCREEN_ROWS * 0.3 ) );
+		beep8.print( name + "\n" );
+		beep8.print( "=".repeat( name.length ) + "\n" );
+
+		// Click to start.
+		let message = "Click to start";
+		if ( beep8.Core.isTouchDevice() ) message = "Tap to start";
+
+		startCol = Math.round( ( beep8.CONFIG.SCREEN_COLS - message.length ) / 2 );
+		beep8.locate( startCol, beep8.CONFIG.SCREEN_ROWS - 4 );
+		beep8.print( message );
+
+		// Wait for user input.
+		await beep8.Core.inputSys.readPointerAsync();
+
+	}
+
+
+} )( beep8 || ( beep8 = {} ) );
+
+( function( beep8 ) {
+
 	beep8.Menu = {};
+
 
 	/**
 	 * Displays a menu with the given choices and returns the index of the selected choice.
@@ -2197,18 +2371,18 @@ const beep8 = {};
 
 				// Go up the menu.
 				selIndex = selIndex > 0 ? selIndex - 1 : choices.length - 1;
-				if ( choices.length > 1 ) beep8.Sfx.play( "beep3" );
+				if ( choices.length > 1 ) beep8.Sfx.play( beep8.CONFIG.SFX.MENU_UP );
 
 			} else if ( k === "ArrowDown" ) {
 
 				// Go down the menu.
 				selIndex = ( selIndex + 1 ) % choices.length;
-				if ( choices.length > 1 ) beep8.Sfx.play( "beep2" );
+				if ( choices.length > 1 ) beep8.Sfx.play( beep8.CONFIG.SFX.MENU_DOWN );
 
 			} else if ( k === "Enter" || k === "ButtonA" ) {
 
 				// Select menu item.
-				beep8.Sfx.play( "beep" );
+				beep8.Sfx.play( beep8.CONFIG.SFX.MENU_SELECT );
 				return selIndex;
 
 			} else if ( ( k === "Escape" || k === "ButtonB" ) && options.cancelable ) {
@@ -2500,13 +2674,17 @@ ${melody.join( '\n' )}`;
 	/**
 	 * Sound effect library.
 	 *
-	 * @see https://codepen.io/KilledByAPixel/pen/BaowKzv?editors=1000
+	 * @see https://killedbyapixel.github.io/ZzFX/
 	 * @see https://codepen.io/KilledByAPixel/pen/BaowKzv?editors=1000
 	 * @type {Object}
 	 */
 	const sfxLibrary = {
 		coin: [ , 0, 1675, , .06, .24, 1, 1.82, , , 837, .06 ],
 		coin2: [ , 0, 523.2511, .01, .06, .3, 1, 1.82, , , 837, .06 ],
+		blip: [ 3, 0, 150, .02, .03, .02, , 2.8, , , , , , , , , , .7, .02 ],
+		blip2: [ 1.5, 0, 200, .02, .03, .02, , 2.8, , , , , , , , , , .7, .02 ],
+		blip3: [ 2, 0, 250, .02, .03, .02, , 2.8, , , , , , , , , , .7, .02 ],
+
 		hit: [ , 0, 925, .04, .3, .6, 1, .3, , 6.27, -184, .09, .17 ],
 		sparkle: [ , 0, 539, 0, .04, .29, 1, 1.92, , , 567, .02, .02, , , , .04 ],
 		sparkle2: [ , 0, 80, .3, .4, .7, 2, .1, -0.73, 3.42, -430, .09, .17, , , , .19 ],
@@ -2517,9 +2695,11 @@ ${melody.join( '\n' )}`;
 		beep: [ 1.5, 0, 270, , .1, , 1, 1.5, , , , , , , , .1, .01 ],
 		beep2: [ 1.2, 0, 150, , .1, , 1, 1.5, , , , , , , , .1, .01 ],
 		beep3: [ 1.5, 0, 200, , .1, , 1, 1.5, , , , , , , , .1, .01 ],
+		ding: [ .9, 0, 685, .01, .03, .17, 1, 1.4, , , , , , , , , , .63, .01, , 420 ],
 		drum: [ , 0, 129, .01, , .15, , , , , , , , 5 ],
 		explode: [ , 0, 333, .01, 0, .9, 4, 1.9, , , , , , .5, , .6 ],
 		explode2: [ , 0, 418, 0, .02, .2, 4, 1.15, -8.5, , , , , .7, , .1 ],
+		explode3: [ , 0, 82, .02, , .2, 4, 4, , , , , , .8, , .2, , .8, .09 ],
 		squeak1: [ , 0, 1975, .08, .56, .02, , , -0.4, , -322, .56, .41, , , , .25 ],
 		squeak2: [ , 0, 75, .03, .08, .17, 1, 1.88, 7.83, , , , , .4 ],
 		squeak3: [ , 0, 1306, .8, .08, .02, 1, , , , , , .48, , -0.1, .11, .25 ],
@@ -2533,13 +2713,18 @@ ${melody.join( '\n' )}`;
 		squirt: [ , 0, 448, .01, .1, .3, 3, .39, -0.5, , , , , , .2, .1, .08 ],
 		swing: [ , 0, 150, .05, , .05, , 1.3, , , , , , 3 ],
 		wave: [ , 0, 40, .5, , 1.5, , 11, , , , , , 199 ],
+		warp: [ 2, 0, 713, .16, .09, .24, , .6, -29, -16, , , .09, .5, , , .23, .75, .15, .48 ],
+		radioactive: [ , 0, 130, .02, .9, .39, 2, .8, , , , , .13, .2, , .1, , .93, .06, .28 ],
 		siren: [ , 0, 960, , 1, .01, , .8, -0.01, , -190, .5, , .05, , , 1 ],
 		car_horn: [ 1.5, 0, 250, .02, .02, .2, 2, 2, , , , , .02, , , .02, .01, , , .1 ],
 		engine2: [ , 0, 25, .05, .3, .5, 3, 9, -0.01, , , , , , 13, .1, .2 ],
 		thunder: [ , 0, 471, , .09, .47, 4, 1.06, -6.7, , , , , .9, 61, .1, , .82, .09, .13 ],
 		sparkle3: [ , 0, 63, , 1, , 1, 1.5, , , , , , , , 3.69, .08 ],
 		sweep: [ , 0, 9220, .01, , , , 5, , , , , , 9 ],
+		click: [ 1.1, 0, 900, , .01, 0, 1, , -10, , -31, .02, , , , , , 1.2, , .16, -1448 ],
 	};
+
+	beep8.Sfx = {};
 
 
 	/**
@@ -2548,11 +2733,15 @@ ${melody.join( '\n' )}`;
 	 * @param {string} sfx The sound effect to play.
 	 * @throws {Error} If the sfx is not found.
 	 */
-	beep8.Sfx.play = function( sfx ) {
+	beep8.Sfx.play = function( sfx = '' ) {
 
+		// Quit if no sound specified.
+		if ( !sfx ) return;
+
+		// Check the sfx is a string.
 		beep8.Utilities.checkString( 'sfx', sfx );
 
-		console.log( `[${sfxLibrary[ sfx ].toString().replace( ' ', '' )}]` );
+		// console.log( `[${sfxLibrary[ sfx ].toString().replace( ' ', '' )}]` );
 
 		// SFX not found.
 		if ( !sfxLibrary[ sfx ] ) {
@@ -2802,6 +2991,7 @@ ${melody.join( '\n' )}`;
 	beep8.TextRenderer = class {
 
 		constructor() {
+
 			// beep8.TextRendererFont for each font, keyed by font name. The default font is called "default".
 			this.fonts_ = {};
 
@@ -2810,13 +3000,17 @@ ${melody.join( '\n' )}`;
 			// character width and height that are INTEGER MULTIPLES of beep8.CONFIG.CHR_WIDTH and
 			// beep8.CONFIG.CHR_HEIGHT, respectively, to ensure the row/column system continues to work.
 			this.curFont_ = null;
+
 		}
+
 
 		/**
 		 * Initializes the beep8.TextRenderer with the default font.
+		 *
 		 * @returns {Promise<void>}
 		 */
 		async initAsync() {
+
 			beep8.Utilities.log( "beep8.TextRenderer init." );
 			const defaultFont = new beep8.TextRendererFont( "default", beep8.CONFIG.CHR_FILE );
 			await defaultFont.initAsync();
@@ -2834,20 +3028,27 @@ ${melody.join( '\n' )}`;
 
 			this.fonts_[ "default" ] = defaultFont;
 			this.curFont_ = defaultFont;
+
 		}
+
 
 		/**
 		 * Loads a new font asynchronously.
+		 *
 		 * @param {string} fontName - The name of the font.
 		 * @param {string} fontImageFile - The URL of the image file for the font.
 		 * @returns {Promise<void>}
 		 */
 		async loadFontAsync( fontName, fontImageFile ) {
+
 			beep8.Utilities.checkString( "fontName", fontName );
 			beep8.Utilities.checkString( "fontImageFile", fontImageFile );
+
 			const font = new beep8.TextRendererFont( fontName, fontImageFile );
 			await font.initAsync();
+
 			this.fonts_[ fontName ] = font;
+
 		}
 
 		/**
@@ -3287,6 +3488,7 @@ ${melody.join( '\n' )}`;
 	 * Represents an individual font that can be used with beep8.TextRenderer.
 	 */
 	beep8.TextRendererFont = class {
+
 		/**
 		 * Constructs a font. NOTE: after construction, you must call await initAsync() to
 		 * initialize the font.
@@ -3294,8 +3496,10 @@ ${melody.join( '\n' )}`;
 		 * @param {string} fontImageFile - The URL of the image file for the font.
 		 */
 		constructor( fontName, fontImageFile ) {
+
 			beep8.Utilities.checkString( "fontName", fontName );
 			beep8.Utilities.checkString( "fontImageFile", fontImageFile );
+
 			this.fontName_ = fontName;
 			this.fontImageFile_ = fontImageFile;
 			this.origImg_ = null;
@@ -3304,26 +3508,43 @@ ${melody.join( '\n' )}`;
 			this.charHeight_ = 0;
 			this.origFgColor_ = 0;
 			this.origBgColor_ = 0;
+
 		}
+
 
 		/**
 		 * Returns the character width of the font.
 		 * @returns {number} The width of each character in pixels.
 		 */
-		getCharWidth() { return this.charWidth_; }
+		getCharWidth() {
+
+			return this.charWidth_;
+
+		}
+
 
 		/**
 		 * Returns the character height of the font.
 		 * @returns {number} The height of each character in pixels.
 		 */
-		getCharHeight() { return this.charHeight_; }
+		getCharHeight() {
+
+			return this.charHeight_;
+
+		}
+
 
 		/**
 		 * Returns the image for a given color number.
 		 * @param {number} colorNumber - The color number.
 		 * @returns {HTMLImageElement} The image for the specified color.
 		 */
-		getImageForColor( colorNumber ) { return this.chrImages_[ colorNumber ]; }
+		getImageForColor( colorNumber ) {
+
+			return this.chrImages_[ colorNumber ];
+
+		}
+
 
 		/**
 		 * Sets up this font from the given character image file. It's assumed to contain the
@@ -3332,25 +3553,34 @@ ${melody.join( '\n' )}`;
 		 * @returns {Promise<void>}
 		 */
 		async initAsync() {
+
 			beep8.Utilities.log( `Building font ${this.fontName_} from image ${this.fontImageFile_}` );
+
 			this.origImg_ = await beep8.Utilities.loadImageAsync( this.fontImageFile_ );
+
 			beep8.Utilities.assert( this.origImg_.width % 16 === 0 && this.origImg_.height % 16 === 0,
 				`Font ${this.fontName_}: image ${this.fontImageFile_} has dimensions ` +
 				`${this.origImg_.width}x${this.origImg_.height}. It must ` +
 				`have dimensions that are multiples of 16 (16x16 grid of characters).` );
+
 			this.charWidth_ = Math.floor( this.origImg_.width / 16 );
 			this.charHeight_ = Math.floor( this.origImg_.height / 16 );
+
 			this.regenColors();
+
 		}
+
 
 		/**
 		 * Regenerates the color text images.
 		 * @returns {void}
 		 */
 		regenColors() {
+
 			const tempCanvas = document.createElement( 'canvas' );
 			tempCanvas.width = this.origImg_.width;
 			tempCanvas.height = this.origImg_.height;
+
 			const ctx = tempCanvas.getContext( '2d' );
 			this.chrImages_ = [];
 
@@ -3373,8 +3603,11 @@ ${melody.join( '\n' )}`;
 				thisImg.src = tempCanvas.toDataURL();
 				this.chrImages_.push( thisImg );
 			}
+
 		}
+
 	}
+
 
 } )( beep8 || ( beep8 = {} ) );
 
