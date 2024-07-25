@@ -6,6 +6,7 @@
 	beep8.TextRenderer = class {
 
 		constructor() {
+
 			// beep8.TextRendererFont for each font, keyed by font name. The default font is called "default".
 			this.fonts_ = {};
 
@@ -14,13 +15,17 @@
 			// character width and height that are INTEGER MULTIPLES of beep8.CONFIG.CHR_WIDTH and
 			// beep8.CONFIG.CHR_HEIGHT, respectively, to ensure the row/column system continues to work.
 			this.curFont_ = null;
+
 		}
+
 
 		/**
 		 * Initializes the beep8.TextRenderer with the default font.
+		 *
 		 * @returns {Promise<void>}
 		 */
 		async initAsync() {
+
 			beep8.Utilities.log( "beep8.TextRenderer init." );
 			const defaultFont = new beep8.TextRendererFont( "default", beep8.CONFIG.CHR_FILE );
 			await defaultFont.initAsync();
@@ -38,20 +43,27 @@
 
 			this.fonts_[ "default" ] = defaultFont;
 			this.curFont_ = defaultFont;
+
 		}
+
 
 		/**
 		 * Loads a new font asynchronously.
+		 *
 		 * @param {string} fontName - The name of the font.
 		 * @param {string} fontImageFile - The URL of the image file for the font.
 		 * @returns {Promise<void>}
 		 */
 		async loadFontAsync( fontName, fontImageFile ) {
+
 			beep8.Utilities.checkString( "fontName", fontName );
 			beep8.Utilities.checkString( "fontImageFile", fontImageFile );
+
 			const font = new beep8.TextRendererFont( fontName, fontImageFile );
 			await font.initAsync();
+
 			this.fonts_[ fontName ] = font;
+
 		}
 
 		/**
