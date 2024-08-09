@@ -46,8 +46,8 @@
 		CHR_WIDTH: 12,
 		CHR_HEIGHT: 12,
 		// Screen width and height in characters.
-		SCREEN_ROWS: 28,
-		SCREEN_COLS: 28,
+		SCREEN_ROWS: 32,
+		SCREEN_COLS: 32,
 		// Pixel scale (magnification). Can be "auto" or an int >= 1.
 		// If this is "auto", we'll automatically compute this to be the maximum possible size
 		// for the current screen size.
@@ -65,8 +65,22 @@
 		// = more memory.
 		// You can redefine the colors at runtime with beep8.redefineColors([]).
 		COLORS: [
-			"#000", "#00A", "#A00", "#A0A", "#0A0", "#0AA", "#AA0", "#DDD",
-			"#666", "#00F", "#F00", "#F0F", "#0F0", "#0FF", "#FF0", "#FFF"
+			"#0F111A",
+			"#323D52",
+			"#9DB1BF",
+			"#8DF1F7",
+			"#59B0F6",
+			"#384C96",
+			"#591D3B",
+			"#694544",
+			"#B14759",
+			"#EF8360",
+			"#FFCB70",
+			"#99D16F",
+			"#5CB87B",
+			"#2F8A73",
+			"#F099B5",
+			"#F4F4F4",
 		],
 		// If this is not null, then we will display a virtual joystick if the user
 		// is on a mobile device.
