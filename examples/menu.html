@@ -19,14 +19,14 @@
     async function main() {
       while (true) {
         // Clear screen using white over blue
-        beep8.color(7, 1);
+        beep8.color(12, 1);
         beep8.cls();
         beep8.locate(1, 1);
         beep8.print("System Boot Menu\n\n");
-        beep8.color(1, 7);
+        beep8.color(1, 12);
         // Show a menu of options.
         const choice = await beep8.Async.menu(["Install OS", "Format disk", "Eject disk", "Fix disk"]);
-        beep8.color(7, 2);
+        beep8.color(6, 2);
         // Show a message box depending on the choice.
         switch (choice) {
           case 0: await beep8.Async.dialog("128kB of memory needed", ["OK"]); break;
@@ -40,7 +40,7 @@
     }
 
     async function formatDisk() {
-      beep8.color(7, 1);
+      beep8.color(12, 1);
       beep8.cls();
       beep8.locate(1, 2);
       beep8.print("Formating disk...\n");
@@ -49,7 +49,7 @@
         beep8.print(`Track ${i}/80...`);
         await beep8.Async.wait(0.5);
       }
-      beep8.color(7, 4);
+      beep8.color(6, 2);
       await beep8.Async.dialog("Successfully formatted");
     }
 

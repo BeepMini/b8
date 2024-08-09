@@ -18,7 +18,7 @@
 
     async function main() {
       // Clear screen using white foreground (7) over blue background (1).
-      beep8.color(7, 1);
+      beep8.color(10, 5);
       beep8.cls();
       // Print greeting at position 1,1.
       beep8.locate(1, 1);
@@ -28,7 +28,7 @@
       // Don't forget: beep8.Async.* functions need to be called with await:
       const name = await beep8.Async.readLine();
       // Print it back, but in yellow (14).
-      beep8.color(14);
+      beep8.color(15);
       beep8.print("\n\nHi, " + name + ".");
     }
 
