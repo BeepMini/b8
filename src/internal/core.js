@@ -9,6 +9,7 @@
 	beep8.Core.realCtx = null;
 	beep8.Core.canvas = null;
 	beep8.Core.ctx = null;
+	beep8.Core.container = null;
 	beep8.Core.deltaTime = 0;
 
 	beep8.Core.drawState = {
@@ -80,10 +81,85 @@
 			}
 		}
 
+		beep8.Core.realCanvas.style.touchAction = "none";
+		beep8.Core.realCanvas.style.userSelect = "none";
+		beep8.Core.realCanvas.style.imageRendering = "pixelated";
+
 		// Prevent default touch events on touch devices.
 		beep8.Core.realCanvas.addEventListener( "touchstart", e => e.preventDefault() );
 
 		// Work out where to put the canvas.
+		beep8.Core.container = document.createElement( 'div' );
+		beep8.Core.container.setAttribute( "style", "" );
+		beep8.Core.container.id = "beep8-container";
+		beep8.Core.container.style.display = "inline-block";
+		beep8.Core.container.style.position = "relative";
+
+		// Add the canvas to the container.
+		beep8.Core.container.appendChild( beep8.Core.realCanvas );
+
+		// Put the canvas in the container.
+		beep8.Core.getBeepContainerEl().appendChild( beep8.Core.container );
+
+		// Set up the virtual canvas (the one we render to). This canvas isn't
+		// part of the document( it's not added to document.body), it only
+		// exists off-screen.
+		beep8.Core.canvas = document.createElement( "canvas" );
+		beep8.Core.canvas.width = beep8.CONFIG.SCREEN_WIDTH;
+		beep8.Core.canvas.height = beep8.CONFIG.SCREEN_HEIGHT;
+		beep8.Core.canvas.style.width = beep8.CONFIG.SCREEN_WIDTH + "px";
+		beep8.Core.canvas.style.height = beep8.CONFIG.SCREEN_HEIGHT + "px";
+		beep8.Core.ctx = beep8.Core.canvas.getContext( "2d" );
+		beep8.Core.ctx.imageSmoothingEnabled = false;
+
+		beep8.Core.addScanlines();
+
+		// Initialize subsystems
+		beep8.Core.textRenderer = new beep8.TextRenderer();
+		beep8.Core.inputSys = new beep8.Input();
+		beep8.Core.cursorRenderer = new beep8.CursorRenderer();
+
+		await beep8.Core.textRenderer.initAsync();
+
+		// Update the positioning and size of the canvas.
+		beep8.Core.updateLayout( false );
+		window.addEventListener(
+			"resize",
+			() => beep8.Core.updateLayout( true )
+		);
+
+		if ( beep8.Core.isMobile() ) {
+			beep8.Joystick.setup();
+		}
+
+		initDone = true;
+
+		await beep8.Intro.loading();
+		await beep8.Intro.splash();
+
+		/**
+		 * Work around an init bug where text would initially not render on
+		 * Firefox. I'm not entirely sure I understand why, but this seems to
+		 * fix it (perhaps waiting 1 frame gives the canvas time to initialize).
+		 */
+		await new Promise( resolve => setTimeout( resolve, 1 ) );
+		await callback();
+
+		beep8.Core.render();
+
+	}
+
+
+	/**
+	 * Gets the container element for the engine.
+	 * This is the element under which the rendering canvas is created.
+	 * If the container is not specified in the configuration, this will be the
+	 * body element.
+	 *
+	 * @returns {HTMLElement} The container element.
+	 */
+	beep8.Core.getBeepContainerEl = function() {
+
 		let container = document.body;
 
 		if ( beep8.CONFIG.CANVAS_SETTINGS && beep8.CONFIG.CANVAS_SETTINGS.CONTAINER ) {
@@ -112,59 +188,13 @@
 
 		}
 
-		// Put the canvas in the container.
-		container.appendChild( beep8.Core.realCanvas );
-
-		// Set up the virtual canvas (the one we render to). This canvas isn't
-		// part of the document( it's not added to document.body), it only
-		// exists off-screen.
-		beep8.Core.canvas = document.createElement( "canvas" );
-		beep8.Core.canvas.width = beep8.CONFIG.SCREEN_WIDTH;
-		beep8.Core.canvas.height = beep8.CONFIG.SCREEN_HEIGHT;
-		beep8.Core.canvas.style.width = beep8.CONFIG.SCREEN_WIDTH + "px";
-		beep8.Core.canvas.style.height = beep8.CONFIG.SCREEN_HEIGHT + "px";
-		beep8.Core.ctx = beep8.Core.canvas.getContext( "2d" );
-		beep8.Core.ctx.imageSmoothingEnabled = false;
-
-		// Initialize subsystems
-		beep8.Core.textRenderer = new beep8.TextRenderer();
-		beep8.Core.inputSys = new beep8.Input();
-		beep8.Core.cursorRenderer = new beep8.CursorRenderer();
-
-		await beep8.Core.textRenderer.initAsync();
-
-		// Update the positioning and size of the canvas.
-		beep8.Core.updateLayout( false );
-		window.addEventListener(
-			"resize",
-			() => beep8.Core.updateLayout( true )
-		);
-
-		if ( beep8.Core.isMobile() ) {
-			beep8.Joystick.setup();
-		}
-
-		initDone = true;
-
-		await beep8.Intro.loading();
-		await beep8.Intro.splash();
-
-
-		/**
-		 * Work around an init bug where text would initially not render on
-		 * Firefox. I'm not entirely sure I understand why, but this seems to
-		 * fix it (perhaps waiting 1 frame gives the canvas time to initialize).
-		 */
-		await new Promise( resolve => setTimeout( resolve, 1 ) );
-		await callback();
-
-		beep8.Core.render();
+		return container;
 
 	}
 
 
 	/**
-	 * Checks if the engine (ans specified method) is ready to run.
+	 * Checks if the engine (and specified method) is ready to run.
 	 *
 	 * @param {string} apiMethod - The name of the API method being called.
 	 * @returns {void}
@@ -668,94 +698,66 @@
 	 */
 	beep8.Core.updateLayout2d = function() {
 
-		const autoSize = !beep8.CONFIG.CANVAS_SETTINGS || beep8.CONFIG.CANVAS_SETTINGS.AUTO_SIZE;
-		const autoPos = !beep8.CONFIG.CANVAS_SETTINGS || beep8.CONFIG.CANVAS_SETTINGS.AUTO_POSITION;
-
-		let useAutoScale = typeof ( beep8.CONFIG.SCREEN_SCALE ) !== 'number';
-		let scale;
-
-		if ( useAutoScale ) {
-
-			const frac = beep8.CONFIG.MAX_SCREEN_FRACTION || 0.8;
-			const availableSize = autoSize ?
-				{ width: frac * window.innerWidth, height: frac * window.innerHeight } :
-				beep8.Core.realCanvas.getBoundingClientRect();
-			scale = Math.floor( Math.min(
-				availableSize.width / beep8.CONFIG.SCREEN_WIDTH,
-				availableSize.height / beep8.CONFIG.SCREEN_HEIGHT ) );
-			scale = Math.min( Math.max( scale, 1 ), 5 );
-			beep8.Utilities.log( `Auto - scale: available size ${availableSize.width} x ${availableSize.height}, scale ${scale}, dpr ${window.devicePixelRatio}` );
-
-		} else {
-
-			scale = beep8.CONFIG.SCREEN_SCALE;
-
-		}
-
-		beep8.CONFIG.SCREEN_EL_WIDTH = beep8.CONFIG.SCREEN_WIDTH * scale;
-		beep8.CONFIG.SCREEN_EL_HEIGHT = beep8.CONFIG.SCREEN_HEIGHT * scale;
-		beep8.CONFIG.SCREEN_REAL_WIDTH = beep8.CONFIG.SCREEN_WIDTH * scale;
-		beep8.CONFIG.SCREEN_REAL_HEIGHT = beep8.CONFIG.SCREEN_HEIGHT * scale;
-
-		if ( autoSize ) {
-
-			beep8.Core.realCanvas.style.width = beep8.CONFIG.SCREEN_EL_WIDTH + "px";
-			beep8.Core.realCanvas.style.height = beep8.CONFIG.SCREEN_EL_HEIGHT + "px";
-			beep8.Core.realCanvas.width = beep8.CONFIG.SCREEN_REAL_WIDTH;
-			beep8.Core.realCanvas.height = beep8.CONFIG.SCREEN_REAL_HEIGHT;
-
-		} else {
-
-			const actualSize = beep8.Core.realCanvas.getBoundingClientRect();
-			beep8.Core.realCanvas.width = actualSize.width;
-			beep8.Core.realCanvas.height = actualSize.height;
-
-		}
-
 		beep8.Core.realCtx = beep8.Core.realCanvas.getContext( "2d" );
 		beep8.Core.realCtx.imageSmoothingEnabled = false;
 
-		if ( autoPos ) {
+		beep8.CONFIG.SCREEN_EL_WIDTH = beep8.CONFIG.SCREEN_WIDTH;
+		beep8.CONFIG.SCREEN_EL_HEIGHT = beep8.CONFIG.SCREEN_HEIGHT;
+		beep8.CONFIG.SCREEN_REAL_WIDTH = beep8.CONFIG.SCREEN_WIDTH;
+		beep8.CONFIG.SCREEN_REAL_HEIGHT = beep8.CONFIG.SCREEN_HEIGHT;
 
-			beep8.Core.realCanvas.style.position = "absolute";
-			beep8.Core.realCanvas.style.left = Math.round( ( window.innerWidth - beep8.Core.realCanvas.width ) / 2 ) + "px";
-			beep8.Core.realCanvas.style.top = Math.round( ( window.innerHeight - beep8.Core.realCanvas.height ) / 2 ) + "px";
+		beep8.Core.realCanvas.style.width = '100%';
+		beep8.Core.realCanvas.style.height = '100%';
+		beep8.Core.realCanvas.width = beep8.CONFIG.SCREEN_REAL_WIDTH;
+		beep8.Core.realCanvas.height = beep8.CONFIG.SCREEN_REAL_HEIGHT;
 
+		console.log( beep8.CONFIG.SCREEN_REAL_HEIGHT, beep8.CONFIG.SCREEN_EL_HEIGHT );
+
+		beep8.Core.container.style.aspectRatio = `${beep8.CONFIG.SCREEN_ROWS} / ${beep8.CONFIG.SCREEN_COLS}`;
+
+	}
+
+
+	/**
+	 * Adds scanlines to the screen.
+	 * This is a simple effect that makes the screen look like an old CRT monitor.
+	 *
+	 * @returns {void}
+	 */
+	beep8.Core.addScanlines = function() {
+
+		// If the scan lines element already exists, don't add it again.
+		if ( scanLinesEl ) {
+			return;
 		}
 
+		// If the scan lines opacity is set to 0, don't show scan lines.
 		const scanLinesOp = beep8.CONFIG.SCAN_LINES_OPACITY || 0;
 
 		if ( scanLinesOp > 0 ) {
 
-			if ( autoPos && autoSize ) {
-
-				if ( !scanLinesEl ) {
-					scanLinesEl = document.createElement( "div" );
-					document.body.appendChild( scanLinesEl );
-				}
-
-				scanLinesEl.style.background =
-					"linear-gradient(rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 1) 50%), " +
-					"linear-gradient(90deg, rgba(255, 0, 0, .6), rgba(0, 255, 0, .2), rgba(0, 0, 255, .6))";
-
-				scanLinesEl.style.backgroundSize = `100% 4px, 3px 100%`;
-				scanLinesEl.style.opacity = scanLinesOp;
-				scanLinesEl.style.position = "absolute";
-				scanLinesEl.style.left = beep8.Core.realCanvas.style.left;
-				scanLinesEl.style.top = beep8.Core.realCanvas.style.top;
-				scanLinesEl.style.width = beep8.Core.realCanvas.style.width;
-				scanLinesEl.style.height = beep8.Core.realCanvas.style.height;
-				scanLinesEl.style.zIndex = 1;
-
-			} else {
-
-				console.error( "beep8: 2D scanlines effect only works if beep8.CONFIG.CANVAS_SETTINGS.AUTO_POS and AUTO_SIZE are both on." );
-
+			if ( !scanLinesEl ) {
+				scanLinesEl = document.createElement( "div" );
+				beep8.Core.container.appendChild( scanLinesEl );
 			}
+
+			scanLinesEl.style.background =
+				"linear-gradient(rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 1) 50%), " +
+				"linear-gradient(90deg, rgba(255, 0, 0, .6), rgba(0, 255, 0, .2), rgba(0, 0, 255, .6))";
+
+			scanLinesEl.style.backgroundSize = `100% 4px, 3px 100%`;
+			scanLinesEl.style.opacity = scanLinesOp;
+			scanLinesEl.style.position = "absolute";
+			scanLinesEl.style.left = 0;
+			scanLinesEl.style.top = 0;
+			scanLinesEl.style.width = '100%';
+			scanLinesEl.style.height = '100%';
+			scanLinesEl.style.zIndex = 1;
 
 		}
 
 	}
+
 
 
 	//
