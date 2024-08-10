@@ -1,0 +1,16 @@
+body {
+	background: black;
+	color: white;
+	display: grid;
+	place-items: center;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	height: 100vh;
+}
+
+#beep8 {
+	width: min(100%, 80vh);
+	margin: auto;
+	max-height: 100vh;
+}

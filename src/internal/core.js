@@ -91,8 +91,9 @@
 		// Work out where to put the canvas.
 		beep8.Core.container = document.createElement( 'div' );
 		beep8.Core.container.setAttribute( "style", "" );
-		beep8.Core.container.id = "beep8-container";
-		beep8.Core.container.style.display = "inline-block";
+		beep8.Core.container.id = "beep8";
+		beep8.Core.container.style.display = "block";
+		beep8.Core.container.style.lineHeight = "0";
 		beep8.Core.container.style.position = "relative";
 
 		// Add the canvas to the container.
