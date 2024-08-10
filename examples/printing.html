@@ -14,11 +14,13 @@
       // Load the custom fonts.
       beep8.cls();
       beep8.print("Loading fonts...");
+
       const boldFont = await beep8.Async.loadFont("../assets/bold-font.png");
       const bigFont = await beep8.Async.loadFont("../assets/big-font2.png");
       const fantasyFont = await beep8.Async.loadFont("../assets/fantasy-font.png");
       const image = await beep8.Async.loadImage("../assets/writer.png");
-      beep8.color(15, 0);
+
+	  beep8.color(15, 0);
       beep8.cls();
       beep8.printBox(28, 28);
       beep8.locate(1, 1);

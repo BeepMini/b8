@@ -66,13 +66,16 @@
 
 		}
 
+
 		/**
 		 * Sets the current font.
+		 *
 		 * @param {string} fontName - The name of the font to set.
 		 * @returns {void}
 		 * @throws {Error} If the font is not found or its dimensions are not compatible.
 		 */
 		setFont( fontName ) {
+
 			beep8.Utilities.checkString( "fontName", fontName );
 			const font = this.fonts_[ fontName ];
 
@@ -96,14 +99,18 @@
 			}
 
 			this.curFont_ = font;
+
 		}
+
 
 		/**
 		 * Prints text at the current cursor position.
+		 *
 		 * @param {string} text - The text to print.
 		 * @returns {void}
 		 */
 		print( text ) {
+
 			beep8.Utilities.checkString( "text", text );
 
 			let col = beep8.Core.drawState.cursorCol;
@@ -135,16 +142,21 @@
 			beep8.Core.drawState.cursorRow = row;
 			beep8.Core.drawState.fgColor = this.origFgColor_;
 			beep8.Core.drawState.bgColor = this.origBgColor_;
+
 			beep8.Core.markDirty();
+
 		}
+
 
 		/**
 		 * Prints text centered within a given width.
+		 *
 		 * @param {string} text - The text to print.
 		 * @param {number} width - The width to center the text within.
 		 * @returns {void}
 		 */
 		printCentered( text, width ) {
+
 			beep8.Utilities.checkString( "text", text );
 			beep8.Utilities.checkNumber( "width", width );
 			text = text.split( "\n" )[ 0 ];
@@ -156,16 +168,23 @@
 
 			beep8.Core.drawState.cursorCol = col;
 			this.print( text );
+
 		}
+
 
 		/**
 		 * Prints a character a specified number of times.
+		 *
 		 * @param {number} ch - The character to print.
 		 * @param {number} n - The number of times to print the character.
 		 * @returns {void}
 		 */
 		printChar( ch, n ) {
-			if ( n === undefined || isNaN( n ) ) n = 1;
+
+			if ( n === undefined || isNaN( n ) ) {
+				n = 1;
+			}
+
 			beep8.Utilities.checkNumber( "ch", ch );
 			beep8.Utilities.checkNumber( "n", n );
 
@@ -181,24 +200,32 @@
 			}
 
 			beep8.Core.markDirty();
+
 		}
+
 
 		/**
 		 * Prints a character as a "sprite" at a raw x, y position.
+		 *
 		 * @param {number} ch - The character to print.
 		 * @param {number} x - The x-coordinate.
 		 * @param {number} y - The y-coordinate.
 		 * @returns {void}
 		 */
 		spr( ch, x, y ) {
+
 			beep8.Utilities.checkNumber( "ch", ch );
 			beep8.Utilities.checkNumber( "x", x );
 			beep8.Utilities.checkNumber( "y", y );
+
 			this.putxy_( ch, x, y, beep8.Core.drawState.fgColor, beep8.Core.drawState.bgColor );
+
 		}
+
 
 		/**
 		 * Draws text at the given pixel coordinates, with no cursor movement.
+		 *
 		 * @param {number} x - The x-coordinate.
 		 * @param {number} y - The y-coordinate.
 		 * @param {string} text - The text to draw.
@@ -206,11 +233,14 @@
 		 * @returns {void}
 		 */
 		drawText( x, y, text, fontName ) {
+
 			beep8.Utilities.checkNumber( "x", x );
 			beep8.Utilities.checkNumber( "y", y );
 			beep8.Utilities.checkString( "text", text );
 
-			if ( fontName ) beep8.Utilities.checkString( "fontName", fontName );
+			if ( fontName ) {
+				beep8.Utilities.checkString( "fontName", fontName );
+			}
 
 			const x0 = x;
 			const font = fontName ? ( this.fonts_[ fontName ] || this.curFont_ ) : this.curFont_;
@@ -237,17 +267,23 @@
 					x += font.getCharWidth();
 				}
 			}
+
 		}
+
 
 		/**
 		 * Measures the dimensions of the text.
+		 *
 		 * @param {string} text - The text to measure.
 		 * @returns {{cols: number, rows: number}} The dimensions of the text.
 		 */
 		measure( text ) {
+
 			beep8.Utilities.checkString( "text", text );
 
-			if ( text === "" ) return { cols: 0, rows: 0 }; // Special case
+			if ( text === "" ) {
+				return { cols: 0, rows: 0 }; // Special case
+			}
 
 			let rows = 1;
 			let thisLineWidth = 0;
@@ -267,16 +303,20 @@
 			}
 
 			return { cols, rows };
+
 		}
+
 
 		/**
 		 * Prints a rectangle of a specified character.
+		 *
 		 * @param {number} width - The width of the rectangle.
 		 * @param {number} height - The height of the rectangle.
 		 * @param {number} ch - The character to fill the rectangle with.
 		 * @returns {void}
 		 */
 		printRect( width, height, ch ) {
+
 			beep8.Utilities.checkNumber( "width", width );
 			beep8.Utilities.checkNumber( "height", height );
 			beep8.Utilities.checkNumber( "ch", ch );
@@ -292,10 +332,13 @@
 
 			beep8.Core.drawState.cursorCol = startCol;
 			beep8.Core.drawState.cursorRow = startRow;
+
 		}
+
 
 		/**
 		 * Prints a box with borders.
+		 *
 		 * @param {number} width - The width of the box.
 		 * @param {number} height - The height of the box.
 		 * @param {boolean} fill - Whether to fill the box.
@@ -303,6 +346,7 @@
 		 * @returns {void}
 		 */
 		printBox( width, height, fill, borderCh ) {
+
 			const borderNW = borderCh;
 			const borderNE = borderCh + 1;
 			const borderSW = borderCh + 2;
@@ -347,10 +391,13 @@
 
 			beep8.Core.drawState.cursorCol = startCol;
 			beep8.Core.drawState.cursorRow = startRow;
+
 		}
+
 
 		/**
 		 * Puts a character at the specified row and column.
+		 *
 		 * @param {number} ch - The character to put.
 		 * @param {number} col - The column.
 		 * @param {number} row - The row.
@@ -359,16 +406,20 @@
 		 * @returns {void}
 		 */
 		put_( ch, col, row, fgColor, bgColor ) {
+
 			const chrW = beep8.CONFIG.CHR_WIDTH;
 			const chrH = beep8.CONFIG.CHR_HEIGHT;
 			const x = Math.round( col * chrW );
 			const y = Math.round( row * chrH );
 
 			this.putxy_( ch, x, y, fgColor, bgColor );
+
 		}
+
 
 		/**
 		 * Puts a character at the specified x and y coordinates.
+		 *
 		 * @param {number} ch - The character to put.
 		 * @param {number} x - The x-coordinate.
 		 * @param {number} y - The y-coordinate.
@@ -378,6 +429,7 @@
 		 * @returns {void}
 		 */
 		putxy_( ch, x, y, fgColor, bgColor, font = null ) {
+
 			font = font || this.curFont_;
 
 			const chrW = font.getCharWidth();
@@ -404,19 +456,24 @@
 				x, y,
 				chrW, chrH
 			);
+
 			beep8.Core.markDirty();
+
 		}
+
 
 		/**
 		 * Tries to run an escape sequence that starts at text[pos].
 		 * Returns the position after the escape sequence ends.
 		 * If pretend is true, then this will only parse but not run it.
+		 *
 		 * @param {string} text - The text containing the escape sequence.
 		 * @param {number} startPos - The start position of the escape sequence.
 		 * @param {boolean} [pretend=false] - Whether to only parse but not run the sequence.
 		 * @returns {number} The position after the escape sequence ends.
 		 */
 		processEscapeSeq_( text, startPos, pretend = false ) {
+
 			// Shorthand.
 			const startSeq = beep8.CONFIG.PRINT_ESCAPE_START;
 			const endSeq = beep8.CONFIG.PRINT_ESCAPE_END;
@@ -439,14 +496,18 @@
 			}
 
 			return endPos + endSeq.length;
+
 		}
+
 
 		/**
 		 * Runs an escape command.
+		 *
 		 * @param {string} command - The command to run.
 		 * @returns {void}
 		 */
 		runEscapeCommand_( command ) {
+
 			// If it contains commas, it's a compound command.
 			if ( command.indexOf( ',' ) > 0 ) {
 				const parts = command.split( ',' );
@@ -483,14 +544,19 @@
 			}
 		}
 
+
 		/**
 		 * Regenerates the colors for all fonts.
+		 *
 		 * @returns {void}
 		 */
 		regenColors() {
+
 			// Tell all the fonts to regenerate their glyph images.
 			Object.values( this.fonts_ ).forEach( f => f.regenColors() );
+
 		}
+
 	}
 
 	beep8.TextRenderer = beep8.TextRenderer;

@@ -31,7 +31,7 @@
 		// Characters file
 		CHR_FILE: "../assets/chr.png",
 		// Character size. The characters file's width must be
-		// 16 * CHR_WIDTH and the height must be 16 * CHR_HEIGHT.
+		// 12 * CHR_WIDTH and the height must be 12 * CHR_HEIGHT.
 		CHR_WIDTH: 12,
 		CHR_HEIGHT: 12,
 		// Screen width and height in characters.
