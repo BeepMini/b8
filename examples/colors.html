@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Example - Hello</title>
+	<meta charset="utf-8">
+	<title>Example - Hello</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
   <link rel="stylesheet" href="example.css">
@@ -51,7 +52,7 @@
 				for (let j = 0; j < MAX_COLORS; j++) {
 					beep8.locate(i + 2, 4 + j);
 					beep8.color(i, j);
-					beep8.print(i === selFg && j === selBg ? "*" : ".");
+					beep8.print(i === selFg && j === selBg ? "*" : "•");
 				}
 			}
 			beep8.locate(19, 3);

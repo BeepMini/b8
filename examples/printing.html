@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Example - Hello</title>
+	<meta charset="utf-8">
+	<title>Example - Hello</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
   <link rel="stylesheet" href="example.css">
@@ -15,15 +16,14 @@
       beep8.cls();
       beep8.print("Loading fonts...");
 
-      const boldFont = await beep8.Async.loadFont("../assets/bold-font.png");
-      const bigFont = await beep8.Async.loadFont("../assets/big-font2.png");
-      const fantasyFont = await beep8.Async.loadFont("../assets/fantasy-font.png");
-      const image = await beep8.Async.loadImage("../assets/writer.png");
+      const boldFont = await beep8.Async.loadFont("../assets/font-bold.png");
+      const bigFont = await beep8.Async.loadFont("../assets/font-big.png");
+      const fantasyFont = await beep8.Async.loadFont("../assets/font-fantasy.png");
 
 	  beep8.color(15, 0);
       beep8.cls();
-      beep8.printBox(28, 28);
-      beep8.locate(1, 1);
+      beep8.printBox(beep8.CONFIG.SCREEN_COLS, beep8.CONFIG.SCREEN_ROWS);
+      beep8.locate(2, 2);
       beep8.color(0, 15);
       beep8.print("PRINTING/FONTS DEMO\n\n");
       beep8.color(15, 0);
@@ -49,11 +49,11 @@
         "jumps over the lazy dog."
 	);
 
-      beep8.drawImage(170, 130, image);
-      beep8.locate(1, 16);
-      beep8.color(1, 15);
-      beep8.printBox(20, 11);
       beep8.locate(2, 19);
+      beep8.color(10, 6);
+      beep8.printBox(beep8.CONFIG.SCREEN_COLS - 4, 11);
+
+      beep8.locate(4, 21);
       await beep8.Async.typewriter(
         "What sayest thou?\n" +
         "Why doth the swift\n" +
@@ -61,6 +61,7 @@
         "o'er the slothful\n" +
         "dog?"
 	  );
+
     }
 
     window.addEventListener("load", () => beep8.init(main));
