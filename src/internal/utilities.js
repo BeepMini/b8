@@ -531,4 +531,36 @@
 	const intersectRects_xint = {};
 	const intersectRects_yint = {};
 
+
+	/**
+	 * Converts a string to a pretty URL-friendly format.
+	 *
+	 * @param {string} str - The string to convert.
+	 * @returns {string} The pretty string.
+	 */
+	beep8.Utilities.makeUrlPretty = function( uglyStr ) {
+
+		beep8.Utilities.checkString( "uglyStr", uglyStr );
+
+		let str = uglyStr;
+
+		// Convert to lowercase
+		str = str.toLowerCase();
+
+		// Replace spaces and slashes with hyphens
+		str = str.replace( /[\s/]+/g, '-' );
+
+		// Remove all non-url-safe characters except hyphens
+		str = str.replace( /[^a-z0-9\-]+/g, '' );
+
+		// Remove multiple consecutive hyphens
+		str = str.replace( /-+/g, '-' );
+
+		// Trim hyphens from start and end
+		str = str.replace( /^-+|-+$/g, '' );
+
+		return str;
+
+	}
+
 } )( beep8 || ( beep8 = {} ) );

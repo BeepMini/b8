@@ -219,7 +219,7 @@
 
 		beep8.Utilities.checkString( "fontImageFile", fontImageFile );
 
-		const fontName = "FONT@" + fontImageFile;
+		const fontName = "FONT@" + beep8.Utilities.makeUrlPretty( fontImageFile );
 		await beep8.Core.textRenderer.loadFontAsync( fontName, fontImageFile );
 
 		return fontName;
