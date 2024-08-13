@@ -101,6 +101,7 @@
 			this.chrImages_ = [];
 
 			for ( let c = 0; c < beep8.CONFIG.COLORS.length; c++ ) {
+
 				beep8.Utilities.log( `Initializing font ${this.fontName_}, color ${c} = ${beep8.CONFIG.COLORS[ c ]}` );
 
 				// Draw the font image to the temp canvas (white over transparent background).
