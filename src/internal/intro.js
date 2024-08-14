@@ -15,7 +15,7 @@
 		const prefix = "8> ";
 
 		// Loop through all colours.
-		beep8.color( 7, 1 );
+		beep8.color( 0, 10 );
 		beep8.cls();
 		beep8.locate( 1, 1 );
 		beep8.print( prefix + "beep8 Loading...\n" );
@@ -40,7 +40,7 @@
 		let name = beep8.CONFIG.NAME;
 		let startCol = 2;
 
-		beep8.color( 7, 1 );
+		beep8.color( 0, 10 );
 		beep8.cls();
 
 		// Border.
@@ -51,7 +51,7 @@
 		startCol = Math.floor( ( beep8.CONFIG.SCREEN_COLS - name.length ) / 2 );
 		beep8.locate( startCol, Math.floor( beep8.CONFIG.SCREEN_ROWS * 0.3 ) );
 		beep8.print( name + "\n" );
-		beep8.print( "=".repeat( name.length ) + "\n" );
+		beep8.print( "_".repeat( name.length ) + "\n" );
 
 		// Click to start.
 		let message = "Click to start";
