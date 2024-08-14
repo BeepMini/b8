@@ -14,25 +14,17 @@
 		const colourCount = beep8.CONFIG.COLORS.length;
 		const prefix = "8> ";
 
-		for ( let i = 0; i < colourCount; i++ ) {
-
-			beep8.color( i, i );
-			beep8.cls();
-			await beep8.Async.wait( 0.03 );
-
-		}
-
 		// Loop through all colours.
 		beep8.color( 7, 1 );
 		beep8.cls();
 		beep8.locate( 1, 1 );
 		beep8.print( prefix + "beep8 Loading...\n" );
 
-		await beep8.Async.wait( 1 );
+		await beep8.Async.wait( 0.1 );
 
 		beep8.print( prefix + "Let's 'a go!" );
 
-		await beep8.Async.wait( 0.5 );
+		await beep8.Async.wait( 0.3 );
 
 	}
 
