@@ -1,6 +1,14 @@
 ( function( beep8 ) {
 
 	/**
+	 * An array of character codes for each character in the chars string.
+	 * This is used to look up the index of a character in the chars string.
+	 *
+	 * @type {number[]}
+	 */
+	const charMap = [];
+
+	/**
 	 * beep8.TextRenderer class handles the rendering of text using various fonts.
 	 */
 	beep8.TextRenderer = class {
@@ -16,6 +24,28 @@
 			// beep8.CONFIG.CHR_HEIGHT, respectively, to ensure the row/column system continues to work.
 			this.curFont_ = null;
 
+			// Current tiles. This is a reference to a beep8.TextRendererFont object.
+			// This is used for the tiles font.
+			this.curTiles_ = null;
+
+		}
+
+
+		/**
+		 * Prepares the charMap array.
+		 * This is a list of character codes for each character in the chars string.
+		 * This is used to look up the index of a character in the chars string.
+		 *
+		 * @returns {void}
+		 */
+		prepareCharMap() {
+
+			let charString = [ ...beep8.CONFIG.CHRS ];
+
+			for ( let i = 0; i < charString.length; i++ ) {
+				charMap.push( charString[ i ].charCodeAt( 0 ) );
+			}
+
 		}
 
 
@@ -27,22 +57,15 @@
 		async initAsync() {
 
 			beep8.Utilities.log( "beep8.TextRenderer init." );
-			const defaultFont = new beep8.TextRendererFont( "default", beep8.CONFIG.CHR_FILE );
-			await defaultFont.initAsync();
 
-			const actualCharWidth = defaultFont.getCharWidth();
-			const actualCharHeight = defaultFont.getCharHeight();
+			// Prepare the text font.
+			this.curFont_ = await this.loadFontAsync( "default", beep8.CONFIG.FONT_DEFAULT );
 
-			beep8.Utilities.assert(
-				actualCharWidth === defaultFont.getCharWidth() &&
-				actualCharHeight === defaultFont.getCharHeight(),
-				`The character image ${beep8.CONFIG.CHR_FILE} should be a 16x16 grid of characters with ` +
-				`dimensions 16 * beep8.CONFIG.CHR_WIDTH, 16 * beep8.CONFIG.CHR_HEIGHT = ` +
-				`${16 * beep8.CONFIG.CHR_WIDTH} x ${16 * beep8.CONFIG.CHR_HEIGHT}`
-			);
+			// Prepare the tiles font.
+			this.curTiles_ = await this.loadFontAsync( "tiles", beep8.CONFIG.FONT_TILES );
 
-			this.fonts_[ "default" ] = defaultFont;
-			this.curFont_ = defaultFont;
+			// Prepare the charMap array.
+			this.prepareCharMap();
 
 		}
 
@@ -64,6 +87,8 @@
 
 			this.fonts_[ fontName ] = font;
 
+			return font;
+
 		}
 
 
@@ -75,6 +100,40 @@
 		 * @throws {Error} If the font is not found or its dimensions are not compatible.
 		 */
 		setFont( fontName ) {
+
+			const font = this.getFontByName( fontName );
+
+			if ( font ) {
+				this.curFont_ = font;
+			}
+
+		}
+
+
+		/**
+		 * Sets the current tiles font.
+		 *
+		 * @param {string} fontName - The name of the font to set.
+		 * @returns {void}
+		 */
+		setTileFont( fontName ) {
+
+			const font = this.getFontByName( fontName );
+
+			if ( font ) {
+				this.curTiles_ = font;
+			}
+
+		}
+
+
+		/**
+		 * Gets a font by name.
+		 *
+		 * @param {string} fontName - The name of the font to get.
+		 * @returns {beep8.TextRendererFont} The font.
+		 */
+		getFontByName( fontName ) {
 
 			beep8.Utilities.checkString( "fontName", fontName );
 			const font = this.fonts_[ fontName ];
@@ -88,17 +147,20 @@
 			const ch = font.getCharHeight();
 
 			if ( cw % beep8.CONFIG.CHR_WIDTH !== 0 || ch % beep8.CONFIG.CHR_HEIGHT !== 0 ) {
+
 				beep8.Utilities.fatal(
-					`setFont(): font ${fontName} has character size ${cw}x${ch}, ` +
+					`getFontByName(): font ${fontName} has character size ${cw}x${ch}, ` +
 					`which is not an integer multiple of beep8.CONFIG.CHR_WIDTH x beep8.CONFIG.CHR_HEIGHT = ` +
 					`${beep8.CONFIG.CHR_WIDTH}x${beep8.CONFIG.CHR_HEIGHT}, so it can't be set as the ` +
 					`current font due to the row,column system. However, you can still use it ` +
 					`directly with drawText() by passing it as a parameter to that function.`
 				);
+
 				return;
+
 			}
 
-			this.curFont_ = font;
+			return font;
 
 		}
 
@@ -109,9 +171,11 @@
 		 * @param {string} text - The text to print.
 		 * @returns {void}
 		 */
-		print( text ) {
+		print( text, font = null ) {
 
 			beep8.Utilities.checkString( "text", text );
+
+			font = font || this.curFont_;
 
 			let col = beep8.Core.drawState.cursorCol;
 			let row = beep8.Core.drawState.cursorRow;
@@ -133,8 +197,21 @@
 					col = initialCol;
 					row += rowInc;
 				} else {
-					this.put_( ch, col, row, beep8.Core.drawState.fgColor, beep8.Core.drawState.bgColor );
-					col += colInc;
+					// Get index for the character from charMap.
+					const chIndex = charMap.indexOf( ch );
+
+					if ( chIndex >= 0 ) {
+
+						this.put_(
+							chIndex,
+							col, row,
+							beep8.Core.drawState.fgColor, beep8.Core.drawState.bgColor,
+							font
+						);
+						col += colInc;
+
+					}
+
 				}
 			}
 
@@ -161,7 +238,9 @@
 			beep8.Utilities.checkNumber( "width", width );
 			text = text.split( "\n" )[ 0 ];
 
-			if ( !text ) return;
+			if ( !text ) {
+				return;
+			}
 
 			const textWidth = this.measure( text ).cols;
 			const col = Math.floor( beep8.Core.drawState.cursorCol + ( width - textWidth ) / 2 );
@@ -179,7 +258,7 @@
 		 * @param {number} n - The number of times to print the character.
 		 * @returns {void}
 		 */
-		printChar( ch, n ) {
+		printChar( ch, n, font = null ) {
 
 			if ( n === undefined || isNaN( n ) ) {
 				n = 1;
@@ -189,14 +268,18 @@
 			beep8.Utilities.checkNumber( "n", n );
 
 			while ( n-- > 0 ) {
+
 				this.put_(
 					ch,
 					beep8.Core.drawState.cursorCol,
 					beep8.Core.drawState.cursorRow,
 					beep8.Core.drawState.fgColor,
-					beep8.Core.drawState.bgColor
+					beep8.Core.drawState.bgColor,
+					font
 				);
+
 				beep8.Core.drawState.cursorCol++;
+
 			}
 
 			beep8.Core.markDirty();
@@ -254,9 +337,12 @@
 				const ch = text.charCodeAt( i );
 
 				if ( ch === 10 ) {
+
 					x = x0;
 					y += font.getCharHeight();
+
 				} else {
+
 					this.putxy_(
 						ch,
 						x, y,
@@ -264,8 +350,11 @@
 						beep8.Core.drawState.bgColor,
 						font
 					);
+
 					x += font.getCharWidth();
+
 				}
+
 			}
 
 		}
@@ -321,13 +410,15 @@
 			beep8.Utilities.checkNumber( "height", height );
 			beep8.Utilities.checkNumber( "ch", ch );
 
+			const charIndex = charMap.indexOf( ch );
+
 			const startCol = beep8.Core.drawState.cursorCol;
 			const startRow = beep8.Core.drawState.cursorRow;
 
 			for ( let i = 0; i < height; i++ ) {
 				beep8.Core.drawState.cursorCol = startCol;
 				beep8.Core.drawState.cursorRow = startRow + i;
-				this.printChar( ch, width );
+				this.printChar( charIndex, width );
 			}
 
 			beep8.Core.drawState.cursorCol = startCol;
@@ -363,8 +454,10 @@
 			const startRow = beep8.Core.drawState.cursorRow;
 
 			for ( let i = 0; i < height; i++ ) {
+
 				beep8.Core.drawState.cursorCol = startCol;
 				beep8.Core.drawState.cursorRow = startRow + i;
+
 				if ( i === 0 ) {
 					// Top border
 					this.printChar( borderNW );
@@ -405,14 +498,14 @@
 		 * @param {number} bgColor - The background color.
 		 * @returns {void}
 		 */
-		put_( ch, col, row, fgColor, bgColor ) {
+		put_( ch, col, row, fgColor, bgColor, font = null ) {
 
 			const chrW = beep8.CONFIG.CHR_WIDTH;
 			const chrH = beep8.CONFIG.CHR_HEIGHT;
 			const x = Math.round( col * chrW );
 			const y = Math.round( row * chrH );
 
-			this.putxy_( ch, x, y, fgColor, bgColor );
+			this.putxy_( ch, x, y, fgColor, bgColor, font );
 
 		}
 
@@ -430,7 +523,7 @@
 		 */
 		putxy_( ch, x, y, fgColor, bgColor, font = null ) {
 
-			font = font || this.curFont_;
+			font = font || this.curTiles_;
 
 			const chrW = font.getCharWidth();
 			const chrH = font.getCharHeight();
@@ -479,7 +572,9 @@
 			const endSeq = beep8.CONFIG.PRINT_ESCAPE_END;
 
 			// If no escape sequences are configured in beep8.CONFIG, stop.
-			if ( !startSeq || !endSeq ) return startPos;
+			if ( !startSeq || !endSeq ) {
+				return startPos;
+			}
 
 			// Check that the start sequence is there.
 			if ( text.substring( startPos, startPos + startSeq.length ) != startSeq ) {
@@ -517,7 +612,9 @@
 
 			command = command.trim();
 
-			if ( command === "" ) return;
+			if ( command === "" ) {
+				return;
+			}
 
 			// The first character is the command's verb. The rest is the argument.
 			const verb = command[ 0 ].toLowerCase();

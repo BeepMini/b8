@@ -28,8 +28,14 @@
 			MENU_DOWN: 'blip2',
 			MENU_SELECT: 'blip3',
 		},
-		// Characters file
-		CHR_FILE: "../assets/chr.png",
+		// The font files.
+		// The font files must be PNG files, with the characters in a grid.
+		FONT_DEFAULT: "../assets/font-default.png",
+		FONT_TILES: "../assets/font-tiles.png",
+		// The characters in the font file.
+		// These are for the default font(s). If you use a different list you
+		// will need to upate the font file to match.
+		CHRS: `ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789*+=-<>_#&@%^~$£€¥¢!?:;'"/\\()[]{}.,©®™•…| `,
 		// Character size. The characters file's width must be
 		// 12 * CHR_WIDTH and the height must be 12 * CHR_HEIGHT.
 		CHR_WIDTH: 12,

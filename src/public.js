@@ -560,6 +560,23 @@
 
 
 	/**
+	 * Sets the current tile font for text-based operations.
+	 *
+	 * @param {string} [fontId="tiles"] - The font ID to set. Pass null or
+	 * omit to reset to default font.
+	 * @returns {void}
+	 */
+	beep8.setTileFont = function( fontId ) {
+
+		beep8.Core.preflight( "beep8.setTileFont" );
+		fontId = fontId || "tiles";
+		beep8.Utilities.checkString( "fontId", fontId );
+		beep8.Core.textRenderer.setTileFont( fontId );
+
+	}
+
+
+	/**
 	 * Converts a character code to its integer representation if needed.
 	 *
 	 * @param {number|string} charCode - The character code to convert.
