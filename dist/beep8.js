@@ -61,15 +61,7 @@ const beep8 = {};
 			// This is an array of strings, each of which is a class name (without the "."),
 			// for example: [ "foo", "bar", "qux" ]
 			CANVAS_CLASSES: [],
-			// If this is true, then we will automatically position the canvas using absolute positioning
-			// to ensure it's centered on the viewport and it's the right size.
-			// If this is false, then you are responsible for positioning the canvas to your liking.
-			AUTO_POSITION: true,
-			// If this is true, we will resize the canvas automatically to match the screen. If false,
-			// you're responsible for sizing the canvas to your liking.
-			// You probably want to specify a fixed scale in SCREEN_SCALE rather than "auto", so you
-			// have control over how large the canvas will be.
-			AUTO_SIZE: true,
+			// If null then the canvas will be appended to the body.
 			// If this is not null, then this is the element under which to create the rendering canvas.
 			// This can be the ID of an HTML element, or an HTMLElement reference.
 			CONTAINER: null,
@@ -82,24 +74,21 @@ const beep8 = {};
 			MENU_DOWN: 'blip2',
 			MENU_SELECT: 'blip3',
 		},
-		// Background color to fill the space not used by the screen.
-		// For best results this should be the same as the page's background.
-		BG_COLOR: "#000",
-		// Characters file
-		CHR_FILE: "../assets/chr.png",
+		// The font files.
+		// The font files must be PNG files, with the characters in a grid.
+		FONT_DEFAULT: "../assets/font-default.png",
+		FONT_TILES: "../assets/font-tiles.png",
+		// The characters in the font file.
+		// These are for the default font(s). If you use a different list you
+		// will need to upate the font file to match.
+		CHRS: `ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789*+=-<>_#&@%^~$£€¥¢!?:;'"/\\()[]{}.,©®™•…| `,
 		// Character size. The characters file's width must be
-		// 16 * CHR_WIDTH and the height must be 16 * CHR_HEIGHT.
+		// 12 * CHR_WIDTH and the height must be 12 * CHR_HEIGHT.
 		CHR_WIDTH: 12,
 		CHR_HEIGHT: 12,
 		// Screen width and height in characters.
-		SCREEN_ROWS: 28,
-		SCREEN_COLS: 28,
-		// Pixel scale (magnification). Can be "auto" or an int >= 1.
-		// If this is "auto", we'll automatically compute this to be the maximum possible size
-		// for the current screen size.
-		SCREEN_SCALE: "auto",
-		// Maximum fraction of the screen to occupy with the canvas.
-		MAX_SCREEN_FRACTION: 0.95,
+		SCREEN_ROWS: 32,
+		SCREEN_COLS: 32,
 		// If set, this is the opacity of the "scan lines" effect.
 		// If 0 or not set, don't show scan lines.
 		SCAN_LINES_OPACITY: 0.1,
@@ -111,8 +100,22 @@ const beep8 = {};
 		// = more memory.
 		// You can redefine the colors at runtime with beep8.redefineColors([]).
 		COLORS: [
-			"#000", "#00A", "#A00", "#A0A", "#0A0", "#0AA", "#AA0", "#DDD",
-			"#666", "#00F", "#F00", "#F0F", "#0F0", "#0FF", "#FF0", "#FFF"
+			"#0F111A",
+			"#323D52",
+			"#9DB1BF",
+			"#8DF1F7",
+			"#59B0F6",
+			"#384C96",
+			"#591D3B",
+			"#694544",
+			"#B14759",
+			"#EF8360",
+			"#FFCB70",
+			"#99D16F",
+			"#5CB87B",
+			"#2F8A73",
+			"#F099B5",
+			"#F4F4F4",
 		],
 		// If this is not null, then we will display a virtual joystick if the user
 		// is on a mobile device.
@@ -702,6 +705,23 @@ const beep8 = {};
 
 
 	/**
+	 * Sets the current tile font for text-based operations.
+	 *
+	 * @param {string} [fontId="tiles"] - The font ID to set. Pass null or
+	 * omit to reset to default font.
+	 * @returns {void}
+	 */
+	beep8.setTileFont = function( fontId ) {
+
+		beep8.Core.preflight( "beep8.setTileFont" );
+		fontId = fontId || "tiles";
+		beep8.Utilities.checkString( "fontId", fontId );
+		beep8.Core.textRenderer.setTileFont( fontId );
+
+	}
+
+
+	/**
 	 * Converts a character code to its integer representation if needed.
 	 *
 	 * @param {number|string} charCode - The character code to convert.
@@ -994,7 +1014,7 @@ const beep8 = {};
 
 		beep8.Utilities.checkString( "fontImageFile", fontImageFile );
 
-		const fontName = "FONT@" + fontImageFile;
+		const fontName = "FONT@" + beep8.Utilities.makeUrlPretty( fontImageFile );
 		await beep8.Core.textRenderer.loadFontAsync( fontName, fontImageFile );
 
 		return fontName;
@@ -1014,6 +1034,7 @@ const beep8 = {};
 	beep8.Core.realCtx = null;
 	beep8.Core.canvas = null;
 	beep8.Core.ctx = null;
+	beep8.Core.container = null;
 	beep8.Core.deltaTime = 0;
 
 	beep8.Core.drawState = {
@@ -1085,10 +1106,86 @@ const beep8 = {};
 			}
 		}
 
+		beep8.Core.realCanvas.style.touchAction = "none";
+		beep8.Core.realCanvas.style.userSelect = "none";
+		beep8.Core.realCanvas.style.imageRendering = "pixelated";
+
 		// Prevent default touch events on touch devices.
 		beep8.Core.realCanvas.addEventListener( "touchstart", e => e.preventDefault() );
 
 		// Work out where to put the canvas.
+		beep8.Core.container = document.createElement( 'div' );
+		beep8.Core.container.setAttribute( "style", "" );
+		beep8.Core.container.id = "beep8";
+		beep8.Core.container.style.display = "block";
+		beep8.Core.container.style.lineHeight = "0";
+		beep8.Core.container.style.position = "relative";
+
+		// Add the canvas to the container.
+		beep8.Core.container.appendChild( beep8.Core.realCanvas );
+
+		// Put the canvas in the container.
+		beep8.Core.getBeepContainerEl().appendChild( beep8.Core.container );
+
+		// Set up the virtual canvas (the one we render to). This canvas isn't
+		// part of the document( it's not added to document.body), it only
+		// exists off-screen.
+		beep8.Core.canvas = document.createElement( "canvas" );
+		beep8.Core.canvas.width = beep8.CONFIG.SCREEN_WIDTH;
+		beep8.Core.canvas.height = beep8.CONFIG.SCREEN_HEIGHT;
+		beep8.Core.canvas.style.width = beep8.CONFIG.SCREEN_WIDTH + "px";
+		beep8.Core.canvas.style.height = beep8.CONFIG.SCREEN_HEIGHT + "px";
+		beep8.Core.ctx = beep8.Core.canvas.getContext( "2d" );
+		beep8.Core.ctx.imageSmoothingEnabled = false;
+
+		beep8.Core.addScanlines();
+
+		// Initialize subsystems
+		beep8.Core.textRenderer = new beep8.TextRenderer();
+		beep8.Core.inputSys = new beep8.Input();
+		beep8.Core.cursorRenderer = new beep8.CursorRenderer();
+
+		await beep8.Core.textRenderer.initAsync();
+
+		// Update the positioning and size of the canvas.
+		beep8.Core.updateLayout( false );
+		window.addEventListener(
+			"resize",
+			() => beep8.Core.updateLayout( true )
+		);
+
+		if ( beep8.Core.isMobile() ) {
+			beep8.Joystick.setup();
+		}
+
+		initDone = true;
+
+		await beep8.Intro.loading();
+		await beep8.Intro.splash();
+
+		/**
+		 * Work around an init bug where text would initially not render on
+		 * Firefox. I'm not entirely sure I understand why, but this seems to
+		 * fix it (perhaps waiting 1 frame gives the canvas time to initialize).
+		 */
+		await new Promise( resolve => setTimeout( resolve, 1 ) );
+		await callback();
+
+		beep8.Core.render();
+
+	}
+
+
+	/**
+	 * Gets the container element for the engine.
+	 * This is the element under which the rendering canvas is created.
+	 * If the container is not specified in the configuration, this will be the
+	 * body element.
+	 *
+	 * @returns {HTMLElement} The container element.
+	 */
+	beep8.Core.getBeepContainerEl = function() {
+
 		let container = document.body;
 
 		if ( beep8.CONFIG.CANVAS_SETTINGS && beep8.CONFIG.CANVAS_SETTINGS.CONTAINER ) {
@@ -1117,59 +1214,13 @@ const beep8 = {};
 
 		}
 
-		// Put the canvas in the container.
-		container.appendChild( beep8.Core.realCanvas );
-
-		// Set up the virtual canvas (the one we render to). This canvas isn't
-		// part of the document( it's not added to document.body), it only
-		// exists off-screen.
-		beep8.Core.canvas = document.createElement( "canvas" );
-		beep8.Core.canvas.width = beep8.CONFIG.SCREEN_WIDTH;
-		beep8.Core.canvas.height = beep8.CONFIG.SCREEN_HEIGHT;
-		beep8.Core.canvas.style.width = beep8.CONFIG.SCREEN_WIDTH + "px";
-		beep8.Core.canvas.style.height = beep8.CONFIG.SCREEN_HEIGHT + "px";
-		beep8.Core.ctx = beep8.Core.canvas.getContext( "2d" );
-		beep8.Core.ctx.imageSmoothingEnabled = false;
-
-		// Initialize subsystems
-		beep8.Core.textRenderer = new beep8.TextRenderer();
-		beep8.Core.inputSys = new beep8.Input();
-		beep8.Core.cursorRenderer = new beep8.CursorRenderer();
-
-		await beep8.Core.textRenderer.initAsync();
-
-		// Update the positioning and size of the canvas.
-		beep8.Core.updateLayout( false );
-		window.addEventListener(
-			"resize",
-			() => beep8.Core.updateLayout( true )
-		);
-
-		if ( beep8.Core.isMobile() ) {
-			beep8.Joystick.setup();
-		}
-
-		initDone = true;
-
-		await beep8.Intro.loading();
-		await beep8.Intro.splash();
-
-
-		/**
-		 * Work around an init bug where text would initially not render on
-		 * Firefox. I'm not entirely sure I understand why, but this seems to
-		 * fix it (perhaps waiting 1 frame gives the canvas time to initialize).
-		 */
-		await new Promise( resolve => setTimeout( resolve, 1 ) );
-		await callback();
-
-		beep8.Core.render();
+		return container;
 
 	}
 
 
 	/**
-	 * Checks if the engine (ans specified method) is ready to run.
+	 * Checks if the engine (and specified method) is ready to run.
 	 *
 	 * @param {string} apiMethod - The name of the API method being called.
 	 * @returns {void}
@@ -1673,94 +1724,66 @@ const beep8 = {};
 	 */
 	beep8.Core.updateLayout2d = function() {
 
-		const autoSize = !beep8.CONFIG.CANVAS_SETTINGS || beep8.CONFIG.CANVAS_SETTINGS.AUTO_SIZE;
-		const autoPos = !beep8.CONFIG.CANVAS_SETTINGS || beep8.CONFIG.CANVAS_SETTINGS.AUTO_POSITION;
-
-		let useAutoScale = typeof ( beep8.CONFIG.SCREEN_SCALE ) !== 'number';
-		let scale;
-
-		if ( useAutoScale ) {
-
-			const frac = beep8.CONFIG.MAX_SCREEN_FRACTION || 0.8;
-			const availableSize = autoSize ?
-				{ width: frac * window.innerWidth, height: frac * window.innerHeight } :
-				beep8.Core.realCanvas.getBoundingClientRect();
-			scale = Math.floor( Math.min(
-				availableSize.width / beep8.CONFIG.SCREEN_WIDTH,
-				availableSize.height / beep8.CONFIG.SCREEN_HEIGHT ) );
-			scale = Math.min( Math.max( scale, 1 ), 5 );
-			beep8.Utilities.log( `Auto - scale: available size ${availableSize.width} x ${availableSize.height}, scale ${scale}, dpr ${window.devicePixelRatio}` );
-
-		} else {
-
-			scale = beep8.CONFIG.SCREEN_SCALE;
-
-		}
-
-		beep8.CONFIG.SCREEN_EL_WIDTH = beep8.CONFIG.SCREEN_WIDTH * scale;
-		beep8.CONFIG.SCREEN_EL_HEIGHT = beep8.CONFIG.SCREEN_HEIGHT * scale;
-		beep8.CONFIG.SCREEN_REAL_WIDTH = beep8.CONFIG.SCREEN_WIDTH * scale;
-		beep8.CONFIG.SCREEN_REAL_HEIGHT = beep8.CONFIG.SCREEN_HEIGHT * scale;
-
-		if ( autoSize ) {
-
-			beep8.Core.realCanvas.style.width = beep8.CONFIG.SCREEN_EL_WIDTH + "px";
-			beep8.Core.realCanvas.style.height = beep8.CONFIG.SCREEN_EL_HEIGHT + "px";
-			beep8.Core.realCanvas.width = beep8.CONFIG.SCREEN_REAL_WIDTH;
-			beep8.Core.realCanvas.height = beep8.CONFIG.SCREEN_REAL_HEIGHT;
-
-		} else {
-
-			const actualSize = beep8.Core.realCanvas.getBoundingClientRect();
-			beep8.Core.realCanvas.width = actualSize.width;
-			beep8.Core.realCanvas.height = actualSize.height;
-
-		}
-
 		beep8.Core.realCtx = beep8.Core.realCanvas.getContext( "2d" );
 		beep8.Core.realCtx.imageSmoothingEnabled = false;
 
-		if ( autoPos ) {
+		beep8.CONFIG.SCREEN_EL_WIDTH = beep8.CONFIG.SCREEN_WIDTH;
+		beep8.CONFIG.SCREEN_EL_HEIGHT = beep8.CONFIG.SCREEN_HEIGHT;
+		beep8.CONFIG.SCREEN_REAL_WIDTH = beep8.CONFIG.SCREEN_WIDTH;
+		beep8.CONFIG.SCREEN_REAL_HEIGHT = beep8.CONFIG.SCREEN_HEIGHT;
 
-			beep8.Core.realCanvas.style.position = "absolute";
-			beep8.Core.realCanvas.style.left = Math.round( ( window.innerWidth - beep8.Core.realCanvas.width ) / 2 ) + "px";
-			beep8.Core.realCanvas.style.top = Math.round( ( window.innerHeight - beep8.Core.realCanvas.height ) / 2 ) + "px";
+		beep8.Core.realCanvas.style.width = '100%';
+		beep8.Core.realCanvas.style.height = '100%';
+		beep8.Core.realCanvas.width = beep8.CONFIG.SCREEN_REAL_WIDTH;
+		beep8.Core.realCanvas.height = beep8.CONFIG.SCREEN_REAL_HEIGHT;
 
+		console.log( beep8.CONFIG.SCREEN_REAL_HEIGHT, beep8.CONFIG.SCREEN_EL_HEIGHT );
+
+		beep8.Core.container.style.aspectRatio = `${beep8.CONFIG.SCREEN_ROWS} / ${beep8.CONFIG.SCREEN_COLS}`;
+
+	}
+
+
+	/**
+	 * Adds scanlines to the screen.
+	 * This is a simple effect that makes the screen look like an old CRT monitor.
+	 *
+	 * @returns {void}
+	 */
+	beep8.Core.addScanlines = function() {
+
+		// If the scan lines element already exists, don't add it again.
+		if ( scanLinesEl ) {
+			return;
 		}
 
+		// If the scan lines opacity is set to 0, don't show scan lines.
 		const scanLinesOp = beep8.CONFIG.SCAN_LINES_OPACITY || 0;
 
 		if ( scanLinesOp > 0 ) {
 
-			if ( autoPos && autoSize ) {
-
-				if ( !scanLinesEl ) {
-					scanLinesEl = document.createElement( "div" );
-					document.body.appendChild( scanLinesEl );
-				}
-
-				scanLinesEl.style.background =
-					"linear-gradient(rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 1) 50%), " +
-					"linear-gradient(90deg, rgba(255, 0, 0, .6), rgba(0, 255, 0, .2), rgba(0, 0, 255, .6))";
-
-				scanLinesEl.style.backgroundSize = `100% 4px, 3px 100%`;
-				scanLinesEl.style.opacity = scanLinesOp;
-				scanLinesEl.style.position = "absolute";
-				scanLinesEl.style.left = beep8.Core.realCanvas.style.left;
-				scanLinesEl.style.top = beep8.Core.realCanvas.style.top;
-				scanLinesEl.style.width = beep8.Core.realCanvas.style.width;
-				scanLinesEl.style.height = beep8.Core.realCanvas.style.height;
-				scanLinesEl.style.zIndex = 1;
-
-			} else {
-
-				console.error( "beep8: 2D scanlines effect only works if beep8.CONFIG.CANVAS_SETTINGS.AUTO_POS and AUTO_SIZE are both on." );
-
+			if ( !scanLinesEl ) {
+				scanLinesEl = document.createElement( "div" );
+				beep8.Core.container.appendChild( scanLinesEl );
 			}
+
+			scanLinesEl.style.background =
+				"linear-gradient(rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 1) 50%), " +
+				"linear-gradient(90deg, rgba(255, 0, 0, .6), rgba(0, 255, 0, .2), rgba(0, 0, 255, .6))";
+
+			scanLinesEl.style.backgroundSize = `100% 4px, 3px 100%`;
+			scanLinesEl.style.opacity = scanLinesOp;
+			scanLinesEl.style.position = "absolute";
+			scanLinesEl.style.left = 0;
+			scanLinesEl.style.top = 0;
+			scanLinesEl.style.width = '100%';
+			scanLinesEl.style.height = '100%';
+			scanLinesEl.style.zIndex = 1;
 
 		}
 
 	}
+
 
 
 	//
@@ -2193,25 +2216,17 @@ const beep8 = {};
 		const colourCount = beep8.CONFIG.COLORS.length;
 		const prefix = "8> ";
 
-		for ( let i = 0; i < colourCount; i++ ) {
-
-			beep8.color( i, i );
-			beep8.cls();
-			await beep8.Async.wait( 0.03 );
-
-		}
-
 		// Loop through all colours.
-		beep8.color( 7, 1 );
+		beep8.color( 0, 10 );
 		beep8.cls();
 		beep8.locate( 1, 1 );
 		beep8.print( prefix + "beep8 Loading...\n" );
 
-		await beep8.Async.wait( 1 );
+		await beep8.Async.wait( 0.1 );
 
 		beep8.print( prefix + "Let's 'a go!" );
 
-		await beep8.Async.wait( 0.5 );
+		await beep8.Async.wait( 0.3 );
 
 	}
 
@@ -2227,7 +2242,7 @@ const beep8 = {};
 		let name = beep8.CONFIG.NAME;
 		let startCol = 2;
 
-		beep8.color( 7, 1 );
+		beep8.color( 0, 10 );
 		beep8.cls();
 
 		// Border.
@@ -2238,7 +2253,7 @@ const beep8 = {};
 		startCol = Math.floor( ( beep8.CONFIG.SCREEN_COLS - name.length ) / 2 );
 		beep8.locate( startCol, Math.floor( beep8.CONFIG.SCREEN_ROWS * 0.3 ) );
 		beep8.print( name + "\n" );
-		beep8.print( "=".repeat( name.length ) + "\n" );
+		beep8.print( "_".repeat( name.length ) + "\n" );
 
 		// Click to start.
 		let message = "Click to start";
@@ -2986,6 +3001,14 @@ ${melody.join( '\n' )}`;
 ( function( beep8 ) {
 
 	/**
+	 * An array of character codes for each character in the chars string.
+	 * This is used to look up the index of a character in the chars string.
+	 *
+	 * @type {number[]}
+	 */
+	const charMap = [];
+
+	/**
 	 * beep8.TextRenderer class handles the rendering of text using various fonts.
 	 */
 	beep8.TextRenderer = class {
@@ -3001,6 +3024,28 @@ ${melody.join( '\n' )}`;
 			// beep8.CONFIG.CHR_HEIGHT, respectively, to ensure the row/column system continues to work.
 			this.curFont_ = null;
 
+			// Current tiles. This is a reference to a beep8.TextRendererFont object.
+			// This is used for the tiles font.
+			this.curTiles_ = null;
+
+		}
+
+
+		/**
+		 * Prepares the charMap array.
+		 * This is a list of character codes for each character in the chars string.
+		 * This is used to look up the index of a character in the chars string.
+		 *
+		 * @returns {void}
+		 */
+		prepareCharMap() {
+
+			let charString = [ ...beep8.CONFIG.CHRS ];
+
+			for ( let i = 0; i < charString.length; i++ ) {
+				charMap.push( charString[ i ].charCodeAt( 0 ) );
+			}
+
 		}
 
 
@@ -3012,22 +3057,15 @@ ${melody.join( '\n' )}`;
 		async initAsync() {
 
 			beep8.Utilities.log( "beep8.TextRenderer init." );
-			const defaultFont = new beep8.TextRendererFont( "default", beep8.CONFIG.CHR_FILE );
-			await defaultFont.initAsync();
 
-			const actualCharWidth = defaultFont.getCharWidth();
-			const actualCharHeight = defaultFont.getCharHeight();
+			// Prepare the text font.
+			this.curFont_ = await this.loadFontAsync( "default", beep8.CONFIG.FONT_DEFAULT );
 
-			beep8.Utilities.assert(
-				actualCharWidth === defaultFont.getCharWidth() &&
-				actualCharHeight === defaultFont.getCharHeight(),
-				`The character image ${beep8.CONFIG.CHR_FILE} should be a 16x16 grid of characters with ` +
-				`dimensions 16 * beep8.CONFIG.CHR_WIDTH, 16 * beep8.CONFIG.CHR_HEIGHT = ` +
-				`${16 * beep8.CONFIG.CHR_WIDTH} x ${16 * beep8.CONFIG.CHR_HEIGHT}`
-			);
+			// Prepare the tiles font.
+			this.curTiles_ = await this.loadFontAsync( "tiles", beep8.CONFIG.FONT_TILES );
 
-			this.fonts_[ "default" ] = defaultFont;
-			this.curFont_ = defaultFont;
+			// Prepare the charMap array.
+			this.prepareCharMap();
 
 		}
 
@@ -3049,15 +3087,54 @@ ${melody.join( '\n' )}`;
 
 			this.fonts_[ fontName ] = font;
 
+			return font;
+
 		}
+
 
 		/**
 		 * Sets the current font.
+		 *
 		 * @param {string} fontName - The name of the font to set.
 		 * @returns {void}
 		 * @throws {Error} If the font is not found or its dimensions are not compatible.
 		 */
 		setFont( fontName ) {
+
+			const font = this.getFontByName( fontName );
+
+			if ( font ) {
+				this.curFont_ = font;
+			}
+
+		}
+
+
+		/**
+		 * Sets the current tiles font.
+		 *
+		 * @param {string} fontName - The name of the font to set.
+		 * @returns {void}
+		 */
+		setTileFont( fontName ) {
+
+			const font = this.getFontByName( fontName );
+
+			if ( font ) {
+				this.curTiles_ = font;
+			}
+
+		}
+
+
+		/**
+		 * Gets a font by name.
+		 *
+		 * @param {string} fontName - The name of the font to get.
+		 * @returns {beep8.TextRendererFont} The font.
+		 */
+		getFontByName( fontName ) {
+
 			beep8.Utilities.checkString( "fontName", fontName );
 			const font = this.fonts_[ fontName ];
 
@@ -3070,26 +3147,35 @@ ${melody.join( '\n' )}`;
 			const ch = font.getCharHeight();
 
 			if ( cw % beep8.CONFIG.CHR_WIDTH !== 0 || ch % beep8.CONFIG.CHR_HEIGHT !== 0 ) {
+
 				beep8.Utilities.fatal(
-					`setFont(): font ${fontName} has character size ${cw}x${ch}, ` +
+					`getFontByName(): font ${fontName} has character size ${cw}x${ch}, ` +
 					`which is not an integer multiple of beep8.CONFIG.CHR_WIDTH x beep8.CONFIG.CHR_HEIGHT = ` +
 					`${beep8.CONFIG.CHR_WIDTH}x${beep8.CONFIG.CHR_HEIGHT}, so it can't be set as the ` +
 					`current font due to the row,column system. However, you can still use it ` +
 					`directly with drawText() by passing it as a parameter to that function.`
 				);
+
 				return;
+
 			}
 
-			this.curFont_ = font;
+			return font;
+
 		}
+
 
 		/**
 		 * Prints text at the current cursor position.
+		 *
 		 * @param {string} text - The text to print.
 		 * @returns {void}
 		 */
-		print( text ) {
+		print( text, font = null ) {
+
 			beep8.Utilities.checkString( "text", text );
+
+			font = font || this.curFont_;
 
 			let col = beep8.Core.drawState.cursorCol;
 			let row = beep8.Core.drawState.cursorRow;
@@ -3111,8 +3197,21 @@ ${melody.join( '\n' )}`;
 					col = initialCol;
 					row += rowInc;
 				} else {
-					this.put_( ch, col, row, beep8.Core.drawState.fgColor, beep8.Core.drawState.bgColor );
-					col += colInc;
+					// Get index for the character from charMap.
+					const chIndex = charMap.indexOf( ch );
+
+					if ( chIndex >= 0 ) {
+
+						this.put_(
+							chIndex,
+							col, row,
+							beep8.Core.drawState.fgColor, beep8.Core.drawState.bgColor,
+							font
+						);
+						col += colInc;
+
+					}
+
 				}
 			}
 
@@ -3120,70 +3219,96 @@ ${melody.join( '\n' )}`;
 			beep8.Core.drawState.cursorRow = row;
 			beep8.Core.drawState.fgColor = this.origFgColor_;
 			beep8.Core.drawState.bgColor = this.origBgColor_;
+
 			beep8.Core.markDirty();
+
 		}
+
 
 		/**
 		 * Prints text centered within a given width.
+		 *
 		 * @param {string} text - The text to print.
 		 * @param {number} width - The width to center the text within.
 		 * @returns {void}
 		 */
 		printCentered( text, width ) {
+
 			beep8.Utilities.checkString( "text", text );
 			beep8.Utilities.checkNumber( "width", width );
 			text = text.split( "\n" )[ 0 ];
 
-			if ( !text ) return;
+			if ( !text ) {
+				return;
+			}
 
 			const textWidth = this.measure( text ).cols;
 			const col = Math.floor( beep8.Core.drawState.cursorCol + ( width - textWidth ) / 2 );
 
 			beep8.Core.drawState.cursorCol = col;
 			this.print( text );
+
 		}
+
 
 		/**
 		 * Prints a character a specified number of times.
+		 *
 		 * @param {number} ch - The character to print.
 		 * @param {number} n - The number of times to print the character.
 		 * @returns {void}
 		 */
-		printChar( ch, n ) {
-			if ( n === undefined || isNaN( n ) ) n = 1;
+		printChar( ch, n, font = null ) {
+
+			if ( n === undefined || isNaN( n ) ) {
+				n = 1;
+			}
+
 			beep8.Utilities.checkNumber( "ch", ch );
 			beep8.Utilities.checkNumber( "n", n );
 
 			while ( n-- > 0 ) {
+
 				this.put_(
 					ch,
 					beep8.Core.drawState.cursorCol,
 					beep8.Core.drawState.cursorRow,
 					beep8.Core.drawState.fgColor,
-					beep8.Core.drawState.bgColor
+					beep8.Core.drawState.bgColor,
+					font
 				);
+
 				beep8.Core.drawState.cursorCol++;
+
 			}
 
 			beep8.Core.markDirty();
+
 		}
+
 
 		/**
 		 * Prints a character as a "sprite" at a raw x, y position.
+		 *
 		 * @param {number} ch - The character to print.
 		 * @param {number} x - The x-coordinate.
 		 * @param {number} y - The y-coordinate.
 		 * @returns {void}
 		 */
 		spr( ch, x, y ) {
+
 			beep8.Utilities.checkNumber( "ch", ch );
 			beep8.Utilities.checkNumber( "x", x );
 			beep8.Utilities.checkNumber( "y", y );
+
 			this.putxy_( ch, x, y, beep8.Core.drawState.fgColor, beep8.Core.drawState.bgColor );
+
 		}
+
 
 		/**
 		 * Draws text at the given pixel coordinates, with no cursor movement.
+		 *
 		 * @param {number} x - The x-coordinate.
 		 * @param {number} y - The y-coordinate.
 		 * @param {string} text - The text to draw.
@@ -3191,11 +3316,14 @@ ${melody.join( '\n' )}`;
 		 * @returns {void}
 		 */
 		drawText( x, y, text, fontName ) {
+
 			beep8.Utilities.checkNumber( "x", x );
 			beep8.Utilities.checkNumber( "y", y );
 			beep8.Utilities.checkString( "text", text );
 
-			if ( fontName ) beep8.Utilities.checkString( "fontName", fontName );
+			if ( fontName ) {
+				beep8.Utilities.checkString( "fontName", fontName );
+			}
 
 			const x0 = x;
 			const font = fontName ? ( this.fonts_[ fontName ] || this.curFont_ ) : this.curFont_;
@@ -3209,9 +3337,12 @@ ${melody.join( '\n' )}`;
 				const ch = text.charCodeAt( i );
 
 				if ( ch === 10 ) {
+
 					x = x0;
 					y += font.getCharHeight();
+
 				} else {
+
 					this.putxy_(
 						ch,
 						x, y,
@@ -3219,20 +3350,29 @@ ${melody.join( '\n' )}`;
 						beep8.Core.drawState.bgColor,
 						font
 					);
+
 					x += font.getCharWidth();
+
 				}
+
 			}
+
 		}
+
 
 		/**
 		 * Measures the dimensions of the text.
+		 *
 		 * @param {string} text - The text to measure.
 		 * @returns {{cols: number, rows: number}} The dimensions of the text.
 		 */
 		measure( text ) {
+
 			beep8.Utilities.checkString( "text", text );
 
-			if ( text === "" ) return { cols: 0, rows: 0 }; // Special case
+			if ( text === "" ) {
+				return { cols: 0, rows: 0 }; // Special case
+			}
 
 			let rows = 1;
 			let thisLineWidth = 0;
@@ -3252,19 +3392,25 @@ ${melody.join( '\n' )}`;
 			}
 
 			return { cols, rows };
+
 		}
+
 
 		/**
 		 * Prints a rectangle of a specified character.
+		 *
 		 * @param {number} width - The width of the rectangle.
 		 * @param {number} height - The height of the rectangle.
 		 * @param {number} ch - The character to fill the rectangle with.
 		 * @returns {void}
 		 */
 		printRect( width, height, ch ) {
+
 			beep8.Utilities.checkNumber( "width", width );
 			beep8.Utilities.checkNumber( "height", height );
 			beep8.Utilities.checkNumber( "ch", ch );
+
+			const charIndex = charMap.indexOf( ch );
 
 			const startCol = beep8.Core.drawState.cursorCol;
 			const startRow = beep8.Core.drawState.cursorRow;
@@ -3272,15 +3418,18 @@ ${melody.join( '\n' )}`;
 			for ( let i = 0; i < height; i++ ) {
 				beep8.Core.drawState.cursorCol = startCol;
 				beep8.Core.drawState.cursorRow = startRow + i;
-				this.printChar( ch, width );
+				this.printChar( charIndex, width );
 			}
 
 			beep8.Core.drawState.cursorCol = startCol;
 			beep8.Core.drawState.cursorRow = startRow;
+
 		}
+
 
 		/**
 		 * Prints a box with borders.
+		 *
 		 * @param {number} width - The width of the box.
 		 * @param {number} height - The height of the box.
 		 * @param {boolean} fill - Whether to fill the box.
@@ -3288,6 +3437,7 @@ ${melody.join( '\n' )}`;
 		 * @returns {void}
 		 */
 		printBox( width, height, fill, borderCh ) {
+
 			const borderNW = borderCh;
 			const borderNE = borderCh + 1;
 			const borderSW = borderCh + 2;
@@ -3304,8 +3454,10 @@ ${melody.join( '\n' )}`;
 			const startRow = beep8.Core.drawState.cursorRow;
 
 			for ( let i = 0; i < height; i++ ) {
+
 				beep8.Core.drawState.cursorCol = startCol;
 				beep8.Core.drawState.cursorRow = startRow + i;
+
 				if ( i === 0 ) {
 					// Top border
 					this.printChar( borderNW );
@@ -3332,10 +3484,13 @@ ${melody.join( '\n' )}`;
 
 			beep8.Core.drawState.cursorCol = startCol;
 			beep8.Core.drawState.cursorRow = startRow;
+
 		}
+
 
 		/**
 		 * Puts a character at the specified row and column.
+		 *
 		 * @param {number} ch - The character to put.
 		 * @param {number} col - The column.
 		 * @param {number} row - The row.
@@ -3343,17 +3498,21 @@ ${melody.join( '\n' )}`;
 		 * @param {number} bgColor - The background color.
 		 * @returns {void}
 		 */
-		put_( ch, col, row, fgColor, bgColor ) {
+		put_( ch, col, row, fgColor, bgColor, font = null ) {
+
 			const chrW = beep8.CONFIG.CHR_WIDTH;
 			const chrH = beep8.CONFIG.CHR_HEIGHT;
 			const x = Math.round( col * chrW );
 			const y = Math.round( row * chrH );
 
-			this.putxy_( ch, x, y, fgColor, bgColor );
+			this.putxy_( ch, x, y, fgColor, bgColor, font );
+
 		}
+
 
 		/**
 		 * Puts a character at the specified x and y coordinates.
+		 *
 		 * @param {number} ch - The character to put.
 		 * @param {number} x - The x-coordinate.
 		 * @param {number} y - The y-coordinate.
@@ -3363,7 +3522,8 @@ ${melody.join( '\n' )}`;
 		 * @returns {void}
 		 */
 		putxy_( ch, x, y, fgColor, bgColor, font = null ) {
-			font = font || this.curFont_;
+
+			font = font || this.curTiles_;
 
 			const chrW = font.getCharWidth();
 			const chrH = font.getCharHeight();
@@ -3389,25 +3549,32 @@ ${melody.join( '\n' )}`;
 				x, y,
 				chrW, chrH
 			);
+
 			beep8.Core.markDirty();
+
 		}
+
 
 		/**
 		 * Tries to run an escape sequence that starts at text[pos].
 		 * Returns the position after the escape sequence ends.
 		 * If pretend is true, then this will only parse but not run it.
+		 *
 		 * @param {string} text - The text containing the escape sequence.
 		 * @param {number} startPos - The start position of the escape sequence.
 		 * @param {boolean} [pretend=false] - Whether to only parse but not run the sequence.
 		 * @returns {number} The position after the escape sequence ends.
 		 */
 		processEscapeSeq_( text, startPos, pretend = false ) {
+
 			// Shorthand.
 			const startSeq = beep8.CONFIG.PRINT_ESCAPE_START;
 			const endSeq = beep8.CONFIG.PRINT_ESCAPE_END;
 
 			// If no escape sequences are configured in beep8.CONFIG, stop.
-			if ( !startSeq || !endSeq ) return startPos;
+			if ( !startSeq || !endSeq ) {
+				return startPos;
+			}
 
 			// Check that the start sequence is there.
 			if ( text.substring( startPos, startPos + startSeq.length ) != startSeq ) {
@@ -3424,14 +3591,18 @@ ${melody.join( '\n' )}`;
 			}
 
 			return endPos + endSeq.length;
+
 		}
+
 
 		/**
 		 * Runs an escape command.
+		 *
 		 * @param {string} command - The command to run.
 		 * @returns {void}
 		 */
 		runEscapeCommand_( command ) {
+
 			// If it contains commas, it's a compound command.
 			if ( command.indexOf( ',' ) > 0 ) {
 				const parts = command.split( ',' );
@@ -3441,7 +3612,9 @@ ${melody.join( '\n' )}`;
 
 			command = command.trim();
 
-			if ( command === "" ) return;
+			if ( command === "" ) {
+				return;
+			}
 
 			// The first character is the command's verb. The rest is the argument.
 			const verb = command[ 0 ].toLowerCase();
@@ -3468,14 +3641,19 @@ ${melody.join( '\n' )}`;
 			}
 		}
 
+
 		/**
 		 * Regenerates the colors for all fonts.
+		 *
 		 * @returns {void}
 		 */
 		regenColors() {
+
 			// Tell all the fonts to regenerate their glyph images.
 			Object.values( this.fonts_ ).forEach( f => f.regenColors() );
+
 		}
+
 	}
 
 	beep8.TextRenderer = beep8.TextRenderer;
@@ -3585,6 +3763,7 @@ ${melody.join( '\n' )}`;
 			this.chrImages_ = [];
 
 			for ( let c = 0; c < beep8.CONFIG.COLORS.length; c++ ) {
+
 				beep8.Utilities.log( `Initializing font ${this.fontName_}, color ${c} = ${beep8.CONFIG.COLORS[ c ]}` );
 
 				// Draw the font image to the temp canvas (white over transparent background).
@@ -4143,6 +4322,38 @@ ${melody.join( '\n' )}`;
 
 	const intersectRects_xint = {};
 	const intersectRects_yint = {};
+
+
+	/**
+	 * Converts a string to a pretty URL-friendly format.
+	 *
+	 * @param {string} str - The string to convert.
+	 * @returns {string} The pretty string.
+	 */
+	beep8.Utilities.makeUrlPretty = function( uglyStr ) {
+
+		beep8.Utilities.checkString( "uglyStr", uglyStr );
+
+		let str = uglyStr;
+
+		// Convert to lowercase
+		str = str.toLowerCase();
+
+		// Replace spaces and slashes with hyphens
+		str = str.replace( /[\s/]+/g, '-' );
+
+		// Remove all non-url-safe characters except hyphens
+		str = str.replace( /[^a-z0-9\-]+/g, '' );
+
+		// Remove multiple consecutive hyphens
+		str = str.replace( /-+/g, '-' );
+
+		// Trim hyphens from start and end
+		str = str.replace( /^-+|-+$/g, '' );
+
+		return str;
+
+	}
 
 } )( beep8 || ( beep8 = {} ) );
 
