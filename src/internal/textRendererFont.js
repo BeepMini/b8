@@ -8,6 +8,7 @@
 		/**
 		 * Constructs a font. NOTE: after construction, you must call await initAsync() to
 		 * initialize the font.
+		 *
 		 * @param {string} fontName - The name of the font.
 		 * @param {string} fontImageFile - The URL of the image file for the font.
 		 */
@@ -22,6 +23,8 @@
 			this.chrImages_ = [];
 			this.charWidth_ = 0;
 			this.charHeight_ = 0;
+			this.charColCount_ = 0;
+			this.charRowCount_ = 0;
 			this.origFgColor_ = 0;
 			this.origBgColor_ = 0;
 
@@ -30,6 +33,7 @@
 
 		/**
 		 * Returns the character width of the font.
+		 *
 		 * @returns {number} The width of each character in pixels.
 		 */
 		getCharWidth() {
@@ -41,6 +45,7 @@
 
 		/**
 		 * Returns the character height of the font.
+		 *
 		 * @returns {number} The height of each character in pixels.
 		 */
 		getCharHeight() {
@@ -49,9 +54,31 @@
 
 		}
 
+		/**
+		 * Returns the character width of the font.
+		 * @returns {number} The width of each character in pixels.
+		 */
+		getCharColCount() {
+
+			return this.charColCount_;
+
+		}
+
+
+		/**
+		 * Returns the character height of the font.
+		 * @returns {number} The height of each character in pixels.
+		 */
+		getCharRowCount() {
+
+			return this.charRowCount_;
+
+		}
+
 
 		/**
 		 * Returns the image for a given color number.
+		 *
 		 * @param {number} colorNumber - The color number.
 		 * @returns {HTMLImageElement} The image for the specified color.
 		 */
@@ -66,6 +93,7 @@
 		 * Sets up this font from the given character image file. It's assumed to contain the
 		 * glyphs arranged in a 16x16 grid, so we will deduce the character size by dividing the
 		 * width and height by 16.
+		 *
 		 * @returns {Promise<void>}
 		 */
 		async initAsync() {
@@ -81,6 +109,8 @@
 
 			this.charWidth_ = Math.floor( this.origImg_.width / 16 );
 			this.charHeight_ = Math.floor( this.origImg_.height / 16 );
+			this.charColCount_ = this.charWidth_ / beep8.CONFIG.CHR_WIDTH;
+			this.charRowCount_ = this.charHeight_ / beep8.CONFIG.CHR_HEIGHT;
 
 			this.regenColors();
 
@@ -89,6 +119,7 @@
 
 		/**
 		 * Regenerates the color text images.
+		 *
 		 * @returns {void}
 		 */
 		regenColors() {
@@ -119,6 +150,7 @@
 				const thisImg = new Image();
 				thisImg.src = tempCanvas.toDataURL();
 				this.chrImages_.push( thisImg );
+
 			}
 
 		}

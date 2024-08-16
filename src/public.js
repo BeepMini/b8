@@ -211,11 +211,14 @@
 	 * @param {string} text - The text to print.
 	 * @returns {void}
 	 */
-	beep8.print = function( text ) {
+	beep8.print = function( text, wrapWidth = -1 ) {
 
 		beep8.Core.preflight( "beep8.text" );
+
 		beep8.Utilities.checkString( "text", text );
-		beep8.Core.textRenderer.print( text );
+		beep8.Utilities.checkNumber( "wrapWidth", wrapWidth );
+
+		beep8.Core.textRenderer.print( text, null, wrapWidth );
 
 	}
 
@@ -555,6 +558,36 @@
 		fontId = fontId || "default";
 		beep8.Utilities.checkString( "fontId", fontId );
 		beep8.Core.textRenderer.setFont( fontId );
+
+	}
+
+
+	/**
+	 * Returns the current font.
+	 *
+	 * @returns {string} The current font.
+	 */
+	beep8.getFont = function() {
+
+		beep8.Core.preflight( "beep8.getFont" );
+		beep8.Core.textRenderer.getFont();
+
+	}
+
+
+	/**
+	 * Returns the font object for the given font name.
+	 *
+	 * @param {string} fontName - The name of the font.
+	 * @returns {Object} The font object.
+	 */
+	beep8.getFontByName = function( fontName ) {
+
+		beep8.Utilities.checkString( "fontName", fontName );
+
+		beep8.Utilities.checkString( "fontName", fontName );
+
+		return beep8.Core.textRenderer.getFontByName( fontName );
 
 	}
 

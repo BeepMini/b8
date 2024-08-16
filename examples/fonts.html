@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Example - Hello</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <link rel="stylesheet" href="example.css">
+  <script src="../dist/beep8.js"></script>
+
+  <script>
+
+	const fontList = [];
+	let currentFont = 0;
+
+    async function main() {
+
+      // Load the custom fonts.
+      beep8.cls();
+      beep8.print("Loading fonts...");
+
+	  fontList.push( beep8.getFont() );
+      fontList.push( await beep8.Async.loadFont("../assets/font-bold.png") );
+	  fontList.push( await beep8.Async.loadFont("../assets/font-big.png") );
+	  fontList.push( await beep8.Async.loadFont("../assets/font-fantasy.png") );
+	  fontList.push( await beep8.Async.loadFont("../assets/font-retro.png") );
+
+	  draw( );
+
+	  while(true) {
+		await beep8.Async.key();
+		currentFont = (currentFont + 1) % fontList.length;
+		draw( );
+	  }
+
+    }
+
+	function draw( ) {
+
+		beep8.color(5, 3);
+		beep8.cls();
+		beep8.locate(1, 1);
+		console.log( "currentFont: " + fontList[currentFont] );
+		beep8.setFont(fontList[currentFont]);
+		beep8.print( "The quick brown fox jumped over the lazy dog.\n\n", beep8.CONFIG.SCREEN_COLS - 2 );
+		beep8.print( "THE QUICK BROWN FOX JUMPED OVER THE LAZY DOG.\n\n", beep8.CONFIG.SCREEN_COLS - 2 );
+
+	}
+
+    window.addEventListener("load", () => beep8.init(main));
+  </script>
+</head>
+<body>
+</body>
+</html>

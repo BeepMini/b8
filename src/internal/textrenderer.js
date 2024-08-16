@@ -111,6 +111,18 @@
 
 
 		/**
+		 * Get the current font.
+		 *
+		 * @returns {beep8.TextRendererFont} The current font.
+		 */
+		getFont() {
+
+			return this.curFont_;
+
+		}
+
+
+		/**
 		 * Sets the current tiles font.
 		 *
 		 * @param {string} fontName - The name of the font to set.
@@ -171,11 +183,15 @@
 		 * @param {string} text - The text to print.
 		 * @returns {void}
 		 */
-		print( text, font = null ) {
-
-			beep8.Utilities.checkString( "text", text );
+		print( text, font = null, wrapWidth = -1 ) {
 
 			font = font || this.curFont_;
+
+			beep8.Utilities.checkString( "text", text );
+			beep8.Utilities.checkNumber( "wrapWidth", wrapWidth );
+			beep8.Utilities.checkObject( "font", font );
+
+			text = this.wrapText( text, wrapWidth, font );
 
 			let col = beep8.Core.drawState.cursorCol;
 			let row = beep8.Core.drawState.cursorRow;
@@ -551,6 +567,64 @@
 			);
 
 			beep8.Core.markDirty();
+
+		}
+
+
+		/**
+		 * Wraps text to a given width.
+		 *
+		 * @param {string} text - The text to wrap.
+		 * @param {number} wrapWidth - The width to wrap the text to.
+		 * @param {beep8.TextRendererFont} fontName - The font to use.
+		 * @returns {string} The wrapped text.
+		 */
+		wrapText( text, wrapWidth, font ) {
+
+			// If 0 or less then don't wrap.
+			if ( wrapWidth <= 0 ) {
+				return text;
+			}
+
+			// Adjust the size of the wrap width based on the size of the font.
+			wrapWidth = Math.floor( wrapWidth / font.getCharColCount() );
+
+			// Split the text into lines.
+			const lines = text.split( "\n" );
+
+			// New list of lines.
+			const wrappedLines = [];
+
+			for ( const line of lines ) {
+
+				const words = line.split( " " );
+
+				let wrappedLine = "";
+				let lineWidth = 0;
+
+				for ( const word of words ) {
+
+					const wordWidth = this.measure( word ).cols;
+					console.log( word, wordWidth );
+
+					// Is the line with the new word longer than the line width?
+					if ( lineWidth + ( wordWidth ) > wrapWidth ) {
+						wrappedLines.push( wrappedLine.trim() );
+						wrappedLine = "";
+						lineWidth = 0;
+					}
+
+					// Add a space between words.
+					wrappedLine += word + " ";
+					lineWidth += wordWidth + 1;
+
+				}
+
+				wrappedLines.push( wrappedLine.trim() );
+
+			}
+
+			return wrappedLines.join( "\n" );
 
 		}
 
