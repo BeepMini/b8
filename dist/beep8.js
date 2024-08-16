@@ -356,11 +356,14 @@ const beep8 = {};
 	 * @param {string} text - The text to print.
 	 * @returns {void}
 	 */
-	beep8.print = function( text ) {
+	beep8.print = function( text, wrapWidth = -1 ) {
 
 		beep8.Core.preflight( "beep8.text" );
+
 		beep8.Utilities.checkString( "text", text );
-		beep8.Core.textRenderer.print( text );
+		beep8.Utilities.checkNumber( "wrapWidth", wrapWidth );
+
+		beep8.Core.textRenderer.print( text, null, wrapWidth );
 
 	}
 
@@ -700,6 +703,36 @@ const beep8 = {};
 		fontId = fontId || "default";
 		beep8.Utilities.checkString( "fontId", fontId );
 		beep8.Core.textRenderer.setFont( fontId );
+
+	}
+
+
+	/**
+	 * Returns the current font.
+	 *
+	 * @returns {string} The current font.
+	 */
+	beep8.getFont = function() {
+
+		beep8.Core.preflight( "beep8.getFont" );
+		beep8.Core.textRenderer.getFont();
+
+	}
+
+
+	/**
+	 * Returns the font object for the given font name.
+	 *
+	 * @param {string} fontName - The name of the font.
+	 * @returns {Object} The font object.
+	 */
+	beep8.getFontByName = function( fontName ) {
+
+		beep8.Utilities.checkString( "fontName", fontName );
+
+		beep8.Utilities.checkString( "fontName", fontName );
+
+		return beep8.Core.textRenderer.getFontByName( fontName );
 
 	}
 
@@ -3111,6 +3144,18 @@ ${melody.join( '\n' )}`;
 
 
 		/**
+		 * Get the current font.
+		 *
+		 * @returns {beep8.TextRendererFont} The current font.
+		 */
+		getFont() {
+
+			return this.curFont_;
+
+		}
+
+
+		/**
 		 * Sets the current tiles font.
 		 *
 		 * @param {string} fontName - The name of the font to set.
@@ -3171,11 +3216,15 @@ ${melody.join( '\n' )}`;
 		 * @param {string} text - The text to print.
 		 * @returns {void}
 		 */
-		print( text, font = null ) {
-
-			beep8.Utilities.checkString( "text", text );
+		print( text, font = null, wrapWidth = -1 ) {
 
 			font = font || this.curFont_;
+
+			beep8.Utilities.checkString( "text", text );
+			beep8.Utilities.checkNumber( "wrapWidth", wrapWidth );
+			beep8.Utilities.checkObject( "font", font );
+
+			text = this.wrapText( text, wrapWidth, font );
 
 			let col = beep8.Core.drawState.cursorCol;
 			let row = beep8.Core.drawState.cursorRow;
@@ -3556,6 +3605,64 @@ ${melody.join( '\n' )}`;
 
 
 		/**
+		 * Wraps text to a given width.
+		 *
+		 * @param {string} text - The text to wrap.
+		 * @param {number} wrapWidth - The width to wrap the text to.
+		 * @param {beep8.TextRendererFont} fontName - The font to use.
+		 * @returns {string} The wrapped text.
+		 */
+		wrapText( text, wrapWidth, font ) {
+
+			// If 0 or less then don't wrap.
+			if ( wrapWidth <= 0 ) {
+				return text;
+			}
+
+			// Adjust the size of the wrap width based on the size of the font.
+			wrapWidth = Math.floor( wrapWidth / font.getCharColCount() );
+
+			// Split the text into lines.
+			const lines = text.split( "\n" );
+
+			// New list of lines.
+			const wrappedLines = [];
+
+			for ( const line of lines ) {
+
+				const words = line.split( " " );
+
+				let wrappedLine = "";
+				let lineWidth = 0;
+
+				for ( const word of words ) {
+
+					const wordWidth = this.measure( word ).cols;
+					console.log( word, wordWidth );
+
+					// Is the line with the new word longer than the line width?
+					if ( lineWidth + ( wordWidth ) > wrapWidth ) {
+						wrappedLines.push( wrappedLine.trim() );
+						wrappedLine = "";
+						lineWidth = 0;
+					}
+
+					// Add a space between words.
+					wrappedLine += word + " ";
+					lineWidth += wordWidth + 1;
+
+				}
+
+				wrappedLines.push( wrappedLine.trim() );
+
+			}
+
+			return wrappedLines.join( "\n" );
+
+		}
+
+
+		/**
 		 * Tries to run an escape sequence that starts at text[pos].
 		 * Returns the position after the escape sequence ends.
 		 * If pretend is true, then this will only parse but not run it.
@@ -3670,6 +3777,7 @@ ${melody.join( '\n' )}`;
 		/**
 		 * Constructs a font. NOTE: after construction, you must call await initAsync() to
 		 * initialize the font.
+		 *
 		 * @param {string} fontName - The name of the font.
 		 * @param {string} fontImageFile - The URL of the image file for the font.
 		 */
@@ -3684,6 +3792,8 @@ ${melody.join( '\n' )}`;
 			this.chrImages_ = [];
 			this.charWidth_ = 0;
 			this.charHeight_ = 0;
+			this.charColCount_ = 0;
+			this.charRowCount_ = 0;
 			this.origFgColor_ = 0;
 			this.origBgColor_ = 0;
 
@@ -3692,6 +3802,7 @@ ${melody.join( '\n' )}`;
 
 		/**
 		 * Returns the character width of the font.
+		 *
 		 * @returns {number} The width of each character in pixels.
 		 */
 		getCharWidth() {
@@ -3703,6 +3814,7 @@ ${melody.join( '\n' )}`;
 
 		/**
 		 * Returns the character height of the font.
+		 *
 		 * @returns {number} The height of each character in pixels.
 		 */
 		getCharHeight() {
@@ -3711,9 +3823,31 @@ ${melody.join( '\n' )}`;
 
 		}
 
+		/**
+		 * Returns the character width of the font.
+		 * @returns {number} The width of each character in pixels.
+		 */
+		getCharColCount() {
+
+			return this.charColCount_;
+
+		}
+
+
+		/**
+		 * Returns the character height of the font.
+		 * @returns {number} The height of each character in pixels.
+		 */
+		getCharRowCount() {
+
+			return this.charRowCount_;
+
+		}
+
 
 		/**
 		 * Returns the image for a given color number.
+		 *
 		 * @param {number} colorNumber - The color number.
 		 * @returns {HTMLImageElement} The image for the specified color.
 		 */
@@ -3728,6 +3862,7 @@ ${melody.join( '\n' )}`;
 		 * Sets up this font from the given character image file. It's assumed to contain the
 		 * glyphs arranged in a 16x16 grid, so we will deduce the character size by dividing the
 		 * width and height by 16.
+		 *
 		 * @returns {Promise<void>}
 		 */
 		async initAsync() {
@@ -3743,6 +3878,8 @@ ${melody.join( '\n' )}`;
 
 			this.charWidth_ = Math.floor( this.origImg_.width / 16 );
 			this.charHeight_ = Math.floor( this.origImg_.height / 16 );
+			this.charColCount_ = this.charWidth_ / beep8.CONFIG.CHR_WIDTH;
+			this.charRowCount_ = this.charHeight_ / beep8.CONFIG.CHR_HEIGHT;
 
 			this.regenColors();
 
@@ -3751,6 +3888,7 @@ ${melody.join( '\n' )}`;
 
 		/**
 		 * Regenerates the color text images.
+		 *
 		 * @returns {void}
 		 */
 		regenColors() {
@@ -3781,6 +3919,7 @@ ${melody.join( '\n' )}`;
 				const thisImg = new Image();
 				thisImg.src = tempCanvas.toDataURL();
 				this.chrImages_.push( thisImg );
+
 			}
 
 		}
