@@ -11,6 +11,7 @@
   <script>
 
 	const fontList = [];
+	const maxWidth = beep8.CONFIG.SCREEN_COLS - 2;
 	let currentFont = 0;
 
     async function main() {
@@ -42,8 +43,13 @@
 		beep8.locate(1, 1);
 		console.log( "currentFont: " + fontList[currentFont] );
 		beep8.setFont(fontList[currentFont]);
-		beep8.print( "The quick brown fox jumped over the lazy dog.\n\n", beep8.CONFIG.SCREEN_COLS - 2 );
-		beep8.print( "THE QUICK BROWN FOX JUMPED OVER THE LAZY DOG.\n\n", beep8.CONFIG.SCREEN_COLS - 2 );
+		beep8.print( "the quick brown fox jumped over the lazy dog.\n", maxWidth );
+		beep8.print( "THE QUICK BROWN FOX JUMPED OVER THE LAZY DOG.\n\n", maxWidth );
+
+		beep8.print( "0123456789\n\n" );
+
+		beep8.print( "the five boxing wizards jump quickly.\n", maxWidth );
+		beep8.print( "THE FIVE BOXING WIZARDS JUMP QUICKLY.\n\n", maxWidth );
 
 	}
 
