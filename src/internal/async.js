@@ -123,7 +123,7 @@
 	 * @param {number} [delay=0.05] - The delay between characters in seconds.
 	 * @returns {Promise<void>} Resolves after the text is printed.
 	 */
-	beep8.Async.typewriter = async function( text, delay = 0.05 ) {
+	beep8.Async.typewriter = async function( text, wrapWidth = -1, delay = 0.05 ) {
 
 		beep8.Core.preflight( "beep8.Async.typewriter" );
 
@@ -132,6 +132,8 @@
 
 		const startCol = beep8.col();
 		const startRow = beep8.row();
+
+		text = beep8.Core.textRenderer.wrapText( text, wrapWidth );
 
 		for ( let i = 0; i <= text.length; i++ ) {
 
