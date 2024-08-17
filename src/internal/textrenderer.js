@@ -579,7 +579,9 @@
 		 * @param {beep8.TextRendererFont} fontName - The font to use.
 		 * @returns {string} The wrapped text.
 		 */
-		wrapText( text, wrapWidth, font ) {
+		wrapText( text, wrapWidth, font = null ) {
+
+			font = font || this.curFont_;
 
 			// If 0 or less then don't wrap.
 			if ( wrapWidth <= 0 ) {
