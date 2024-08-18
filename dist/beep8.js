@@ -100,21 +100,21 @@ const beep8 = {};
 		// = more memory.
 		// You can redefine the colors at runtime with beep8.redefineColors([]).
 		COLORS: [
-			"#0F111A",
-			"#323D52",
+			"#0E0F17",
+			"#2A3752",
 			"#9DB1BF",
-			"#8DF1F7",
-			"#59B0F6",
-			"#384C96",
-			"#591D3B",
-			"#694544",
-			"#B14759",
-			"#EF8360",
-			"#FFCB70",
-			"#99D16F",
-			"#5CB87B",
-			"#2F8A73",
-			"#F099B5",
+			"#8DF0F7",
+			"#44BDF9",
+			"#3C55B0",
+			"#54002A",
+			"#754B3B",
+			"#B51212",
+			"#F7883D",
+			"#FFCF66",
+			"#9AE065",
+			"#42C26B",
+			"#12897C",
+			"#F078DC",
 			"#F4F4F4",
 		],
 		// If this is not null, then we will display a virtual joystick if the user
@@ -668,6 +668,7 @@ const beep8 = {};
 	beep8.keyp = function( keyName ) {
 
 		beep8.Core.preflight( "beep8.keyp" );
+
 		beep8.Utilities.checkString( "keyName", keyName );
 
 		return beep8.Core.inputSys.keyJustPressed( keyName );
@@ -684,7 +685,9 @@ const beep8 = {};
 	beep8.redefineColors = function( colors ) {
 
 		beep8.Core.preflight( "beep8.redefineColors" );
+
 		beep8.Utilities.checkArray( "colors", colors );
+
 		beep8.Core.defineColors( colors );
 
 	}
@@ -700,8 +703,10 @@ const beep8 = {};
 	beep8.setFont = function( fontId ) {
 
 		beep8.Core.preflight( "beep8.setFont" );
+
 		fontId = fontId || "default";
 		beep8.Utilities.checkString( "fontId", fontId );
+
 		beep8.Core.textRenderer.setFont( fontId );
 
 	}
@@ -715,6 +720,7 @@ const beep8 = {};
 	beep8.getFont = function() {
 
 		beep8.Core.preflight( "beep8.getFont" );
+
 		beep8.Core.textRenderer.getFont();
 
 	}
@@ -727,8 +733,6 @@ const beep8 = {};
 	 * @returns {Object} The font object.
 	 */
 	beep8.getFontByName = function( fontName ) {
-
-		beep8.Utilities.checkString( "fontName", fontName );
 
 		beep8.Utilities.checkString( "fontName", fontName );
 
@@ -747,8 +751,10 @@ const beep8 = {};
 	beep8.setTileFont = function( fontId ) {
 
 		beep8.Core.preflight( "beep8.setTileFont" );
+
 		fontId = fontId || "tiles";
 		beep8.Utilities.checkString( "fontId", fontId );
+
 		beep8.Core.textRenderer.setTileFont( fontId );
 
 	}
@@ -951,7 +957,7 @@ const beep8 = {};
 	 * @param {number} [delay=0.05] - The delay between characters in seconds.
 	 * @returns {Promise<void>} Resolves after the text is printed.
 	 */
-	beep8.Async.typewriter = async function( text, delay = 0.05 ) {
+	beep8.Async.typewriter = async function( text, wrapWidth = -1, delay = 0.05 ) {
 
 		beep8.Core.preflight( "beep8.Async.typewriter" );
 
@@ -960,6 +966,8 @@ const beep8 = {};
 
 		const startCol = beep8.col();
 		const startRow = beep8.row();
+
+		text = beep8.Core.textRenderer.wrapText( text, wrapWidth );
 
 		for ( let i = 0; i <= text.length; i++ ) {
 
@@ -3612,7 +3620,9 @@ ${melody.join( '\n' )}`;
 		 * @param {beep8.TextRendererFont} fontName - The font to use.
 		 * @returns {string} The wrapped text.
 		 */
-		wrapText( text, wrapWidth, font ) {
+		wrapText( text, wrapWidth, font = null ) {
+
+			font = font || this.curFont_;
 
 			// If 0 or less then don't wrap.
 			if ( wrapWidth <= 0 ) {
@@ -3638,7 +3648,6 @@ ${melody.join( '\n' )}`;
 				for ( const word of words ) {
 
 					const wordWidth = this.measure( word ).cols;
-					console.log( word, wordWidth );
 
 					// Is the line with the new word longer than the line width?
 					if ( lineWidth + ( wordWidth ) > wrapWidth ) {
@@ -3881,7 +3890,7 @@ ${melody.join( '\n' )}`;
 			this.charColCount_ = this.charWidth_ / beep8.CONFIG.CHR_WIDTH;
 			this.charRowCount_ = this.charHeight_ / beep8.CONFIG.CHR_HEIGHT;
 
-			this.regenColors();
+			await this.regenColors();
 
 		}
 
@@ -3889,9 +3898,9 @@ ${melody.join( '\n' )}`;
 		/**
 		 * Regenerates the color text images.
 		 *
-		 * @returns {void}
+		 * @returns {Promise<void>}
 		 */
-		regenColors() {
+		async regenColors() {
 
 			const tempCanvas = document.createElement( 'canvas' );
 			tempCanvas.width = this.origImg_.width;
@@ -3904,8 +3913,10 @@ ${melody.join( '\n' )}`;
 
 				beep8.Utilities.log( `Initializing font ${this.fontName_}, color ${c} = ${beep8.CONFIG.COLORS[ c ]}` );
 
-				// Draw the font image to the temp canvas (white over transparent background).
+				// Clear the temp canvas.
 				ctx.clearRect( 0, 0, this.origImg_.width, this.origImg_.height );
+
+				// Draw the font image to the temp canvas (white over transparent background).
 				ctx.globalCompositeOperation = 'source-over';
 				ctx.drawImage( this.origImg_, 0, 0, this.origImg_.width, this.origImg_.height );
 
@@ -3916,11 +3927,26 @@ ${melody.join( '\n' )}`;
 				ctx.fillRect( 0, 0, this.origImg_.width, this.origImg_.height );
 
 				// Now extract the canvas contents as an image.
-				const thisImg = new Image();
-				thisImg.src = tempCanvas.toDataURL();
+				const thisImg = await this.createImageFromCanvas( tempCanvas );
 				this.chrImages_.push( thisImg );
 
 			}
+
+			// Delete the canvas.
+			tempCanvas.remove();
+
+		}
+
+		// Function to create an image and wait for it to load
+		createImageFromCanvas( canvas ) {
+
+			return new Promise(
+				( resolve ) => {
+					const img = new Image();
+					img.src = canvas.toDataURL();
+					img.onload = () => resolve( img );
+				}
+			);
 
 		}
 
@@ -4202,8 +4228,8 @@ ${melody.join( '\n' )}`;
 		return new Promise(
 			( resolver ) => {
 				const img = new Image();
-				img.onload = () => resolver( img );
 				img.src = src;
+				img.onload = () => resolver( img );
 			}
 		);
 
