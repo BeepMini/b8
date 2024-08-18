@@ -16,9 +16,9 @@
       beep8.cls();
       beep8.print("Loading fonts...");
 
+      const newsFont = await beep8.Async.loadFont("../assets/font-news.png");
       const boldFont = await beep8.Async.loadFont("../assets/font-bold.png");
       const bigFont = await beep8.Async.loadFont("../assets/font-big.png");
-      const fantasyFont = await beep8.Async.loadFont("../assets/font-fantasy.png");
 
 	  beep8.color(15, 0);
       beep8.cls();
@@ -31,7 +31,7 @@
       beep8.setFont(boldFont);
       beep8.print("This is the bold font.\n");
       beep8.setFont(bigFont);
-      beep8.print("Big font.\n");
+      beep8.print("A Big font.\n");
 
       beep8.setFont(null);  // Return to default font.
       beep8.print("\nStyle markup can be used:\n");
@@ -42,18 +42,24 @@
       // You can combine them in the same sequence: {{c0,b14}}.
       beep8.print("Or say an {{c0,b14}}important{{z}} thing.\n");
 
-      beep8.setFont(fantasyFont);
-      beep8.print(
-		"\nHere's a fantasy font.\n" +
-        "The quick brown fox\n" +
-        "jumps over the lazy dog."
-	);
+	//   console.log(beep8.Core.drawState);
+      beep8.setFont(newsFont);
+	//   await beep8.Async.wait(0.1);
+	//   beep8.setFont(bigFont);
+	// beep8.setFont(null);
+	  beep8.print(
+		"\nHere's a newspaper font.\n" +
+        "The quick brown fox jumps over the lazy dog.\n",
+		beep8.CONFIG.SCREEN_COLS - 4
+	  );
 
+	  beep8.setFont(newsFont);
       beep8.locate(2, 19);
       beep8.color(10, 6);
       beep8.printBox(beep8.CONFIG.SCREEN_COLS - 4, 11);
 
       beep8.locate(4, 21);
+	  beep8.color(15, 6);
       await beep8.Async.typewriter(
         "What sayest thou?\n" +
         "Why doth the swift auburn fox leap o'er the slothful dog?",

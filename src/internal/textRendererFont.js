@@ -112,7 +112,7 @@
 			this.charColCount_ = this.charWidth_ / beep8.CONFIG.CHR_WIDTH;
 			this.charRowCount_ = this.charHeight_ / beep8.CONFIG.CHR_HEIGHT;
 
-			this.regenColors();
+			await this.regenColors();
 
 		}
 
@@ -120,9 +120,9 @@
 		/**
 		 * Regenerates the color text images.
 		 *
-		 * @returns {void}
+		 * @returns {Promise<void>}
 		 */
-		regenColors() {
+		async regenColors() {
 
 			const tempCanvas = document.createElement( 'canvas' );
 			tempCanvas.width = this.origImg_.width;
@@ -135,8 +135,10 @@
 
 				beep8.Utilities.log( `Initializing font ${this.fontName_}, color ${c} = ${beep8.CONFIG.COLORS[ c ]}` );
 
-				// Draw the font image to the temp canvas (white over transparent background).
+				// Clear the temp canvas.
 				ctx.clearRect( 0, 0, this.origImg_.width, this.origImg_.height );
+
+				// Draw the font image to the temp canvas (white over transparent background).
 				ctx.globalCompositeOperation = 'source-over';
 				ctx.drawImage( this.origImg_, 0, 0, this.origImg_.width, this.origImg_.height );
 
@@ -147,11 +149,26 @@
 				ctx.fillRect( 0, 0, this.origImg_.width, this.origImg_.height );
 
 				// Now extract the canvas contents as an image.
-				const thisImg = new Image();
-				thisImg.src = tempCanvas.toDataURL();
+				const thisImg = await this.createImageFromCanvas( tempCanvas );
 				this.chrImages_.push( thisImg );
 
 			}
+
+			// Delete the canvas.
+			tempCanvas.remove();
+
+		}
+
+		// Function to create an image and wait for it to load
+		createImageFromCanvas( canvas ) {
+
+			return new Promise(
+				( resolve ) => {
+					const img = new Image();
+					img.src = canvas.toDataURL();
+					img.onload = () => resolve( img );
+				}
+			);
 
 		}
 

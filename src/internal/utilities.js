@@ -271,8 +271,8 @@
 		return new Promise(
 			( resolver ) => {
 				const img = new Image();
-				img.onload = () => resolver( img );
 				img.src = src;
+				img.onload = () => resolver( img );
 			}
 		);
 

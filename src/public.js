@@ -523,6 +523,7 @@
 	beep8.keyp = function( keyName ) {
 
 		beep8.Core.preflight( "beep8.keyp" );
+
 		beep8.Utilities.checkString( "keyName", keyName );
 
 		return beep8.Core.inputSys.keyJustPressed( keyName );
@@ -539,7 +540,9 @@
 	beep8.redefineColors = function( colors ) {
 
 		beep8.Core.preflight( "beep8.redefineColors" );
+
 		beep8.Utilities.checkArray( "colors", colors );
+
 		beep8.Core.defineColors( colors );
 
 	}
@@ -555,8 +558,10 @@
 	beep8.setFont = function( fontId ) {
 
 		beep8.Core.preflight( "beep8.setFont" );
+
 		fontId = fontId || "default";
 		beep8.Utilities.checkString( "fontId", fontId );
+
 		beep8.Core.textRenderer.setFont( fontId );
 
 	}
@@ -570,6 +575,7 @@
 	beep8.getFont = function() {
 
 		beep8.Core.preflight( "beep8.getFont" );
+
 		beep8.Core.textRenderer.getFont();
 
 	}
@@ -582,8 +588,6 @@
 	 * @returns {Object} The font object.
 	 */
 	beep8.getFontByName = function( fontName ) {
-
-		beep8.Utilities.checkString( "fontName", fontName );
 
 		beep8.Utilities.checkString( "fontName", fontName );
 
@@ -602,8 +606,10 @@
 	beep8.setTileFont = function( fontId ) {
 
 		beep8.Core.preflight( "beep8.setTileFont" );
+
 		fontId = fontId || "tiles";
 		beep8.Utilities.checkString( "fontId", fontId );
+
 		beep8.Core.textRenderer.setTileFont( fontId );
 
 	}

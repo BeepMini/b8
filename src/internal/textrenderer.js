@@ -607,7 +607,6 @@
 				for ( const word of words ) {
 
 					const wordWidth = this.measure( word ).cols;
-					console.log( word, wordWidth );
 
 					// Is the line with the new word longer than the line width?
 					if ( lineWidth + ( wordWidth ) > wrapWidth ) {
