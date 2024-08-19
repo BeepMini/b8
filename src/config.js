@@ -6,7 +6,7 @@
 		// The name of the project.
 		NAME: "beep8 Project",
 		// The version of the project.
-		VERSION: "1.0.0",
+		VERSION: "1.0.0-alpha",
 		// Canvas settings
 		CANVAS_SETTINGS: {
 			// The ID to assign to the beep8 canvas.
