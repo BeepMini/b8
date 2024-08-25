@@ -48,10 +48,10 @@
         " #... ...   ...    ######### ".split(''),
         " #..,.   .. . ..   ,       # ".split(''),
         " ######       .        2   # ".split(''),
-        " #    +     ......         # ".split(''),
+        " #    +      ....          # ".split(''),
         " #  ###     ..~~..  ...  ..# ".split(''),
         " #0 #  ,    ..~~... ,. ....# ".split(''),
-        " ####   1   ......         # ".split(''),
+        " ####   1    ....          # ".split(''),
         " #     0           ,    1 |# ".split(''),
         " #|||   2    ||| ,    |||||# ".split(''),
         " #|||| ,,   ||||||  ,||||||# ".split(''),
@@ -60,18 +60,18 @@
     };
 
     const TILES = {
-      "~": { color: 3, bg: 5, char: 0xcd, solid: true },
-      "|": { color: 12, char: 0xdf, solid: true },
-      "^": { color: 2, char: 0xce, solid: true },
+      "~": { color: 3, bg: 5, char: 10 * 16 - 1, solid: true },	// water.
+      "|": { color: 12, char: 123, solid: true },			// tree.
+      "^": { color: 2, char: 255 - 16, solid: true },			// mountain.
       "=": { color: 1, char: 0xdd, solid: false },
-      ",": { color: 11, char: 0xcc, solid: false },
-      " ": { color: 1, char: 0x20, solid: false },
-      "T": { color: 15, char: 0xcb, solid: false },
+      ",": { color: 13, char: 24, solid: false },			// grass.
+      " ": { color: 1, char: 0, solid: false },				// empty.
+      "T": { color: 15, char: 252, solid: false },			// town.
       "O": { color: 0, char: 0x20, solid: false },
-      "#": { color: 7, char: 0x87, solid: true },
-      ".": { color: 1, char: 0xdc, solid: false },
+      "#": { color: 7, char: 13, solid: true },				// wall.
+      ".": { color: 1, char: 15, solid: false },			// stones.
       "+": { color: 6, char: 0xc9, solid: false },
-      "]": { color: 10, char: 0x84, solid: true },
+      "]": { color: 10, char: 4 * 16, solid: true },		// force field.
       "0": { color: 15, char: 0xd0, solid: true, talk: true },
       "1": { color: 15, char: 0xd3, solid: true, talk: true },
       "2": { color: 15, char: 0xd5, solid: true, talk: true },
