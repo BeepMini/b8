@@ -339,7 +339,7 @@
 	 * use.
 	 * @returns {void}
 	 */
-	beep8.printBox = function( widthCols, heightRows, fill = true, borderChar = 0x80 ) {
+	beep8.printBox = function( widthCols, heightRows, fill = true, borderChar = 48 ) {
 
 		beep8.Core.preflight( "beep8.printBox" );
 		borderChar = beep8.convChar( borderChar );

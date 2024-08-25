@@ -455,11 +455,11 @@
 		printBox( width, height, fill, borderCh ) {
 
 			const borderNW = borderCh;
-			const borderNE = borderCh + 1;
-			const borderSW = borderCh + 2;
-			const borderSE = borderCh + 3;
-			const borderV = borderCh + 4;
-			const borderH = borderCh + 5;
+			const borderNE = borderCh + 2;
+			const borderSW = borderCh + 32;
+			const borderSE = borderCh + 32 + 2;
+			const borderV = borderCh + 16;
+			const borderH = borderCh + 1;
 
 			beep8.Utilities.checkNumber( "width", width );
 			beep8.Utilities.checkNumber( "height", height );
@@ -495,7 +495,7 @@
 			if ( fill && width > 2 && height > 2 ) {
 				beep8.Core.drawState.cursorCol = startCol + 1;
 				beep8.Core.drawState.cursorRow = startRow + 1;
-				this.printRect( width - 2, height - 2, 32 );
+				this.printRect( width - 2, height - 2, 0 );
 			}
 
 			beep8.Core.drawState.cursorCol = startCol;
