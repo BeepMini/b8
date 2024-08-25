@@ -554,6 +554,11 @@
 				beep8.Core.ctx.fillRect( x, y, chrW, chrH );
 			}
 
+			// Foreground and background are the same so don't draw anything else.
+			if ( bgColor === fgColor ) {
+				return;
+			}
+
 			const color = beep8.Utilities.clamp( fgColor, 0, beep8.CONFIG.COLORS.length - 1 );
 			const img = font.getImageForColor( color );
 
