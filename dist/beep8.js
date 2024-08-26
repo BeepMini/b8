@@ -3774,6 +3774,9 @@ ${melody.join( '\n' )}`;
 			// The first character is the command's verb. The rest is the argument.
 			const verb = command[ 0 ].toLowerCase();
 			const arg = command.substring( 1 );
+
+			// If the argument is not a number then the result will be NaN and
+			// the default will be used.
 			const argNum = 1 * arg;
 
 			switch ( verb ) {
@@ -3788,6 +3791,11 @@ ${melody.join( '\n' )}`;
 					beep8.Core.drawState.bgColor = arg !== "" ? argNum : this.origBgColor_;
 					break;
 
+				// Change font.
+				case "t":
+					this.printFont_ = this.getFontByName( arg );
+					break;
+
 				// Reset state.
 				case "z":
 					beep8.Core.drawState.fgColor = this.origFgColor_;
@@ -3796,14 +3804,10 @@ ${melody.join( '\n' )}`;
 					this.printFont_ = this.origFont_ || this.fonts_[ "default" ];
 					break;
 
-				// Change font.
-				case "t":
-					this.printFont_ = this.getFontByName( arg );
-					break;
-
 				default:
 					console.warn( "Unknown beep8 print escape command: " + command );
 			}
+
 		}
 
 
