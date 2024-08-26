@@ -19,6 +19,7 @@
       const newsFont = await beep8.Async.loadFont("../assets/font-news.png");
       const boldFont = await beep8.Async.loadFont("../assets/font-bold.png");
       const bigFont = await beep8.Async.loadFont("../assets/font-big.png");
+	  const retroFont = await beep8.Async.loadFont("../assets/font-retro.png");
 	  console.log(boldFont);
 
 	  beep8.color(15, 0);
@@ -42,7 +43,7 @@
       // {{c0}} sets the color to 0 (black) and {{b14}} sets the background to 14 (pink).
       // You can combine them in the same sequence: {{c0,b14}}.
       beep8.print("Or say an {{c0,b14}}important{{z}} thing.");
-	  beep8.print("Or use a {{t" + boldFont + "}}bolder{{z}} font.")
+	  beep8.print("Or use a {{t" + retroFont + "}}bolder, retro{{z}} font.")
 
 	//   console.log(beep8.Core.drawState);
       beep8.setFont(newsFont);
