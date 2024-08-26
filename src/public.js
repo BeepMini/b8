@@ -117,14 +117,17 @@
 
 
 	/**
-	 * Clears the screen using the current background color.
+	 * Clears the screen using the specified or current background color.
 	 *
+	 * @param {number} [bgColor] - Optional background color index. If provided,
+	 * uses this index to get the color from the config. If not provided, uses
+	 * the current background color (drawState.bgColor).
 	 * @returns {void}
 	 */
-	beep8.cls = function() {
+	beep8.cls = function( bgColor = undefined ) {
 
 		beep8.Core.preflight( "beep8.Core.cls" );
-		beep8.Core.cls();
+		beep8.Core.cls( bgColor );
 
 	}
 
@@ -214,6 +217,7 @@
 	 * See example-printing.html for an example.
 	 *
 	 * @param {string} text - The text to print.
+	 * @param {number} [wrapWidth=-1] - The width to wrap text at. -1 for no wrapping.
 	 * @returns {void}
 	 */
 	beep8.print = function( text, wrapWidth = -1 ) {

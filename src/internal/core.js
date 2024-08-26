@@ -391,11 +391,21 @@
 	/**
 	 * Clears the screen and resets the cursor to the top-left corner.
 	 *
+	 * @param {number} [bgColor] - Optional background color index.
 	 * @returns {void}
 	 */
-	beep8.Core.cls = function() {
+	beep8.Core.cls = function( bgColor = undefined ) {
 
-		beep8.Core.ctx.fillStyle = beep8.Core.getColorHex( beep8.Core.drawState.bgColor );
+		let fillColor;
+
+		if ( bgColor !== undefined ) {
+			beep8.Utilities.checkNumber( "bgColor", bgColor );
+			fillColor = beep8.Core.getColorHex( bgColor );
+		} else {
+			fillColor = beep8.Core.getColorHex( beep8.Core.drawState.bgColor );
+		}
+
+		beep8.Core.ctx.fillStyle = fillColor;
 		beep8.Core.ctx.fillRect( 0, 0, beep8.Core.canvas.width, beep8.Core.canvas.height );
 
 		this.setCursorLocation( 0, 0 );
