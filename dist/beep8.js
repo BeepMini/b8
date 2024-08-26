@@ -52,7 +52,7 @@ const beep8 = {};
 		// The name of the project.
 		NAME: "beep8 Project",
 		// The version of the project.
-		VERSION: "1.0.0",
+		VERSION: "1.0.0-dev",
 		// Canvas settings
 		CANVAS_SETTINGS: {
 			// The ID to assign to the beep8 canvas.
@@ -262,14 +262,17 @@ const beep8 = {};
 
 
 	/**
-	 * Clears the screen using the current background color.
+	 * Clears the screen using the specified or current background color.
 	 *
+	 * @param {number} [bgColor] - Optional background color index. If provided,
+	 * uses this index to get the color from the config. If not provided, uses
+	 * the current background color (drawState.bgColor).
 	 * @returns {void}
 	 */
-	beep8.cls = function() {
+	beep8.cls = function( bgColor = undefined ) {
 
 		beep8.Core.preflight( "beep8.Core.cls" );
-		beep8.Core.cls();
+		beep8.Core.cls( bgColor );
 
 	}
 
@@ -343,17 +346,23 @@ const beep8 = {};
 	 * Prints text at the cursor position, using the current foreground and
 	 * background colors.
 	 *
-	 * The text can contain embedded newlines and they will behave as you expect:
+	 * The text can contain embedded newlines and they will behave as expected:
 	 * printing will continue at the next line.
 	 *
 	 * If PRINT_ESCAPE_START and PRINT_ESCAPE_END are defined in CONFIG, then
-	 * you can also use escape sequences. For example {{c1}} sets the color to
-	 * 1, so your string can be "I like the color {{c1}}blue" and the word
-	 * 'blue' would be in blue. The sequence {{b2}} sets the background to 2
-	 * (red). The sequence {{z}} resets the color to the default. See
-	 * example-printing.html for an example.
+	 * you can also use escape sequences. For example:
+	 * - {{c1}} sets the color to 1
+	 * - {{b2}} sets the background to 2 (red)
+	 * - {{tfontname}} changes the current font to 'fontname' (temporary)
+	 * - {{z}} resets the color and font to their states before printing started
+	 *
+	 * Note: Font changes using escape sequences are temporary and will be
+	 * reset after the print operation is complete.
+	 *
+	 * See example-printing.html for an example.
 	 *
 	 * @param {string} text - The text to print.
+	 * @param {number} [wrapWidth=-1] - The width to wrap text at. -1 for no wrapping.
 	 * @returns {void}
 	 */
 	beep8.print = function( text, wrapWidth = -1 ) {
@@ -484,7 +493,7 @@ const beep8 = {};
 	 * use.
 	 * @returns {void}
 	 */
-	beep8.printBox = function( widthCols, heightRows, fill = true, borderChar = 0x80 ) {
+	beep8.printBox = function( widthCols, heightRows, fill = true, borderChar = 48 ) {
 
 		beep8.Core.preflight( "beep8.printBox" );
 		borderChar = beep8.convChar( borderChar );
@@ -1457,11 +1466,21 @@ const beep8 = {};
 	/**
 	 * Clears the screen and resets the cursor to the top-left corner.
 	 *
+	 * @param {number} [bgColor] - Optional background color index.
 	 * @returns {void}
 	 */
-	beep8.Core.cls = function() {
+	beep8.Core.cls = function( bgColor = undefined ) {
 
-		beep8.Core.ctx.fillStyle = beep8.Core.getColorHex( beep8.Core.drawState.bgColor );
+		let fillColor;
+
+		if ( bgColor !== undefined ) {
+			beep8.Utilities.checkNumber( "bgColor", bgColor );
+			fillColor = beep8.Core.getColorHex( bgColor );
+		} else {
+			fillColor = beep8.Core.getColorHex( beep8.Core.drawState.bgColor );
+		}
+
+		beep8.Core.ctx.fillStyle = fillColor;
 		beep8.Core.ctx.fillRect( 0, 0, beep8.Core.canvas.width, beep8.Core.canvas.height );
 
 		this.setCursorLocation( 0, 0 );
@@ -2349,8 +2368,8 @@ const beep8 = {};
 				prompt: "",
 				selBgColor: beep8.Core.drawState.fgColor,
 				selFgColor: beep8.Core.drawState.bgColor,
-				bgChar: 32,
-				borderChar: 0x80,
+				bgChar: 0,
+				borderChar: 48,
 				center: false,
 				centerH: false,
 				centerV: false,
@@ -3222,31 +3241,44 @@ ${melody.join( '\n' )}`;
 		 * Prints text at the current cursor position.
 		 *
 		 * @param {string} text - The text to print.
+		 * @param {beep8.TextRendererFont} [font=null] - The font to use for printing.
+		 * @param {number} [wrapWidth=-1] - The width to wrap text at.
 		 * @returns {void}
 		 */
 		print( text, font = null, wrapWidth = -1 ) {
 
-			font = font || this.curFont_;
+			this.printFont_ = font || this.curFont_;
 
 			beep8.Utilities.checkString( "text", text );
 			beep8.Utilities.checkNumber( "wrapWidth", wrapWidth );
-			beep8.Utilities.checkObject( "font", font );
+			if ( font !== null ) {
+				beep8.Utilities.checkObject( "font", font );
+			}
 
+			// Wrap text to specified width.
 			text = this.wrapText( text, wrapWidth, font );
 
+			// If text does not end in a new line then add one.
+			if ( text.length > 0 && text[ text.length - 1 ] !== '\n' ) {
+				text += "\n";
+			}
+
+			// Store the start location.
 			let col = beep8.Core.drawState.cursorCol;
 			let row = beep8.Core.drawState.cursorRow;
 
-			// Store a backup of foreground/background colors.
+			// Store a backup of foreground/background colors and fonts.
 			this.origFgColor_ = beep8.Core.drawState.fgColor;
 			this.origBgColor_ = beep8.Core.drawState.bgColor;
+			this.origFont_ = this.printFont_;
 
-			const colInc = Math.floor( this.curFont_.getCharWidth() / beep8.CONFIG.CHR_WIDTH );
-			const rowInc = Math.floor( this.curFont_.getCharHeight() / beep8.CONFIG.CHR_HEIGHT );
+			const colInc = this.printFont_.getCharColCount();
+			const rowInc = this.printFont_.getCharRowCount();
 
 			const initialCol = col;
 
 			for ( let i = 0; i < text.length; i++ ) {
+
 				i = this.processEscapeSeq_( text, i );
 				const ch = text.charCodeAt( i );
 
@@ -3263,7 +3295,7 @@ ${melody.join( '\n' )}`;
 							chIndex,
 							col, row,
 							beep8.Core.drawState.fgColor, beep8.Core.drawState.bgColor,
-							font
+							this.printFont_
 						);
 						col += colInc;
 
@@ -3272,12 +3304,14 @@ ${melody.join( '\n' )}`;
 				}
 			}
 
+			// Reset properties.
 			beep8.Core.drawState.cursorCol = col;
 			beep8.Core.drawState.cursorRow = row;
 			beep8.Core.drawState.fgColor = this.origFgColor_;
 			beep8.Core.drawState.bgColor = this.origBgColor_;
 
 			beep8.Core.markDirty();
+
 
 		}
 
@@ -3496,11 +3530,11 @@ ${melody.join( '\n' )}`;
 		printBox( width, height, fill, borderCh ) {
 
 			const borderNW = borderCh;
-			const borderNE = borderCh + 1;
-			const borderSW = borderCh + 2;
-			const borderSE = borderCh + 3;
-			const borderV = borderCh + 4;
-			const borderH = borderCh + 5;
+			const borderNE = borderCh + 2;
+			const borderSW = borderCh + 32;
+			const borderSE = borderCh + 32 + 2;
+			const borderV = borderCh + 16;
+			const borderH = borderCh + 1;
 
 			beep8.Utilities.checkNumber( "width", width );
 			beep8.Utilities.checkNumber( "height", height );
@@ -3536,7 +3570,7 @@ ${melody.join( '\n' )}`;
 			if ( fill && width > 2 && height > 2 ) {
 				beep8.Core.drawState.cursorCol = startCol + 1;
 				beep8.Core.drawState.cursorRow = startRow + 1;
-				this.printRect( width - 2, height - 2, 32 );
+				this.printRect( width - 2, height - 2, 0 );
 			}
 
 			beep8.Core.drawState.cursorCol = startCol;
@@ -3593,6 +3627,11 @@ ${melody.join( '\n' )}`;
 			if ( bgColor >= 0 ) {
 				beep8.Core.ctx.fillStyle = beep8.Core.getColorHex( bgColor );
 				beep8.Core.ctx.fillRect( x, y, chrW, chrH );
+			}
+
+			// Foreground and background are the same so don't draw anything else.
+			if ( bgColor === fgColor ) {
+				return;
 			}
 
 			const color = beep8.Utilities.clamp( fgColor, 0, beep8.CONFIG.COLORS.length - 1 );
@@ -3738,18 +3777,28 @@ ${melody.join( '\n' )}`;
 			const argNum = 1 * arg;
 
 			switch ( verb ) {
+				// Set foreground color.
 				case "f":
-				case "c": // Set foreground color.
+				case "c":
 					beep8.Core.drawState.fgColor = arg !== "" ? argNum : this.origFgColor_;
 					break;
 
-				case "b": // Set background color.
+				// Set background color.
+				case "b":
 					beep8.Core.drawState.bgColor = arg !== "" ? argNum : this.origBgColor_;
 					break;
 
-				case "z": // Reset state.
+				// Reset state.
+				case "z":
 					beep8.Core.drawState.fgColor = this.origFgColor_;
 					beep8.Core.drawState.bgColor = this.origBgColor_;
+					// Use original font if available, otherwise default.
+					this.printFont_ = this.origFont_ || this.fonts_[ "default" ];
+					break;
+
+				// Change font.
+				case "t":
+					this.printFont_ = this.getFontByName( arg );
 					break;
 
 				default:
@@ -3832,6 +3881,7 @@ ${melody.join( '\n' )}`;
 
 		}
 
+
 		/**
 		 * Returns the character width of the font.
 		 * @returns {number} The width of each character in pixels.
@@ -3887,8 +3937,8 @@ ${melody.join( '\n' )}`;
 
 			this.charWidth_ = Math.floor( this.origImg_.width / 16 );
 			this.charHeight_ = Math.floor( this.origImg_.height / 16 );
-			this.charColCount_ = this.charWidth_ / beep8.CONFIG.CHR_WIDTH;
-			this.charRowCount_ = this.charHeight_ / beep8.CONFIG.CHR_HEIGHT;
+			this.charColCount_ = Math.floor( this.charWidth_ / beep8.CONFIG.CHR_WIDTH );
+			this.charRowCount_ = Math.floor( this.charHeight_ / beep8.CONFIG.CHR_HEIGHT );
 
 			await this.regenColors();
 
