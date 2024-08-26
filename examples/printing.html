@@ -19,6 +19,7 @@
       const newsFont = await beep8.Async.loadFont("../assets/font-news.png");
       const boldFont = await beep8.Async.loadFont("../assets/font-bold.png");
       const bigFont = await beep8.Async.loadFont("../assets/font-big.png");
+	  console.log(boldFont);
 
 	  beep8.color(15, 0);
       beep8.cls();
@@ -37,10 +38,11 @@
       beep8.print("\nStyle markup can be used:\n");
       // {{c13}} sets the foreground color to 13 (green).
       // {{z}} resets the color.
-      beep8.print("You can have a {{c13}}green{{z}} word.\n");
+      beep8.print("You can have a {{c13}}green{{z}} word.");
       // {{c0}} sets the color to 0 (black) and {{b14}} sets the background to 14 (pink).
       // You can combine them in the same sequence: {{c0,b14}}.
-      beep8.print("Or say an {{c0,b14}}important{{z}} thing.\n");
+      beep8.print("Or say an {{c0,b14}}important{{z}} thing.");
+	  beep8.print("Or use a {{t" + boldFont + "}}bolder{{z}} font.")
 
 	//   console.log(beep8.Core.drawState);
       beep8.setFont(newsFont);

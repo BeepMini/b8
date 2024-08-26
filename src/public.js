@@ -198,15 +198,20 @@
 	 * Prints text at the cursor position, using the current foreground and
 	 * background colors.
 	 *
-	 * The text can contain embedded newlines and they will behave as you expect:
+	 * The text can contain embedded newlines and they will behave as expected:
 	 * printing will continue at the next line.
 	 *
 	 * If PRINT_ESCAPE_START and PRINT_ESCAPE_END are defined in CONFIG, then
-	 * you can also use escape sequences. For example {{c1}} sets the color to
-	 * 1, so your string can be "I like the color {{c1}}blue" and the word
-	 * 'blue' would be in blue. The sequence {{b2}} sets the background to 2
-	 * (red). The sequence {{z}} resets the color to the default. See
-	 * example-printing.html for an example.
+	 * you can also use escape sequences. For example:
+	 * - {{c1}} sets the color to 1
+	 * - {{b2}} sets the background to 2 (red)
+	 * - {{tfontname}} changes the current font to 'fontname' (temporary)
+	 * - {{z}} resets the color and font to their states before printing started
+	 *
+	 * Note: Font changes using escape sequences are temporary and will be
+	 * reset after the print operation is complete.
+	 *
+	 * See example-printing.html for an example.
 	 *
 	 * @param {string} text - The text to print.
 	 * @returns {void}

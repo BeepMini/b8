@@ -181,31 +181,44 @@
 		 * Prints text at the current cursor position.
 		 *
 		 * @param {string} text - The text to print.
+		 * @param {beep8.TextRendererFont} [font=null] - The font to use for printing.
+		 * @param {number} [wrapWidth=-1] - The width to wrap text at.
 		 * @returns {void}
 		 */
 		print( text, font = null, wrapWidth = -1 ) {
 
-			font = font || this.curFont_;
+			this.printFont_ = font || this.curFont_;
 
 			beep8.Utilities.checkString( "text", text );
 			beep8.Utilities.checkNumber( "wrapWidth", wrapWidth );
-			beep8.Utilities.checkObject( "font", font );
+			if ( font !== null ) {
+				beep8.Utilities.checkObject( "font", font );
+			}
 
+			// Wrap text to specified width.
 			text = this.wrapText( text, wrapWidth, font );
 
+			// If text does not end in a new line then add one.
+			if ( text.length > 0 && text[ text.length - 1 ] !== '\n' ) {
+				text += "\n";
+			}
+
+			// Store the start location.
 			let col = beep8.Core.drawState.cursorCol;
 			let row = beep8.Core.drawState.cursorRow;
 
-			// Store a backup of foreground/background colors.
+			// Store a backup of foreground/background colors and fonts.
 			this.origFgColor_ = beep8.Core.drawState.fgColor;
 			this.origBgColor_ = beep8.Core.drawState.bgColor;
+			this.origFont_ = this.printFont_;
 
-			const colInc = Math.floor( this.curFont_.getCharWidth() / beep8.CONFIG.CHR_WIDTH );
-			const rowInc = Math.floor( this.curFont_.getCharHeight() / beep8.CONFIG.CHR_HEIGHT );
+			const colInc = this.printFont_.getCharColCount();
+			const rowInc = this.printFont_.getCharRowCount();
 
 			const initialCol = col;
 
 			for ( let i = 0; i < text.length; i++ ) {
+
 				i = this.processEscapeSeq_( text, i );
 				const ch = text.charCodeAt( i );
 
@@ -222,7 +235,7 @@
 							chIndex,
 							col, row,
 							beep8.Core.drawState.fgColor, beep8.Core.drawState.bgColor,
-							font
+							this.printFont_
 						);
 						col += colInc;
 
@@ -231,12 +244,14 @@
 				}
 			}
 
+			// Reset properties.
 			beep8.Core.drawState.cursorCol = col;
 			beep8.Core.drawState.cursorRow = row;
 			beep8.Core.drawState.fgColor = this.origFgColor_;
 			beep8.Core.drawState.bgColor = this.origBgColor_;
 
 			beep8.Core.markDirty();
+
 
 		}
 
@@ -702,18 +717,28 @@
 			const argNum = 1 * arg;
 
 			switch ( verb ) {
+				// Set foreground color.
 				case "f":
-				case "c": // Set foreground color.
+				case "c":
 					beep8.Core.drawState.fgColor = arg !== "" ? argNum : this.origFgColor_;
 					break;
 
-				case "b": // Set background color.
+				// Set background color.
+				case "b":
 					beep8.Core.drawState.bgColor = arg !== "" ? argNum : this.origBgColor_;
 					break;
 
-				case "z": // Reset state.
+				// Reset state.
+				case "z":
 					beep8.Core.drawState.fgColor = this.origFgColor_;
 					beep8.Core.drawState.bgColor = this.origBgColor_;
+					// Use original font if available, otherwise default.
+					this.printFont_ = this.origFont_ || this.fonts_[ "default" ];
+					break;
+
+				// Change font.
+				case "t":
+					this.printFont_ = this.getFontByName( arg );
 					break;
 
 				default:

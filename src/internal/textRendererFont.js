@@ -54,6 +54,7 @@
 
 		}
 
+
 		/**
 		 * Returns the character width of the font.
 		 * @returns {number} The width of each character in pixels.
@@ -109,8 +110,8 @@
 
 			this.charWidth_ = Math.floor( this.origImg_.width / 16 );
 			this.charHeight_ = Math.floor( this.origImg_.height / 16 );
-			this.charColCount_ = this.charWidth_ / beep8.CONFIG.CHR_WIDTH;
-			this.charRowCount_ = this.charHeight_ / beep8.CONFIG.CHR_HEIGHT;
+			this.charColCount_ = Math.floor( this.charWidth_ / beep8.CONFIG.CHR_WIDTH );
+			this.charRowCount_ = Math.floor( this.charHeight_ / beep8.CONFIG.CHR_HEIGHT );
 
 			await this.regenColors();
 
