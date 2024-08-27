@@ -396,16 +396,11 @@
 	 */
 	beep8.Core.cls = function( bgColor = undefined ) {
 
-		let fillColor;
+		bgColor = bgColor || beep8.Core.drawState.bgColor;
 
-		if ( bgColor !== undefined ) {
-			beep8.Utilities.checkNumber( "bgColor", bgColor );
-			fillColor = beep8.Core.getColorHex( bgColor );
-		} else {
-			fillColor = beep8.Core.getColorHex( beep8.Core.drawState.bgColor );
-		}
+		beep8.Utilities.checkNumber( "bgColor", bgColor );
 
-		beep8.Core.ctx.fillStyle = fillColor;
+		beep8.Core.ctx.fillStyle = beep8.Core.getColorHex( bgColor );
 		beep8.Core.ctx.fillRect( 0, 0, beep8.Core.canvas.width, beep8.Core.canvas.height );
 
 		this.setCursorLocation( 0, 0 );
