@@ -159,9 +159,9 @@ const beep8 = {};
 		beep8.Utilities.checkFunction( "callback", callback );
 		beep8.Utilities.checkObject( "options", options );
 
-		// Combine options with beep8.CONFIG.
+		// Combine options with beep8.CONFIG using deep merge
 		if ( options !== null ) {
-			beep8.CONFIG = Object.assign( beep8.CONFIG, options );
+			beep8.CONFIG = beep8.Utilities.deepMerge( beep8.CONFIG, options );
 		}
 
 		return beep8.Core.init( callback );
@@ -838,7 +838,6 @@ const beep8 = {};
 
 	}
 
-
 } )( beep8 || ( beep8 = {} ) );
 
 ( function( beep8 ) {
@@ -1244,11 +1243,10 @@ const beep8 = {};
 
 			if ( typeof ( containerSpec ) === "string" ) {
 
-				container = document.getElementById( containerSpec );
+				container = document.getElementById( containerSpec.replace( '#', '' ) );
 
 				if ( !container ) {
-					console.error( "beep8: Could not find container element with ID: " + containerSpec );
-					container = document.body;
+					beep8.Utilities.fatal( "beep8: Could not find container element with ID: " + containerSpec );
 				}
 
 			} else if ( containerSpec instanceof HTMLElement ) {
@@ -1791,8 +1789,6 @@ const beep8 = {};
 		beep8.Core.realCanvas.style.height = '100%';
 		beep8.Core.realCanvas.width = beep8.CONFIG.SCREEN_REAL_WIDTH;
 		beep8.Core.realCanvas.height = beep8.CONFIG.SCREEN_REAL_HEIGHT;
-
-		console.log( beep8.CONFIG.SCREEN_REAL_HEIGHT, beep8.CONFIG.SCREEN_EL_HEIGHT );
 
 		beep8.Core.container.style.aspectRatio = `${beep8.CONFIG.SCREEN_ROWS} / ${beep8.CONFIG.SCREEN_COLS}`;
 
@@ -4566,6 +4562,48 @@ ${melody.join( '\n' )}`;
 		str = str.replace( /^-+|-+$/g, '' );
 
 		return str;
+
+	}
+
+
+
+	/**
+	 * Performs a deep merge of objects and returns new object. Does not modify
+	 * objects (immutable) and merges arrays via concatenation.
+	 *
+	 * @param {...object} objects - Objects to merge
+	 * @returns {object} New object with merged key/values
+	 */
+	beep8.Utilities.deepMerge = function( ...objects ) {
+
+		const isObject = obj => obj && typeof obj === 'object';
+
+		return objects.reduce(
+
+			( prev, obj ) => {
+
+				Object.keys( obj ).forEach(
+					( key ) => {
+
+						const pVal = prev[ key ];
+						const oVal = obj[ key ];
+
+						if ( Array.isArray( pVal ) && Array.isArray( oVal ) ) {
+							prev[ key ] = pVal.concat( ...oVal );
+						}
+						else if ( isObject( pVal ) && isObject( oVal ) ) {
+							prev[ key ] = beep8.Utilities.deepMerge( pVal, oVal );
+						}
+						else {
+							prev[ key ] = oVal;
+						}
+					}
+				);
+
+				return prev;
+			},
+			{}
+		);
 
 	}
 

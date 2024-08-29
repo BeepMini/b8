@@ -14,9 +14,9 @@
 		beep8.Utilities.checkFunction( "callback", callback );
 		beep8.Utilities.checkObject( "options", options );
 
-		// Combine options with beep8.CONFIG.
+		// Combine options with beep8.CONFIG using deep merge
 		if ( options !== null ) {
-			beep8.CONFIG = Object.assign( beep8.CONFIG, options );
+			beep8.CONFIG = beep8.Utilities.deepMerge( beep8.CONFIG, options );
 		}
 
 		return beep8.Core.init( callback );
@@ -692,6 +692,5 @@
 		return beep8.Core.restoreScreen( screenData );
 
 	}
-
 
 } )( beep8 || ( beep8 = {} ) );
