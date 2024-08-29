@@ -169,11 +169,10 @@
 
 			if ( typeof ( containerSpec ) === "string" ) {
 
-				container = document.getElementById( containerSpec );
+				container = document.getElementById( containerSpec.replace( '#', '' ) );
 
 				if ( !container ) {
-					console.error( "beep8: Could not find container element with ID: " + containerSpec );
-					container = document.body;
+					beep8.Utilities.fatal( "beep8: Could not find container element with ID: " + containerSpec );
 				}
 
 			} else if ( containerSpec instanceof HTMLElement ) {
@@ -716,8 +715,6 @@
 		beep8.Core.realCanvas.style.height = '100%';
 		beep8.Core.realCanvas.width = beep8.CONFIG.SCREEN_REAL_WIDTH;
 		beep8.Core.realCanvas.height = beep8.CONFIG.SCREEN_REAL_HEIGHT;
-
-		console.log( beep8.CONFIG.SCREEN_REAL_HEIGHT, beep8.CONFIG.SCREEN_EL_HEIGHT );
 
 		beep8.Core.container.style.aspectRatio = `${beep8.CONFIG.SCREEN_ROWS} / ${beep8.CONFIG.SCREEN_COLS}`;
 
