@@ -756,6 +756,7 @@
 			scanLinesEl.style.width = '100%';
 			scanLinesEl.style.height = '100%';
 			scanLinesEl.style.zIndex = 1;
+			scanLinesEl.style.pointerEvents = "none";
 
 		}
 
