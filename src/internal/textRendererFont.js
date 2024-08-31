@@ -11,8 +11,9 @@
 		 *
 		 * @param {string} fontName - The name of the font.
 		 * @param {string} fontImageFile - The URL of the image file for the font.
+		 * @param {number} [sizeMultiplier=1] - The tile size multiplier for the font.
 		 */
-		constructor( fontName, fontImageFile ) {
+		constructor( fontName, fontImageFile, tileSizeMultiplier = 1 ) {
 
 			beep8.Utilities.checkString( "fontName", fontName );
 			beep8.Utilities.checkString( "fontImageFile", fontImageFile );
@@ -21,12 +22,15 @@
 			this.fontImageFile_ = fontImageFile;
 			this.origImg_ = null;
 			this.chrImages_ = [];
+			this.imageWidth_ = 0;
+			this.imageHeight_ = 0;
+			this.colCount_ = 0;
+			this.rowCount_ = 0;
 			this.charWidth_ = 0;
 			this.charHeight_ = 0;
 			this.charColCount_ = 0;
 			this.charRowCount_ = 0;
-			this.origFgColor_ = 0;
-			this.origBgColor_ = 0;
+			this.tileSizeMultiplier_ = tileSizeMultiplier;
 
 		}
 
@@ -103,15 +107,26 @@
 
 			this.origImg_ = await beep8.Utilities.loadImageAsync( this.fontImageFile_ );
 
-			beep8.Utilities.assert( this.origImg_.width % 16 === 0 && this.origImg_.height % 16 === 0,
-				`Font ${this.fontName_}: image ${this.fontImageFile_} has dimensions ` +
-				`${this.origImg_.width}x${this.origImg_.height}. It must ` +
-				`have dimensions that are multiples of 16 (16x16 grid of characters).` );
+			const imageCharWidth = beep8.CONFIG.CHR_WIDTH * this.tileSizeMultiplier_;
+			const imageCharHeight = beep8.CONFIG.CHR_HEIGHT * this.tileSizeMultiplier_;
 
-			this.charWidth_ = Math.floor( this.origImg_.width / 16 );
-			this.charHeight_ = Math.floor( this.origImg_.height / 16 );
-			this.charColCount_ = Math.floor( this.charWidth_ / beep8.CONFIG.CHR_WIDTH );
-			this.charRowCount_ = Math.floor( this.charHeight_ / beep8.CONFIG.CHR_HEIGHT );
+			beep8.Utilities.assert(
+				this.origImg_.width % imageCharWidth === 0 && this.origImg_.height % imageCharHeight === 0,
+				`Font ${this.fontName_}: image ${this.fontImageFile_} has dimensions ` +
+				`${this.origImg_.width}x${this.origImg_.height}.`
+			);
+
+			this.charWidth_ = imageCharWidth;
+			this.charHeight_ = imageCharHeight;
+			this.imageWidth_ = this.origImg_.width;
+			this.imageHeight_ = this.origImg_.height;
+			this.colCount_ = this.imageWidth_ / this.charWidth_;
+			this.rowCount_ = this.imageHeight_ / this.charHeight_;
+			// How many tiles wide and tall each character is.
+			this.charColCount_ = this.tileSizeMultiplier_;
+			this.charRowCount_ = this.tileSizeMultiplier_;
+
+			console.log( 'load image', this );
 
 			await this.regenColors();
 

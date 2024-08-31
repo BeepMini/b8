@@ -215,14 +215,14 @@
 	 * @param {string} fontImageFile - The URL of the font image file.
 	 * @returns {Promise<string>} The font ID.
 	 */
-	beep8.Async.loadFont = async function( fontImageFile ) {
+	beep8.Async.loadFont = async function( fontImageFile, tileSizeMultiplier = 1 ) {
 
 		beep8.Core.preflight( "beep8.Async.loadFont" );
 
 		beep8.Utilities.checkString( "fontImageFile", fontImageFile );
 
 		const fontName = "FONT@" + beep8.Utilities.makeUrlPretty( fontImageFile );
-		await beep8.Core.textRenderer.loadFontAsync( fontName, fontImageFile );
+		await beep8.Core.textRenderer.loadFontAsync( fontName, fontImageFile, tileSizeMultiplier );
 
 		return fontName;
 

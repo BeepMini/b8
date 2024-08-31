@@ -8,6 +8,7 @@
 	 */
 	const charMap = [];
 
+
 	/**
 	 * beep8.TextRenderer class handles the rendering of text using various fonts.
 	 */
@@ -75,14 +76,15 @@
 		 *
 		 * @param {string} fontName - The name of the font.
 		 * @param {string} fontImageFile - The URL of the image file for the font.
+		 * @param {number} [tileSizeMultiplier=1] - The tile size multiplier for the font.
 		 * @returns {Promise<void>}
 		 */
-		async loadFontAsync( fontName, fontImageFile ) {
+		async loadFontAsync( fontName, fontImageFile, tileSizeMultiplier = 1 ) {
 
 			beep8.Utilities.checkString( "fontName", fontName );
 			beep8.Utilities.checkString( "fontImageFile", fontImageFile );
 
-			const font = new beep8.TextRendererFont( fontName, fontImageFile );
+			const font = new beep8.TextRendererFont( fontName, fontImageFile, tileSizeMultiplier );
 			await font.initAsync();
 
 			this.fonts_[ fontName ] = font;
@@ -158,6 +160,7 @@
 			const cw = font.getCharWidth();
 			const ch = font.getCharHeight();
 
+			// Check that the font image has a width and height that are divisible by the tilesize.
 			if ( cw % beep8.CONFIG.CHR_WIDTH !== 0 || ch % beep8.CONFIG.CHR_HEIGHT !== 0 ) {
 
 				beep8.Utilities.fatal(
