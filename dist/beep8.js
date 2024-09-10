@@ -453,6 +453,7 @@ const beep8 = {};
 		charCode = beep8.convChar( charCode );
 		beep8.Utilities.checkNumber( "charCode", charCode );
 		beep8.Utilities.checkNumber( "numTimes", numTimes );
+
 		beep8.Core.textRenderer.printChar( charCode, numTimes );
 
 	}
@@ -464,17 +465,18 @@ const beep8 = {};
 	 *
 	 * @param {number} widthCols - Width of the rectangle in screen columns.
 	 * @param {number} heightRows - Height of the rectangle in screen rows.
-	 * @param {number|string} [charCode=32] - The character to print, as an
-	 * integer (ASCII code) or a one-character string.
+	 * @param {number|string} [charCode=8] - The character to print.
 	 * @returns {void}
 	 */
-	beep8.printRect = function( widthCols, heightRows, charCode = 32 ) {
+	beep8.printRect = function( widthCols, heightRows, charCode = 8 ) {
 
 		beep8.Core.preflight( "beep8.printRect" );
 		charCode = beep8.convChar( charCode );
+
 		beep8.Utilities.checkNumber( "widthCols", widthCols );
 		beep8.Utilities.checkNumber( "heightRows", heightRows );
 		beep8.Utilities.checkNumber( "charCode", charCode );
+
 		beep8.Core.textRenderer.printRect( widthCols, heightRows, charCode );
 
 	}
@@ -489,11 +491,11 @@ const beep8 = {};
 	 * @param {number} heightRows - Height of the box in screen rows, including
 	 * the border.
 	 * @param {boolean} [fill=true] - If true, fill the interior with spaces.
-	 * @param {number} [borderChar=0x80] - The first border-drawing character to
+	 * @param {number} [borderChar=54] - The first border-drawing character to
 	 * use.
 	 * @returns {void}
 	 */
-	beep8.printBox = function( widthCols, heightRows, fill = true, borderChar = 48 ) {
+	beep8.printBox = function( widthCols, heightRows, fill = true, borderChar = 54 ) {
 
 		beep8.Core.preflight( "beep8.printBox" );
 		borderChar = beep8.convChar( borderChar );
@@ -1074,6 +1076,29 @@ const beep8 = {};
 
 ( function( beep8 ) {
 
+	beep8.Collision = {};
+
+	beep8.COLLISION = {};
+	beep8.COLLISION.NONE = 0;
+	beep8.COLLISION.N = 1;
+	beep8.COLLISION.E = 2;
+	beep8.COLLISION.S = 4;
+	beep8.COLLISION.W = 8;
+	beep8.COLLISION.NE = beep8.COLLISION.N + beep8.COLLISION.E;
+	beep8.COLLISION.NS = beep8.COLLISION.N + beep8.COLLISION.S;
+	beep8.COLLISION.NW = beep8.COLLISION.N + beep8.COLLISION.W;
+	beep8.COLLISION.SE = beep8.COLLISION.S + beep8.COLLISION.E;
+	beep8.COLLISION.SW = beep8.COLLISION.S + beep8.COLLISION.W;
+	beep8.COLLISION.WE = beep8.COLLISION.W + beep8.COLLISION.E;
+	beep8.COLLISION.WNE = beep8.COLLISION.W + beep8.COLLISION.N + beep8.COLLISION.E;
+	beep8.COLLISION.WES = beep8.COLLISION.W + beep8.COLLISION.E + beep8.COLLISION.S;
+	beep8.COLLISION.NES = beep8.COLLISION.N + beep8.COLLISION.E + beep8.COLLISION.S;
+	beep8.COLLISION.ALL = beep8.COLLISION.N + beep8.COLLISION.E + beep8.COLLISION.S + beep8.COLLISION.W;
+
+} )( beep8 || ( beep8 = {} ) );
+
+( function( beep8 ) {
+
 	beep8.Core = {};
 
 	beep8.Core.textRenderer = null;
@@ -1429,7 +1454,9 @@ const beep8 = {};
 	 */
 	beep8.Core.render = function() {
 
-		if ( crashed ) return;
+		if ( crashed ) {
+			return;
+		}
 
 		beep8.Core.realCtx.imageSmoothingEnabled = false;
 		beep8.Core.realCtx.clearRect( 0, 0, beep8.Core.realCanvas.width, beep8.Core.realCanvas.height );
@@ -1453,7 +1480,9 @@ const beep8 = {};
 	 */
 	beep8.Core.markDirty = function() {
 
-		if ( dirty ) return;
+		if ( dirty ) {
+			return;
+		}
 
 		dirty = true;
 		setTimeout( beep8.Core.render, 1 );
@@ -3496,15 +3525,13 @@ ${melody.join( '\n' )}`;
 			beep8.Utilities.checkNumber( "height", height );
 			beep8.Utilities.checkNumber( "ch", ch );
 
-			const charIndex = charMap.indexOf( ch );
-
 			const startCol = beep8.Core.drawState.cursorCol;
 			const startRow = beep8.Core.drawState.cursorRow;
 
 			for ( let i = 0; i < height; i++ ) {
 				beep8.Core.drawState.cursorCol = startCol;
 				beep8.Core.drawState.cursorRow = startRow + i;
-				this.printChar( charIndex, width );
+				this.printChar( ch, width );
 			}
 
 			beep8.Core.drawState.cursorCol = startCol;
@@ -3524,11 +3551,13 @@ ${melody.join( '\n' )}`;
 		 */
 		printBox( width, height, fill, borderCh ) {
 
+			const colCount = this.curTiles_.getColCount();
+
 			const borderNW = borderCh;
 			const borderNE = borderCh + 2;
-			const borderSW = borderCh + 32;
-			const borderSE = borderCh + 32 + 2;
-			const borderV = borderCh + 16;
+			const borderSW = borderCh + colCount + colCount;
+			const borderSE = borderCh + colCount + colCount + 2;
+			const borderV = borderCh + colCount;
 			const borderH = borderCh + 1;
 
 			beep8.Utilities.checkNumber( "width", width );
@@ -3586,10 +3615,9 @@ ${melody.join( '\n' )}`;
 		 */
 		put_( ch, col, row, fgColor, bgColor, font = null ) {
 
-			const chrW = beep8.CONFIG.CHR_WIDTH;
-			const chrH = beep8.CONFIG.CHR_HEIGHT;
-			const x = Math.round( col * chrW );
-			const y = Math.round( row * chrH );
+			// Calculate x and y row and column to place character.
+			const x = Math.round( col * beep8.CONFIG.CHR_WIDTH );
+			const y = Math.round( row * beep8.CONFIG.CHR_HEIGHT );
 
 			this.putxy_( ch, x, y, fgColor, bgColor, font );
 
@@ -3611,10 +3639,11 @@ ${melody.join( '\n' )}`;
 
 			font = font || this.curTiles_;
 
+			const colCount = font.getColCount();
 			const chrW = font.getCharWidth();
 			const chrH = font.getCharHeight();
-			const fontRow = Math.floor( ch / 16 );
-			const fontCol = ch % 16;
+			const fontRow = Math.floor( ch / colCount );
+			const fontCol = ch % colCount;
 
 			x = Math.round( x );
 			y = Math.round( y );
@@ -3887,6 +3916,7 @@ ${melody.join( '\n' )}`;
 
 		/**
 		 * Returns the character width of the font.
+		 *
 		 * @returns {number} The width of each character in pixels.
 		 */
 		getCharColCount() {
@@ -3898,6 +3928,7 @@ ${melody.join( '\n' )}`;
 
 		/**
 		 * Returns the character height of the font.
+		 *
 		 * @returns {number} The height of each character in pixels.
 		 */
 		getCharRowCount() {
@@ -3905,6 +3936,31 @@ ${melody.join( '\n' )}`;
 			return this.charRowCount_;
 
 		}
+
+
+		/**
+		 * Returns the number of rows in the font image.
+		 *
+		 * @returns {number} The number of rows in the font image.
+		 */
+		getRowCount() {
+
+			return this.rowCount_;
+
+		}
+
+
+		/**
+		 * Returns the number of columns in the font image.
+		 *
+		 * @returns {number} The number of columns in the font image.
+		 */
+		getColCount() {
+
+			return this.colCount_;
+
+		}
+
 
 
 		/**
