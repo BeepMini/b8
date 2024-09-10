@@ -1,0 +1,22 @@
+( function( beep8 ) {
+
+	beep8.Collision = {};
+
+	beep8.COLLISION = {};
+	beep8.COLLISION.NONE = 0;
+	beep8.COLLISION.N = 1;
+	beep8.COLLISION.E = 2;
+	beep8.COLLISION.S = 4;
+	beep8.COLLISION.W = 8;
+	beep8.COLLISION.NE = beep8.COLLISION.N + beep8.COLLISION.E;
+	beep8.COLLISION.NS = beep8.COLLISION.N + beep8.COLLISION.S;
+	beep8.COLLISION.NW = beep8.COLLISION.N + beep8.COLLISION.W;
+	beep8.COLLISION.SE = beep8.COLLISION.S + beep8.COLLISION.E;
+	beep8.COLLISION.SW = beep8.COLLISION.S + beep8.COLLISION.W;
+	beep8.COLLISION.WE = beep8.COLLISION.W + beep8.COLLISION.E;
+	beep8.COLLISION.WNE = beep8.COLLISION.W + beep8.COLLISION.N + beep8.COLLISION.E;
+	beep8.COLLISION.WES = beep8.COLLISION.W + beep8.COLLISION.E + beep8.COLLISION.S;
+	beep8.COLLISION.NES = beep8.COLLISION.N + beep8.COLLISION.E + beep8.COLLISION.S;
+	beep8.COLLISION.ALL = beep8.COLLISION.N + beep8.COLLISION.E + beep8.COLLISION.S + beep8.COLLISION.W;
+
+} )( beep8 || ( beep8 = {} ) );
