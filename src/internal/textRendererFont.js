@@ -61,6 +61,7 @@
 
 		/**
 		 * Returns the character width of the font.
+		 *
 		 * @returns {number} The width of each character in pixels.
 		 */
 		getCharColCount() {
@@ -72,6 +73,7 @@
 
 		/**
 		 * Returns the character height of the font.
+		 *
 		 * @returns {number} The height of each character in pixels.
 		 */
 		getCharRowCount() {
@@ -79,6 +81,31 @@
 			return this.charRowCount_;
 
 		}
+
+
+		/**
+		 * Returns the number of rows in the font image.
+		 *
+		 * @returns {number} The number of rows in the font image.
+		 */
+		getRowCount() {
+
+			return this.rowCount_;
+
+		}
+
+
+		/**
+		 * Returns the number of columns in the font image.
+		 *
+		 * @returns {number} The number of columns in the font image.
+		 */
+		getColCount() {
+
+			return this.colCount_;
+
+		}
+
 
 
 		/**

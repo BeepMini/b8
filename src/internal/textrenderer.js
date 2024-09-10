@@ -444,15 +444,13 @@
 			beep8.Utilities.checkNumber( "height", height );
 			beep8.Utilities.checkNumber( "ch", ch );
 
-			const charIndex = charMap.indexOf( ch );
-
 			const startCol = beep8.Core.drawState.cursorCol;
 			const startRow = beep8.Core.drawState.cursorRow;
 
 			for ( let i = 0; i < height; i++ ) {
 				beep8.Core.drawState.cursorCol = startCol;
 				beep8.Core.drawState.cursorRow = startRow + i;
-				this.printChar( charIndex, width );
+				this.printChar( ch, width );
 			}
 
 			beep8.Core.drawState.cursorCol = startCol;
@@ -472,11 +470,13 @@
 		 */
 		printBox( width, height, fill, borderCh ) {
 
+			const colCount = 18;
+
 			const borderNW = borderCh;
 			const borderNE = borderCh + 2;
-			const borderSW = borderCh + 32;
-			const borderSE = borderCh + 32 + 2;
-			const borderV = borderCh + 16;
+			const borderSW = borderCh + colCount + colCount;
+			const borderSE = borderCh + colCount + colCount + 2;
+			const borderV = borderCh + colCount;
 			const borderH = borderCh + 1;
 
 			beep8.Utilities.checkNumber( "width", width );
@@ -534,10 +534,9 @@
 		 */
 		put_( ch, col, row, fgColor, bgColor, font = null ) {
 
-			const chrW = beep8.CONFIG.CHR_WIDTH;
-			const chrH = beep8.CONFIG.CHR_HEIGHT;
-			const x = Math.round( col * chrW );
-			const y = Math.round( row * chrH );
+			// Calculate x and y row and column to place character.
+			const x = Math.round( col * beep8.CONFIG.CHR_WIDTH );
+			const y = Math.round( row * beep8.CONFIG.CHR_HEIGHT );
 
 			this.putxy_( ch, x, y, fgColor, bgColor, font );
 
@@ -559,10 +558,11 @@
 
 			font = font || this.curTiles_;
 
+			const colCount = font.getColCount();
 			const chrW = font.getCharWidth();
 			const chrH = font.getCharHeight();
-			const fontRow = Math.floor( ch / 16 );
-			const fontCol = ch % 16;
+			const fontRow = Math.floor( ch / colCount );
+			const fontCol = ch % colCount;
 
 			x = Math.round( x );
 			y = Math.round( y );
