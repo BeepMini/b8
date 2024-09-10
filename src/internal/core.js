@@ -355,7 +355,9 @@
 	 */
 	beep8.Core.render = function() {
 
-		if ( crashed ) return;
+		if ( crashed ) {
+			return;
+		}
 
 		beep8.Core.realCtx.imageSmoothingEnabled = false;
 		beep8.Core.realCtx.clearRect( 0, 0, beep8.Core.realCanvas.width, beep8.Core.realCanvas.height );
@@ -379,7 +381,9 @@
 	 */
 	beep8.Core.markDirty = function() {
 
-		if ( dirty ) return;
+		if ( dirty ) {
+			return;
+		}
 
 		dirty = true;
 		setTimeout( beep8.Core.render, 1 );
