@@ -470,7 +470,7 @@
 		 */
 		printBox( width, height, fill, borderCh ) {
 
-			const colCount = 18;
+			const colCount = this.curTiles_.getColCount();
 
 			const borderNW = borderCh;
 			const borderNE = borderCh + 2;
