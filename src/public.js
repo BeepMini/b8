@@ -308,6 +308,7 @@
 		charCode = beep8.convChar( charCode );
 		beep8.Utilities.checkNumber( "charCode", charCode );
 		beep8.Utilities.checkNumber( "numTimes", numTimes );
+
 		beep8.Core.textRenderer.printChar( charCode, numTimes );
 
 	}
@@ -319,17 +320,18 @@
 	 *
 	 * @param {number} widthCols - Width of the rectangle in screen columns.
 	 * @param {number} heightRows - Height of the rectangle in screen rows.
-	 * @param {number|string} [charCode=32] - The character to print, as an
-	 * integer (ASCII code) or a one-character string.
+	 * @param {number|string} [charCode=8] - The character to print.
 	 * @returns {void}
 	 */
-	beep8.printRect = function( widthCols, heightRows, charCode = 32 ) {
+	beep8.printRect = function( widthCols, heightRows, charCode = 8 ) {
 
 		beep8.Core.preflight( "beep8.printRect" );
 		charCode = beep8.convChar( charCode );
+
 		beep8.Utilities.checkNumber( "widthCols", widthCols );
 		beep8.Utilities.checkNumber( "heightRows", heightRows );
 		beep8.Utilities.checkNumber( "charCode", charCode );
+
 		beep8.Core.textRenderer.printRect( widthCols, heightRows, charCode );
 
 	}
@@ -344,11 +346,11 @@
 	 * @param {number} heightRows - Height of the box in screen rows, including
 	 * the border.
 	 * @param {boolean} [fill=true] - If true, fill the interior with spaces.
-	 * @param {number} [borderChar=0x80] - The first border-drawing character to
+	 * @param {number} [borderChar=54] - The first border-drawing character to
 	 * use.
 	 * @returns {void}
 	 */
-	beep8.printBox = function( widthCols, heightRows, fill = true, borderChar = 48 ) {
+	beep8.printBox = function( widthCols, heightRows, fill = true, borderChar = 54 ) {
 
 		beep8.Core.preflight( "beep8.printBox" );
 		borderChar = beep8.convChar( borderChar );
