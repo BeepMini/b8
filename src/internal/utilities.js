@@ -142,6 +142,26 @@
 
 
 	/**
+	 * Checks that a variable is an integer.
+	 *
+	 * @param {string} varName - The name of the variable.
+	 * @param {any} varValue - The value of the variable.
+	 * @returns {number} The 'varValue' parameter.
+	 */
+	beep8.Utilities.checkInt = function( varName, varValue, optMin, optMax ) {
+
+		beep8.Utilities.checkNumber( varName, varValue, optMin, optMax );
+
+		if ( varValue !== Math.round( varValue ) ) {
+			beep8.Utilities.fatal( `${varName} should be an integer but is ${varValue}` );
+		}
+
+		return varValue;
+
+	}
+
+
+	/**
 	 * Checks that a variable is a string.
 	 *
 	 * @param {string} varName - The name of the variable.
