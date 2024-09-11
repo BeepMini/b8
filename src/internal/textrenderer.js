@@ -65,6 +65,9 @@
 			// Prepare the tiles font.
 			this.curTiles_ = await this.loadFontAsync( "tiles", beep8.CONFIG.FONT_TILES );
 
+			// Prepare the actors/ player characters.
+			this.curActors_ = await this.loadFontAsync( "actors", beep8.CONFIG.FONT_ACTORS );
+
 			// Prepare the charMap array.
 			this.prepareCharMap();
 
