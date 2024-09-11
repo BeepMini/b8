@@ -350,7 +350,7 @@
 	 * use.
 	 * @returns {void}
 	 */
-	beep8.printBox = function( widthCols, heightRows, fill = true, borderChar = 54 ) {
+	beep8.printBox = function( widthCols, heightRows, fill = true, borderChar = beep8.CONFIG.BORDER_CHAR ) {
 
 		beep8.Core.preflight( "beep8.printBox" );
 		borderChar = beep8.convChar( borderChar );
@@ -424,14 +424,14 @@
 	 * @param {number} height - The height of the rectangle in pixels.
 	 * @returns {void}
 	 */
-	beep8.drawRect = function( x, y, width, height ) {
+	beep8.drawRect = function( x, y, width, height, lineWidth = 1 ) {
 
 		beep8.Utilities.checkNumber( "x", x );
 		beep8.Utilities.checkNumber( "y", y );
 		beep8.Utilities.checkNumber( "width", width );
 		beep8.Utilities.checkNumber( "height", height );
 
-		beep8.Core.drawRect( x, y, width, height );
+		beep8.Core.drawRect( x, y, width, height, lineWidth );
 
 	}
 
@@ -495,6 +495,27 @@
 		beep8.Utilities.checkNumber( "y", y );
 
 		beep8.Core.textRenderer.spr( ch, x, y );
+
+	}
+
+
+	/**
+	 * Draws an actor on the screen with a specific frame and direction.
+	 *
+	 * @param {number} ch - The character code of the actor.
+	 * @param {number} frame - The frame to draw.
+	 * @param {number} [direction=0] - The direction to draw the actor in. 0 = right, 1 = left.
+	 * @returns {void}
+	 */
+	beep8.drawActor = function( ch, frame, direction = 0 ) {
+
+		ch = beep8.convChar( ch );
+
+		beep8.Utilities.checkInt( "ch", ch );
+		beep8.Utilities.checkInt( "frame", frame );
+		beep8.Utilities.checkInt( "direction", direction );
+
+		beep8.Actors.draw( ch, frame, direction );
 
 	}
 
