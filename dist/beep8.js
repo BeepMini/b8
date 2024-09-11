@@ -78,6 +78,7 @@ const beep8 = {};
 		// The font files must be PNG files, with the characters in a grid.
 		FONT_DEFAULT: "../assets/font-default.png",
 		FONT_TILES: "../assets/font-tiles.png",
+		FONT_ACTORS: "../assets/font-actors.png",
 		// The characters in the font file.
 		// These are for the default font(s). If you use a different list you
 		// will need to upate the font file to match.
@@ -87,8 +88,8 @@ const beep8 = {};
 		CHR_WIDTH: 12,
 		CHR_HEIGHT: 12,
 		// Screen width and height in characters.
-		SCREEN_ROWS: 32,
-		SCREEN_COLS: 32,
+		SCREEN_ROWS: 28,
+		SCREEN_COLS: 28,
 		// If set, this is the opacity of the "scan lines" effect.
 		// If 0 or not set, don't show scan lines.
 		SCAN_LINES_OPACITY: 0.1,
@@ -139,6 +140,10 @@ const beep8 = {};
 		// If you don't want this, comment out these line, or set them to null.
 		PRINT_ESCAPE_START: "{{",
 		PRINT_ESCAPE_END: "}}",
+		// The first character to use for the border in printBox & menus.
+		// The number is the index of the top left corner of a border pattern in the font file.
+		// The method will use the 4 corners, and the top horizontal and left vertical sides.
+		BORDER_CHAR: 54,
 	};
 
 } )( beep8 || ( beep8 = {} ) );
@@ -495,7 +500,7 @@ const beep8 = {};
 	 * use.
 	 * @returns {void}
 	 */
-	beep8.printBox = function( widthCols, heightRows, fill = true, borderChar = 54 ) {
+	beep8.printBox = function( widthCols, heightRows, fill = true, borderChar = beep8.CONFIG.BORDER_CHAR ) {
 
 		beep8.Core.preflight( "beep8.printBox" );
 		borderChar = beep8.convChar( borderChar );
@@ -569,14 +574,14 @@ const beep8 = {};
 	 * @param {number} height - The height of the rectangle in pixels.
 	 * @returns {void}
 	 */
-	beep8.drawRect = function( x, y, width, height ) {
+	beep8.drawRect = function( x, y, width, height, lineWidth = 1 ) {
 
 		beep8.Utilities.checkNumber( "x", x );
 		beep8.Utilities.checkNumber( "y", y );
 		beep8.Utilities.checkNumber( "width", width );
 		beep8.Utilities.checkNumber( "height", height );
 
-		beep8.Core.drawRect( x, y, width, height );
+		beep8.Core.drawRect( x, y, width, height, lineWidth );
 
 	}
 
@@ -640,6 +645,27 @@ const beep8 = {};
 		beep8.Utilities.checkNumber( "y", y );
 
 		beep8.Core.textRenderer.spr( ch, x, y );
+
+	}
+
+
+	/**
+	 * Draws an actor on the screen with a specific frame and direction.
+	 *
+	 * @param {number} ch - The character code of the actor.
+	 * @param {number} frame - The frame to draw.
+	 * @param {number} [direction=0] - The direction to draw the actor in. 0 = right, 1 = left.
+	 * @returns {void}
+	 */
+	beep8.drawActor = function( ch, frame, direction = 0 ) {
+
+		ch = beep8.convChar( ch );
+
+		beep8.Utilities.checkInt( "ch", ch );
+		beep8.Utilities.checkInt( "frame", frame );
+		beep8.Utilities.checkInt( "direction", direction );
+
+		beep8.Actors.draw( ch, frame, direction );
 
 	}
 
@@ -839,6 +865,60 @@ const beep8 = {};
 		return beep8.Core.restoreScreen( screenData );
 
 	}
+
+} )( beep8 || ( beep8 = {} ) );
+
+( function( beep8 ) {
+
+	beep8.Actors = {};
+
+
+	/**
+	 * Draw an actor at the current cursor position.
+	 *
+	 * @param {number} ch The character to draw.
+	 * @param {number} frame The frame to draw.
+	 * @param {number} direction The direction to draw the actor in. 0 = right, 1 = left.
+	 * @returns {void}
+	 */
+	beep8.Actors.draw = function( ch, frame, direction = 0 ) {
+
+		beep8.Utilities.checkInt( "ch", ch );
+		beep8.Utilities.checkInt( "frame", frame );
+
+		const font = beep8.Core.textRenderer.curActors_;
+
+		const chrIndex = ( ch * font.getColCount() ) + frame;
+
+		beep8.Core.textRenderer.put_(
+			chrIndex,
+			beep8.Core.drawState.cursorCol,
+			beep8.Core.drawState.cursorRow,
+			beep8.Core.drawState.fgColor,
+			beep8.Core.drawState.bgColor,
+			font,
+			direction
+		);
+
+	};
+
+
+	/**
+	 * Animate an actor.
+	 *
+	 * No idea how I will do this yet, but I will figure it out.
+	 *
+	 * @param {number} ch The character to animate.
+	 * @param {number[]} frames The frames to animate.
+	 * @param {number} direction The direction to animate the actor in. 0 = right, 1 = left.
+	 * @returns {void}
+	 */
+	beep8.Actors.animate = function( ch, frames = null, direction = 0 ) {
+
+		beep8.Utilities.checkInt( "ch", ch );
+		beep8.Utilities.checkArray( "frames", frames );
+
+	};
 
 } )( beep8 || ( beep8 = {} ) );
 
@@ -1652,7 +1732,7 @@ const beep8 = {};
 	 * @param {number} height - The height of the rectangle.
 	 * @returns {void}
 	 */
-	beep8.Core.drawRect = function( x, y, width, height ) {
+	beep8.Core.drawRect = function( x, y, width, height, lineWidth = 1 ) {
 
 		beep8.Utilities.checkNumber( "x", x );
 		beep8.Utilities.checkNumber( "y", y );
@@ -1661,9 +1741,10 @@ const beep8 = {};
 
 		let oldStrokeStyle = beep8.Core.ctx.strokeStyle;
 		beep8.Core.ctx.strokeStyle = beep8.Core.getColorHex( beep8.Core.drawState.fgColor );
+		beep8.Core.ctx.lineWidth = lineWidth;
 		beep8.Core.ctx.strokeRect(
-			Math.round( x ) + 0.5, Math.round( y ) + 0.5,
-			Math.round( width ) - 1, Math.round( height ) - 1
+			Math.round( x ), Math.round( y ),
+			Math.round( width ), Math.round( height )
 		);
 
 		beep8.Core.ctx.strokeStyle = oldStrokeStyle;
@@ -2390,7 +2471,7 @@ const beep8 = {};
 				selBgColor: beep8.Core.drawState.fgColor,
 				selFgColor: beep8.Core.drawState.bgColor,
 				bgChar: 0,
-				borderChar: 48,
+				borderChar: beep8.CONFIG.BORDER_CHAR,
 				center: false,
 				centerH: false,
 				centerV: false,
@@ -2409,7 +2490,12 @@ const beep8 = {};
 		const border01 = options.borderChar ? 1 : 0;
 		let choicesCols = 0;
 		const choicesRows = choices.length;
-		choices.forEach( choice => choicesCols = Math.max( choicesCols, choice.length ) );
+
+		choices.forEach(
+			( choice ) => {
+				choicesCols = Math.max( choicesCols, choice.length );
+			}
+		);
 
 		const totalCols = Math.max( promptSize.cols, choicesCols ) + 2 * options.padding + 2 * border01;
 		const totalRows = prompt01 * ( promptSize.rows + 1 ) + choicesRows + 2 * options.padding + 2 * border01;
@@ -2430,7 +2516,9 @@ const beep8 = {};
 
 		// Print the border.
 		if ( options.borderChar ) {
+
 			beep8.Core.textRenderer.printBox( totalCols, totalRows, false, options.borderChar );
+
 			// Print title at the top of the border.
 			if ( options.title ) {
 				const t = " " + options.title + " ";
@@ -3146,6 +3234,9 @@ ${melody.join( '\n' )}`;
 			// Prepare the tiles font.
 			this.curTiles_ = await this.loadFontAsync( "tiles", beep8.CONFIG.FONT_TILES );
 
+			// Prepare the actors/ player characters.
+			this.curActors_ = await this.loadFontAsync( "actors", beep8.CONFIG.FONT_ACTORS );
+
 			// Prepare the charMap array.
 			this.prepareCharMap();
 
@@ -3351,17 +3442,28 @@ ${melody.join( '\n' )}`;
 
 			beep8.Utilities.checkString( "text", text );
 			beep8.Utilities.checkNumber( "width", width );
-			text = text.split( "\n" )[ 0 ];
+
+			const col = beep8.Core.drawState.cursorCol;
+
+			// Split the text into lines.
+			text = text.split( "\n" );
 
 			if ( !text ) {
 				return;
 			}
 
-			const textWidth = this.measure( text ).cols;
-			const col = Math.floor( beep8.Core.drawState.cursorCol + ( width - textWidth ) / 2 );
+			// Loop through each line of text.
+			for ( let i = 0; i < text.length; i++ ) {
+
+				const textWidth = this.measure( text[ i ] ).cols;
+				const tempCol = Math.floor( col + ( width - textWidth ) / 2 );
+
+				beep8.Core.drawState.cursorCol = tempCol;
+				this.print( text[ i ] );
+
+			}
 
 			beep8.Core.drawState.cursorCol = col;
-			this.print( text );
 
 		}
 
@@ -3549,21 +3651,21 @@ ${melody.join( '\n' )}`;
 		 * @param {number} borderCh - The character to use for the border.
 		 * @returns {void}
 		 */
-		printBox( width, height, fill, borderCh ) {
-
-			const colCount = this.curTiles_.getColCount();
-
-			const borderNW = borderCh;
-			const borderNE = borderCh + 2;
-			const borderSW = borderCh + colCount + colCount;
-			const borderSE = borderCh + colCount + colCount + 2;
-			const borderV = borderCh + colCount;
-			const borderH = borderCh + 1;
+		printBox( width, height, fill, borderChar = beep8.CONFIG.BORDER_CHAR ) {
 
 			beep8.Utilities.checkNumber( "width", width );
 			beep8.Utilities.checkNumber( "height", height );
 			beep8.Utilities.checkBoolean( "fill", fill );
-			beep8.Utilities.checkNumber( "borderCh", borderCh );
+			beep8.Utilities.checkNumber( "borderChar", borderChar );
+
+			const colCount = this.curTiles_.getColCount();
+
+			const borderNW = borderChar;
+			const borderNE = borderChar + 2;
+			const borderSW = borderChar + colCount + colCount;
+			const borderSE = borderChar + colCount + colCount + 2;
+			const borderV = borderChar + colCount;
+			const borderH = borderChar + 1;
 
 			const startCol = beep8.Core.drawState.cursorCol;
 			const startRow = beep8.Core.drawState.cursorRow;
@@ -3613,13 +3715,13 @@ ${melody.join( '\n' )}`;
 		 * @param {number} bgColor - The background color.
 		 * @returns {void}
 		 */
-		put_( ch, col, row, fgColor, bgColor, font = null ) {
+		put_( ch, col, row, fgColor, bgColor, font = null, direction = 0 ) {
 
 			// Calculate x and y row and column to place character.
 			const x = Math.round( col * beep8.CONFIG.CHR_WIDTH );
 			const y = Math.round( row * beep8.CONFIG.CHR_HEIGHT );
 
-			this.putxy_( ch, x, y, fgColor, bgColor, font );
+			this.putxy_( ch, x, y, fgColor, bgColor, font, direction );
 
 		}
 
@@ -3635,7 +3737,7 @@ ${melody.join( '\n' )}`;
 		 * @param {beep8.TextRendererFont} [font=null] - The font to use.
 		 * @returns {void}
 		 */
-		putxy_( ch, x, y, fgColor, bgColor, font = null ) {
+		putxy_( ch, x, y, fgColor, bgColor, font = null, direction = 0 ) {
 
 			font = font || this.curTiles_;
 
@@ -3648,6 +3750,8 @@ ${melody.join( '\n' )}`;
 			x = Math.round( x );
 			y = Math.round( y );
 
+			// If bgColor is -1 then don't draw the background.
+			// Or make the background transparent.
 			if ( bgColor >= 0 ) {
 				beep8.Core.ctx.fillStyle = beep8.Core.getColorHex( bgColor );
 				beep8.Core.ctx.fillRect( x, y, chrW, chrH );
@@ -3656,6 +3760,32 @@ ${melody.join( '\n' )}`;
 			// Foreground and background are the same so don't draw anything else.
 			if ( bgColor === fgColor ) {
 				return;
+			}
+
+			// Flippety flip the tiles.
+			if ( direction > 0 ) {
+
+				// Save the current state of the canvas context if flipping is needed.
+				beep8.Core.ctx.save();
+
+				// Determine whether to flip horizontally or vertically
+				const flipH = ( direction & 1 ) !== 0; // Check if bit 1 is set (horizontal flip)
+				const flipV = ( direction & 2 ) !== 0; // Check if bit 2 is set (vertical flip)
+
+				// Adjust the origin based on flip direction
+				const translateX = flipH ? chrW : 0;
+				const translateY = flipV ? chrH : 0;
+				beep8.Core.ctx.translate( x + translateX, y + translateY );
+
+				// Apply scaling to flip the image
+				const scaleX = flipH ? -1 : 1;
+				const scaleY = flipV ? -1 : 1;
+				beep8.Core.ctx.scale( scaleX, scaleY );
+
+				// Reset x and y to 0 because the translate operation adjusts the positioning
+				x = 0;
+				y = 0;
+
 			}
 
 			const color = beep8.Utilities.clamp( fgColor, 0, beep8.CONFIG.COLORS.length - 1 );
@@ -3669,6 +3799,11 @@ ${melody.join( '\n' )}`;
 				x, y,
 				chrW, chrH
 			);
+
+			// Restore the canvas context if flipping was needed.
+			if ( direction > 0 ) {
+				beep8.Core.ctx.restore();
+			}
 
 			beep8.Core.markDirty();
 
@@ -4319,6 +4454,26 @@ ${melody.join( '\n' )}`;
 
 		if ( optMax !== undefined ) {
 			beep8.Utilities.assert( varValue <= optMax, `${varName} should be <= ${optMax} but is ${varValue}` );
+		}
+
+		return varValue;
+
+	}
+
+
+	/**
+	 * Checks that a variable is an integer.
+	 *
+	 * @param {string} varName - The name of the variable.
+	 * @param {any} varValue - The value of the variable.
+	 * @returns {number} The 'varValue' parameter.
+	 */
+	beep8.Utilities.checkInt = function( varName, varValue, optMin, optMax ) {
+
+		beep8.Utilities.checkNumber( varName, varValue, optMin, optMax );
+
+		if ( varValue !== Math.round( varValue ) ) {
+			beep8.Utilities.fatal( `${varName} should be an integer but is ${varValue}` );
 		}
 
 		return varValue;
