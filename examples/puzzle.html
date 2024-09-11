@@ -61,19 +61,20 @@
 		}
 
 		beep8.color(10);
-		beep8.Core.drawRect(
+		beep8.drawRect(
 			(currentTile[0] * PIECE_WIDTH) + OFFSET_X,
 			(currentTile[1] * PIECE_HEIGHT) + OFFSET_Y,
-			PIECE_WIDTH, PIECE_HEIGHT
+			PIECE_WIDTH, PIECE_HEIGHT,
+			2
 		);
 
 		beep8.locate(1, 22);
 		if (hasWon()) {
 			beep8.color(12, 0);
-			beep8.print("* YOU WON! CONGRATULATIONS! *");
+			beep8.printCentered("* YOU WON! CONGRATULATIONS! *", beep8.CONFIG.SCREEN_COLS - 2 );
 		} else {
 			beep8.color(7, 0);
-			beep8.print("Arrows: select\nEnter: slide");
+			beep8.printCentered("Arrows: Select\nEnter: Slide", beep8.CONFIG.SCREEN_COLS - 2 );
 		}
 	}
 
