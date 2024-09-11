@@ -36,7 +36,7 @@
 				selBgColor: beep8.Core.drawState.fgColor,
 				selFgColor: beep8.Core.drawState.bgColor,
 				bgChar: 0,
-				borderChar: 48,
+				borderChar: beep8.CONFIG.BORDER_CHAR,
 				center: false,
 				centerH: false,
 				centerV: false,
@@ -55,7 +55,12 @@
 		const border01 = options.borderChar ? 1 : 0;
 		let choicesCols = 0;
 		const choicesRows = choices.length;
-		choices.forEach( choice => choicesCols = Math.max( choicesCols, choice.length ) );
+
+		choices.forEach(
+			( choice ) => {
+				choicesCols = Math.max( choicesCols, choice.length );
+			}
+		);
 
 		const totalCols = Math.max( promptSize.cols, choicesCols ) + 2 * options.padding + 2 * border01;
 		const totalRows = prompt01 * ( promptSize.rows + 1 ) + choicesRows + 2 * options.padding + 2 * border01;
@@ -76,7 +81,9 @@
 
 		// Print the border.
 		if ( options.borderChar ) {
+
 			beep8.Core.textRenderer.printBox( totalCols, totalRows, false, options.borderChar );
+
 			// Print title at the top of the border.
 			if ( options.title ) {
 				const t = " " + options.title + " ";
