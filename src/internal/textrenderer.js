@@ -273,17 +273,28 @@
 
 			beep8.Utilities.checkString( "text", text );
 			beep8.Utilities.checkNumber( "width", width );
-			text = text.split( "\n" )[ 0 ];
+
+			const col = beep8.Core.drawState.cursorCol;
+
+			// Split the text into lines.
+			text = text.split( "\n" );
 
 			if ( !text ) {
 				return;
 			}
 
-			const textWidth = this.measure( text ).cols;
-			const col = Math.floor( beep8.Core.drawState.cursorCol + ( width - textWidth ) / 2 );
+			// Loop through each line of text.
+			for ( let i = 0; i < text.length; i++ ) {
+
+				const textWidth = this.measure( text[ i ] ).cols;
+				const tempCol = Math.floor( col + ( width - textWidth ) / 2 );
+
+				beep8.Core.drawState.cursorCol = tempCol;
+				this.print( text[ i ] );
+
+			}
 
 			beep8.Core.drawState.cursorCol = col;
-			this.print( text );
 
 		}
 
