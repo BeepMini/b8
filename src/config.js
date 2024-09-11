@@ -32,6 +32,7 @@
 		// The font files must be PNG files, with the characters in a grid.
 		FONT_DEFAULT: "../assets/font-default.png",
 		FONT_TILES: "../assets/font-tiles.png",
+		FONT_ACTORS: "../assets/font-actors.png",
 		// The characters in the font file.
 		// These are for the default font(s). If you use a different list you
 		// will need to upate the font file to match.
@@ -41,8 +42,8 @@
 		CHR_WIDTH: 12,
 		CHR_HEIGHT: 12,
 		// Screen width and height in characters.
-		SCREEN_ROWS: 32,
-		SCREEN_COLS: 32,
+		SCREEN_ROWS: 28,
+		SCREEN_COLS: 28,
 		// If set, this is the opacity of the "scan lines" effect.
 		// If 0 or not set, don't show scan lines.
 		SCAN_LINES_OPACITY: 0.1,
@@ -93,6 +94,10 @@
 		// If you don't want this, comment out these line, or set them to null.
 		PRINT_ESCAPE_START: "{{",
 		PRINT_ESCAPE_END: "}}",
+		// The first character to use for the border in printBox & menus.
+		// The number is the index of the top left corner of a border pattern in the font file.
+		// The method will use the 4 corners, and the top horizontal and left vertical sides.
+		BORDER_CHAR: 54,
 	};
 
 } )( beep8 || ( beep8 = {} ) );
