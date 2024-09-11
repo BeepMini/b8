@@ -471,21 +471,21 @@
 		 * @param {number} borderCh - The character to use for the border.
 		 * @returns {void}
 		 */
-		printBox( width, height, fill, borderCh ) {
-
-			const colCount = this.curTiles_.getColCount();
-
-			const borderNW = borderCh;
-			const borderNE = borderCh + 2;
-			const borderSW = borderCh + colCount + colCount;
-			const borderSE = borderCh + colCount + colCount + 2;
-			const borderV = borderCh + colCount;
-			const borderH = borderCh + 1;
+		printBox( width, height, fill, borderChar = beep8.CONFIG.BORDER_CHAR ) {
 
 			beep8.Utilities.checkNumber( "width", width );
 			beep8.Utilities.checkNumber( "height", height );
 			beep8.Utilities.checkBoolean( "fill", fill );
-			beep8.Utilities.checkNumber( "borderCh", borderCh );
+			beep8.Utilities.checkNumber( "borderChar", borderChar );
+
+			const colCount = this.curTiles_.getColCount();
+
+			const borderNW = borderChar;
+			const borderNE = borderChar + 2;
+			const borderSW = borderChar + colCount + colCount;
+			const borderSE = borderChar + colCount + colCount + 2;
+			const borderV = borderChar + colCount;
+			const borderH = borderChar + 1;
 
 			const startCol = beep8.Core.drawState.cursorCol;
 			const startRow = beep8.Core.drawState.cursorRow;
@@ -535,13 +535,13 @@
 		 * @param {number} bgColor - The background color.
 		 * @returns {void}
 		 */
-		put_( ch, col, row, fgColor, bgColor, font = null ) {
+		put_( ch, col, row, fgColor, bgColor, font = null, direction = 0 ) {
 
 			// Calculate x and y row and column to place character.
 			const x = Math.round( col * beep8.CONFIG.CHR_WIDTH );
 			const y = Math.round( row * beep8.CONFIG.CHR_HEIGHT );
 
-			this.putxy_( ch, x, y, fgColor, bgColor, font );
+			this.putxy_( ch, x, y, fgColor, bgColor, font, direction );
 
 		}
 
@@ -557,7 +557,7 @@
 		 * @param {beep8.TextRendererFont} [font=null] - The font to use.
 		 * @returns {void}
 		 */
-		putxy_( ch, x, y, fgColor, bgColor, font = null ) {
+		putxy_( ch, x, y, fgColor, bgColor, font = null, direction = 0 ) {
 
 			font = font || this.curTiles_;
 
@@ -570,6 +570,8 @@
 			x = Math.round( x );
 			y = Math.round( y );
 
+			// If bgColor is -1 then don't draw the background.
+			// Or make the background transparent.
 			if ( bgColor >= 0 ) {
 				beep8.Core.ctx.fillStyle = beep8.Core.getColorHex( bgColor );
 				beep8.Core.ctx.fillRect( x, y, chrW, chrH );
@@ -578,6 +580,32 @@
 			// Foreground and background are the same so don't draw anything else.
 			if ( bgColor === fgColor ) {
 				return;
+			}
+
+			// Flippety flip the tiles.
+			if ( direction > 0 ) {
+
+				// Save the current state of the canvas context if flipping is needed.
+				beep8.Core.ctx.save();
+
+				// Determine whether to flip horizontally or vertically
+				const flipH = ( direction & 1 ) !== 0; // Check if bit 1 is set (horizontal flip)
+				const flipV = ( direction & 2 ) !== 0; // Check if bit 2 is set (vertical flip)
+
+				// Adjust the origin based on flip direction
+				const translateX = flipH ? chrW : 0;
+				const translateY = flipV ? chrH : 0;
+				beep8.Core.ctx.translate( x + translateX, y + translateY );
+
+				// Apply scaling to flip the image
+				const scaleX = flipH ? -1 : 1;
+				const scaleY = flipV ? -1 : 1;
+				beep8.Core.ctx.scale( scaleX, scaleY );
+
+				// Reset x and y to 0 because the translate operation adjusts the positioning
+				x = 0;
+				y = 0;
+
 			}
 
 			const color = beep8.Utilities.clamp( fgColor, 0, beep8.CONFIG.COLORS.length - 1 );
@@ -591,6 +619,11 @@
 				x, y,
 				chrW, chrH
 			);
+
+			// Restore the canvas context if flipping was needed.
+			if ( direction > 0 ) {
+				beep8.Core.ctx.restore();
+			}
 
 			beep8.Core.markDirty();
 
