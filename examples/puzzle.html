@@ -16,6 +16,8 @@
     const PIECE_WIDTH = 64, PIECE_HEIGHT = 42;
     // How many rows and columns of puzzle pieces.
     const GRID_ROWS = 4, GRID_COLS = 4;
+	const OFFSET_X = ((beep8.CONFIG.SCREEN_COLS * beep8.CONFIG.CHR_WIDTH) - (PIECE_WIDTH * GRID_COLS)) / 2;
+	const OFFSET_Y = 24;
     // The current puzzle layout. -1 is the empty cell.
     let pieces = [
        [  4,  0,  1,  3, ],
@@ -27,48 +29,78 @@
     let curRow = 0, curCol = 0;
 
     async function main() {
-      beep8.color(7, 0);
-      beep8.cls();
-      beep8.locate(1, 1);
-      beep8.print("Loading...");
-      fullImg = await beep8.Async.loadImage("../assets/colmar.png");
-      while (true) {
-        drawBoard();
-        await processInput();
-      }
-    }
+		beep8.color(7, 0);
+		beep8.cls();
+		beep8.locate(1, 1);
+		beep8.print("Loading...");
+		fullImg = await beep8.Async.loadImage("../assets/colmar.png");
+		while (true) {
+			drawBoard();
+			await processInput();
+		}
+	}
 
-    function drawBoard() {
-      beep8.cls();
-      // Draw each piece.
-      for (let i = 0; i < GRID_ROWS; i++) {
-        for (let j = 0; j < GRID_COLS; j++) {
-          const pieceNumber = pieces[i][j];
-          drawPiece(pieceNumber, j * PIECE_WIDTH, i * PIECE_HEIGHT,
-            i === curRow && j === curCol);
-        }
-      }
-      beep8.locate(1, 22);
-      if (hasWon()) {
-        beep8.color(12, 0);
-        beep8.print("* YOU WON! CONGRATULATIONS! *");
-      } else {
-        beep8.color(7, 0);
-        beep8.print("Arrows: select, Enter: slide");
-      }
-    }
+	function drawBoard() {
+		beep8.cls();
+
+		let currentTile = [];
+
+		// Draw each piece.
+		for (let i = 0; i < GRID_ROWS; i++) {
+			for (let j = 0; j < GRID_COLS; j++) {
+				const pieceNumber = pieces[i][j];
+				drawPiece(
+					pieceNumber,
+					j * PIECE_WIDTH, i * PIECE_HEIGHT
+				);
+
+				if ( i === curRow && j === curCol ) {
+					currentTile =[j, i];
+				}
+			}
+		}
+
+		beep8.color(10);
+		beep8.Core.drawRect(
+			(currentTile[0] * PIECE_WIDTH) + OFFSET_X,
+			(currentTile[1] * PIECE_HEIGHT) + OFFSET_Y,
+			PIECE_WIDTH, PIECE_HEIGHT
+		);
+
+		beep8.locate(1, 22);
+		if (hasWon()) {
+			beep8.color(12, 0);
+			beep8.print("* YOU WON! CONGRATULATIONS! *");
+		} else {
+			beep8.color(7, 0);
+			beep8.print("Arrows: select\nEnter: slide");
+		}
+	}
 
     function drawPiece(pieceNumber, x, y, isCurrent) {
-      // The piece number tells us what part of the image to draw.
-      const row = Math.floor(pieceNumber / GRID_COLS);
-      const col = pieceNumber % GRID_COLS;
-      // Draw the rectangular part of the image that corresponds to
-      // the piece.
-      beep8.drawImageRect(x, y, fullImg,
-          col * PIECE_WIDTH, row * PIECE_HEIGHT, PIECE_WIDTH, PIECE_HEIGHT);
-      beep8.color(isCurrent ? 14 : 0);
-      beep8.drawRect(x, y, PIECE_WIDTH, PIECE_HEIGHT);
-    }
+
+		// The piece number tells us what part of the image to draw.
+		const row = Math.floor(pieceNumber / GRID_COLS);
+		const col = pieceNumber % GRID_COLS;
+
+		// Draw the rectangular part of the image that corresponds to
+		// the piece.
+		beep8.drawImageRect(
+			x + OFFSET_X, y + OFFSET_Y,
+			fullImg,
+			col * PIECE_WIDTH,
+			row * PIECE_HEIGHT,
+			PIECE_WIDTH, PIECE_HEIGHT
+		);
+
+		// Draw a border around the selected tile.
+		beep8.color(0);
+		beep8.drawRect(
+			x + OFFSET_X, y + OFFSET_Y,
+			PIECE_WIDTH, PIECE_HEIGHT
+		);
+
+	}
 
     async function processInput() {
       const k = await beep8.Async.key();

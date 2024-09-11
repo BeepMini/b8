@@ -38,11 +38,9 @@
       beep8.print("\nStyle markup can be used:\n");
       // {{c13}} sets the foreground color to 13 (green).
       // {{z}} resets the color.
-      beep8.print("You can have a {{c12,t" + boldFont + "}}green{{z}} word.");
       // {{c0}} sets the color to 0 (black) and {{b14}} sets the background to 14 (pink).
       // You can combine them in the same sequence: {{c0,b14}}.
-      beep8.print("Or say an {{c0,b14}}important{{z}} thing.");
-	  beep8.print("Or use a {{t" + retroFont + "}}bolder, retro{{z}} font.")
+      beep8.print("You can have a {{c12,t" + boldFont + "}}green{{z}} word. Or say an {{c0,b14}}important{{z}} thing. Or use a {{t" + retroFont + "}}bolder, retro{{z}} font.", beep8.CONFIG.SCREEN_COLS - 4);
 
 	//   console.log(beep8.Core.drawState);
       beep8.setFont(newsFont);
@@ -58,7 +56,7 @@
 	  beep8.setFont(newsFont);
       beep8.locate(2, 19);
       beep8.color(10, 6);
-      beep8.printBox(beep8.CONFIG.SCREEN_COLS - 4, 11);
+      beep8.printBox(beep8.CONFIG.SCREEN_COLS - 4, beep8.CONFIG.SCREEN_ROWS - 19 - 1);
 
       beep8.locate(4, 21);
 	  beep8.color(15, 6);

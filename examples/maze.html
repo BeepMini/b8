@@ -39,7 +39,7 @@
     // Player position.
     let px = 2, py = 2;
     // If true, the player is facing left instead of right.
-    let facingLeft = false;
+    let facingLeft = 0;
     // Sound effects.
     let sfxStep, sfxWin, sfxDoor;
 
@@ -72,27 +72,28 @@
           // Choose the draw color based on the distance to the player.
           const distToPlayer = beep8.Utilities.dist2d(px, py, x, y);
 		  let tile_color = 0;
+		  if ( distToPlayer < 8 ) { tile_color = 1; }
 		  if ( distToPlayer < 5 ) { tile_color = 5; }
 		  if ( distToPlayer < 3 ) { tile_color = 4; }
 		  if ( distToPlayer < 2 ) {	tile_color = 3; }
 	      beep8.color( tile_color );
 
           // For decorative purposes, use some graphical characters instead of the ASCII ones.
-          beep8.printChar(cell === "#" ? 0x87 : cell === "." ? 0xDB : cell === "+" ? 0xC8 : " ");
+          beep8.printChar( cell === "#" ? 291 : cell === "." ? 110 : cell === "+" ? 237 : 0 );
         }
       }
     }
 
     function drawPlayer() {
       beep8.locate(px, py);
-      beep8.color(15, 0);
-      beep8.printChar(facingLeft ? 193 : 192); // 0xc0 is the player facing right, 0xc1 is left.
+      beep8.color(10, 0);
+      beep8.drawActor(3, 1, facingLeft);
     }
 
     async function movePlayer() {
       const keyName = await beep8.Async.key();
-      if (keyName === "ArrowLeft") facingLeft = true;
-      if (keyName === "ArrowRight") facingLeft = false;
+      if (keyName === "ArrowLeft") facingLeft = 1;
+      if (keyName === "ArrowRight") facingLeft = 0;
       // Where does the player want to go?
       const candX = px + (keyName === "ArrowRight" ? 1 : 0) + (keyName === "ArrowLeft" ? -1 : 0);
       const candY = py + (keyName === "ArrowDown" ? 1 : 0) + (keyName === "ArrowUp" ? -1 : 0);

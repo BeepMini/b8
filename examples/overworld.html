@@ -60,18 +60,20 @@
     };
 
     const TILES = {
-      "~": { color: 3, bg: 5, char: 10 * 16 - 1, solid: true },	// water.
-      "|": { color: 12, char: 123, solid: true },			// tree.
-      "^": { color: 2, char: 255 - 16, solid: true },			// mountain.
-      "=": { color: 1, char: 0xdd, solid: false },
-      ",": { color: 13, char: 24, solid: false },			// grass.
+      "~": { color: 3, bg: 5, char: 188, solid: true },	// water.
+      "|": { color: 12, char: 185, solid: true },			// tree.
+      "^": { color: 2, char: 187, solid: true },			// mountain.
+      "=": { color: 1, char: 222, solid: false },			// bridge.
+      ",": { color: 13, char: 274, solid: false },			// grass.
       " ": { color: 1, char: 0, solid: false },				// empty.
-      "T": { color: 15, char: 252, solid: false },			// town.
-      "O": { color: 0, char: 0x20, solid: false },
-      "#": { color: 7, char: 13, solid: true },				// wall.
-      ".": { color: 1, char: 15, solid: false },			// stones.
-      "+": { color: 6, char: 0xc9, solid: false },
-      "]": { color: 10, char: 4 * 16, solid: true },		// force field.
+      "T": { color: 15, char: 326, solid: false },			// town.
+      "O": { color: 0, char: 0x20, solid: false },			//
+      "#": { color: 7, char: 298, solid: true },				// wall.
+      ".": { color: 1, char: 301, solid: false },			// stones.
+      "+": { color: 6, char: 234, solid: false },			// doorway.
+      "]": { color: 10, char: 74, solid: true },		// force field.
+
+	  // Villagers.
       "0": { color: 15, char: 0xd0, solid: true, talk: true },
       "1": { color: 15, char: 0xd3, solid: true, talk: true },
       "2": { color: 15, char: 0xd5, solid: true, talk: true },
@@ -86,7 +88,7 @@
 
     let curMap = "OVERWORLD";  // Current map name
     let px = 10, py = 10;      // Current player position.
-    let facingLeft = false;    // If true, player is looking to the left.
+    let facingLeft = 1;    // If true, player is looking to the left.
 
     async function main() {
       while (true) {
@@ -99,7 +101,7 @@
     function drawPlayer() {
       beep8.locate(px, py);
       beep8.color(15, 0);
-      beep8.printChar(facingLeft ? 0xc1 : 0xc0); // 0xc0 is the player facing right, 0xc1 is left.
+	  beep8.drawActor(0, 1, facingLeft);
     }
 
     function drawMap() {
@@ -130,8 +132,8 @@
 
       const keyName = await beep8.Async.key();
 
-	  if (keyName === "ArrowLeft") facingLeft = true;
-      if (keyName === "ArrowRight") facingLeft = false;
+	  if (keyName === "ArrowLeft") facingLeft = 1;
+      if (keyName === "ArrowRight") facingLeft = 0;
 
 	  // Where does the player want to go?
       const candX = px + (keyName === "ArrowRight" ? 1 : 0) + (keyName === "ArrowLeft" ? -1 : 0);

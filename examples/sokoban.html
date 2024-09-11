@@ -84,8 +84,8 @@
     ];
 
     const TILES = {
-      "#": { color: 5, char: 29 },   // Wall
-      ".": { color: 4, char: 6 * 16 + 2 },   // Target
+      "#": { color: 5, char: 309 },   // Wall
+      ".": { color: 4, char: 88 },   // Target
       // NOTE: the remaining stuff (boxes, player) are objects, they are not tiles in the map.
     }
 
@@ -153,7 +153,7 @@
         beep8.locate(DRAW_OFFSET_X + box.x, DRAW_OFFSET_Y + box.y);
         // If the box is on a target, make it green; otherwise, black.
         beep8.color(curLevel[box.y][box.x] === "." ? 12 : 14);
-        beep8.printChar(46);
+        beep8.printChar(310);
       });
     }
 
