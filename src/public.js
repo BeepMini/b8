@@ -430,6 +430,7 @@
 		beep8.Utilities.checkNumber( "y", y );
 		beep8.Utilities.checkNumber( "width", width );
 		beep8.Utilities.checkNumber( "height", height );
+		beep8.Utilities.checkNumber( "lineWidth", lineWidth );
 
 		beep8.Core.drawRect( x, y, width, height, lineWidth );
 
