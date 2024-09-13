@@ -1,6 +1,5 @@
 ( function( beep8 ) {
 
-
 	/**
 	 * A collection of functions for working with tilemaps.
 	 * The tilemaps are created with the beep8 Tilemap Editor.
@@ -14,6 +13,12 @@
 	 * [4] = additional data.
 	 */
 	beep8.Tilemap = {};
+
+	beep8.Tilemap.MAP_CHAR = 0;
+	beep8.Tilemap.MAP_FG = 1;
+	beep8.Tilemap.MAP_BG = 2;
+	beep8.Tilemap.MAP_COLLISION = 3;
+	beep8.Tilemap.MAP_DATA = 4;
 
 
 	/**
@@ -87,16 +92,25 @@
 		beep8.Utilities.checkNumber( "width", width );
 		beep8.Utilities.checkNumber( "height", height );
 
+		const startRow = beep8.Core.drawState.cursorRow;
+		const startCol = beep8.Core.drawState.cursorCol;
+
 		for ( let y = 0; y < height; y++ ) {
-			beep8.locate( 0, y );
+			beep8.locate(
+				0 + startCol,
+				y + startRow
+			);
 			for ( let x = 0; x < width; x++ ) {
 				const tile = tilemap[ y ][ x ];
 				if ( tile ) {
+
 					beep8.color(
-						tile[ engine.MAP_FG ],
-						tile[ engine.MAP_BG ]
+						tile[ beep8.Tilemap.MAP_FG ],
+						tile[ beep8.Tilemap.MAP_BG ]
 					);
-					beep8.printChar( tile[ engine.MAP_CHAR ] );
+
+					beep8.printChar( tile[ beep8.Tilemap.MAP_CHAR ] );
+
 				}
 			}
 		}
