@@ -84,14 +84,14 @@
     ];
 
     const TILES = {
-      "#": { color: 5, char: 309 },   // Wall
-      ".": { color: 4, char: 88 },   // Target
+      "#": { color: 5, char: 303 },   // Wall
+      ".": { color: 4, char: 110 },   // Target
       // NOTE: the remaining stuff (boxes, player) are objects, they are not tiles in the map.
     }
 
     const LEVEL_SIZE = 12;
-    const DRAW_OFFSET_X = 10;
-    const DRAW_OFFSET_Y = 5;
+    let DRAW_OFFSET_X = 10;
+    let DRAW_OFFSET_Y = 5;
 
     // Current level number.
     let curLevelNumber = 0;
@@ -100,7 +100,7 @@
     // Player position.
     let px = 3, py = 3;
     // If true, the player is facing left instead of right.
-    let facingLeft = false;
+    let facingLeft = 0;
     // Positions of boxes. Each is an object with {x,y}
     let boxes = [];
     // Sound effects
@@ -130,13 +130,11 @@
     function drawMap() {
       beep8.color(7, 0);
       beep8.cls();
-      beep8.locate(13, 1);
+      beep8.locate(0, 1);
       beep8.color(14);
-      beep8.print(`SOKOBAN\n`);
+      beep8.printCentered(`SOKOBAN\n`, beep8.CONFIG.SCREEN_COLS - 2);
       beep8.color(8);
-      beep8.print(`LEVEL ${curLevelNumber+1}`);
-      beep8.locate(1, 20);
-      beep8.print("Push boxes (\x89) onto dots (\x8b)\nPress B to reset level.");
+      beep8.printCentered(`LEVEL ${curLevelNumber+1}\n`, beep8.CONFIG.SCREEN_COLS - 2);
       for (let y = 0; y < LEVEL_SIZE; y++) {
         beep8.locate(DRAW_OFFSET_X, DRAW_OFFSET_Y + y);
         for (let x = 0; x < LEVEL_SIZE; x++) {
@@ -160,14 +158,14 @@
     function drawPlayer() {
       beep8.locate(DRAW_OFFSET_X + px, DRAW_OFFSET_Y + py);
       beep8.color(15);
-      beep8.printChar(facingLeft ? 0xc1 : 0xc0); // 0xc0 is the player facing right, 0xc1 is left.
+      beep8.drawActor( 2, 1, facingLeft ); // 0xc0 is the player facing right, 0xc1 is left.
     }
 
     async function movePlayer() {
       const keyName = await beep8.Async.key();
       if (keyName === "ButtonB" || keyName === "b") setUpLevel(curLevelNumber); // Reset level
-      if (keyName === "ArrowLeft") facingLeft = true;
-      if (keyName === "ArrowRight") facingLeft = false;
+      if (keyName === "ArrowLeft") facingLeft = 1;
+      if (keyName === "ArrowRight") facingLeft = 0;
 
       // Where does the player want to go?
       const candX = px + (keyName === "ArrowRight" ? 1 : 0) + (keyName === "ArrowLeft" ? -1 : 0);
@@ -202,6 +200,10 @@
       curLevelNumber = levelNumber;
       curLevel = LEVELS[curLevelNumber];
       boxes = [];
+
+	  DRAW_OFFSET_X = Math.round( (beep8.CONFIG.SCREEN_COLS / 2) - (LEVELS[curLevelNumber][0].length / 2) );
+	  DRAW_OFFSET_Y = Math.round( (beep8.CONFIG.SCREEN_ROWS / 2) - (LEVELS[curLevelNumber].length / 2) );
+
       for (let y = 0; y < LEVEL_SIZE; y++) {
         for (let x = 0; x < LEVEL_SIZE; x++) {
           const thisCell = curLevel[y][x];
@@ -220,7 +222,7 @@
       beep8.locate(1, 19);
       beep8.printBox(beep8.CONFIG.SCREEN_COLS - 2, 6);
       beep8.locate(2, 21);
-      beep8.print("Level complete.\nPress ENTER to continue.");
+      beep8.print("Level complete!\nPress ENTER to continue.");
       beep8.playSound(sfxLevelUp);
       while (true) {
         const key = await beep8.Async.key();

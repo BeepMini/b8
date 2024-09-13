@@ -16,8 +16,11 @@
     const PIECE_WIDTH = 64, PIECE_HEIGHT = 42;
     // How many rows and columns of puzzle pieces.
     const GRID_ROWS = 4, GRID_COLS = 4;
+	// Puzzle offset, to keep it centered.
 	const OFFSET_X = ((beep8.CONFIG.SCREEN_COLS * beep8.CONFIG.CHR_WIDTH) - (PIECE_WIDTH * GRID_COLS)) / 2;
 	const OFFSET_Y = 24;
+	// Border width.
+	const BORDER_WIDTH = 3;
     // The current puzzle layout. -1 is the empty cell.
     let pieces = [
        [  4,  0,  1,  3, ],
@@ -65,7 +68,7 @@
 			(currentTile[0] * PIECE_WIDTH) + OFFSET_X,
 			(currentTile[1] * PIECE_HEIGHT) + OFFSET_Y,
 			PIECE_WIDTH, PIECE_HEIGHT,
-			2
+			BORDER_WIDTH
 		);
 
 		beep8.locate(1, 22);
@@ -98,7 +101,8 @@
 		beep8.color(0);
 		beep8.drawRect(
 			x + OFFSET_X, y + OFFSET_Y,
-			PIECE_WIDTH, PIECE_HEIGHT
+			PIECE_WIDTH, PIECE_HEIGHT,
+			BORDER_WIDTH
 		);
 
 	}
