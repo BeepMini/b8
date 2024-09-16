@@ -220,9 +220,9 @@
       // Otherwise, congratulate and move on to the next one.
       beep8.color(15, 4);
       beep8.locate(1, 19);
-      beep8.printBox(beep8.CONFIG.SCREEN_COLS - 2, 6);
+      beep8.printBox(beep8.CONFIG.SCREEN_COLS - 2, 7);
       beep8.locate(2, 21);
-      beep8.print("Level complete!\nPress ENTER to continue.");
+      beep8.print("Level complete!\nPress ENTER\nto continue.");
       beep8.playSound(sfxLevelUp);
       while (true) {
         const key = await beep8.Async.key();
