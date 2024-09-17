@@ -722,7 +722,7 @@
 		beep8.Core.realCanvas.width = beep8.CONFIG.SCREEN_REAL_WIDTH;
 		beep8.Core.realCanvas.height = beep8.CONFIG.SCREEN_REAL_HEIGHT;
 
-		beep8.Core.container.style.aspectRatio = `${beep8.CONFIG.SCREEN_ROWS} / ${beep8.CONFIG.SCREEN_COLS}`;
+		beep8.Core.container.style.aspectRatio = `${beep8.CONFIG.SCREEN_COLS} / ${beep8.CONFIG.SCREEN_ROWS}`;
 
 	}
 
