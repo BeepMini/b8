@@ -20,7 +20,7 @@ async function main() {
         const keyName = await beep8.Async.key();
         beep8.locate(1, 10);
         beep8.color(5);
-        beep8.print("'" + keyName + "'                 ");
+        beep8.print("'" + keyName.join( "' '" ) + "'                 ");
       }
     }
 
