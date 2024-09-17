@@ -11,10 +11,7 @@
   <script>
 
     const CH_SPACESHIP = 0xf0;
-    const CH_ENEMY_LEFT = 0xf1;
-    const CH_ENEMY_RIGHT = 0xf3;
-    const CH_ENEMY_DOWN = 0xf5;
-    const CH_LASER = 0x84;
+    const CH_LASER = 72;
     const MIN_Y = 24, MAX_Y = 168;
     const MIN_X = 16, MAX_X = 248;
 
@@ -159,7 +156,9 @@
     }
 
     function updateAndDrawEnemy(e) {
+
       ++e.ticks;
+
       if (e.sliding > 0) {
         // Sliding vertically against wall.
         e.y += e.speed;
@@ -179,7 +178,7 @@
       if (laser && beep8.Utilities.intersectRects(LASER_COLL_RECT, ENEMY_COLL_RECT, laser.x, laser.y, e.x, e.y)) {
         e.dead = true;
         laser = null;
-        partFx = {x: e.x, y: e.y, ticks: 0, color: e.color};
+        partFx = {x: e.x, y: e.y, startTime: beep8.Core.getNow()};
         score += 50;
         beep8.playSound(sfxHit);
       }
@@ -191,25 +190,27 @@
       }
 
       // Draw.
-      const animFrame = Math.sign(e.ticks & 8);
-      const base = e.sliding ? CH_ENEMY_DOWN : e.dir > 0 ? CH_ENEMY_RIGHT : CH_ENEMY_LEFT;
       beep8.color(e.color);
-      beep8.spr(base + animFrame, e.x, e.y);
+
+	  let animation = 'move-right';
+	  if (e.dir < 0) {
+		animation = 'move-left';
+	  }
+	  beep8.sprActor( 20, animation, e.x, e.y );
     }
 
     function updateAndDrawPartFx() {
       if (!partFx) return;
-      if (++partFx.ticks > 6) { partFx = null; return; }
-      beep8.color(partFx.color);
-      beep8.spr(0xe2 + Math.floor(partFx.ticks / 2), partFx.x, partFx.y);
+      beep8.color(15);
+      const animating = beep8.sprActor(39, 'explode', partFx.x, partFx.y, partFx.startTime);
+	  if ( !animating ) partFx = null;
     }
 
     function showGameOver() {
       beep8.color(15, 2);
       beep8.locate(0, 10);
-      beep8.printBox(32, 3);
-      beep8.locate(12, 11);
-      beep8.print("GAME OVER");
+      beep8.printBox(beep8.CONFIG.SCREEN_COLS, 3);
+      beep8.printCentered("GAME OVER", beep8.CONFIG.SCREEN_COLS);
     }
 
     function calcParam(paramSpec) {

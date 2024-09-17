@@ -10,6 +10,7 @@
 	beep8.Core.canvas = null;
 	beep8.Core.ctx = null;
 	beep8.Core.container = null;
+	beep8.Core.startTime = 0;
 	beep8.Core.deltaTime = 0;
 
 	beep8.Core.drawState = {
@@ -50,6 +51,7 @@
 
 		beep8.Utilities.checkFunction( "callback", callback );
 		beep8.Core.asyncInit( callback );
+		beep8.Core.startTime = beep8.Core.getNow();
 
 	}
 

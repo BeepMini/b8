@@ -244,8 +244,10 @@
 	beep8.printCentered = function( text, width ) {
 
 		beep8.Core.preflight( "beep8.printCentered" );
+
 		beep8.Utilities.checkString( "text", text );
 		beep8.Utilities.checkNumber( "width", width );
+
 		beep8.Core.textRenderer.printCentered( text, width );
 
 	}
@@ -508,15 +510,36 @@
 	 * @param {number} [direction=0] - The direction to draw the actor in. 0 = right, 1 = left.
 	 * @returns {void}
 	 */
-	beep8.drawActor = function( ch, frame, direction = 0 ) {
+	beep8.drawActor = function( ch, animation ) {
 
 		ch = beep8.convChar( ch );
 
 		beep8.Utilities.checkInt( "ch", ch );
-		beep8.Utilities.checkInt( "frame", frame );
-		beep8.Utilities.checkInt( "direction", direction );
+		beep8.Utilities.checkInt( "animation", animation );
 
-		beep8.Actors.draw( ch, frame, direction );
+		beep8.Actors.draw( ch, animation, direction );
+
+	}
+
+
+	/**
+	 * Draws a sprite on the screen.
+	 *
+	 * @param {number|string} ch - The character code of the sprite.
+	 * @param {number} x - The X position at which to draw.
+	 * @param {number} y - The Y position at which to draw.
+	 * @returns {boolean} True if the sprite was drawn, otherwise false.
+	 */
+	beep8.sprActor = function( ch, animation, x, y, startTime = null ) {
+
+		ch = beep8.convChar( ch );
+
+		beep8.Utilities.checkInt( "ch", ch );
+		beep8.Utilities.checkString( "animation", animation );
+		beep8.Utilities.checkNumber( "x", x );
+		beep8.Utilities.checkNumber( "y", y );
+
+		return beep8.Actors.spr( ch, animation, x, y, startTime );
 
 	}
 

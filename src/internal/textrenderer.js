@@ -197,9 +197,7 @@
 
 			beep8.Utilities.checkString( "text", text );
 			beep8.Utilities.checkNumber( "wrapWidth", wrapWidth );
-			if ( font !== null ) {
-				beep8.Utilities.checkObject( "font", font );
-			}
+			if ( font !== null ) beep8.Utilities.checkObject( "font", font );
 
 			// Wrap text to specified width.
 			text = this.wrapText( text, wrapWidth, font );
@@ -343,13 +341,23 @@
 		 * @param {number} y - The y-coordinate.
 		 * @returns {void}
 		 */
-		spr( ch, x, y ) {
+		spr( ch, x, y, font = null, direction = 0 ) {
 
 			beep8.Utilities.checkNumber( "ch", ch );
 			beep8.Utilities.checkNumber( "x", x );
 			beep8.Utilities.checkNumber( "y", y );
+			beep8.Utilities.checkInt( "direction", direction );
+			if ( font !== null ) beep8.Utilities.checkObject( "font", font );
 
-			this.putxy_( ch, x, y, beep8.Core.drawState.fgColor, beep8.Core.drawState.bgColor );
+			this.putxy_(
+				ch,
+				x,
+				y,
+				beep8.Core.drawState.fgColor,
+				beep8.Core.drawState.bgColor,
+				font,
+				direction
+			);
 
 		}
 
@@ -578,9 +586,11 @@
 			const fontRow = Math.floor( ch / colCount );
 			const fontCol = ch % colCount;
 
+			// Round so assets are always drawn on whole pixels.
 			x = Math.round( x );
 			y = Math.round( y );
 
+			// Draw the background.
 			// If bgColor is -1 then don't draw the background.
 			// Or make the background transparent.
 			if ( bgColor >= 0 ) {
