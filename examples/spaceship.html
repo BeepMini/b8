@@ -10,7 +10,7 @@
 
   <script>
 
-    const CH_SPACESHIP = 0xf0;
+    const CH_SPACESHIP = 22;
     const CH_LASER = 72;
     const MIN_Y = 24, MAX_Y = 168;
     const MIN_X = 16, MAX_X = 248;
@@ -118,7 +118,7 @@
       playerX = beep8.Utilities.clamp(playerX + playerSpeed, MIN_X, MAX_X);
       // Draw the spaceship.
       beep8.color(15);
-      beep8.spr(CH_SPACESHIP, playerX, playerY);
+      beep8.sprActor(CH_SPACESHIP, 'idle', playerX, playerY);
       // If there is no laser and the player presses Space (or the A button on mobile), shoot.
       if (!laser && (beep8.key(" ") || beep8.key("ButtonA"))) shootLaser();
     }
@@ -126,7 +126,7 @@
     function updateAndDrawLaser() {
       laser.y -= 16;
       // Draw the laser. It's a double sprite (16 pixels tall).
-      beep8.color(15);
+      beep8.color(11);
       beep8.spr(CH_LASER, laser.x, laser.y);
       beep8.spr(CH_LASER, laser.x, laser.y + 8);
       // Remove laser if it went off-screen.
@@ -196,7 +196,7 @@
 	  if (e.dir < 0) {
 		animation = 'move-left';
 	  }
-	  beep8.sprActor( 20, animation, e.x, e.y );
+	  beep8.sprActor( 21, animation, e.x, e.y );
     }
 
     function updateAndDrawPartFx() {
@@ -208,8 +208,9 @@
 
     function showGameOver() {
       beep8.color(15, 2);
-      beep8.locate(0, 10);
-      beep8.printBox(beep8.CONFIG.SCREEN_COLS, 3);
+      beep8.locate(2, 10);
+      beep8.printBox(beep8.CONFIG.SCREEN_COLS - 4, 3);
+      beep8.locate(0, 11);
       beep8.printCentered("GAME OVER", beep8.CONFIG.SCREEN_COLS);
     }
 
