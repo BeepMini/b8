@@ -68,11 +68,19 @@
 		 */
 		onKeyDown( e ) {
 
-			this.keysJustPressed_.add( e.key.toUpperCase() );
-			this.keysHeld_.add( e.key.toUpperCase() );
+			const key = e.key;
+
+			const keys = this.getKeys( key );
+
+			console.log( "Key down", key, keys );
+
+			for ( const k of keys ) {
+				this.keysJustPressed_.add( k.toUpperCase() );
+				this.keysHeld_.add( k.toUpperCase() );
+			}
 
 			if ( beep8.Core.hasPendingAsync( "beep8.Async.key" ) ) {
-				beep8.Core.resolveAsync( "beep8.Async.key", e.key );
+				beep8.Core.resolveAsync( "beep8.Async.key", keys );
 			}
 
 		}
@@ -102,7 +110,12 @@
 		 */
 		onKeyUp( e ) {
 
-			this.keysHeld_.delete( e.key.toUpperCase() );
+			const key = e.key.toUpperCase();
+			const keys = this.getKeys( key );
+
+			for ( const k of keys ) {
+				this.keysHeld_.delete( k.toUpperCase() );
+			}
 
 		}
 
@@ -140,6 +153,54 @@
 
 
 		/**
+		 * Gets an array of keys that correspond to a given key.
+		 * This is used to handle key aliases (e.g. "W" and "ArrowUp").
+		 *
+		 * @param {string} key - The key to get aliases for.
+		 * @returns {string[]} An array of key names.
+		 */
+		getKeys( key ) {
+
+			let keys = [ key ];
+
+			switch ( key.toUpperCase() ) {
+				case "W":
+					keys.push( "ArrowUp" );
+					break;
+
+				case "A":
+					keys.push( "ArrowLeft" );
+					break;
+
+				case "S":
+					keys.push( "ArrowDown" );
+					break;
+
+				case "D":
+					keys.push( "ArrowRight" );
+					break;
+
+				case "Enter":
+					keys.push( "Escape" );
+					break;
+
+				case "Z":
+				case "N":
+					keys.push( "ButtonA" );
+					break;
+
+				case "X":
+				case "M":
+					keys.push( "ButtonB" );
+					break;
+			}
+
+			return keys;
+
+		}
+
+
+		/**
 		 * Reads a line of text asynchronously.
 		 * Handles user input to build a string until the Enter key is pressed.
 		 *
@@ -166,51 +227,55 @@
 
 				beep8.Core.setCursorLocation( curCol, curRow );
 				beep8.Core.textRenderer.print( curStrings[ curPos ] || "" );
-				const key = await this.readKeyAsync();
+				const keys = await this.readKeyAsync();
 
-				if ( key === "Backspace" ) {
+				for ( const key of keys ) {
 
-					// Handle backspace: remove the last character.
-					if ( curStrings[ curPos ].length === 0 ) {
-						if ( curPos === 0 ) {
-							continue;
+					if ( key === "Backspace" ) {
+
+						// Handle backspace: remove the last character.
+						if ( curStrings[ curPos ].length === 0 ) {
+							if ( curPos === 0 ) {
+								continue;
+							}
+							curPos--;
+							curRow--;
 						}
-						curPos--;
-						curRow--;
-					}
 
-					curStrings[ curPos ] = curStrings[ curPos ].length > 0 ? curStrings[ curPos ].substring( 0, curStrings[ curPos ].length - 1 ) : curStrings[ curPos ];
-					beep8.Core.setCursorLocation( curCol + curStrings[ curPos ].length, curRow );
-					beep8.Core.textRenderer.print( " " );
+						curStrings[ curPos ] = curStrings[ curPos ].length > 0 ? curStrings[ curPos ].substring( 0, curStrings[ curPos ].length - 1 ) : curStrings[ curPos ];
+						beep8.Core.setCursorLocation( curCol + curStrings[ curPos ].length, curRow );
+						beep8.Core.textRenderer.print( " " );
 
-					beep8.Sfx.play( beep8.CONFIG.SFX.TYPING );
+						beep8.Sfx.play( beep8.CONFIG.SFX.TYPING );
 
-				} else if ( key === "Enter" ) {
+					} else if ( key === "Enter" ) {
 
-					// Handle enter: submit the text.
-					beep8.Core.setCursorLocation( 1, curRow + 1 );
-					beep8.Core.cursorRenderer.setCursorVisible( cursorWasVisible );
+						// Handle enter: submit the text.
+						beep8.Core.setCursorLocation( 1, curRow + 1 );
+						beep8.Core.cursorRenderer.setCursorVisible( cursorWasVisible );
 
-					beep8.Sfx.play( beep8.CONFIG.SFX.TYPING );
+						beep8.Sfx.play( beep8.CONFIG.SFX.TYPING );
 
-					return curStrings.join( "" );
+						return curStrings.join( "" );
 
-				} else if ( key.length === 1 ) {
+					} else if ( key.length === 1 ) {
 
-					// Handle regular character input.
-					if ( curStrings.join( "" ).length < maxLen || maxLen === -1 ) {
-						curStrings[ curPos ] += key;
+						// Handle regular character input.
+						if ( curStrings.join( "" ).length < maxLen || maxLen === -1 ) {
+							curStrings[ curPos ] += key;
 
-						if ( maxWidth !== -1 && curStrings[ curPos ].length >= maxWidth ) {
-							beep8.Core.textRenderer.print( curStrings[ curPos ].charAt( curStrings[ curPos ].length - 1 ) );
-							curCol = startCol;
-							curPos++;
-							curStrings[ curPos ] = "";
-							curRow++;
+							if ( maxWidth !== -1 && curStrings[ curPos ].length >= maxWidth ) {
+								beep8.Core.textRenderer.print( curStrings[ curPos ].charAt( curStrings[ curPos ].length - 1 ) );
+								curCol = startCol;
+								curPos++;
+								curStrings[ curPos ] = "";
+								curRow++;
+							}
 						}
-					}
 
-					beep8.Sfx.play( beep8.CONFIG.SFX.TYPING );
+						beep8.Sfx.play( beep8.CONFIG.SFX.TYPING );
+
+					}
 
 				}
 			}
