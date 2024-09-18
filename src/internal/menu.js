@@ -62,7 +62,9 @@
 			}
 		);
 
-		const totalCols = Math.max( promptSize.cols, choicesCols ) + 2 * options.padding + 2 * border01;
+		let totalCols = Math.max( promptSize.cols, choicesCols ) + 2 * options.padding + 2 * border01;
+		totalCols = Math.min( totalCols, beep8.CONFIG.SCREEN_COLS );
+
 		const totalRows = prompt01 * ( promptSize.rows + 1 ) + choicesRows + 2 * options.padding + 2 * border01;
 
 		if ( options.centerH || options.center ) {
