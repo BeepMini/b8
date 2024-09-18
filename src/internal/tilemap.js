@@ -102,18 +102,64 @@
 			);
 			for ( let x = 0; x < width; x++ ) {
 				const tile = tilemap[ y ][ x ];
-				if ( tile ) {
+				if ( tile && tile.length >= 3 ) {
 
 					beep8.color(
 						tile[ beep8.Tilemap.MAP_FG ],
 						tile[ beep8.Tilemap.MAP_BG ]
 					);
-
 					beep8.printChar( tile[ beep8.Tilemap.MAP_CHAR ] );
 
 				}
 			}
 		}
+
+	};
+
+
+	/**
+	 * Create an empty tilemap array of the specified size.
+	 *
+	 * @param {number} width The width of the tilemap.
+	 * @param {number} height The height of the tilemap.
+	 * @returns {Array} The empty tilemap array.
+	 */
+	beep8.Tilemap.createEmptyTilemap = function( width, height ) {
+
+		let layout = [];
+
+		for ( let y = 0; y < height; y++ ) {
+			layout[ y ] = [];
+			for ( let x = 0; x < width; x++ ) {
+
+				// char: 0,				// Default to space character
+				// fg: data.colors.FG,		// Default foreground color (adjust as needed)
+				// bg: data.colors.BG,		// Default background color (adjust as needed)
+				// coll: 0,				// Default to no collision
+				// data: {}				// Empty object for additional data
+
+				layout[ y ][ x ] = beep8.Tilemap.getDefaultTile();
+
+			}
+		}
+
+		return layout;
+
+	};
+
+
+	/**
+	 * Get the default tile for a tilemap.
+	 *
+	 * @returns {Array} The default tile.
+	 */
+	beep8.Tilemap.getDefaultTile = function() {
+
+		return [
+			0,
+			data.colors.FG,
+			data.colors.BG,
+		]
 
 	};
 
