@@ -1,55 +1,58 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 	<meta charset="utf-8">
 	<title>Example - Menu</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-  <link rel="stylesheet" href="example.css">
-  <script src="../dist/beep8.js"></script>
+	<link rel="stylesheet" href="example.css">
+	<script src="../dist/beep8.js"></script>
 
-  <script>
+	<script>
 
-    async function main() {
-      while (true) {
-        // Clear screen using white over blue
-        beep8.color(12, 1);
-        beep8.cls();
-        beep8.locate(1, 1);
-        beep8.print("System Boot Menu\n\n");
-        beep8.color(1, 12);
-        // Show a menu of options.
-        const choice = await beep8.Async.menu(["Install OS", "Format disk", "Eject disk", "Fix disk"]);
-        beep8.color(6, 2);
-        // Show a message box depending on the choice.
-        switch (choice) {
-          case 0: await beep8.Async.dialog("128kB of memory needed", ["OK"]); break;
-          case 1:
-            if (await beep8.Async.dialog("Are you sure?", ["No","Yes"])) await formatDisk();
-            break;
-          case 2: await beep8.Async.dialog("Can't eject.\nDisk in use."); break;
-          case 3: await beep8.Async.dialog("No problems detected."); break;
-        }
-      }
-    }
+		async function main() {
+			while ( true ) {
+				// Clear screen using white over blue
+				beep8.color( 12, 1 );
+				beep8.cls();
+				beep8.locate( 1, 1 );
+				beep8.print( "System Boot Menu\n\n" );
+				beep8.color( 1, 12 );
+				// Show a menu of options.
+				const choice = await beep8.Async.menu( [ "Install OS", "Format disk", "Eject disk", "Fix disk" ] );
+				beep8.color( 6, 2 );
+				// Show a message box depending on the choice.
+				switch ( choice ) {
+					case 0: await beep8.Async.dialog( "128kB of memory\nneeded", [ "OK" ] ); break;
+					case 1:
+						if ( await beep8.Async.dialog( "Are you sure?", [ "No", "Yes" ] ) ) await formatDisk();
+						break;
+					case 2: await beep8.Async.dialog( "Can't eject.\nDisk in use." ); break;
+					case 3: await beep8.Async.dialog( "No problems detected." ); break;
+				}
+			}
+		}
 
-    async function formatDisk() {
-      beep8.color(12, 1);
-      beep8.cls();
-      beep8.locate(1, 2);
-      beep8.print("Formating disk...\n");
-      for (let i = 0; i <= 80; i += 10) {
-        beep8.locate(1, 4);
-        beep8.print(`Track ${i}/80...`);
-        await beep8.Async.wait(0.5);
-      }
-      beep8.color(6, 2);
-      await beep8.Async.dialog("Successfully formatted");
-    }
+		async function formatDisk() {
+			beep8.color( 12, 1 );
+			beep8.cls();
+			beep8.locate( 1, 2 );
+			beep8.print( "Formating disk...\n" );
+			for ( let i = 0; i <= 80; i += 10 ) {
+				beep8.locate( 1, 4 );
+				beep8.print( `Track ${i}/80...` );
+				await beep8.Async.wait( 0.5 );
+			}
+			beep8.color( 6, 2 );
+			await beep8.Async.dialog( "Successfully formatted" );
+		}
 
-    window.addEventListener("load", () => beep8.init(main));
-  </script>
+		window.addEventListener( "load", () => beep8.init( main ) );
+	</script>
 </head>
+
 <body>
 </body>
+
 </html>

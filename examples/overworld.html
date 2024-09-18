@@ -1,170 +1,183 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-  <meta charset="utf-8">
-  <title>Example - Overworld</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<meta charset="utf-8">
+	<title>Example - Overworld</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-  <link rel="stylesheet" href="example.css">
-  <script src="../dist/beep8.js"></script>
+	<link rel="stylesheet" href="example.css">
+	<script src="../dist/beep8.js"></script>
 
-  <script>
+	<script>
 
-    const MAPS = {
-      "OVERWORLD": [
-        "                             ".split(''),
-        " ~~~~~     ^^^     ~~   ^^   ".split(''),
-        " ~~~~|,   ^^^^     ~~ ^^^||  ".split(''),
-        " ~~||| ,   ,^^     ~,^^||    ".split(''),
-        " ||||     ,^^^     ~~  ||    ".split(''),
-        " |||,   ||,   ^^    ~~ ,     ".split(''),
-        "      |||||||^^    ~~   ||^^ ".split(''),
-        " ^     ,||||^^^^|, ~~  |||^^ ".split(''),
-        "  ^^^|    ,     ,  ==     ^^ ".split(''),
-        "   ^|| ,     |^^   ~~ ,, ^^^ ".split(''),
-        "  ^^^^|      ^^^^ ~~  , ^^^^ ".split(''),
-        "  ^^^^        ^^^~~       ~  ".split(''),
-        "    ^    ,       ~~      ~~  ".split(''),
-        "             ,  ~~    ||~~~  ".split(''),
-        "     ,      ,  ~~   ,||||~~  ".split(''),
-        "      |        ~~  ,,  |     ".split(''),
-        "   | ,|||T|^  ~~~ ,,      ^^ ".split(''),
-        "  |||   ^^^^ ~~~        ^^^^ ".split(''),
-        " ^^^||      ~~~~     ^^^^^^^ ".split(''),
-        "  ^^^,     ~~~    ^^^^^^^^^^ ".split(''),
-        "                             ".split(''),
-      ],
-      "TOWN": [
-        "                             ".split(''),
-        "              OO             ".split(''),
-        " #############..############ ".split(''),
-        " #        ,   ..    #    ] # ".split(''),
-        " # #########  .     #    ] # ".split(''),
-        " # # ]     #   .    +    ]2# ".split(''),
-        " # # ]     #   .    ######## ".split(''),
-        " # #0]     +  .   , #    ] # ".split(''),
-        " # # ]     #  ..    +    ]1# ".split(''),
-        " # #########  ..    #    ] # ".split(''),
-        " #... ...   ...    ######### ".split(''),
-        " #..,.   .. . ..   ,       # ".split(''),
-        " ######       .        2   # ".split(''),
-        " #    +      ....          # ".split(''),
-        " #  ###     ..~~..  ...  ..# ".split(''),
-        " #0 #  ,    ..~~... ,. ....# ".split(''),
-        " ####   1    ....          # ".split(''),
-        " #     0           ,    1 |# ".split(''),
-        " #|||   2    ||| ,    |||||# ".split(''),
-        " #|||| ,,   ||||||  ,||||||# ".split(''),
-        " ########################### ".split(''),
-      ],
-    };
+		const MAPS = {
+			"OVERWORLD": [
+				"                             ".split( '' ),
+				" ~~~~~     ^^^     ~~   ^^   ".split( '' ),
+				" ~~~~|,   ^^^^     ~~ ^^^||  ".split( '' ),
+				" ~~||| ,   ,^^     ~,^^||    ".split( '' ),
+				" ||||     ,^^^     ~~  ||    ".split( '' ),
+				" |||,   ||,   ^^    ~~ ,     ".split( '' ),
+				"      |||||||^^    ~~   ||^^ ".split( '' ),
+				" ^     ,||||^^^^|, ~~  |||^^ ".split( '' ),
+				"  ^^^|    ,     ,  ==     ^^ ".split( '' ),
+				"   ^|| ,     |^^   ~~ ,, ^^^ ".split( '' ),
+				"  ^^^^|      ^^^^ ~~  , ^^^^ ".split( '' ),
+				"  ^^^^        ^^^~~       ~  ".split( '' ),
+				"    ^    ,       ~~      ~~  ".split( '' ),
+				"             ,  ~~    ||~~~  ".split( '' ),
+				"     ,      ,  ~~   ,||||~~  ".split( '' ),
+				"      |        ~~  ,,  |     ".split( '' ),
+				"   | ,|||T|^  ~~~ ,,      ^^ ".split( '' ),
+				"  |||   ^^^^ ~~~        ^^^^ ".split( '' ),
+				" ^^^||      ~~~~     ^^^^^^^ ".split( '' ),
+				"  ^^^,     ~~~    ^^^^^^^^^^ ".split( '' ),
+				"                             ".split( '' ),
+			],
+			"TOWN": [
+				"                             ".split( '' ),
+				"              OO             ".split( '' ),
+				" #############..############ ".split( '' ),
+				" #        ,   ..    #    ] # ".split( '' ),
+				" # #########  .     #    ] # ".split( '' ),
+				" # # ]     #   .    +    ]2# ".split( '' ),
+				" # # ]     #   .    ######## ".split( '' ),
+				" # #0]     +  .   , #    ] # ".split( '' ),
+				" # # ]     #  ..    +    ]1# ".split( '' ),
+				" # #########  ..    #    ] # ".split( '' ),
+				" #... ...   ...    ######### ".split( '' ),
+				" #..,.   .. . ..   ,       # ".split( '' ),
+				" ######       .        2   # ".split( '' ),
+				" #    +      ....          # ".split( '' ),
+				" #  ###     ..~~..  ...  ..# ".split( '' ),
+				" #0 #  ,    ..~~... ,. ....# ".split( '' ),
+				" ####   1    ....          # ".split( '' ),
+				" #     0           ,    1 |# ".split( '' ),
+				" #|||   2    ||| ,    |||||# ".split( '' ),
+				" #|||| ,,   ||||||  ,||||||# ".split( '' ),
+				" ########################### ".split( '' ),
+			],
+		};
 
-    const TILES = {
-      "~": { color: 3, bg: 5, char: 188, solid: true },	// water.
-      "|": { color: 12, char: 185, solid: true },			// tree.
-      "^": { color: 2, char: 187, solid: true },			// mountain.
-      "=": { color: 1, char: 222, solid: false },			// bridge.
-      ",": { color: 13, char: 274, solid: false },			// grass.
-      " ": { color: 1, char: 0, solid: false },				// empty.
-      "T": { color: 15, char: 326, solid: false },			// town.
-      "O": { color: 0, char: 0x20, solid: false },			//
-      "#": { color: 7, char: 298, solid: true },				// wall.
-      ".": { color: 1, char: 301, solid: false },			// stones.
-      "+": { color: 6, char: 234, solid: false },			// doorway.
-      "]": { color: 10, char: 74, solid: true },		// force field.
+		const TILES = {
+			"~": { color: 3, bg: 5, char: 188, solid: true },	// water.
+			"|": { color: 12, char: 185, solid: true },			// tree.
+			"^": { color: 2, char: 187, solid: true },			// mountain.
+			"=": { color: 1, char: 222, solid: false },			// bridge.
+			",": { color: 13, char: 274, solid: false },			// grass.
+			" ": { color: 1, char: 0, solid: false },				// empty.
+			"T": { color: 15, char: 326, solid: false },			// town.
+			"O": { color: 0, char: 0x20, solid: false },			//
+			"#": { color: 7, char: 298, solid: true },				// wall.
+			".": { color: 1, char: 301, solid: false },			// stones.
+			"+": { color: 6, char: 234, solid: false },			// doorway.
+			"]": { color: 10, char: 74, solid: true },		// force field.
 
-	  // Villagers.
-      "0": { color: 15, char: 0xd0, solid: true, talk: true },
-      "1": { color: 15, char: 0xd3, solid: true, talk: true },
-      "2": { color: 15, char: 0xd5, solid: true, talk: true },
-    }
+			// Villagers.
+			"0": { color: 15, char: 0xd0, solid: true, talk: true },
+			"1": { color: 15, char: 0xd3, solid: true, talk: true },
+			"2": { color: 15, char: 0xd5, solid: true, talk: true },
+		}
 
-    const MAP_WIDTH = beep8.CONFIG.SCREEN_COLS+1, MAP_HEIGHT = 21;
+		const MAP_WIDTH = beep8.CONFIG.SCREEN_COLS + 1, MAP_HEIGHT = 21;
 
-    const GREETINGS = [
-      "Greetings, traveler!", "Welcome, adventurer!",
-      "I'm a placeholder\ncharacter in an\nexample game.",
-    ];
+		const GREETINGS = [
+			"Greetings, traveler!", "Welcome, adventurer!",
+			"I'm a placeholder\ncharacter in an\nexample game.",
+		];
 
-    let curMap = "OVERWORLD";  // Current map name
-    let px = 10, py = 10;      // Current player position.
-    let facingLeft = 1;    // If true, player is looking to the left.
+		let curMap = "OVERWORLD";  // Current map name
+		let px = 10, py = 10;      // Current player position.
+		let facingLeft = 1;    // If true, player is looking to the left.
 
-    async function main() {
-      while (true) {
-        drawMap();
-        drawPlayer();
-        await movePlayer();
-      }
-    }
+		async function main() {
 
-    function drawPlayer() {
-      beep8.locate(px, py);
-      beep8.color(15, 0);
-	  beep8.drawActor(0, 1, facingLeft);
-    }
+			while ( true ) {
+				drawMap();
+				drawPlayer();
+				await movePlayer();
+			}
 
-    function drawMap() {
-      const map = MAPS[curMap];
-      beep8.color(7, 0);
-      beep8.cls();
-      for (let y = 0; y < MAP_HEIGHT; y++) {
-        beep8.locate(0, y);
-        for (let x = 0; x < MAP_WIDTH; x++) {
-          const tile = TILES[map[y][x]];
-		  if ( tile ) {
-			beep8.color(
-				tile.color,
-				tile.bg | undefined
-			);
-			beep8.printChar(tile ? tile.char : 0x3f);
-		  }
-        }
-      }
-      beep8.locate(1, 22);
-      beep8.color(8, 0);
-      beep8.print(
-        "ROBIN    HP 34/34   Gold:72\n" +
-        "Paladin Lvl 6      XP:18,390");
-    }
+		}
 
-    async function movePlayer() {
+		function drawPlayer() {
 
-      const keyName = await beep8.Async.key();
+			beep8.locate( px, py );
+			beep8.color( 15, 0 );
+			let animation = 'move-right';
 
-	  if (keyName === "ArrowLeft") facingLeft = 1;
-      if (keyName === "ArrowRight") facingLeft = 0;
+			if ( facingLeft ) {
+				animation = 'move-left';
+			}
 
-	  // Where does the player want to go?
-      const candX = px + (keyName === "ArrowRight" ? 1 : 0) + (keyName === "ArrowLeft" ? -1 : 0);
-      const candY = py + (keyName === "ArrowDown" ? 1 : 0) + (keyName === "ArrowUp" ? -1 : 0);
+			beep8.drawActor( 0, animation );
 
-	  // Don't let player go beyond edges.
-      if (candX <= 0 || candX >= MAP_WIDTH - 1) return;
-      if (candY <= 0 || candY >= MAP_HEIGHT - 1) return;
+		}
 
-	  // What tile is the player trying to enter?
-      const tile = MAPS[curMap][candY][candX];
-      if (TILES[tile].talk) await randomGreeting();
-      if (TILES[tile].solid) return; // Can't walk over a solid tile.
+		function drawMap() {
+			const map = MAPS[ curMap ];
+			beep8.color( 7, 0 );
+			beep8.cls();
+			for ( let y = 0; y < MAP_HEIGHT; y++ ) {
+				beep8.locate( 0, y );
+				for ( let x = 0; x < MAP_WIDTH; x++ ) {
+					const tile = TILES[ map[ y ][ x ] ];
+					if ( tile ) {
+						beep8.color(
+							tile.color,
+							tile.bg | undefined
+						);
+						beep8.printChar( tile ? tile.char : 0x3f );
+					}
+				}
+			}
+			beep8.locate( 1, 22 );
+			beep8.color( 8, 0 );
+			beep8.print(
+				"ROBIN    HP 34/34   Gold:72\n" +
+				"Paladin Lvl 6      XP:18,390" );
+		}
 
-	  px = candX, py = candY;
+		async function movePlayer() {
 
-	  // Change maps?
-      if (tile === "T") goToMap("TOWN", 15, 3);
-      if (tile === "O") goToMap("OVERWORLD", 9, 15);
+			const keyName = await beep8.Async.key();
 
-	}
+			if ( keyName.includes( "ArrowLeft" ) ) facingLeft = 1;
+			if ( keyName.includes( "ArrowRight" ) ) facingLeft = 0;
 
-    function goToMap(mapName, x, y) { curMap = mapName, px = x, py = y; }
+			// Where does the player want to go?
+			const candX = px + ( keyName.includes( "ArrowRight" ) ? 1 : 0 ) + ( keyName.includes( "ArrowLeft" ) ? -1 : 0 );
+			const candY = py + ( keyName.includes( "ArrowDown" ) ? 1 : 0 ) + ( keyName.includes( "ArrowUp" ) ? -1 : 0 );
 
-    async function randomGreeting() {
-      await beep8.Async.dialog("VILLAGER:\n" + GREETINGS[Math.floor(Math.random() * GREETINGS.length)]);
-    }
+			// Don't let player go beyond edges.
+			if ( candX <= 0 || candX >= MAP_WIDTH - 1 ) return;
+			if ( candY <= 0 || candY >= MAP_HEIGHT - 1 ) return;
 
-    window.addEventListener("load", () => beep8.init(main));
-  </script>
+			// What tile is the player trying to enter?
+			const tile = MAPS[ curMap ][ candY ][ candX ];
+			if ( TILES[ tile ].talk ) await randomGreeting();
+			if ( TILES[ tile ].solid ) return; // Can't walk over a solid tile.
+
+			px = candX, py = candY;
+
+			// Change maps?
+			if ( tile === "T" ) goToMap( "TOWN", 15, 3 );
+			if ( tile === "O" ) goToMap( "OVERWORLD", 9, 15 );
+
+		}
+
+		function goToMap( mapName, x, y ) { curMap = mapName, px = x, py = y; }
+
+		async function randomGreeting() {
+			await beep8.Async.dialog( "VILLAGER:\n" + GREETINGS[ Math.floor( Math.random() * GREETINGS.length ) ] );
+		}
+
+		window.addEventListener( "load", () => beep8.init( main ) );
+	</script>
 </head>
+
 <body>
 </body>
+
 </html>

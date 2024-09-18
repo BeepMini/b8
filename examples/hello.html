@@ -1,34 +1,37 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 	<meta charset="utf-8">
 	<title>Example - Hello</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-  <link rel="stylesheet" href="example.css">
-  <script src="../dist/beep8.js"></script>
+	<link rel="stylesheet" href="example.css">
+	<script src="../dist/beep8.js"></script>
 
-  <script>
+	<script>
 
-    async function main() {
-      // Clear screen using white foreground (7) over blue background (1).
-      beep8.color(10, 5);
-      beep8.cls();
-      // Print greeting at position 1,1.
-      beep8.locate(1, 1);
-      beep8.print("Hello world!\n\n");
-      // Ask the user's name.
-      beep8.print("What is your name?\n> ");
-      // Don't forget: beep8.Async.* functions need to be called with await:
-      const name = await beep8.Async.readLine();
-      // Print it back, but in yellow (14).
-      beep8.color(15);
-      beep8.print("\n\nHi, " + name + ".");
-    }
+		async function main() {
+			// Clear screen using white foreground (7) over blue background (1).
+			beep8.color( 10, 5 );
+			beep8.cls();
+			// Print greeting at position 1,1.
+			beep8.locate( 1, 1 );
+			beep8.print( "Hello world!\n\n" );
+			// Ask the user's name.
+			beep8.print( "What is your name?\n> " );
+			// Don't forget: beep8.Async.* functions need to be called with await:
+			const name = await beep8.Async.readLine();
+			// Print it back, but in yellow (14).
+			beep8.color( 15 );
+			beep8.print( "\n\nHi, " + name + "." );
+		}
 
-    window.addEventListener("load", () => beep8.init(main, { NAME: 'Hello' }));
-  </script>
+		window.addEventListener( "load", () => beep8.init( main, { NAME: 'Hello' } ) );
+	</script>
 </head>
+
 <body>
 </body>
+
 </html>
