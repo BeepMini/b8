@@ -57,7 +57,7 @@
         "     ####   ".split(''),
         "  ####  ##  ".split(''),
         " ##.#.   #  ".split(''),
-        "##  ###  #  ".split(''),
+        " #  ###  #  ".split(''),
         "##b ### ##  ".split(''),
         "# b  .. ####".split(''),
         "#  p## b   #".split(''),
@@ -158,18 +158,23 @@
     function drawPlayer() {
       beep8.locate(DRAW_OFFSET_X + px, DRAW_OFFSET_Y + py);
       beep8.color(15);
-      beep8.drawActor( 2, 1, facingLeft ); // 0xc0 is the player facing right, 0xc1 is left.
+	  let animation = 'move-right';
+	  if (facingLeft) {
+		animation = 'move-left';
+	  }
+      beep8.drawActor( 2, animation ); // 0xc0 is the player facing right, 0xc1 is left.
     }
 
     async function movePlayer() {
       const keyName = await beep8.Async.key();
-      if (keyName === "ButtonB" || keyName === "b") setUpLevel(curLevelNumber); // Reset level
-      if (keyName === "ArrowLeft") facingLeft = 1;
-      if (keyName === "ArrowRight") facingLeft = 0;
+	  console.log('key',keyName);
+      if (keyName.includes("ButtonB")) setUpLevel(curLevelNumber); // Reset level
+      if (keyName.includes("ArrowLeft")) facingLeft = 1;
+      if (keyName.includes("ArrowRight")) facingLeft = 0;
 
       // Where does the player want to go?
-      const candX = px + (keyName === "ArrowRight" ? 1 : 0) + (keyName === "ArrowLeft" ? -1 : 0);
-      const candY = py + (keyName === "ArrowDown" ? 1 : 0) + (keyName === "ArrowUp" ? -1 : 0);
+      const candX = px + (keyName.includes("ArrowRight") ? 1 : 0) + (keyName.includes("ArrowLeft") ? -1 : 0);
+      const candY = py + (keyName.includes("ArrowDown") ? 1 : 0) + (keyName.includes("ArrowUp") ? -1 : 0);
       if (candX === px && candY === py) return; // Player doesn't want to move.
 
       const boxToPush = boxes.find(box => box.x === candX && box.y === candY);
@@ -226,7 +231,7 @@
       beep8.playSound(sfxLevelUp);
       while (true) {
         const key = await beep8.Async.key();
-        if (key === "Enter" || key === "ButtonA") break;
+        if (key.includes("Enter") || key.includes("ButtonA")) break;
       }
       if (curLevelNumber + 1 < LEVELS.length) {
         // Advance to next level.

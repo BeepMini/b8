@@ -515,9 +515,9 @@
 		ch = beep8.convChar( ch );
 
 		beep8.Utilities.checkInt( "ch", ch );
-		beep8.Utilities.checkInt( "animation", animation );
+		beep8.Utilities.checkString( "animation", animation );
 
-		beep8.Actors.draw( ch, animation, direction );
+		beep8.Actors.draw( ch, animation );
 
 	}
 
