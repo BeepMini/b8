@@ -52,7 +52,7 @@
 		beep8.Utilities.checkInt( "ch", ch );
 		beep8.Utilities.checkString( "animation", animation );
 
-		const frame = beep8.Actors.animationFrame( animation );
+		const frame = animationFrame( animation );
 
 		const font = beep8.Core.textRenderer.curActors_;
 
