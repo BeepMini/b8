@@ -118,25 +118,25 @@
 
 			const k = await beep8.Core.inputSys.readKeyAsync();
 
-			if ( k === "ArrowUp" ) {
+			if ( k.includes( "ArrowUp" ) ) {
 
 				// Go up the menu.
 				selIndex = selIndex > 0 ? selIndex - 1 : choices.length - 1;
 				if ( choices.length > 1 ) beep8.Sfx.play( beep8.CONFIG.SFX.MENU_UP );
 
-			} else if ( k === "ArrowDown" ) {
+			} else if ( k.includes( "ArrowDown" ) ) {
 
 				// Go down the menu.
 				selIndex = ( selIndex + 1 ) % choices.length;
 				if ( choices.length > 1 ) beep8.Sfx.play( beep8.CONFIG.SFX.MENU_DOWN );
 
-			} else if ( k === "Enter" || k === "ButtonA" ) {
+			} else if ( k.includes( "Enter" ) || k.includes( "ButtonA" ) ) {
 
 				// Select menu item.
 				beep8.Sfx.play( beep8.CONFIG.SFX.MENU_SELECT );
 				return selIndex;
 
-			} else if ( ( k === "Escape" || k === "ButtonB" ) && options.cancelable ) {
+			} else if ( ( k.includes( "Escape" ) || k.includes( "ButtonB" ) ) && options.cancelable ) {
 
 				// Close menu.
 				return -1;
