@@ -88,8 +88,8 @@ const beep8 = {};
 		CHR_WIDTH: 12,
 		CHR_HEIGHT: 12,
 		// Screen width and height in characters.
-		SCREEN_ROWS: 28,
-		SCREEN_COLS: 28,
+		SCREEN_ROWS: 30,
+		SCREEN_COLS: 24,
 		// If set, this is the opacity of the "scan lines" effect.
 		// If 0 or not set, don't show scan lines.
 		SCAN_LINES_OPACITY: 0.1,
@@ -118,6 +118,12 @@ const beep8 = {};
 			"#F078DC",
 			"#F4F4F4",
 		],
+		// The passkey for the game.
+		// This is used when generating passcodes for levels.
+		// It should be unique for each game so that passcodes are different for each game.
+		// You can generate a passcode for a level with beep8.Passcode.getCode( levelId ).
+		// The passcode will be a 4-character code.
+		PASSKEY: "beep8IsAwesome",
 		// If this is not null, then we will display a virtual joystick if the user
 		// is on a mobile device.
 		TOUCH_VJOY: true,
@@ -394,8 +400,10 @@ const beep8 = {};
 	beep8.printCentered = function( text, width ) {
 
 		beep8.Core.preflight( "beep8.printCentered" );
+
 		beep8.Utilities.checkString( "text", text );
 		beep8.Utilities.checkNumber( "width", width );
+
 		beep8.Core.textRenderer.printCentered( text, width );
 
 	}
@@ -580,6 +588,7 @@ const beep8 = {};
 		beep8.Utilities.checkNumber( "y", y );
 		beep8.Utilities.checkNumber( "width", width );
 		beep8.Utilities.checkNumber( "height", height );
+		beep8.Utilities.checkNumber( "lineWidth", lineWidth );
 
 		beep8.Core.drawRect( x, y, width, height, lineWidth );
 
@@ -657,15 +666,36 @@ const beep8 = {};
 	 * @param {number} [direction=0] - The direction to draw the actor in. 0 = right, 1 = left.
 	 * @returns {void}
 	 */
-	beep8.drawActor = function( ch, frame, direction = 0 ) {
+	beep8.drawActor = function( ch, animation ) {
 
 		ch = beep8.convChar( ch );
 
 		beep8.Utilities.checkInt( "ch", ch );
-		beep8.Utilities.checkInt( "frame", frame );
-		beep8.Utilities.checkInt( "direction", direction );
+		beep8.Utilities.checkString( "animation", animation );
 
-		beep8.Actors.draw( ch, frame, direction );
+		beep8.Actors.draw( ch, animation );
+
+	}
+
+
+	/**
+	 * Draws a sprite on the screen.
+	 *
+	 * @param {number|string} ch - The character code of the sprite.
+	 * @param {number} x - The X position at which to draw.
+	 * @param {number} y - The Y position at which to draw.
+	 * @returns {boolean} True if the sprite was drawn, otherwise false.
+	 */
+	beep8.sprActor = function( ch, animation, x, y, startTime = null ) {
+
+		ch = beep8.convChar( ch );
+
+		beep8.Utilities.checkInt( "ch", ch );
+		beep8.Utilities.checkString( "animation", animation );
+		beep8.Utilities.checkNumber( "x", x );
+		beep8.Utilities.checkNumber( "y", y );
+
+		return beep8.Actors.spr( ch, animation, x, y, startTime );
 
 	}
 
@@ -873,6 +903,42 @@ const beep8 = {};
 	beep8.Actors = {};
 
 
+	beep8.Actors.animations = {
+		'idle': {
+			frames: [ 0 ],
+			fps: 1,
+			loop: true
+		},
+		'move-right': {
+			frames: [ 1, 2 ],
+			fps: 4,
+			loop: true
+		},
+		'move-left': {
+			frames: [ 1, 2 ],
+			fps: 4,
+			loop: true,
+			direction: 1
+		},
+		'jump-right': {
+			frames: [ 3 ],
+			fps: 1,
+			loop: false
+		},
+		'jump-left': {
+			frames: [ 3 ],
+			fps: 1,
+			loop: false,
+			direction: 1
+		},
+		'explode': {
+			frames: [ 0, 1, 2, 3 ],
+			fps: 16,
+			loop: false
+		}
+	};
+
+
 	/**
 	 * Draw an actor at the current cursor position.
 	 *
@@ -881,10 +947,12 @@ const beep8 = {};
 	 * @param {number} direction The direction to draw the actor in. 0 = right, 1 = left.
 	 * @returns {void}
 	 */
-	beep8.Actors.draw = function( ch, frame, direction = 0 ) {
+	beep8.Actors.draw = function( ch, animation ) {
 
 		beep8.Utilities.checkInt( "ch", ch );
-		beep8.Utilities.checkInt( "frame", frame );
+		beep8.Utilities.checkString( "animation", animation );
+
+		const frame = animationFrame( animation );
 
 		const font = beep8.Core.textRenderer.curActors_;
 
@@ -897,28 +965,135 @@ const beep8 = {};
 			beep8.Core.drawState.fgColor,
 			beep8.Core.drawState.bgColor,
 			font,
-			direction
+			beep8.Actors.animations[ animation ].direction || 0
 		);
 
 	};
 
 
 	/**
-	 * Animate an actor.
+	 * Draw an actor at a specific position.
+	 * This ignores the text grid/ cursor position and draws at specific x, y coordinates.
+	 * This is useful for drawing actors in the game world and real-time apps.
 	 *
-	 * No idea how I will do this yet, but I will figure it out.
-	 *
-	 * @param {number} ch The character to animate.
-	 * @param {number[]} frames The frames to animate.
-	 * @param {number} direction The direction to animate the actor in. 0 = right, 1 = left.
-	 * @returns {void}
+	 * @param {number} ch The character to draw.
+	 * @param {string} animation The animation to draw.
+	 * @param {number} x The x coordinate to draw the actor at.
+	 * @param {number} y The y coordinate to draw the actor at.
+	 * @returns {boolean} True if the animation is still playing, false if it has finished.
 	 */
-	beep8.Actors.animate = function( ch, frames = null, direction = 0 ) {
+	beep8.Actors.spr = function( ch, animation, x, y, startTime = null ) {
 
 		beep8.Utilities.checkInt( "ch", ch );
-		beep8.Utilities.checkArray( "frames", frames );
+		beep8.Utilities.checkString( "animation", animation );
+		beep8.Utilities.checkNumber( "x", x );
+		beep8.Utilities.checkNumber( "y", y );
+		if ( startTime !== null ) beep8.Utilities.checkNumber( "startTime", startTime );
 
-	};
+		const frame = animationFrame( animation, startTime );
+
+		const font = beep8.Core.textRenderer.curActors_;
+
+		const chrIndex = ( ch * font.getColCount() ) + frame;
+
+		const anim = beep8.Actors.animations[ animation ];
+
+		// Example usage:
+		if ( !shouldLoopAnimation( anim, startTime ) ) {
+			return false;
+		}
+
+		// Draw the actor.
+		beep8.Core.textRenderer.spr(
+			chrIndex,
+			x,
+			y,
+			font,
+			anim.direction || 0
+		);
+
+		// The animation is still playing.
+		return true;
+
+	}
+
+
+
+	/**
+	 * Get the current frame of an animation.
+	 * This is used internally to automatically determine what frame to draw.
+	 * This uses delta time to determine the current frame.
+	 *
+	 * @param {string} animation The animation to get the frame for.
+	 * @returns {number} The frame to draw for the animation.
+	 */
+	const animationFrame = function( animation, startTime = null ) {
+
+		// Does the animation exist.
+		if ( beep8.Actors.animations[ animation ] === undefined ) {
+			beep8.Utilities.fatal( "Invalid animation: " + animation );
+		}
+
+		// If the animation has a start time, use that.
+		if ( startTime === null ) {
+			startTime = beep8.Core.startTime;
+		}
+
+		// Get the current animation properties.
+		const anim = beep8.Actors.animations[ animation ];
+		let frame = 0;
+
+		// If there's only one frame, return it.
+		if ( anim.frames.length === 1 ) {
+			frame = anim.frames[ 0 ];
+		}
+
+		// If there's more than one frame, calculate the frame to display.
+		if ( anim.frames.length > 1 ) {
+
+			const totalTime = beep8.Core.getNow() - startTime;
+			const frameCount = anim.frames.length;
+			const frameDuration = 1 / anim.fps;
+
+			// Dividing totalTime by 1000 to convert ms to seconds.
+			// Dividing by frameDuration to get the current frame.
+			// Modulo frameCount to loop the animation.
+			const frameIndex = Math.floor( ( totalTime / 1000 ) / frameDuration % frameCount );
+
+			frame = anim.frames[ frameIndex ];
+
+		}
+
+		return frame;
+
+	}
+
+
+	/**
+	 * Checks if the animation has finished looping.
+	 *
+	 * @param {Object} anim - The animation object.
+	 * @param {number} startTime - The start time of the animation.
+	 * @returns {boolean} - Returns true if the animation should continue, false if it has finished looping.
+	 */
+	const shouldLoopAnimation = function( anim, startTime ) {
+
+		// If the animation has not started or is set to loop, continue the animation.
+		if ( startTime === null || anim.loop === true ) {
+			return true;
+		}
+
+		// Calculate the total length of the animation in milliseconds.
+		const animationLength = anim.frames.length * ( 1000 / anim.fps );
+
+		// Check if the current time exceeds the animation length.
+		if ( beep8.Core.getNow() - startTime >= animationLength ) {
+			return false;
+		}
+
+		return true;
+
+	}
 
 } )( beep8 || ( beep8 = {} ) );
 
@@ -1189,6 +1364,7 @@ const beep8 = {};
 	beep8.Core.canvas = null;
 	beep8.Core.ctx = null;
 	beep8.Core.container = null;
+	beep8.Core.startTime = 0;
 	beep8.Core.deltaTime = 0;
 
 	beep8.Core.drawState = {
@@ -1229,6 +1405,7 @@ const beep8 = {};
 
 		beep8.Utilities.checkFunction( "callback", callback );
 		beep8.Core.asyncInit( callback );
+		beep8.Core.startTime = beep8.Core.getNow();
 
 	}
 
@@ -1711,6 +1888,7 @@ const beep8 = {};
 		if ( srcY !== undefined ) beep8.Utilities.checkNumber( "srcY", srcY );
 		if ( width !== undefined ) beep8.Utilities.checkNumber( "width", width );
 		if ( height !== undefined ) beep8.Utilities.checkNumber( "height", height );
+
 		if (
 			srcX !== undefined && srcY !== undefined &&
 			width !== undefined && height !== undefined
@@ -1738,16 +1916,37 @@ const beep8 = {};
 		beep8.Utilities.checkNumber( "y", y );
 		beep8.Utilities.checkNumber( "width", width );
 		beep8.Utilities.checkNumber( "height", height );
+		beep8.Utilities.checkNumber( "lineWidth", lineWidth );
 
-		let oldStrokeStyle = beep8.Core.ctx.strokeStyle;
+		const oldStrokeStyle = beep8.Core.ctx.strokeStyle;
+		const oldLineWidth = beep8.Core.ctx.lineWidth;
+
+		const halfLineWidth = lineWidth / 2;
+
 		beep8.Core.ctx.strokeStyle = beep8.Core.getColorHex( beep8.Core.drawState.fgColor );
 		beep8.Core.ctx.lineWidth = lineWidth;
+
+		// Drawn inside the shape.
 		beep8.Core.ctx.strokeRect(
 			Math.round( x ), Math.round( y ),
 			Math.round( width ), Math.round( height )
 		);
 
+		// beep8.Core.ctx.strokeRect(
+		// 	Math.round( x ) + halfLineWidth, Math.round( y ) + halfLineWidth,
+		// 	Math.round( width ) - lineWidth, Math.round( height ) - lineWidth
+		// );
+
+		console.log(
+			lineWidth,
+			Math.round( x ) + halfLineWidth, Math.round( y ) + halfLineWidth,
+			Math.round( width ) - lineWidth, Math.round( height ) - lineWidth
+		);
+
+
+		// Restore properties.
 		beep8.Core.ctx.strokeStyle = oldStrokeStyle;
+		beep8.Core.ctx.lineWidth = oldLineWidth;
 
 	}
 
@@ -1900,7 +2099,7 @@ const beep8 = {};
 		beep8.Core.realCanvas.width = beep8.CONFIG.SCREEN_REAL_WIDTH;
 		beep8.Core.realCanvas.height = beep8.CONFIG.SCREEN_REAL_HEIGHT;
 
-		beep8.Core.container.style.aspectRatio = `${beep8.CONFIG.SCREEN_ROWS} / ${beep8.CONFIG.SCREEN_COLS}`;
+		beep8.Core.container.style.aspectRatio = `${beep8.CONFIG.SCREEN_COLS} / ${beep8.CONFIG.SCREEN_ROWS}`;
 
 	}
 
@@ -1968,7 +2167,7 @@ const beep8 = {};
 		beep8.Core.cls();
 
 		beep8.Core.drawState.cursorCol = beep8.Core.drawState.cursorRow = 1;
-		beep8.Core.textRenderer.print( "*** CRASH ***:\n" + errorMessage );
+		beep8.Core.textRenderer.print( "*** CRASH ***:\n" + errorMessage, null, beep8.CONFIG.SCREEN_COLS );
 		beep8.Core.render();
 
 		crashing = false;
@@ -2211,11 +2410,19 @@ const beep8 = {};
 		 */
 		onKeyDown( e ) {
 
-			this.keysJustPressed_.add( e.key.toUpperCase() );
-			this.keysHeld_.add( e.key.toUpperCase() );
+			const key = e.key;
+
+			const keys = this.getKeys( key );
+
+			console.log( "Key down", key, keys );
+
+			for ( const k of keys ) {
+				this.keysJustPressed_.add( k.toUpperCase() );
+				this.keysHeld_.add( k.toUpperCase() );
+			}
 
 			if ( beep8.Core.hasPendingAsync( "beep8.Async.key" ) ) {
-				beep8.Core.resolveAsync( "beep8.Async.key", e.key );
+				beep8.Core.resolveAsync( "beep8.Async.key", keys );
 			}
 
 		}
@@ -2245,7 +2452,12 @@ const beep8 = {};
 		 */
 		onKeyUp( e ) {
 
-			this.keysHeld_.delete( e.key.toUpperCase() );
+			const key = e.key.toUpperCase();
+			const keys = this.getKeys( key );
+
+			for ( const k of keys ) {
+				this.keysHeld_.delete( k.toUpperCase() );
+			}
 
 		}
 
@@ -2283,6 +2495,54 @@ const beep8 = {};
 
 
 		/**
+		 * Gets an array of keys that correspond to a given key.
+		 * This is used to handle key aliases (e.g. "W" and "ArrowUp").
+		 *
+		 * @param {string} key - The key to get aliases for.
+		 * @returns {string[]} An array of key names.
+		 */
+		getKeys( key ) {
+
+			let keys = [ key ];
+
+			switch ( key.toUpperCase() ) {
+				case "W":
+					keys.push( "ArrowUp" );
+					break;
+
+				case "A":
+					keys.push( "ArrowLeft" );
+					break;
+
+				case "S":
+					keys.push( "ArrowDown" );
+					break;
+
+				case "D":
+					keys.push( "ArrowRight" );
+					break;
+
+				case "Enter":
+					keys.push( "Escape" );
+					break;
+
+				case "Z":
+				case "N":
+					keys.push( "ButtonA" );
+					break;
+
+				case "X":
+				case "M":
+					keys.push( "ButtonB" );
+					break;
+			}
+
+			return keys;
+
+		}
+
+
+		/**
 		 * Reads a line of text asynchronously.
 		 * Handles user input to build a string until the Enter key is pressed.
 		 *
@@ -2309,51 +2569,55 @@ const beep8 = {};
 
 				beep8.Core.setCursorLocation( curCol, curRow );
 				beep8.Core.textRenderer.print( curStrings[ curPos ] || "" );
-				const key = await this.readKeyAsync();
+				const keys = await this.readKeyAsync();
 
-				if ( key === "Backspace" ) {
+				for ( const key of keys ) {
 
-					// Handle backspace: remove the last character.
-					if ( curStrings[ curPos ].length === 0 ) {
-						if ( curPos === 0 ) {
-							continue;
+					if ( key === "Backspace" ) {
+
+						// Handle backspace: remove the last character.
+						if ( curStrings[ curPos ].length === 0 ) {
+							if ( curPos === 0 ) {
+								continue;
+							}
+							curPos--;
+							curRow--;
 						}
-						curPos--;
-						curRow--;
-					}
 
-					curStrings[ curPos ] = curStrings[ curPos ].length > 0 ? curStrings[ curPos ].substring( 0, curStrings[ curPos ].length - 1 ) : curStrings[ curPos ];
-					beep8.Core.setCursorLocation( curCol + curStrings[ curPos ].length, curRow );
-					beep8.Core.textRenderer.print( " " );
+						curStrings[ curPos ] = curStrings[ curPos ].length > 0 ? curStrings[ curPos ].substring( 0, curStrings[ curPos ].length - 1 ) : curStrings[ curPos ];
+						beep8.Core.setCursorLocation( curCol + curStrings[ curPos ].length, curRow );
+						beep8.Core.textRenderer.print( " " );
 
-					beep8.Sfx.play( beep8.CONFIG.SFX.TYPING );
+						beep8.Sfx.play( beep8.CONFIG.SFX.TYPING );
 
-				} else if ( key === "Enter" ) {
+					} else if ( key === "Enter" ) {
 
-					// Handle enter: submit the text.
-					beep8.Core.setCursorLocation( 1, curRow + 1 );
-					beep8.Core.cursorRenderer.setCursorVisible( cursorWasVisible );
+						// Handle enter: submit the text.
+						beep8.Core.setCursorLocation( 1, curRow + 1 );
+						beep8.Core.cursorRenderer.setCursorVisible( cursorWasVisible );
 
-					beep8.Sfx.play( beep8.CONFIG.SFX.TYPING );
+						beep8.Sfx.play( beep8.CONFIG.SFX.TYPING );
 
-					return curStrings.join( "" );
+						return curStrings.join( "" );
 
-				} else if ( key.length === 1 ) {
+					} else if ( key.length === 1 ) {
 
-					// Handle regular character input.
-					if ( curStrings.join( "" ).length < maxLen || maxLen === -1 ) {
-						curStrings[ curPos ] += key;
+						// Handle regular character input.
+						if ( curStrings.join( "" ).length < maxLen || maxLen === -1 ) {
+							curStrings[ curPos ] += key;
 
-						if ( maxWidth !== -1 && curStrings[ curPos ].length >= maxWidth ) {
-							beep8.Core.textRenderer.print( curStrings[ curPos ].charAt( curStrings[ curPos ].length - 1 ) );
-							curCol = startCol;
-							curPos++;
-							curStrings[ curPos ] = "";
-							curRow++;
+							if ( maxWidth !== -1 && curStrings[ curPos ].length >= maxWidth ) {
+								beep8.Core.textRenderer.print( curStrings[ curPos ].charAt( curStrings[ curPos ].length - 1 ) );
+								curCol = startCol;
+								curPos++;
+								curStrings[ curPos ] = "";
+								curRow++;
+							}
 						}
-					}
 
-					beep8.Sfx.play( beep8.CONFIG.SFX.TYPING );
+						beep8.Sfx.play( beep8.CONFIG.SFX.TYPING );
+
+					}
 
 				}
 			}
@@ -2375,20 +2639,15 @@ const beep8 = {};
 	beep8.Intro.loading = async function( sfx ) {
 
 		// Colour count.
-		const colourCount = beep8.CONFIG.COLORS.length;
 		const prefix = "8> ";
 
 		// Loop through all colours.
-		beep8.color( 0, 10 );
+		beep8.color( 0, 4 );
 		beep8.cls();
 		beep8.locate( 1, 1 );
 		beep8.print( prefix + "beep8 Loading...\n" );
 
-		await beep8.Async.wait( 0.1 );
-
-		beep8.print( prefix + "Let's 'a go!" );
-
-		await beep8.Async.wait( 0.3 );
+		await beep8.Async.wait( 0.4 );
 
 	}
 
@@ -2401,28 +2660,22 @@ const beep8 = {};
 	 */
 	beep8.Intro.splash = async function() {
 
-		let name = beep8.CONFIG.NAME;
-		let startCol = 2;
+		// Load title screen image.
+		const titleScreen = beep8.Tilemap.load( `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BACDAQQAgxcDBIMBAwSDGBgDBIMAAwSDAQQAgxh0AwSDGIYDBIMABQSDAQQAAA8AAA8AmCCDAQQAgwEEAIMBBACDAQQAgwEEAIMADwSDAQQAgwEEAIMBBACDFwMEgwIDBIMBAwSDGBgDBIMBBACDAQQAgwEEAIMBBACDAQQAgwEEAIMAAwSDAAMEgxh0AwSDGQFGBQSDAQQAgxkBRgUEgwEEAAAPAAAPAJgggxYFBIMQBQSDFgMEgxgoAwSDAQQAgwEEAIMYdAMEgxADBIMBBACDAQQAgwEEAIMBBACDAQQAgwEEAIMBBACDAQQAgxYDBIMYKAMEgxh0AwSDGIYDBIMYdAMEgxi0BQSDAAUFgwEFBIMBBQSDAQUEAA8AAA8AmCCDAQUEgwEFBIMYKAUDgwAFA4MYKAMEgxh0AwSDAQQAgwEEAIMZATMDBIMBBACDAQQAgxh0AwSDGIYDBIMWAwSDGCgDBIMWAwSDAQMEgwEDBIMQAwSDAAMEgwEEAIMBBQSDAAUFgwEFBIMBBQSDAQUEAA8AAA8AmCCDAQUEgwEFBIMBBQSDGCgFA4MABQODGCgDBIMYuAUEgwEEAIMBBACDGIYDBIMYdAMEgxi4BQSDDwMEgwsEA4MBAwSDAQMEgxkBSQUDgwEDBIMBAwSDGCgDBIMBBACDAQUEgwAFBYMBBQSDAQUEgwEFBAAPAAAPAJgggwkBBYMBBQSDAQUEgwEFBIMBBQSDAQUEgwEFBIMBBQSDAQUEgwEFBIMBBQSDAQUEgwEFBIMBBQSDAQUEgwEFBIMBBQSDAQUEgwEFBIMBBQSDAQUEgwEFBIMBBQSDDwEFgwEFBIMBBQQADwAADwCYGIMADwGDCQEFgwAPBYMADwWDAA8FgwAPBYMADwWDAA8FgwAPBYMAAQWDAA8FgwAPBYMADwWDAA8FgwAPBYMADwWDAA8FgwAPBYMADwWDAA8FgwAPBYMJAQWDAA8FgwAPAZgYgwAPAYMADwGDAA8BgxABBYMADwWDAA8FgwAPBYMADwWDAA8FgwEBBYMQAQWDAA8FgwAPBYMADwWDAA8FgwAPBYMJAQWDAA8FgwAPBYMEAQWDAA8BgwAPAYMADwGDAA8B` );
 
-		beep8.color( 0, 10 );
-		beep8.cls();
-
-		// Border.
-		beep8.locate( 1, 1 );
-		beep8.printBox( beep8.CONFIG.SCREEN_COLS - 2, beep8.CONFIG.SCREEN_ROWS - 2 );
-
-		// Project title.
-		startCol = Math.floor( ( beep8.CONFIG.SCREEN_COLS - name.length ) / 2 );
-		beep8.locate( startCol, Math.floor( beep8.CONFIG.SCREEN_ROWS * 0.3 ) );
-		beep8.print( name + "\n" );
-		beep8.print( "_".repeat( name.length ) + "\n" );
+		// Draw title screen.
+		beep8.locate( 0, 0 );
+		beep8.Tilemap.draw( titleScreen );
 
 		// Click to start.
 		let message = "Click to start";
 		if ( beep8.Core.isTouchDevice() ) message = "Tap to start";
 
-		startCol = Math.round( ( beep8.CONFIG.SCREEN_COLS - message.length ) / 2 );
-		beep8.locate( startCol, beep8.CONFIG.SCREEN_ROWS - 4 );
+		beep8.color( 4, 5 );
+		beep8.locate(
+			Math.round( ( beep8.CONFIG.SCREEN_COLS - message.length ) / 2 ),
+			beep8.CONFIG.SCREEN_ROWS - 2
+		);
 		beep8.print( message );
 
 		// Wait for user input.
@@ -2497,7 +2750,9 @@ const beep8 = {};
 			}
 		);
 
-		const totalCols = Math.max( promptSize.cols, choicesCols ) + 2 * options.padding + 2 * border01;
+		let totalCols = Math.max( promptSize.cols, choicesCols ) + 2 * options.padding + 2 * border01;
+		totalCols = Math.min( totalCols, beep8.CONFIG.SCREEN_COLS );
+
 		const totalRows = prompt01 * ( promptSize.rows + 1 ) + choicesRows + 2 * options.padding + 2 * border01;
 
 		if ( options.centerH || options.center ) {
@@ -2551,25 +2806,25 @@ const beep8 = {};
 
 			const k = await beep8.Core.inputSys.readKeyAsync();
 
-			if ( k === "ArrowUp" ) {
+			if ( k.includes( "ArrowUp" ) ) {
 
 				// Go up the menu.
 				selIndex = selIndex > 0 ? selIndex - 1 : choices.length - 1;
 				if ( choices.length > 1 ) beep8.Sfx.play( beep8.CONFIG.SFX.MENU_UP );
 
-			} else if ( k === "ArrowDown" ) {
+			} else if ( k.includes( "ArrowDown" ) ) {
 
 				// Go down the menu.
 				selIndex = ( selIndex + 1 ) % choices.length;
 				if ( choices.length > 1 ) beep8.Sfx.play( beep8.CONFIG.SFX.MENU_DOWN );
 
-			} else if ( k === "Enter" || k === "ButtonA" ) {
+			} else if ( k.includes( "Enter" ) || k.includes( "ButtonA" ) ) {
 
 				// Select menu item.
 				beep8.Sfx.play( beep8.CONFIG.SFX.MENU_SELECT );
 				return selIndex;
 
-			} else if ( ( k === "Escape" || k === "ButtonB" ) && options.cancelable ) {
+			} else if ( ( k.includes( "Escape" ) || k.includes( "ButtonB" ) ) && options.cancelable ) {
 
 				// Close menu.
 				return -1;
@@ -2849,6 +3104,89 @@ ${melody.join( '\n' )}`;
 
 	}
 
+
+} )( beep8 || ( beep8 = {} ) );
+
+( function( beep8 ) {
+
+	beep8.Passcodes = {};
+
+	// The length of the level passcodes.
+	beep8.Passcodes.codeLength = 4;
+
+
+	/**
+	 * Function to hash a string.
+	 *
+	 * @param {string} input - The string to hash.
+	 * @returns {string} The hashed string.
+	 */
+	function hashString( input ) {
+
+		input = btoa( input );
+		let hash = 0;
+		let result = '';
+
+		// Loop to hash the input string.
+		for ( let i = 0; i < input.length; i++ ) {
+			hash = ( hash << 5 ) - hash + input.charCodeAt( i );
+			hash = hash & hash; // Convert to 32bit integer
+		}
+
+		// Loop to extend the length of the result by rehashing.
+		for ( let j = 0; j < 5; j++ ) { // Adjust to control string length
+			hash = ( hash << 5 ) - hash + secretKey.charCodeAt( j % secretKey.length );
+			result += Math.abs( hash ).toString( 36 ); // Append base-36 to the result
+		}
+
+		return result;
+
+	}
+
+
+	/**
+	 * Function to generate a passcode for a given id.
+	 * This is intended for level passcodes.
+	 *
+	 * @param {string} id - The id to generate a code for.
+	 * @returns {string} The generated code.
+	 */
+	beep8.Passcode.getCode = function( id ) {
+
+		beep8.Utilities.checkIsSet( "id", id );
+
+		// Combine the id and secret key for uniqueness.
+		const combined = id + beep8.CONFIG.PASSKEY;
+
+		// Generate hash of the combined string.
+		let hash = hashString( combined );
+
+		// Remove non-alphabetic characters and convert to uppercase.
+		hash = hash.replace( /[^a-zA-Z]/g, '' );
+		hash = hash.toUpperCase(); // Convert to uppercase
+
+		// Return the first 'codeLength' characters.
+		return hash.substring( 0, beep8.Passcodes.codeLength );
+
+	}
+
+
+	/**
+	 * Function to check if a given code is valid for a given id.
+	 *
+	 * @param {string} id - The id to check the code for.
+	 * @param {string} code - The code to check.
+	 * @returns {boolean} True if the code is valid, false otherwise.
+	 */
+	beep8.Passcode.checkCode = function( id, code ) {
+
+		beep8.Utilities.checkIsSet( "id", id );
+		beep8.Utilities.checkString( "code", code );
+
+		const generatedCode = beep8.Passcode.getCode( id );
+		return generatedCode === code;
+
+	}
 
 } )( beep8 || ( beep8 = {} ) );
 
@@ -3366,17 +3704,15 @@ ${melody.join( '\n' )}`;
 
 			beep8.Utilities.checkString( "text", text );
 			beep8.Utilities.checkNumber( "wrapWidth", wrapWidth );
-			if ( font !== null ) {
-				beep8.Utilities.checkObject( "font", font );
-			}
+			if ( font !== null ) beep8.Utilities.checkObject( "font", font );
 
 			// Wrap text to specified width.
 			text = this.wrapText( text, wrapWidth, font );
 
 			// If text does not end in a new line then add one.
-			if ( text.length > 0 && text[ text.length - 1 ] !== '\n' ) {
-				text += "\n";
-			}
+			// if ( text.length > 0 && text[ text.length - 1 ] !== '\n' ) {
+			// 	text += "\n";
+			// }
 
 			// Store the start location.
 			let col = beep8.Core.drawState.cursorCol;
@@ -3512,13 +3848,23 @@ ${melody.join( '\n' )}`;
 		 * @param {number} y - The y-coordinate.
 		 * @returns {void}
 		 */
-		spr( ch, x, y ) {
+		spr( ch, x, y, font = null, direction = 0 ) {
 
 			beep8.Utilities.checkNumber( "ch", ch );
 			beep8.Utilities.checkNumber( "x", x );
 			beep8.Utilities.checkNumber( "y", y );
+			beep8.Utilities.checkInt( "direction", direction );
+			if ( font !== null ) beep8.Utilities.checkObject( "font", font );
 
-			this.putxy_( ch, x, y, beep8.Core.drawState.fgColor, beep8.Core.drawState.bgColor );
+			this.putxy_(
+				ch,
+				x,
+				y,
+				beep8.Core.drawState.fgColor,
+				beep8.Core.drawState.bgColor,
+				font,
+				direction
+			);
 
 		}
 
@@ -3747,9 +4093,11 @@ ${melody.join( '\n' )}`;
 			const fontRow = Math.floor( ch / colCount );
 			const fontCol = ch % colCount;
 
+			// Round so assets are always drawn on whole pixels.
 			x = Math.round( x );
 			y = Math.round( y );
 
+			// Draw the background.
 			// If bgColor is -1 then don't draw the background.
 			// Or make the background transparent.
 			if ( bgColor >= 0 ) {
@@ -4212,7 +4560,6 @@ ${melody.join( '\n' )}`;
 
 ( function( beep8 ) {
 
-
 	/**
 	 * A collection of functions for working with tilemaps.
 	 * The tilemaps are created with the beep8 Tilemap Editor.
@@ -4226,6 +4573,12 @@ ${melody.join( '\n' )}`;
 	 * [4] = additional data.
 	 */
 	beep8.Tilemap = {};
+
+	beep8.Tilemap.MAP_CHAR = 0;
+	beep8.Tilemap.MAP_FG = 1;
+	beep8.Tilemap.MAP_BG = 2;
+	beep8.Tilemap.MAP_COLLISION = 3;
+	beep8.Tilemap.MAP_DATA = 4;
 
 
 	/**
@@ -4299,19 +4652,74 @@ ${melody.join( '\n' )}`;
 		beep8.Utilities.checkNumber( "width", width );
 		beep8.Utilities.checkNumber( "height", height );
 
+		const startRow = beep8.Core.drawState.cursorRow;
+		const startCol = beep8.Core.drawState.cursorCol;
+
 		for ( let y = 0; y < height; y++ ) {
-			beep8.locate( 0, y );
+			beep8.locate(
+				0 + startCol,
+				y + startRow
+			);
 			for ( let x = 0; x < width; x++ ) {
 				const tile = tilemap[ y ][ x ];
-				if ( tile ) {
+				if ( tile && tile.length >= 3 ) {
+
 					beep8.color(
-						tile[ engine.MAP_FG ],
-						tile[ engine.MAP_BG ]
+						tile[ beep8.Tilemap.MAP_FG ],
+						tile[ beep8.Tilemap.MAP_BG ]
 					);
-					beep8.printChar( tile[ engine.MAP_CHAR ] );
+					beep8.printChar( tile[ beep8.Tilemap.MAP_CHAR ] );
+
 				}
 			}
 		}
+
+	};
+
+
+	/**
+	 * Create an empty tilemap array of the specified size.
+	 *
+	 * @param {number} width The width of the tilemap.
+	 * @param {number} height The height of the tilemap.
+	 * @returns {Array} The empty tilemap array.
+	 */
+	beep8.Tilemap.createEmptyTilemap = function( width, height ) {
+
+		let layout = [];
+
+		for ( let y = 0; y < height; y++ ) {
+			layout[ y ] = [];
+			for ( let x = 0; x < width; x++ ) {
+
+				// char: 0,				// Default to space character
+				// fg: data.colors.FG,		// Default foreground color (adjust as needed)
+				// bg: data.colors.BG,		// Default background color (adjust as needed)
+				// coll: 0,				// Default to no collision
+				// data: {}				// Empty object for additional data
+
+				layout[ y ][ x ] = beep8.Tilemap.getDefaultTile();
+
+			}
+		}
+
+		return layout;
+
+	};
+
+
+	/**
+	 * Get the default tile for a tilemap.
+	 *
+	 * @returns {Array} The default tile.
+	 */
+	beep8.Tilemap.getDefaultTile = function() {
+
+		return [
+			0,
+			data.colors.FG,
+			data.colors.BG,
+		]
 
 	};
 
@@ -4554,6 +4962,25 @@ ${melody.join( '\n' )}`;
 		beep8.Utilities.assert(
 			varValue instanceof expectedClass,
 			`${varName} should be an instance of ${expectedClass.name} but was not, it's: ${varValue}`
+		);
+
+		return varValue;
+
+	}
+
+
+	/**
+	 * Checks that a variable is set (not undefined or null).
+	 *
+	 * @param {string} varName - The name of the variable.
+	 * @param {any} varValue - The value of the variable.
+	 * @returns {any} The 'varValue' parameter.
+	 */
+	beep8.Utilities.checkIsSet = function( varName, varValue ) {
+
+		beep8.Utilities.assert(
+			varValue !== undefined && varValue !== null,
+			`${varName} should be set but was: ${varValue}`
 		);
 
 		return varValue;
@@ -4961,31 +5388,21 @@ ${melody.join( '\n' )}`;
 	beep8.Joystick = {};
 
 
-	/**
-	 * The HTML for the left side of the virtual joystick.
-	 * This includes the up, down, left, and right buttons.
-	 *
-	 * @type {string}
-	 */
-	const LEFT_VJOY_HTML = `
-<div id='vjoy-button-up' class='vjoy-button'></div>
-<div id='vjoy-button-down' class='vjoy-button'></div>
-<div id='vjoy-button-left' class='vjoy-button'></div>
-<div id='vjoy-button-right' class='vjoy-button'></div>
-	`;
-
-
-	/**
-	 * The HTML for the right side of the virtual joystick.
-	 * This includes the A, B, and = buttons.
-	 *
-	 * @type {string}
-	 */
-	const RIGHT_VJOY_HTML = `
-<div id='vjoy-button-pri' class='vjoy-button'>A</div>
-<div id='vjoy-button-sec' class='vjoy-button'>B</div>
-<div id='vjoy-button-ter' class='vjoy-button'>=</div>
-	`;
+	const VJOY_HTML = `
+<button id='vjoy-button-ter' class='vjoy-button'>Start</button>
+<div class="vjoy-controls">
+<div class="vjoy-dpad">
+<button id='vjoy-button-up' class='vjoy-button'>Up</button>
+<button id='vjoy-button-down' class='vjoy-button'>Down</button>
+<button id='vjoy-button-left' class='vjoy-button'>Left</button>
+<button id='vjoy-button-right' class='vjoy-button'>Right</button>
+<div id='vjoy-button-center'></div>
+</div>
+<div class="vjoy-buttons">
+<button id='vjoy-button-pri' class='vjoy-button'>A</button>
+<button id='vjoy-button-sec' class='vjoy-button'>B</button>
+</div>
+</div>`;
 
 
 	/**
@@ -4994,45 +5411,48 @@ ${melody.join( '\n' )}`;
 	 * @type {string}
 	 */
 	const VJOY_CSS = `
-* {
-	user-select: none;
-	-webkit-user-select: none;
-	-webkit-touch-callout: none;
+:root {
+	--vjoy-button-color: #444;
+	--vjoy-button-dpad-size: 40vw;
 }
 
-#vjoy-scrim {
-	position: fixed;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	top: 0;
-	pointer-events: all;
-}
-
-#vjoy-container-left {
+.vjoy-container,
+.vjoy-container * {
 	box-sizing: border-box;
-	position: fixed;
-	bottom: 16px;
-	left: 16px;
-	width: 40vmin;
-	height: 40vmin;
 	user-select: none;
-	touch-callout: none;
 	-webkit-user-select: none;
 	-webkit-touch-callout: none;
 }
 
-#vjoy-container-right {
-	box-sizing: border-box;
-	position: fixed;
-	bottom: 16px;
-	right: 16px;
-	width: 40vmin;
-	height: 40vmin;
-	user-select: none;
-	touch-callout: none;
-	-webkit-user-select: none;
-	-webkit-touch-callout: none;
+.vjoy-container {
+width: 100%;
+padding: 0 5vw;
+}
+
+.vjoy-controls {
+display: flex;
+gap: 5vw;
+justify-content: space-between;
+align-items: center;
+}
+
+.vjoy-dpad {
+aspect-ratio: 1;
+display: grid;
+grid-template-columns: 1fr 1fr 1fr;
+grid-template-rows: 1fr 1fr 1fr;
+width: var(--vjoy-button-dpad-size);
+}
+
+.vjoy-buttons {
+display: flex;
+gap: 5vw;
+}
+
+.vjoy-buttons button {
+	width: calc( var(--vjoy-button-dpad-size) / 3 );
+	height: calc( var(--vjoy-button-dpad-size) / 3 );
+	border-radius: 5rem;
 }
 
 .vjoy-button {
@@ -5049,74 +5469,46 @@ ${melody.join( '\n' )}`;
 	-webkit-user-select: none;
 	-webkit-touch-callout: none;
 }
+.vjoy-button:active,
 .vjoy-button:active {
 	background: #888;
 }
 
 #vjoy-button-up {
-	position: absolute;
-	left: 30%;
-	top: 0px;
-	width: 40%;
-	height: 45%;
-	border-radius: 0px 0px 50% 50%;
+	grid-area: 1 / 2;
+	border-radius: 1rem 1rem 0 0;
 }
 
 #vjoy-button-down {
-	position: absolute;
-	left: 30%;
-	bottom: 0px;
-	width: 40%;
-	height: 45%;
-	border-radius: 50% 50% 0px 0px;
+	grid-area: 3 / 2;
+	border-radius: 0 0 1rem 1rem;
 }
 
 #vjoy-button-left {
-	position: absolute;
-	left: 0px;
-	bottom: 30%;
-	width: 45%;
-	height: 40%;
-	border-radius: 0px 50% 50% 0px;
+	grid-area: 2 / 1;
+	border-radius: 1rem 0 0 1rem;
 }
 
 #vjoy-button-right {
-	position: absolute;
-	right: 0px;
-	bottom: 30%;
-	width: 45%;
-	height: 40%;
-	border-radius: 50% 0px 0px 50%;
+	grid-area: 2 / 3;
+	border-radius: 0 1rem 1rem 0;
+}
+
+#vjoy-button-center {
+	grid-column: 2;
+	grid-row: 2;
+	background: #444;
 }
 
 #vjoy-button-pri {
-	position: absolute;
-	right: 0px;
-	top: 30%;
-	width: 50%;
-	height: 50%;
-	border-radius: 50%;
-}
-
-#vjoy-button-sec {
-	position: absolute;
-	left: 0px;
-	top: 30%;
-	width: 50%;
-	height: 50%;
-	border-radius: 50%;
+	margin-top: 5vw;
 }
 
 #vjoy-button-ter {
-	position: fixed;
-	right: 0px;
-	bottom: 0px;
-	width: 10vw;
-	height: 8vmin;
-	border-radius: 8px;
-	opacity: 0.5;
+	height: 10vw;
+	border-radius: 1rem;
 }
-	`;
+`;
 
 
 	/**
@@ -5128,27 +5520,20 @@ ${melody.join( '\n' )}`;
 
 		beep8.Utilities.log( "Setting up virtual joystick..." );
 
+		// Add controller styles.
 		const styleEl = document.createElement( "style" );
 		styleEl.setAttribute( "type", "text/css" );
 		styleEl.innerText = VJOY_CSS;
 		document.body.appendChild( styleEl );
 
-		const scrim = document.createElement( "div" );
-		scrim.setAttribute( "id", "vjoy-scrim" );
-		scrim.addEventListener( "touchstart", e => e.preventDefault() );
-		document.body.appendChild( scrim );
+		// Create a container element
+		const container = document.createElement( 'div' );
+		container.className = 'vjoy-container';
+		container.innerHTML = VJOY_HTML;
 
-		const leftContainer = document.createElement( "div" );
-		leftContainer.setAttribute( "id", "vjoy-container-left" );
-		leftContainer.innerHTML = LEFT_VJOY_HTML;
-		document.body.appendChild( leftContainer );
+		beep8.Core.getBeepContainerEl().appendChild( container );
 
-		const rightContainer = document.createElement( "div" );
-		rightContainer.setAttribute( "id", "vjoy-container-right" );
-		rightContainer.innerHTML = RIGHT_VJOY_HTML;
-		document.body.appendChild( rightContainer );
-
-		setTimeout( continueSetup, 10 );
+		setTimeout( beep8.Joystick.continueSetup, 10 );
 
 	}
 
@@ -5160,13 +5545,13 @@ ${melody.join( '\n' )}`;
 	 */
 	beep8.Joystick.continueSetup = function() {
 
-		setUpButton( "vjoy-button-up", "ArrowUp" );
-		setUpButton( "vjoy-button-down", "ArrowDown" );
-		setUpButton( "vjoy-button-left", "ArrowLeft" );
-		setUpButton( "vjoy-button-right", "ArrowRight" );
-		setUpButton( "vjoy-button-pri", "ButtonA" );
-		setUpButton( "vjoy-button-sec", "ButtonB" );
-		setUpButton( "vjoy-button-ter", "Escape" );
+		beep8.Joystick.setUpButton( "vjoy-button-up", "ArrowUp" );
+		beep8.Joystick.setUpButton( "vjoy-button-down", "ArrowDown" );
+		beep8.Joystick.setUpButton( "vjoy-button-left", "ArrowLeft" );
+		beep8.Joystick.setUpButton( "vjoy-button-right", "ArrowRight" );
+		beep8.Joystick.setUpButton( "vjoy-button-pri", "ButtonA" );
+		beep8.Joystick.setUpButton( "vjoy-button-sec", "ButtonB" );
+		beep8.Joystick.setUpButton( "vjoy-button-ter", "Escape" );
 
 		// Prevent touches on the document body from doing what they usually do (opening
 		// context menus, selecting stuff, etc).
@@ -5198,23 +5583,23 @@ ${melody.join( '\n' )}`;
 		}
 
 		button.addEventListener(
-			"mousedown",
-			( e ) => handleButtonEvent( buttonKeyName, true, e )
+			"pointerdown",
+			( e ) => beep8.Joystick.handleButtonEvent( buttonKeyName, true, e )
 		);
 
 		button.addEventListener(
-			"touchstart",
-			( e ) => handleButtonEvent( buttonKeyName, true, e )
+			"pointerstart",
+			( e ) => beep8.Joystick.handleButtonEvent( buttonKeyName, true, e )
 		);
 
 		button.addEventListener(
-			"mouseup",
-			( e ) => handleButtonEvent( buttonKeyName, false, e )
+			"pointerup",
+			( e ) => beep8.Joystick.handleButtonEvent( buttonKeyName, false, e )
 		);
 
 		button.addEventListener(
-			"touchend",
-			( e ) => handleButtonEvent( buttonKeyName, false, e )
+			"pointerend",
+			( e ) => beep8.Joystick.handleButtonEvent( buttonKeyName, false, e )
 		);
 
 		button.addEventListener(
@@ -5235,10 +5620,12 @@ ${melody.join( '\n' )}`;
 	 */
 	beep8.Joystick.handleButtonEvent = function( buttonKeyName, down, evt ) {
 
+		console.log( 'handleButtonEvent', buttonKeyName, down, evt );
+
 		if ( down ) {
-			inputSys.onKeyDown( { key: buttonKeyName } );
+			beep8.Core.inputSys.onKeyDown( { key: buttonKeyName } );
 		} else {
-			inputSys.onKeyUp( { key: buttonKeyName } );
+			beep8.Core.inputSys.onKeyUp( { key: buttonKeyName } );
 		}
 
 		evt.preventDefault();
