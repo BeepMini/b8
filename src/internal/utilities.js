@@ -242,6 +242,25 @@
 
 
 	/**
+	 * Checks that a variable is set (not undefined or null).
+	 *
+	 * @param {string} varName - The name of the variable.
+	 * @param {any} varValue - The value of the variable.
+	 * @returns {any} The 'varValue' parameter.
+	 */
+	beep8.Utilities.checkIsSet = function( varName, varValue ) {
+
+		beep8.Utilities.assert(
+			varValue !== undefined && varValue !== null,
+			`${varName} should be set but was: ${varValue}`
+		);
+
+		return varValue;
+
+	}
+
+
+	/**
 	 * Checks that a variable is an array.
 	 *
 	 * @param {string} varName - The name of the variable.

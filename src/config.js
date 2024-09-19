@@ -72,6 +72,12 @@
 			"#F078DC",
 			"#F4F4F4",
 		],
+		// The passkey for the game.
+		// This is used when generating passcodes for levels.
+		// It should be unique for each game so that passcodes are different for each game.
+		// You can generate a passcode for a level with beep8.Passcode.getCode( levelId ).
+		// The passcode will be a 4-character code.
+		PASSKEY: "beep8IsAwesome",
 		// If this is not null, then we will display a virtual joystick if the user
 		// is on a mobile device.
 		TOUCH_VJOY: true,
