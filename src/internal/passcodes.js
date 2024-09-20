@@ -2,7 +2,11 @@
 
 	beep8.Passcodes = {};
 
-	// The length of the level passcodes.
+	/**
+	 * The length of the level passcodes.
+	 *
+	 * @type {number}
+	 */
 	beep8.Passcodes.codeLength = 4;
 
 
@@ -42,7 +46,7 @@
 	 * @param {string} id - The id to generate a code for.
 	 * @returns {string} The generated code.
 	 */
-	beep8.Passcode.getCode = function( id ) {
+	beep8.Passcodes.getCode = function( id ) {
 
 		beep8.Utilities.checkIsSet( "id", id );
 
@@ -69,7 +73,7 @@
 	 * @param {string} code - The code to check.
 	 * @returns {boolean} True if the code is valid, false otherwise.
 	 */
-	beep8.Passcode.checkCode = function( id, code ) {
+	beep8.Passcodes.checkCode = function( id, code ) {
 
 		beep8.Utilities.checkIsSet( "id", id );
 		beep8.Utilities.checkString( "code", code );
