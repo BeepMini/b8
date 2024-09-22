@@ -24,7 +24,7 @@
 	/**
 	 * Save a tilemap array to a string.
 	 *
-	 * @param {Array} tilemap The tilemap array to save.
+	 * @param {Array} tilemap - The tilemap array to save.
 	 * @returns {string} The encoded string
 	 */
 	beep8.Tilemap.save = function( tilemap ) {

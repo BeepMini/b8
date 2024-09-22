@@ -63,8 +63,9 @@
 			beep8.printBox( beep8.CONFIG.SCREEN_COLS - 2, 5 );
 			beep8.locate( 2, 25 );
 			beep8.print( `color(${selFg},${selBg})
-FG: ${selFg}
-BG: ${selBg}` );
+FG: ${( selFg + '' ).padEnd( 2, ' ' )} ${beep8.CONFIG.COLORS[ selFg ]}
+BG: ${( selBg + '' ).padEnd( 2, ' ' )} ${beep8.CONFIG.COLORS[ selBg ]}` );
+
 		}
 
 		window.addEventListener(

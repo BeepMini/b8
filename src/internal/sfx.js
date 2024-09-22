@@ -58,10 +58,11 @@
 
 
 	/**
-	 * Play a sound effect.
+	 * Play a named sound effect.
 	 *
-	 * @param {string} sfx The sound effect to play.
+	 * @param {string} sfx - The name of the sound effect to play.
 	 * @throws {Error} If the sfx is not found.
+	 * @returns	{void}
 	 */
 	beep8.Sfx.play = function( sfx = '' ) {
 
@@ -86,7 +87,7 @@
 	/**
 	 * Add a sound effect to the library.
 	 *
-	 * @param {string} sfxName The name of the sound effect.
+	 * @param {string} sfxName - The name of the sound effect.
 	 * @param {Array} sfxArray The sound effect array.
 	 * @throws {Error} If the sfxName is not a string.
 	 * @throws {Error} If the sfxArray is not an array.

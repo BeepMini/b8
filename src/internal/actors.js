@@ -42,9 +42,9 @@
 	/**
 	 * Draw an actor at the current cursor position.
 	 *
-	 * @param {number} ch The character to draw.
-	 * @param {number} frame The frame to draw.
-	 * @param {number} direction The direction to draw the actor in. 0 = right, 1 = left.
+	 * @param {number} ch - The character to draw.
+	 * @param {number} frame - The frame to draw.
+	 * @param {number} direction - The direction to draw the actor in. 0 = right, 1 = left.
 	 * @returns {void}
 	 */
 	beep8.Actors.draw = function( ch, animation ) {

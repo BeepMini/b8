@@ -8,15 +8,17 @@
 	 * Shows a fatal error and throws an exception.
 	 *
 	 * @param {string} error - The error to show.
+	 * @throws {Error} The error message.
+	 * @returns {void}
 	 */
 	beep8.Utilities.fatal = function( error ) {
 
-		console.error( "Fatal error: " + error );
+		beep8.Utilities.error( "Fatal error: " + error );
 
 		try {
 			beep8.Core.handleCrash( error );
 		} catch ( e ) {
-			console.error( "Error in beep8.Core.handleCrash: " + e + " while handling error " + error );
+			beep8.Utilities.error( "Error in beep8.Core.handleCrash: " + e + " while handling error " + error );
 		}
 
 		throw new Error( "Error: " + error );
@@ -112,11 +114,11 @@
 	 *
 	 * @param {string} varName - The name of the variable.
 	 * @param {any} varValue - The value of the variable.
-	 * @param {number} [optMin] - The minimum acceptable value for the variable.
-	 * @param {number} [optMax] - The maximum acceptable value for the variable.
+	 * @param {number} [optMin=undefined] - The minimum acceptable value for the variable.
+	 * @param {number} [optMax=undefined] - The maximum acceptable value for the variable.
 	 * @returns {number} The 'varValue' parameter.
 	 */
-	beep8.Utilities.checkNumber = function( varName, varValue, optMin, optMax ) {
+	beep8.Utilities.checkNumber = function( varName, varValue, optMin = undefined, optMax = undefined ) {
 
 		beep8.Utilities.checkType( varName, varValue, "number" );
 
@@ -279,24 +281,41 @@
 	 * Prints a log to the console if beep8.CONFIG.DEBUG is true.
 	 *
 	 * @param {string} msg - The message to print.
+	 * @returns {void}
 	 */
-	beep8.Utilities.log = beep8.CONFIG.DEBUG ? console.log : ( () => { } );
+	beep8.Utilities.log = function( msg ) {
+
+		if ( beep8.CONFIG.DEBUG ) {
+			console.log( msg );
+		}
+
+	}
 
 
 	/**
 	 * Prints a warning to the console.
 	 *
 	 * @param {string} msg - The message to print.
+	 * @returns {void}
 	 */
-	beep8.Utilities.warn = console.warn;
+	beep8.Utilities.warn = function( msg ) {
+
+		console.warn( msg );
+
+	}
 
 
 	/**
 	 * Prints an error to the console.
 	 *
 	 * @param {string} msg - The message to print.
+	 * @returns {void}
 	 */
-	beep8.Utilities.error = console.error;
+	beep8.Utilities.error = function( msg ) {
+
+		console.error( msg );
+
+	}
 
 
 	/**
