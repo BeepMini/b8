@@ -26,7 +26,8 @@
 
 	/**
 	 * Sets the frame handler, that is, the function that will be called on
-	 * every frame to render the screen.
+	 * every frame to render the screen. This is only needed if you are making a
+	 * real time game. For asynchronous games, you can update the screen manually.
 	 *
 	 * @param {Function} handler - The frame handler function.
 	 * @param {number} [fps=30] - The target frames per second. Recommended: 30.
@@ -50,9 +51,10 @@
 	/**
 	 * Forces the screen to render right now. Useful for immediate redraw in
 	 * animations.
-	 * Forces the screen to render right now. You only need this if you are
-	 * doing some kind of animation on your own and you want to redraw the
-	 * screen immediately to show the current state.
+	 *
+	 * You only need this if you are doing some kind of animation on your own
+	 * and you want to redraw the screen immediately to show the current state.
+	 *
 	 * Otherwise the screen repaints automatically when waiting for user input.
 	 *
 	 * @returns {void}
@@ -70,10 +72,10 @@
 	 * Sets the foreground and/or background color.
 	 *
 	 * @param {number} fg - The foreground color.
-	 * @param {number} [bg] - The background color (optional).
+	 * @param {number} [bg=undefined] - The background color (optional).
 	 * @returns {void}
 	 */
-	beep8.color = function( fg, bg ) {
+	beep8.color = function( fg, bg = undefined ) {
 
 		beep8.Core.preflight( "beep8.color" );
 		beep8.Utilities.checkNumber( "fg", fg );
@@ -119,21 +121,23 @@
 	/**
 	 * Clears the screen using the specified or current background color.
 	 *
-	 * @param {number} [bgColor] - Optional background color index. If provided,
-	 * uses this index to get the color from the config. If not provided, uses
-	 * the current background color (drawState.bgColor).
+	 * @param {number} [bgColor=undefined] - Optional background color index.
+	 * If provided, uses this index to get the color from the config. If not
+	 * provided, uses the current background color (drawState.bgColor).
 	 * @returns {void}
 	 */
 	beep8.cls = function( bgColor = undefined ) {
 
 		beep8.Core.preflight( "beep8.Core.cls" );
+
 		beep8.Core.cls( bgColor );
 
 	}
 
 
 	/**
-	 * Places the cursor at the given screen column and row.
+	 * Places the cursor at the given screen column and row. All drawing and
+	 * printing operations will start from here.
 	 *
 	 * @param {number} col - The column where the cursor is to be placed.
 	 * @param {number} [row] - The row where the cursor is to be placed (optional).
@@ -192,6 +196,7 @@
 
 		beep8.Core.preflight( "cursor" );
 		beep8.Utilities.checkBoolean( "visible", visible );
+
 		beep8.Core.cursorRenderer.setCursorVisible( visible );
 
 	}

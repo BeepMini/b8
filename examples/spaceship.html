@@ -1,226 +1,230 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 	<meta charset="utf-8">
-	<title>Example - Spaceship</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<title>Spaceship Game</title>
+	<meta name="description" content="Demo of a space invaders style game with real time updates.">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-  <link rel="stylesheet" href="example.css">
-  <script src="../dist/beep8.js"></script>
+	<link rel="stylesheet" href="example.css">
+	<script src="../dist/beep8.js"></script>
 
-  <script>
+	<script>
 
-    const CH_SPACESHIP = 22;
-    const CH_LASER = 72;
-    const MIN_Y = 24, MAX_Y = 168;
-    const MIN_X = 16, MAX_X = 248;
+		const CH_SPACESHIP = 22;
+		const CH_LASER = 72;
+		const MIN_Y = 24, MAX_Y = 168;
+		const MIN_X = 16, MAX_X = 248;
 
-    const ACCEL = 3;
-    const FRICTION = 2;
-    const MAX_SPEED = 4;
+		const ACCEL = 3;
+		const FRICTION = 2;
+		const MAX_SPEED = 4;
 
-    // Ship's collision rectangle
-    const PLAYER_COLL_RECT = { x: 1, y: 1, w: 6, h: 6 };
-    // Enemy's collision rectangle
-    const ENEMY_COLL_RECT = { x: 1, y: 1, w: 6, h: 6 };
-    // Laser's collision rectangle.
-    const LASER_COLL_RECT = { x: 2, y: 0, w: 4, h: 16 };
+		// Ship's collision rectangle
+		const PLAYER_COLL_RECT = { x: 1, y: 1, w: 6, h: 6 };
+		// Enemy's collision rectangle
+		const ENEMY_COLL_RECT = { x: 1, y: 1, w: 6, h: 6 };
+		// Laser's collision rectangle.
+		const LASER_COLL_RECT = { x: 2, y: 0, w: 4, h: 16 };
 
-    // Difficulty parameters are specified per score slice of 500, so the first value
-    // is used when the player has 0-499 points, the second value is for 500-999, etc.
-    const MIN_ENEMIES     = [   3,   3,   4,   4,   5,   5,   6,   6,   7,   7 ];
-    const MAX_ENEMIES     = [   5,   5,   6,   6,   7,   7,   8,   8,   9,   9 ];
-    const SPAWN_INTERVAL  = [ 100,  90,  80,  70,  60,  50,  40,  30,  30,  30 ];
-    const ENEMY_SPEED     = [   1,   2,   2,   3,   3,   4,   4,   5,   5,   6 ];
-    const ENEMY_COLOR     = [  12,  14,  13,  15,  11,  10,  12,  14,  13,  15 ];
+		// Difficulty parameters are specified per score slice of 500, so the first value
+		// is used when the player has 0-499 points, the second value is for 500-999, etc.
+		const MIN_ENEMIES = [ 3, 3, 4, 4, 5, 5, 6, 6, 7, 7 ];
+		const MAX_ENEMIES = [ 5, 5, 6, 6, 7, 7, 8, 8, 9, 9 ];
+		const SPAWN_INTERVAL = [ 100, 90, 80, 70, 60, 50, 40, 30, 30, 30 ];
+		const ENEMY_SPEED = [ 1, 2, 2, 3, 3, 4, 4, 5, 5, 6 ];
+		const ENEMY_COLOR = [ 12, 14, 13, 15, 11, 10, 12, 14, 13, 15 ];
 
-    // Player's coordinates (Y is fixed).
-    let playerX = 124, playerY = MAX_Y;
-    // Player's speed
-    let playerSpeed = 0;
-    // If a laser exists, laser.x, laser.y are its coordinates. Otherwise this is null.
-    let laser = null;
-    // Array of enemies.
-    const enemies = [];
-    // Countdown to spawn next enemy.
-    let spawnCountdown = 0;
-    // If partFx != null, then we're doing a particle effect at partFx.x, partFx.y
-    // partFx.ticks indicates for how many ticks we have been playing it.
-    let partFx = null;
-    let score = 0;
-    let gameOver = false;
-    let backgroundImg = null;
-    // Sound effects.
-    let sfxLaser = null;
-    let sfxHit = null;
-    let sfxBlast = null;
+		// Player's coordinates (Y is fixed).
+		let playerX = 124, playerY = MAX_Y;
+		// Player's speed
+		let playerSpeed = 0;
+		// If a laser exists, laser.x, laser.y are its coordinates. Otherwise this is null.
+		let laser = null;
+		// Array of enemies.
+		const enemies = [];
+		// Countdown to spawn next enemy.
+		let spawnCountdown = 0;
+		// If partFx != null, then we're doing a particle effect at partFx.x, partFx.y
+		// partFx.ticks indicates for how many ticks we have been playing it.
+		let partFx = null;
+		let score = 0;
+		let gameOver = false;
+		let backgroundImg = null;
+		// Sound effects.
+		let sfxLaser = null;
+		let sfxHit = null;
+		let sfxBlast = null;
 
-    async function main() {
-      beep8.cls();
-      beep8.print("Loading...");
-      backgroundImg = await beep8.Async.loadImage("../assets/city.png");
-      sfxLaser = await beep8.Async.loadSound("../assets/laser.wav")
-      sfxHit = await beep8.Async.loadSound("../assets/hit.wav")
-      sfxBlast = await beep8.Async.loadSound("../assets/blast.wav")
-      beep8.drawImage(0, 0, backgroundImg);
-      beep8.locate(4, 6);
-      beep8.color(14, -1);
-      beep8.print("\u00d7  SPACESHIP EXAMPLE \u00d8 \u00d9");
-      beep8.locate(3, 8);
-      beep8.color(7, -1);
-      beep8.print("Press any button to start.\n\n");
-      beep8.print("Controls:\n  SPACE or 'A' button\n  to shoot.");
-      await beep8.Async.key();
-      beep8.cls();
-      beep8.frame(doFrame);
-    }
+		async function main() {
+			beep8.cls();
+			beep8.print( "Loading..." );
+			backgroundImg = await beep8.Async.loadImage( "../assets/city.png" );
+			sfxLaser = await beep8.Async.loadSound( "../assets/laser.wav" )
+			sfxHit = await beep8.Async.loadSound( "../assets/hit.wav" )
+			sfxBlast = await beep8.Async.loadSound( "../assets/blast.wav" )
+			beep8.drawImage( 0, 0, backgroundImg );
+			beep8.locate( 4, 6 );
+			beep8.color( 14, -1 );
+			beep8.print( "\u00d7  SPACESHIP EXAMPLE \u00d8 \u00d9" );
+			beep8.locate( 3, 8 );
+			beep8.color( 7, -1 );
+			beep8.print( "Press any button to start.\n\n" );
+			beep8.print( "Controls:\n  SPACE or 'A' button\n  to shoot." );
+			await beep8.Async.key();
+			beep8.cls();
+			beep8.frame( doFrame );
+		}
 
-    async function doFrame() {
+		async function doFrame() {
 
-      beep8.cls();
-      beep8.drawImage(0, 0, backgroundImg);
-      // Update and draw everything.
-      updateAndDrawPlayer();
-      if (laser) updateAndDrawLaser();
-      enemies.forEach(updateAndDrawEnemy);
-      updateAndDrawPartFx();
+			beep8.cls();
+			beep8.drawImage( 0, 0, backgroundImg );
+			// Update and draw everything.
+			updateAndDrawPlayer();
+			if ( laser ) updateAndDrawLaser();
+			enemies.forEach( updateAndDrawEnemy );
+			updateAndDrawPartFx();
 
-      // Spawn enemy, if it's time. Or if we are below the minimum number of enemies.
-      if (--spawnCountdown < 0 || enemies.length < calcParam(MIN_ENEMIES)) spawnEnemy();
+			// Spawn enemy, if it's time. Or if we are below the minimum number of enemies.
+			if ( --spawnCountdown < 0 || enemies.length < calcParam( MIN_ENEMIES ) ) spawnEnemy();
 
-      // Remove dead enemies.
-      for (let i = enemies.length - 1; i >= 0; i--) {
-        if (enemies[i].dead) enemies.splice(i, 1);
-      }
+			// Remove dead enemies.
+			for ( let i = enemies.length - 1; i >= 0; i-- ) {
+				if ( enemies[ i ].dead ) enemies.splice( i, 1 );
+			}
 
-      // Draw score
-      beep8.color(7);
-      beep8.locate(25, 1);
-      beep8.print((score < 10 ? "000" : score < 100 ? "00" : score < 1000 ? "0" : "") + score);
+			// Draw score
+			beep8.color( 7 );
+			beep8.locate( 25, 1 );
+			beep8.print( ( score < 10 ? "000" : score < 100 ? "00" : score < 1000 ? "0" : "" ) + score );
 
-      // Game over?
-      if (gameOver) {
-        beep8.frame(null);
-        showGameOver();
-      }
+			// Game over?
+			if ( gameOver ) {
+				beep8.frame( null );
+				showGameOver();
+			}
 
-    }
+		}
 
-    function updateAndDrawPlayer() {
-      // Apply acceleration based on up/down keys.
-      playerSpeed += (beep8.key("ArrowRight") ? 1 : beep8.key("ArrowLeft") ? -1 : 0) * ACCEL;
-      // Apply friction (reduce speed).
-      playerSpeed = playerSpeed > 0 ?
-        Math.max(0, playerSpeed - FRICTION) : Math.min(0, playerSpeed + FRICTION);
-      // Cap speed to maximum.
-      playerSpeed = beep8.Utilities.clamp(playerSpeed, -MAX_SPEED, MAX_SPEED);
-      // Apply speed to position.
-      playerX = beep8.Utilities.clamp(playerX + playerSpeed, MIN_X, MAX_X);
-      // Draw the spaceship.
-      beep8.color(15);
-      beep8.sprActor(CH_SPACESHIP, 'idle', playerX, playerY);
-      // If there is no laser and the player presses Space (or the A button on mobile), shoot.
-      if (!laser && (beep8.key(" ") || beep8.key("ButtonA"))) shootLaser();
-    }
+		function updateAndDrawPlayer() {
+			// Apply acceleration based on up/down keys.
+			playerSpeed += ( beep8.key( "ArrowRight" ) ? 1 : beep8.key( "ArrowLeft" ) ? -1 : 0 ) * ACCEL;
+			// Apply friction (reduce speed).
+			playerSpeed = playerSpeed > 0 ?
+				Math.max( 0, playerSpeed - FRICTION ) : Math.min( 0, playerSpeed + FRICTION );
+			// Cap speed to maximum.
+			playerSpeed = beep8.Utilities.clamp( playerSpeed, -MAX_SPEED, MAX_SPEED );
+			// Apply speed to position.
+			playerX = beep8.Utilities.clamp( playerX + playerSpeed, MIN_X, MAX_X );
+			// Draw the spaceship.
+			beep8.color( 15 );
+			beep8.sprActor( CH_SPACESHIP, 'idle', playerX, playerY );
+			// If there is no laser and the player presses Space (or the A button on mobile), shoot.
+			if ( !laser && ( beep8.key( " " ) || beep8.key( "ButtonA" ) ) ) shootLaser();
+		}
 
-    function updateAndDrawLaser() {
-      laser.y -= 16;
-      // Draw the laser. It's a double sprite (16 pixels tall).
-      beep8.color(11);
-      beep8.spr(CH_LASER, laser.x, laser.y);
-      beep8.spr(CH_LASER, laser.x, laser.y + 8);
-      // Remove laser if it went off-screen.
-      if (laser.y < -16) laser = null;
-    }
+		function updateAndDrawLaser() {
+			laser.y -= 16;
+			// Draw the laser. It's a double sprite (16 pixels tall).
+			beep8.color( 11 );
+			beep8.spr( CH_LASER, laser.x, laser.y );
+			beep8.spr( CH_LASER, laser.x, laser.y + 8 );
+			// Remove laser if it went off-screen.
+			if ( laser.y < -16 ) laser = null;
+		}
 
-    function shootLaser() {
-      laser = {x: playerX, y: playerY };
-      beep8.playSound(sfxLaser);
-    }
+		function shootLaser() {
+			laser = { x: playerX, y: playerY };
+			beep8.playSound( sfxLaser );
+		}
 
-    function spawnEnemy() {
-      const maxEnemies = calcParam(MAX_ENEMIES);
-      if (enemies.length >= maxEnemies) return;
-      const e = {
-        y: MIN_Y,
-        x: Math.round(MIN_X + Math.random() * (MAX_X - MIN_X)), ticks: 0,
-        speed: calcParam(ENEMY_SPEED),
-        color: calcParam(ENEMY_COLOR),
-        // If 1, we're moving right, if -1 we're moving left.
-        dir: Math.random() > 0.5 ? 1 : -1,
-        // If > 0, we are sliding vertically against a wall.
-        sliding: 0,
-      };
-      enemies.push(e);
-      spawnCountdown = calcParam(SPAWN_INTERVAL);
-    }
+		function spawnEnemy() {
+			const maxEnemies = calcParam( MAX_ENEMIES );
+			if ( enemies.length >= maxEnemies ) return;
+			const e = {
+				y: MIN_Y,
+				x: Math.round( MIN_X + Math.random() * ( MAX_X - MIN_X ) ), ticks: 0,
+				speed: calcParam( ENEMY_SPEED ),
+				color: calcParam( ENEMY_COLOR ),
+				// If 1, we're moving right, if -1 we're moving left.
+				dir: Math.random() > 0.5 ? 1 : -1,
+				// If > 0, we are sliding vertically against a wall.
+				sliding: 0,
+			};
+			enemies.push( e );
+			spawnCountdown = calcParam( SPAWN_INTERVAL );
+		}
 
-    function updateAndDrawEnemy(e) {
+		function updateAndDrawEnemy( e ) {
 
-      ++e.ticks;
+			++e.ticks;
 
-      if (e.sliding > 0) {
-        // Sliding vertically against wall.
-        e.y += e.speed;
-        --e.sliding;
-      } else {
-        // Moving horizontally.
-        e.x += e.dir * e.speed;
-        // Hit a wall? If so, start a slide.
-        if (e.x <= MIN_X) { e.x = MIN_X; e.dir = 1; e.sliding = 8; }
-        if (e.x >= MAX_X) { e.x = MAX_X; e.dir = -1; e.sliding = 8; }
-      }
+			if ( e.sliding > 0 ) {
+				// Sliding vertically against wall.
+				e.y += e.speed;
+				--e.sliding;
+			} else {
+				// Moving horizontally.
+				e.x += e.dir * e.speed;
+				// Hit a wall? If so, start a slide.
+				if ( e.x <= MIN_X ) { e.x = MIN_X; e.dir = 1; e.sliding = 8; }
+				if ( e.x >= MAX_X ) { e.x = MAX_X; e.dir = -1; e.sliding = 8; }
+			}
 
-      // Don't go past player
-      e.y = Math.min(e.y, playerY);
+			// Don't go past player
+			e.y = Math.min( e.y, playerY );
 
-      // Hit by laser?
-      if (laser && beep8.Utilities.intersectRects(LASER_COLL_RECT, ENEMY_COLL_RECT, laser.x, laser.y, e.x, e.y)) {
-        e.dead = true;
-        laser = null;
-        partFx = {x: e.x, y: e.y, startTime: beep8.Core.getNow()};
-        score += 50;
-        beep8.playSound(sfxHit);
-      }
+			// Hit by laser?
+			if ( laser && beep8.Utilities.intersectRects( LASER_COLL_RECT, ENEMY_COLL_RECT, laser.x, laser.y, e.x, e.y ) ) {
+				e.dead = true;
+				laser = null;
+				partFx = { x: e.x, y: e.y, startTime: beep8.Core.getNow() };
+				score += 50;
+				beep8.playSound( sfxHit );
+			}
 
-      // Hit player?
-      if (beep8.Utilities.intersectRects(ENEMY_COLL_RECT, PLAYER_COLL_RECT, e.x, e.y, playerX, playerY)) {
-        if (!gameOver) beep8.playSound(sfxBlast);
-        gameOver = true;
-      }
+			// Hit player?
+			if ( beep8.Utilities.intersectRects( ENEMY_COLL_RECT, PLAYER_COLL_RECT, e.x, e.y, playerX, playerY ) ) {
+				if ( !gameOver ) beep8.playSound( sfxBlast );
+				gameOver = true;
+			}
 
-      // Draw.
-      beep8.color(e.color);
+			// Draw.
+			beep8.color( e.color );
 
-	  let animation = 'move-right';
-	  if (e.dir < 0) {
-		animation = 'move-left';
-	  }
-	  beep8.sprActor( 21, animation, e.x, e.y );
-    }
+			let animation = 'move-right';
+			if ( e.dir < 0 ) {
+				animation = 'move-left';
+			}
+			beep8.sprActor( 21, animation, e.x, e.y );
+		}
 
-    function updateAndDrawPartFx() {
-      if (!partFx) return;
-      beep8.color(15);
-      const animating = beep8.sprActor(39, 'explode', partFx.x, partFx.y, partFx.startTime);
-	  if ( !animating ) partFx = null;
-    }
+		function updateAndDrawPartFx() {
+			if ( !partFx ) return;
+			beep8.color( 15 );
+			const animating = beep8.sprActor( 39, 'explode', partFx.x, partFx.y, partFx.startTime );
+			if ( !animating ) partFx = null;
+		}
 
-    function showGameOver() {
-      beep8.color(15, 2);
-      beep8.locate(2, 10);
-      beep8.printBox(beep8.CONFIG.SCREEN_COLS - 4, 3);
-      beep8.locate(0, 11);
-      beep8.printCentered("GAME OVER", beep8.CONFIG.SCREEN_COLS);
-    }
+		function showGameOver() {
+			beep8.color( 15, 2 );
+			beep8.locate( 2, 10 );
+			beep8.printBox( beep8.CONFIG.SCREEN_COLS - 4, 3 );
+			beep8.locate( 0, 11 );
+			beep8.printCentered( "GAME OVER", beep8.CONFIG.SCREEN_COLS );
+		}
 
-    function calcParam(paramSpec) {
-      return paramSpec[Math.min(Math.max(Math.floor(score / 500), 0), paramSpec.length - 1)];
-    }
+		function calcParam( paramSpec ) {
+			return paramSpec[ Math.min( Math.max( Math.floor( score / 500 ), 0 ), paramSpec.length - 1 ) ];
+		}
 
-    window.addEventListener("load", () => beep8.init(main, {NAME: 'Spaceshop Shooter'}));
-  </script>
+		window.addEventListener( "load", () => beep8.init( main, { NAME: 'Spaceshop Shooter' } ) );
+	</script>
 </head>
+
 <body>
 </body>
+
 </html>

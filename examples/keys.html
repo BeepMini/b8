@@ -3,7 +3,8 @@
 
 <head>
 	<meta charset="utf-8">
-	<title>Example - Hello</title>
+	<title>Keyboard Input</title>
+	<meta name="description" content="Display the name of the last key pressed.">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
 	<link rel="stylesheet" href="example.css">
@@ -11,12 +12,13 @@
 
 	<script>
 
+		console.log( beep8.CONFIG );
 		async function main() {
 			// Clear screen.
 			beep8.color( 13, 10 );
 			beep8.cls();
 			beep8.locate( 1, 8 );
-			beep8.print( "Type a key to show its name:\n" );
+			beep8.print( "Type a key to show its name:\n", beep8.CONFIG.SCREEN_COLS - 2 );
 			while ( true ) {
 				const keyName = await beep8.Async.key();
 				beep8.locate( 1, 10 );

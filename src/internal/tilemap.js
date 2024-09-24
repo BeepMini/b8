@@ -22,7 +22,9 @@
 
 
 	/**
-	 * Save a tilemap array to a string.
+	 * Convert a tilemap array to a string.
+	 *
+	 * This string can be loaded with beep8.Tilemap.load.
 	 *
 	 * @param {Array} tilemap - The tilemap array to save.
 	 * @returns {string} The encoded string
