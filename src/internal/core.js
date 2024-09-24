@@ -38,6 +38,9 @@
 	/**
 	 * Initializes the engine.
 	 *
+	 * This merges config properties and then calls beep8.Core.asyncInit() to
+	 * prepare assets.
+	 *
 	 * @param {Function} callback - The function to call when the engine is initialized.
 	 * @return {void}
 	 */
@@ -56,13 +59,17 @@
 	}
 
 
+
 	/**
 	 * Asynchronously initializes the engine.
+	 *
+	 * This function sets up the canvas, initializes subsystems, and then calls
+	 * the callback function if it's set.
 	 *
 	 * @param {Function} callback - The function to call when the engine is initialized.
 	 * @returns {void}
 	 */
-	beep8.Core.asyncInit = async function( callback ) {
+	beep8.Core.asyncInit = async function( callback = null ) {
 
 		beep8.Utilities.log( "beep8 System initialized" );
 
@@ -155,9 +162,9 @@
 
 	/**
 	 * Gets the container element for the engine.
-	 * This is the element under which the rendering canvas is created.
-	 * If the container is not specified in the configuration, this will be the
-	 * body element.
+	 *
+	 * This is the element under which the rendering canvas is created. If the
+	 * container is not specified in the configuration, this will be the body element.
 	 *
 	 * @returns {HTMLElement} The container element.
 	 */
@@ -196,7 +203,10 @@
 
 
 	/**
-	 * Checks if the engine (and specified method) is ready to run.
+	 * Checks if the engine (and specified api method) is ready to run.
+	 *
+	 * This function checks if the engine has crashed, if the initAsync() method
+	 * has been called, and if there is a pending asynchronous operation.
 	 *
 	 * @param {string} apiMethod - The name of the API method being called.
 	 * @returns {void}
@@ -232,6 +242,12 @@
 
 	/**
 	 * Starts an asynchronous operation.
+	 *
+	 * This function should be called at the beginning of an asynchronous method.
+	 * It sets up the pendingAsync object, which is used to track the state of the
+	 * asynchronous operation.
+	 *
+	 * This function should be called at the beginning of an asynchronous method.
 	 *
 	 * @param {string} asyncMethodName - The name of the asynchronous method.
 	 * @param {Function} resolve - The function to call when the operation is successful.
@@ -303,6 +319,8 @@
 
 	/**
 	 * Resolves an asynchronous operation.
+	 *
+	 * This function should be called at the end of an asynchronous method.
 	 *
 	 * @param {string} asyncMethodName - The name of the asynchronous method.
 	 * @param {any} result - The result of the operation.
@@ -396,6 +414,9 @@
 	/**
 	 * Clears the screen and resets the cursor to the top-left corner.
 	 *
+	 * It will optionally also set the background colour. By default it uses the
+	 * specified background but you can override this yourself.
+	 *
 	 * @param {number} [bgColor] - Optional background color index.
 	 * @returns {void}
 	 */
@@ -423,6 +444,7 @@
 	beep8.Core.defineColors = function( colors ) {
 
 		beep8.Utilities.checkArray( "colors", colors );
+
 		beep8.CONFIG.COLORS = colors.slice();
 		beep8.Core.textRenderer.regenColors();
 
@@ -433,10 +455,10 @@
 	 * Sets the colors used for text and background.
 	 *
 	 * @param {number} fg - The foreground color.
-	 * @param {number} bg - The background color.
+	 * @param {number} [bg=undefined] - The background color.
 	 * @returns {void}
 	 */
-	beep8.Core.setColor = function( fg, bg ) {
+	beep8.Core.setColor = function( fg, bg = undefined ) {
 
 		beep8.Utilities.checkNumber( "fg", fg );
 		beep8.Core.drawState.fgColor = Math.round( fg );
@@ -451,6 +473,11 @@
 
 	/**
 	 * Sets the cursor location.
+	 *
+	 * The cursor location is used for text rendering and is the position where
+	 * the next character will be drawn.
+	 *
+	 * Characters can be text or images, drawn using the loaded fonts.
 	 *
 	 * @param {number} col - The column.
 	 * @param {number} row - The row.
@@ -497,9 +524,14 @@
 
 
 	/**
-	 * Gets the current time.
+	 * Gets the current time in milliseconds.
 	 *
-	 * @returns {number} The current time.
+	 * This is used for rendering and animation, and can also be used in the game
+	 * to get the current time for things like timers.
+	 *
+	 * You can get the game start time by calling beep8.Core.startTime.
+	 *
+	 * @returns {number} The current time in milliseconds.
 	 */
 	beep8.Core.getNow = function() {
 
@@ -514,6 +546,9 @@
 
 	/**
 	 * Draws an image.
+	 *
+	 * This function is a wrapper around the canvas drawImage() function and will
+	 * draw the image at any x,y position. It does not use the cursor position.
 	 *
 	 * @param {HTMLImageElement} img - The image to draw.
 	 * @param {number} x - The x-coordinate of the upper-left corner of the image.
@@ -534,6 +569,7 @@
 		if ( srcY !== undefined ) beep8.Utilities.checkNumber( "srcY", srcY );
 		if ( width !== undefined ) beep8.Utilities.checkNumber( "width", width );
 		if ( height !== undefined ) beep8.Utilities.checkNumber( "height", height );
+
 		if (
 			srcX !== undefined && srcY !== undefined &&
 			width !== undefined && height !== undefined
@@ -547,7 +583,9 @@
 
 
 	/**
-	 * Draws a rectangle.
+	 * Draws a rectangle of the specified width and height.
+	 *
+	 * This ignores the cursor position.
 	 *
 	 * @param {number} x - The x-coordinate of the upper-left corner of the rectangle.
 	 * @param {number} y - The y-coordinate of the upper-left corner of the rectangle.
@@ -555,27 +593,46 @@
 	 * @param {number} height - The height of the rectangle.
 	 * @returns {void}
 	 */
-	beep8.Core.drawRect = function( x, y, width, height ) {
+	beep8.Core.drawRect = function( x, y, width, height, lineWidth = 1 ) {
 
 		beep8.Utilities.checkNumber( "x", x );
 		beep8.Utilities.checkNumber( "y", y );
 		beep8.Utilities.checkNumber( "width", width );
 		beep8.Utilities.checkNumber( "height", height );
+		beep8.Utilities.checkNumber( "lineWidth", lineWidth );
 
-		let oldStrokeStyle = beep8.Core.ctx.strokeStyle;
+		const oldStrokeStyle = beep8.Core.ctx.strokeStyle;
+		const oldLineWidth = beep8.Core.ctx.lineWidth;
+
+		const halfLineWidth = lineWidth / 2;
+
 		beep8.Core.ctx.strokeStyle = beep8.Core.getColorHex( beep8.Core.drawState.fgColor );
+		beep8.Core.ctx.lineWidth = lineWidth;
+
+		// Drawn inside the shape.
 		beep8.Core.ctx.strokeRect(
-			Math.round( x ) + 0.5, Math.round( y ) + 0.5,
-			Math.round( width ) - 1, Math.round( height ) - 1
+			Math.round( x ), Math.round( y ),
+			Math.round( width ), Math.round( height )
 		);
 
+		console.log(
+			lineWidth,
+			Math.round( x ) + halfLineWidth, Math.round( y ) + halfLineWidth,
+			Math.round( width ) - lineWidth, Math.round( height ) - lineWidth
+		);
+
+
+		// Restore properties.
 		beep8.Core.ctx.strokeStyle = oldStrokeStyle;
+		beep8.Core.ctx.lineWidth = oldLineWidth;
 
 	}
 
 
 	/**
-	 * Fills a rectangle.
+	 * Draws a filled rectangle using the current colours.
+	 *
+	 * Ignores the cursor position.
 	 *
 	 * @param {number} x - The x-coordinate of the upper-left corner of the rectangle.
 	 * @param {number} y - The y-coordinate of the upper-left corner of the rectangle.
@@ -599,7 +656,7 @@
 
 
 	/**
-	 * Saves the current screen.
+	 * Generates the bitmap data for the current screen and returns it to you.
 	 *
 	 * @returns {ImageData} The saved screen.
 	 */
@@ -629,6 +686,7 @@
 
 	/**
 	 * Run the game loop.
+	 *
 	 * This function ensures we stay as close to the target frame rate as
 	 * possible.
 	 *
@@ -729,7 +787,13 @@
 
 	/**
 	 * Adds scanlines to the screen.
+	 *
 	 * This is a simple effect that makes the screen look like an old CRT monitor.
+	 *
+	 * The scan lines are added as a separate element on top of the canvas and
+	 * drawn using css gradients.
+	 *
+	 * This can be disabled using the SCAN_LINES_OPACITY configuration option.
 	 *
 	 * @returns {void}
 	 */

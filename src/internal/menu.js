@@ -6,21 +6,27 @@
 	/**
 	 * Displays a menu with the given choices and returns the index of the selected choice.
 	 *
+	 * Displaying a menu will pause the execution of other elements of your game
+	 * until a choice has been made.
+	 *
+	 * The menu automatically beeps and boops as the player navigates through the choices.
+	 *
+	 * The options object can contain the following properties:
+	 * - options.title - The title of the menu.
+	 * - options.prompt - The prompt to display above the choices.
+	 * - options.selBgColor - The background color of the selected choice. Defaults to the current foreground colour.
+	 * - options.selFgColor - The foreground color of the selected choice. Defaults to the current background colour.
+	 * - options.bgChar - The character to use for the background.
+	 * - options.borderChar - The character to use for the border.
+	 * - options.center - Whether to center the menu horizontally and vertically.
+	 * - options.centerH - Whether to center the menu horizontally.
+	 * - options.centerV - Whether to center the menu vertically.
+	 * - options.padding - The padding around the prompt and choices.
+	 * - options.selIndex - The index of the initially selected choice.
+	 * - options.cancelable - Whether the menu can be canceled with the Escape key.
 	 *
 	 * @param {string[]} choices - The choices to display.
 	 * @param {object} [options] - Options for the menu.
-	 * @param {string} [options.title=""] - The title of the menu.
-	 * @param {string} [options.prompt=""] - The prompt to display above the choices.
-	 * @param {string} [options.selBgColor=beep8.Core.drawState.fgColor] - The background color of the selected choice.
-	 * @param {string} [options.selFgColor=beep8.Core.drawState.bgColor] - The foreground color of the selected choice.
-	 * @param {number} [options.bgChar=32] - The character to use for the background.
-	 * @param {number} [options.borderChar=0x80] - The character to use for the border.
-	 * @param {boolean} [options.center=false] - Whether to center the menu horizontally and vertically.
-	 * @param {boolean} [options.centerH=false] - Whether to center the menu horizontally.
-	 * @param {boolean} [options.centerV=false] - Whether to center the menu vertically.
-	 * @param {number} [options.padding=1] - The padding around the prompt and choices.
-	 * @param {number} [options.selIndex=0] - The index of the initially selected choice.
-	 * @param {boolean} [options.cancelable=false] - Whether the menu can be canceled with the Escape key.
 	 * @returns {Promise<number>} A promise that resolves to the index of the selected choice.
 	 */
 	beep8.Menu.display = async function( choices, options ) {
@@ -114,7 +120,7 @@
 				( startCol + border01 + options.padding ) :
 				( startCol + Math.round( ( totalCols - choicesCols ) / 2 ) );
 
-			beep8.Menu.printChoices( choices, selIndex, options );
+			printChoices( choices, selIndex, options );
 
 			const k = await beep8.Core.inputSys.readKeyAsync();
 
@@ -149,16 +155,18 @@
 
 
 	/**
-	 * Prints the choices for a menu.
+	 * Prints the choices for a menu highlighting the current choice.
+	 *
+	 * The options object should contain the following properties:
+	 * - options.selBgColor - The background color of the selected choice.
+	 * - options.selFgColor - The foreground color of the selected choice.
 	 *
 	 * @param {string[]} choices - The choices to print.
 	 * @param {number} selIndex - The index of the selected choice.
 	 * @param {object} options - Options for the menu.
-	 * @param {string} options.selBgColor - The background color of the selected choice.
-	 * @param {string} options.selFgColor - The foreground color of the selected choice.
 	 * @returns {void}
 	 */
-	beep8.Menu.printChoices = function( choices, selIndex, options ) {
+	const printChoices = function( choices, selIndex, options ) {
 
 		const origBg = beep8.Core.drawState.bgColor;
 		const origFg = beep8.Core.drawState.fgColor;

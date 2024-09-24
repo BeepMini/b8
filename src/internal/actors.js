@@ -3,6 +3,11 @@
 	beep8.Actors = {};
 
 
+	/**
+	 * The animations for the default actors.
+	 *
+	 * @type {Object}
+	 */
 	beep8.Actors.animations = {
 		'idle': {
 			frames: [ 0 ],
@@ -72,14 +77,25 @@
 
 
 	/**
-	 * Draw an actor at a specific position.
-	 * This ignores the text grid/ cursor position and draws at specific x, y coordinates.
+	 * Draw an actor at the specified x, y position.
+	 * This ignores the cursor position and draws at specific x, y coordinates.
 	 * This is useful for drawing actors in the game world and real-time apps.
+	 *
+	 * By default the animations will start playing based upon the current game
+	 * time. This means they may loop from anywhere in the animation sequence.
+	 * If you specify the startTime then the animation will start from the
+	 * beginning. This is particularly useful for non-looping animations.
+	 *
+	 * The startTime should be stored and not changed each time the animation is
+	 * drawn.
+	 *
+	 * The function will return false if the animation has finished playing.
 	 *
 	 * @param {number} ch The character to draw.
 	 * @param {string} animation The animation to draw.
 	 * @param {number} x The x coordinate to draw the actor at.
 	 * @param {number} y The y coordinate to draw the actor at.
+	 * @param {number} [startTime=null] The time the animation started.
 	 * @returns {boolean} True if the animation is still playing, false if it has finished.
 	 */
 	beep8.Actors.spr = function( ch, animation, x, y, startTime = null ) {
@@ -116,7 +132,6 @@
 		return true;
 
 	}
-
 
 
 	/**
