@@ -429,7 +429,7 @@
 		beep8.Core.ctx.fillStyle = beep8.Core.getColorHex( bgColor );
 		beep8.Core.ctx.fillRect( 0, 0, beep8.Core.canvas.width, beep8.Core.canvas.height );
 
-		this.setCursorLocation( 0, 0 );
+		beep8.Core.setCursorLocation( 0, 0 );
 		beep8.Core.markDirty();
 
 	}
@@ -853,8 +853,8 @@
 		beep8.Core.setColor( beep8.CONFIG.COLORS.length - 1, 0 );
 		beep8.Core.cls();
 
-		beep8.Core.drawState.cursorCol = beep8.Core.drawState.cursorRow = 1;
-		beep8.Core.textRenderer.print( "*** CRASH ***:\n" + errorMessage, null, beep8.CONFIG.SCREEN_COLS );
+		beep8.Core.setCursorLocation( 1, 1 );
+		beep8.Core.textRenderer.print( "*** CRASH ***:\n" + errorMessage, null, beep8.CONFIG.SCREEN_COLS - 2 );
 		beep8.Core.render();
 
 		crashing = false;
