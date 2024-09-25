@@ -82,6 +82,10 @@
 	/**
 	 * Displays a dialog with the given prompt and choices.
 	 *
+	 * This allows shows a user the prompt and waits for them to select a choice.
+	 * You can use this for information (with an 'ok' response) or for multiple
+	 * choice answers.
+	 *
 	 * @param {string} prompt - The text to show.
 	 * @param {string[]} [choices=["OK"]] - The choices to present to the user.
 	 * @returns {Promise<number>} The index of the selected item.
