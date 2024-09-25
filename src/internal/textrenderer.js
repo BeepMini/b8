@@ -486,11 +486,11 @@
 		 *
 		 * @param {number} width - The width of the box.
 		 * @param {number} height - The height of the box.
-		 * @param {boolean} fill - Whether to fill the box.
-		 * @param {number} borderCh - The character to use for the border.
+		 * @param {boolean} [fill=true] - Whether to fill the box.
+		 * @param {number} [borderCh=beep8.CONFIG.BORDER_CHAR] - The character to use for the border.
 		 * @returns {void}
 		 */
-		printBox( width, height, fill, borderChar = beep8.CONFIG.BORDER_CHAR ) {
+		printBox( width, height, fill = true, borderChar = beep8.CONFIG.BORDER_CHAR ) {
 
 			beep8.Utilities.checkNumber( "width", width );
 			beep8.Utilities.checkNumber( "height", height );
