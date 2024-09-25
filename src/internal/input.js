@@ -69,16 +69,20 @@
 		onKeyDown( e ) {
 
 			const key = e.key;
-
 			const keys = this.getKeys( key );
 
-			console.log( "Key down", key, keys );
+			// Stop page from scrolling when the arrows are pressed.
+			if ( [ "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight" ].includes( key ) ) {
+				e.preventDefault();
+			}
 
+			// Add to currently held keys.
 			for ( const k of keys ) {
 				this.keysJustPressed_.add( k.toUpperCase() );
 				this.keysHeld_.add( k.toUpperCase() );
 			}
 
+			// Return any pending key events.
 			if ( beep8.Core.hasPendingAsync( "beep8.Async.key" ) ) {
 				beep8.Core.resolveAsync( "beep8.Async.key", keys );
 			}
