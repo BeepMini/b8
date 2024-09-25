@@ -345,8 +345,8 @@
 
 
 	/**
-	 * Prints a box of the given size starting at the cursor position, using
-	 * border-drawing characters.
+	 * Prints a box with a border of the given size starting at the cursor
+	 * position, using border-drawing characters.
 	 *
 	 * @param {number} widthCols - Width of the box in screen columns, including
 	 * the border.
