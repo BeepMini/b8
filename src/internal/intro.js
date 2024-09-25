@@ -53,6 +53,9 @@
 		// Wait for user input.
 		await beep8.Core.inputSys.readPointerAsync();
 
+		beep8.color( 15, 0 );
+		beep8.cls();
+
 	}
 
 
