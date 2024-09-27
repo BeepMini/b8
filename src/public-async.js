@@ -90,15 +90,14 @@
 	 * @param {string[]} [choices=["OK"]] - The choices to present to the user.
 	 * @returns {Promise<number>} The index of the selected item.
 	 */
-	beep8.Async.dialog = async function( prompt, choices = [ "OK" ], maxWidth = -1 ) {
+	beep8.Async.dialog = async function( prompt, choices = [ "OK" ] ) {
 
 		beep8.Core.preflight( "beep8.Async.dialog" );
 
 		beep8.Utilities.checkString( "prompt", prompt );
 		beep8.Utilities.checkArray( "choices", choices );
-		beep8.Utilities.checkNumber( "maxWidth", maxWidth );
 
-		return beep8.Async.menu( choices, { prompt, center: true, maxWidth } );
+		return beep8.Async.menu( choices, { prompt, center: true } );
 
 	}
 
