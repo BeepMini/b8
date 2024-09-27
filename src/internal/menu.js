@@ -56,7 +56,7 @@
 		let startCol = beep8.Core.drawState.cursorCol;
 		let startRow = beep8.Core.drawState.cursorRow;
 
-		const promptSize = beep8.Core.textRenderer.measure( options.prompt );
+		const promptSize = beep8.TextRenderer.measure( options.prompt );
 		const prompt01 = options.prompt ? 1 : 0;
 		const border01 = options.borderChar ? 1 : 0;
 		let choicesCols = 0;
@@ -85,18 +85,18 @@
 		beep8.Core.drawState.cursorRow = startRow;
 
 		// Print the background.
-		beep8.Core.textRenderer.printRect( totalCols, totalRows, options.bgChar );
+		beep8.TextRenderer.printRect( totalCols, totalRows, options.bgChar );
 
 		// Print the border.
 		if ( options.borderChar ) {
 
-			beep8.Core.textRenderer.printBox( totalCols, totalRows, false, options.borderChar );
+			beep8.TextRenderer.printBox( totalCols, totalRows, false, options.borderChar );
 
 			// Print title at the top of the border.
 			if ( options.title ) {
 				const t = " " + options.title + " ";
 				beep8.Core.drawState.cursorCol = startCol + Math.round( ( totalCols - t.length ) / 2 );
-				beep8.Core.textRenderer.print( t );
+				beep8.TextRenderer.print( t );
 			}
 		}
 
@@ -105,7 +105,7 @@
 				( startCol + border01 + options.padding ) :
 				( startCol + Math.round( ( totalCols - promptSize.cols ) / 2 ) );
 			beep8.Core.drawState.cursorRow = startRow + border01 + options.padding;
-			beep8.Core.textRenderer.print( options.prompt );
+			beep8.TextRenderer.print( options.prompt );
 		}
 
 		// TODO: save the screen image before showing the menu and restore it later.
@@ -174,7 +174,7 @@
 		for ( let i = 0; i < choices.length; i++ ) {
 			const isSel = i === selIndex;
 			beep8.Core.setColor( isSel ? options.selFgColor : origFg, isSel ? options.selBgColor : origBg );
-			beep8.Core.textRenderer.print( choices[ i ] + "\n" );
+			beep8.TextRenderer.print( choices[ i ] + "\n" );
 		}
 
 		beep8.Core.setColor( origFg, origBg );

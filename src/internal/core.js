@@ -2,7 +2,6 @@
 
 	beep8.Core = {};
 
-	beep8.Core.textRenderer = null;
 	beep8.Core.inputSys = null;
 	beep8.Core.cursorRenderer = null;
 	beep8.Core.realCanvas = null;
@@ -125,11 +124,11 @@
 		beep8.Core.addScanlines();
 
 		// Initialize subsystems
-		beep8.Core.textRenderer = new beep8.TextRenderer();
 		beep8.Core.inputSys = new beep8.Input();
 		beep8.Core.cursorRenderer = new beep8.CursorRenderer();
 
-		await beep8.Core.textRenderer.initAsync();
+		// Load and initialize default fonts.
+		await beep8.TextRenderer.initAsync();
 
 		// Update the positioning and size of the canvas.
 		beep8.Core.updateLayout( false );
@@ -446,7 +445,7 @@
 		beep8.Utilities.checkArray( "colors", colors );
 
 		beep8.CONFIG.COLORS = colors.slice();
-		beep8.Core.textRenderer.regenColors();
+		beep8.TextRenderer.regenColors();
 
 	}
 
@@ -496,6 +495,23 @@
 		if ( row !== undefined ) {
 			beep8.Core.drawState.cursorRow = Math.round( row );
 		}
+
+	}
+
+
+	/**
+	 * Move the cursor to the next character.
+	 *
+	 * This adjusts the drawing position without actually drawing anything.
+	 *
+	 * @returns {void}
+	 */
+	beep8.Core.nextCursorLocation = function() {
+
+		let currentCursorCol = beep8.Core.drawState.cursorCol;
+		let currentCursorRow = beep8.Core.drawState.cursorRow;
+
+		beep8.Core.setCursorLocation( currentCursorCol + 1, currentCursorRow );
 
 	}
 
@@ -854,7 +870,7 @@
 		beep8.Core.cls();
 
 		beep8.Core.setCursorLocation( 1, 1 );
-		beep8.Core.textRenderer.print( "*** CRASH ***:\n" + errorMessage, null, beep8.CONFIG.SCREEN_COLS - 2 );
+		beep8.TextRenderer.print( "*** CRASH ***:\n" + errorMessage, null, beep8.CONFIG.SCREEN_COLS - 2 );
 		beep8.Core.render();
 
 		crashing = false;

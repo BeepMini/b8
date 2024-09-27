@@ -59,16 +59,14 @@
 
 		const frame = animationFrame( animation );
 
-		const font = beep8.Core.textRenderer.curActors_;
+		const font = beep8.TextRenderer.curActors_;
 
 		const chrIndex = ( ch * font.getColCount() ) + frame;
 
-		beep8.Core.textRenderer.put_(
+		beep8.TextRenderer.spr(
 			chrIndex,
-			beep8.Core.drawState.cursorCol,
-			beep8.Core.drawState.cursorRow,
-			beep8.Core.drawState.fgColor,
-			beep8.Core.drawState.bgColor,
+			beep8.Core.drawState.cursorCol * beep8.CONFIG.CHR_WIDTH,
+			beep8.Core.drawState.cursorRow * beep8.CONFIG.CHR_HEIGHT,
 			font,
 			beep8.Actors.animations[ animation ].direction || 0
 		);
@@ -108,7 +106,7 @@
 
 		const frame = animationFrame( animation, startTime );
 
-		const font = beep8.Core.textRenderer.curActors_;
+		const font = beep8.TextRenderer.curActors_;
 
 		const chrIndex = ( ch * font.getColCount() ) + frame;
 
@@ -120,7 +118,7 @@
 		}
 
 		// Draw the actor.
-		beep8.Core.textRenderer.spr(
+		beep8.TextRenderer.spr(
 			chrIndex,
 			x,
 			y,

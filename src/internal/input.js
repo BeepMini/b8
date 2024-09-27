@@ -230,7 +230,7 @@
 			while ( true ) {
 
 				beep8.Core.setCursorLocation( curCol, curRow );
-				beep8.Core.textRenderer.print( curStrings[ curPos ] || "" );
+				beep8.TextRenderer.print( curStrings[ curPos ] || "" );
 				const keys = await this.readKeyAsync();
 
 				for ( const key of keys ) {
@@ -248,7 +248,7 @@
 
 						curStrings[ curPos ] = curStrings[ curPos ].length > 0 ? curStrings[ curPos ].substring( 0, curStrings[ curPos ].length - 1 ) : curStrings[ curPos ];
 						beep8.Core.setCursorLocation( curCol + curStrings[ curPos ].length, curRow );
-						beep8.Core.textRenderer.print( " " );
+						beep8.TextRenderer.print( " " );
 
 						beep8.Sfx.play( beep8.CONFIG.SFX.TYPING );
 
@@ -269,7 +269,7 @@
 							curStrings[ curPos ] += key;
 
 							if ( maxWidth !== -1 && curStrings[ curPos ].length >= maxWidth ) {
-								beep8.Core.textRenderer.print( curStrings[ curPos ].charAt( curStrings[ curPos ].length - 1 ) );
+								beep8.TextRenderer.print( curStrings[ curPos ].charAt( curStrings[ curPos ].length - 1 ) );
 								curCol = startCol;
 								curPos++;
 								curStrings[ curPos ] = "";

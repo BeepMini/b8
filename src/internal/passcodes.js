@@ -100,10 +100,10 @@
 		let yPosition = Math.round( ( beep8.CONFIG.SCREEN_ROWS - height ) / 2 );
 
 		beep8.Core.setCursorLocation( xPosition, yPosition );
-		beep8.Core.textRenderer.printBox( width, height );
+		beep8.TextRenderer.printBox( width, height );
 
 		beep8.Core.setCursorLocation( xPosition + 2, yPosition + 2 );
-		beep8.Core.textRenderer.print( message + "\n" );
+		beep8.TextRenderer.print( message + "\n" );
 
 		const passcode = await beep8.Async.readLine( "", beep8.Passcodes.codeLength );
 		const value = beep8.Passcodes.getId( passcode );

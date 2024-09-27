@@ -137,7 +137,7 @@
 		const startCol = beep8.col();
 		const startRow = beep8.row();
 
-		text = beep8.Core.textRenderer.wrapText( text, wrapWidth );
+		text = beep8.TextRenderer.wrapText( text, wrapWidth );
 
 		for ( let i = 0; i <= text.length; i++ ) {
 
@@ -226,7 +226,7 @@
 		beep8.Utilities.checkString( "fontImageFile", fontImageFile );
 
 		const fontName = "FONT@" + beep8.Utilities.makeUrlPretty( fontImageFile );
-		await beep8.Core.textRenderer.loadFontAsync( fontName, fontImageFile, tileSizeMultiplier );
+		await beep8.TextRenderer.loadFontAsync( fontName, fontImageFile, tileSizeMultiplier );
 
 		return fontName;
 

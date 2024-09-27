@@ -232,7 +232,7 @@
 		beep8.Utilities.checkString( "text", text );
 		beep8.Utilities.checkNumber( "wrapWidth", wrapWidth );
 
-		beep8.Core.textRenderer.print( text, null, wrapWidth );
+		beep8.TextRenderer.print( text, null, wrapWidth );
 
 	}
 
@@ -253,7 +253,7 @@
 		beep8.Utilities.checkString( "text", text );
 		beep8.Utilities.checkNumber( "width", width );
 
-		beep8.Core.textRenderer.printCentered( text, width );
+		beep8.TextRenderer.printCentered( text, width );
 
 	}
 
@@ -279,7 +279,7 @@
 			beep8.Utilities.checkString( "fontId", fontId );
 		}
 
-		beep8.Core.textRenderer.drawText( x, y, text, fontId );
+		beep8.TextRenderer.drawText( x, y, text, fontId );
 
 	}
 
@@ -295,7 +295,7 @@
 		beep8.Core.preflight( "measure" );
 		beep8.Utilities.checkString( "text", text );
 
-		return beep8.Core.textRenderer.measure( text );
+		return beep8.TextRenderer.measure( text );
 
 	}
 
@@ -316,7 +316,7 @@
 		beep8.Utilities.checkNumber( "charCode", charCode );
 		beep8.Utilities.checkNumber( "numTimes", numTimes );
 
-		beep8.Core.textRenderer.printChar( charCode, numTimes );
+		beep8.TextRenderer.printChar( charCode, numTimes );
 
 	}
 
@@ -339,7 +339,7 @@
 		beep8.Utilities.checkNumber( "heightRows", heightRows );
 		beep8.Utilities.checkNumber( "charCode", charCode );
 
-		beep8.Core.textRenderer.printRect( widthCols, heightRows, charCode );
+		beep8.TextRenderer.printRect( widthCols, heightRows, charCode );
 
 	}
 
@@ -367,7 +367,7 @@
 		beep8.Utilities.checkBoolean( "fill", fill );
 		beep8.Utilities.checkNumber( "borderChar", borderChar );
 
-		beep8.Core.textRenderer.printBox( widthCols, heightRows, fill, borderChar );
+		beep8.TextRenderer.printBox( widthCols, heightRows, fill, borderChar );
 
 	}
 
@@ -466,7 +466,7 @@
 
 
 	/**
-	 * Plays a sound (previously loaded with beep8.playSound).
+	 * Plays a sound (previously loaded with beep8.loadSound).
 	 *
 	 * @param {HTMLAudioElement} sfx - The sound to play.
 	 * @param {number} [volume=1] - The volume to play the sound at.
@@ -502,7 +502,7 @@
 		beep8.Utilities.checkNumber( "x", x );
 		beep8.Utilities.checkNumber( "y", y );
 
-		beep8.Core.textRenderer.spr( ch, x, y );
+		beep8.TextRenderer.spr( ch, x, y );
 
 	}
 
@@ -644,7 +644,7 @@
 		fontId = fontId || "default";
 		beep8.Utilities.checkString( "fontId", fontId );
 
-		beep8.Core.textRenderer.setFont( fontId );
+		beep8.TextRenderer.setFont( fontId );
 
 	}
 
@@ -658,7 +658,7 @@
 
 		beep8.Core.preflight( "beep8.getFont" );
 
-		beep8.Core.textRenderer.getFont();
+		beep8.TextRenderer.getFont();
 
 	}
 
@@ -673,7 +673,7 @@
 
 		beep8.Utilities.checkString( "fontName", fontName );
 
-		return beep8.Core.textRenderer.getFontByName( fontName );
+		return beep8.TextRenderer.getFontByName( fontName );
 
 	}
 
@@ -692,7 +692,7 @@
 		fontId = fontId || "tiles";
 		beep8.Utilities.checkString( "fontId", fontId );
 
-		beep8.Core.textRenderer.setTileFont( fontId );
+		beep8.TextRenderer.setTileFont( fontId );
 
 	}
 
