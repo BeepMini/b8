@@ -566,11 +566,32 @@
 	}
 
 
+	/**
+	 * Play a song.
+	 *
+	 * @param {string} song - The name of the song to play.
+	 * @returns {void}
+	 */
 	beep8.playSong = function( song ) {
 
 		beep8.Utilities.checkString( "song", song );
 
 		beep8.Sound.playSong( song );
+
+	}
+
+
+	/**
+	 * Play a sound effect.
+	 *
+	 * @param {string} sfx - The name of the sound effect to play.
+	 * @returns {void}
+	 */
+	beep8.playSfx = function( sfx ) {
+
+		beep8.Utilities.checkString( "sfx", sfx );
+
+		beep8.Sfx.play( sfx );
 
 	}
 
