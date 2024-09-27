@@ -67,6 +67,7 @@
 		beep8.Utilities.checkString( "code", code );
 
 		// Loop through all levels to find a match.
+		code = code.toUpperCase();
 		for ( c = 1; c < 999; c++ ) {
 			if ( beep8.Passcodes.checkCode( c, code ) ) {
 				return c;
