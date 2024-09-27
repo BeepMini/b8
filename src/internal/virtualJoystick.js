@@ -12,31 +12,21 @@
 	beep8.Joystick = {};
 
 
-	/**
-	 * The HTML for the left side of the virtual joystick.
-	 * This includes the up, down, left, and right buttons.
-	 *
-	 * @type {string}
-	 */
-	const LEFT_VJOY_HTML = `
-<div id='vjoy-button-up' class='vjoy-button'></div>
-<div id='vjoy-button-down' class='vjoy-button'></div>
-<div id='vjoy-button-left' class='vjoy-button'></div>
-<div id='vjoy-button-right' class='vjoy-button'></div>
-	`;
-
-
-	/**
-	 * The HTML for the right side of the virtual joystick.
-	 * This includes the A, B, and = buttons.
-	 *
-	 * @type {string}
-	 */
-	const RIGHT_VJOY_HTML = `
-<div id='vjoy-button-pri' class='vjoy-button'>A</div>
-<div id='vjoy-button-sec' class='vjoy-button'>B</div>
-<div id='vjoy-button-ter' class='vjoy-button'>=</div>
-	`;
+	const VJOY_HTML = `
+<button id='vjoy-button-ter' class='vjoy-button'>Start</button>
+<div class="vjoy-controls">
+<div class="vjoy-dpad">
+<button id='vjoy-button-up' class='vjoy-button'>Up</button>
+<button id='vjoy-button-down' class='vjoy-button'>Down</button>
+<button id='vjoy-button-left' class='vjoy-button'>Left</button>
+<button id='vjoy-button-right' class='vjoy-button'>Right</button>
+<div id='vjoy-button-center'></div>
+</div>
+<div class="vjoy-buttons">
+<button id='vjoy-button-pri' class='vjoy-button'>A</button>
+<button id='vjoy-button-sec' class='vjoy-button'>B</button>
+</div>
+</div>`;
 
 
 	/**
@@ -45,45 +35,48 @@
 	 * @type {string}
 	 */
 	const VJOY_CSS = `
-* {
-	user-select: none;
-	-webkit-user-select: none;
-	-webkit-touch-callout: none;
+:root {
+	--vjoy-button-color: #444;
+	--vjoy-button-dpad-size: 40vw;
 }
 
-#vjoy-scrim {
-	position: fixed;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	top: 0;
-	pointer-events: all;
-}
-
-#vjoy-container-left {
+.vjoy-container,
+.vjoy-container * {
 	box-sizing: border-box;
-	position: fixed;
-	bottom: 16px;
-	left: 16px;
-	width: 40vmin;
-	height: 40vmin;
 	user-select: none;
-	touch-callout: none;
 	-webkit-user-select: none;
 	-webkit-touch-callout: none;
 }
 
-#vjoy-container-right {
-	box-sizing: border-box;
-	position: fixed;
-	bottom: 16px;
-	right: 16px;
-	width: 40vmin;
-	height: 40vmin;
-	user-select: none;
-	touch-callout: none;
-	-webkit-user-select: none;
-	-webkit-touch-callout: none;
+.vjoy-container {
+width: 100%;
+padding: 0 5vw;
+}
+
+.vjoy-controls {
+display: flex;
+gap: 5vw;
+justify-content: space-between;
+align-items: center;
+}
+
+.vjoy-dpad {
+aspect-ratio: 1;
+display: grid;
+grid-template-columns: 1fr 1fr 1fr;
+grid-template-rows: 1fr 1fr 1fr;
+width: var(--vjoy-button-dpad-size);
+}
+
+.vjoy-buttons {
+display: flex;
+gap: 5vw;
+}
+
+.vjoy-buttons button {
+	width: calc( var(--vjoy-button-dpad-size) / 3 );
+	height: calc( var(--vjoy-button-dpad-size) / 3 );
+	border-radius: 5rem;
 }
 
 .vjoy-button {
@@ -100,74 +93,46 @@
 	-webkit-user-select: none;
 	-webkit-touch-callout: none;
 }
+.vjoy-button:active,
 .vjoy-button:active {
 	background: #888;
 }
 
 #vjoy-button-up {
-	position: absolute;
-	left: 30%;
-	top: 0px;
-	width: 40%;
-	height: 45%;
-	border-radius: 0px 0px 50% 50%;
+	grid-area: 1 / 2;
+	border-radius: 1rem 1rem 0 0;
 }
 
 #vjoy-button-down {
-	position: absolute;
-	left: 30%;
-	bottom: 0px;
-	width: 40%;
-	height: 45%;
-	border-radius: 50% 50% 0px 0px;
+	grid-area: 3 / 2;
+	border-radius: 0 0 1rem 1rem;
 }
 
 #vjoy-button-left {
-	position: absolute;
-	left: 0px;
-	bottom: 30%;
-	width: 45%;
-	height: 40%;
-	border-radius: 0px 50% 50% 0px;
+	grid-area: 2 / 1;
+	border-radius: 1rem 0 0 1rem;
 }
 
 #vjoy-button-right {
-	position: absolute;
-	right: 0px;
-	bottom: 30%;
-	width: 45%;
-	height: 40%;
-	border-radius: 50% 0px 0px 50%;
+	grid-area: 2 / 3;
+	border-radius: 0 1rem 1rem 0;
+}
+
+#vjoy-button-center {
+	grid-column: 2;
+	grid-row: 2;
+	background: #444;
 }
 
 #vjoy-button-pri {
-	position: absolute;
-	right: 0px;
-	top: 30%;
-	width: 50%;
-	height: 50%;
-	border-radius: 50%;
-}
-
-#vjoy-button-sec {
-	position: absolute;
-	left: 0px;
-	top: 30%;
-	width: 50%;
-	height: 50%;
-	border-radius: 50%;
+	margin-top: 5vw;
 }
 
 #vjoy-button-ter {
-	position: fixed;
-	right: 0px;
-	bottom: 0px;
-	width: 10vw;
-	height: 8vmin;
-	border-radius: 8px;
-	opacity: 0.5;
+	height: 10vw;
+	border-radius: 1rem;
 }
-	`;
+`;
 
 
 	/**
@@ -179,27 +144,20 @@
 
 		beep8.Utilities.log( "Setting up virtual joystick..." );
 
+		// Add controller styles.
 		const styleEl = document.createElement( "style" );
 		styleEl.setAttribute( "type", "text/css" );
 		styleEl.innerText = VJOY_CSS;
 		document.body.appendChild( styleEl );
 
-		const scrim = document.createElement( "div" );
-		scrim.setAttribute( "id", "vjoy-scrim" );
-		scrim.addEventListener( "touchstart", e => e.preventDefault() );
-		document.body.appendChild( scrim );
+		// Create a container element
+		const container = document.createElement( 'div' );
+		container.className = 'vjoy-container';
+		container.innerHTML = VJOY_HTML;
 
-		const leftContainer = document.createElement( "div" );
-		leftContainer.setAttribute( "id", "vjoy-container-left" );
-		leftContainer.innerHTML = LEFT_VJOY_HTML;
-		document.body.appendChild( leftContainer );
+		beep8.Core.getBeepContainerEl().appendChild( container );
 
-		const rightContainer = document.createElement( "div" );
-		rightContainer.setAttribute( "id", "vjoy-container-right" );
-		rightContainer.innerHTML = RIGHT_VJOY_HTML;
-		document.body.appendChild( rightContainer );
-
-		setTimeout( continueSetup, 10 );
+		setTimeout( beep8.Joystick.continueSetup, 10 );
 
 	}
 
@@ -211,13 +169,13 @@
 	 */
 	beep8.Joystick.continueSetup = function() {
 
-		setUpButton( "vjoy-button-up", "ArrowUp" );
-		setUpButton( "vjoy-button-down", "ArrowDown" );
-		setUpButton( "vjoy-button-left", "ArrowLeft" );
-		setUpButton( "vjoy-button-right", "ArrowRight" );
-		setUpButton( "vjoy-button-pri", "ButtonA" );
-		setUpButton( "vjoy-button-sec", "ButtonB" );
-		setUpButton( "vjoy-button-ter", "Escape" );
+		beep8.Joystick.setUpButton( "vjoy-button-up", "ArrowUp" );
+		beep8.Joystick.setUpButton( "vjoy-button-down", "ArrowDown" );
+		beep8.Joystick.setUpButton( "vjoy-button-left", "ArrowLeft" );
+		beep8.Joystick.setUpButton( "vjoy-button-right", "ArrowRight" );
+		beep8.Joystick.setUpButton( "vjoy-button-pri", "ButtonA" );
+		beep8.Joystick.setUpButton( "vjoy-button-sec", "ButtonB" );
+		beep8.Joystick.setUpButton( "vjoy-button-ter", "Escape" );
 
 		// Prevent touches on the document body from doing what they usually do (opening
 		// context menus, selecting stuff, etc).
@@ -249,23 +207,23 @@
 		}
 
 		button.addEventListener(
-			"mousedown",
-			( e ) => handleButtonEvent( buttonKeyName, true, e )
+			"pointerdown",
+			( e ) => beep8.Joystick.handleButtonEvent( buttonKeyName, true, e )
 		);
 
 		button.addEventListener(
-			"touchstart",
-			( e ) => handleButtonEvent( buttonKeyName, true, e )
+			"pointerstart",
+			( e ) => beep8.Joystick.handleButtonEvent( buttonKeyName, true, e )
 		);
 
 		button.addEventListener(
-			"mouseup",
-			( e ) => handleButtonEvent( buttonKeyName, false, e )
+			"pointerup",
+			( e ) => beep8.Joystick.handleButtonEvent( buttonKeyName, false, e )
 		);
 
 		button.addEventListener(
-			"touchend",
-			( e ) => handleButtonEvent( buttonKeyName, false, e )
+			"pointerend",
+			( e ) => beep8.Joystick.handleButtonEvent( buttonKeyName, false, e )
 		);
 
 		button.addEventListener(
@@ -286,10 +244,12 @@
 	 */
 	beep8.Joystick.handleButtonEvent = function( buttonKeyName, down, evt ) {
 
+		console.log( 'handleButtonEvent', buttonKeyName, down, evt );
+
 		if ( down ) {
-			inputSys.onKeyDown( { key: buttonKeyName } );
+			beep8.Core.inputSys.onKeyDown( { key: buttonKeyName } );
 		} else {
-			inputSys.onKeyUp( { key: buttonKeyName } );
+			beep8.Core.inputSys.onKeyUp( { key: buttonKeyName } );
 		}
 
 		evt.preventDefault();
