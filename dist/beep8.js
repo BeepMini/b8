@@ -5578,6 +5578,29 @@ ${melody.join( '\n' )}`;
 
 	}
 
+
+	/**
+	 * Pads a number with leading zeros to the specified length.
+	 *
+	 * Does not support negative numbers.
+	 *
+	 * @param {number} number - The number to pad.
+	 * @param {number} length - The desired length of the output string.
+	 * @returns {string} - The padded number as a string.
+	 */
+	beep8.Utilities.padWithZeros = function( number, length ) {
+
+		beep8.Utilities.checkNumber( "number", number );
+		beep8.Utilities.checkInt( "length", length );
+
+		if ( number < 0 ) {
+			beep8.Utilities.fatal( "padWithZeros does not support negative numbers" );
+		}
+
+		return number.toString().padStart( length, '0' );
+
+	}
+
 } )( beep8 || ( beep8 = {} ) );
 
 ( function( beep8 ) {
