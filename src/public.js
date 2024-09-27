@@ -766,4 +766,22 @@
 
 	}
 
+
+	/**
+	 * Returns the text with line breaks inserted so that it fits within the
+	 * given width.
+	 *
+	 * @param {string} text - The text to wrap.
+	 * @param {number} width - The width to wrap text at.
+	 * @returns {string} The wrapped text.
+	 */
+	beep8.wrapText = function( text, width ) {
+
+		beep8.Utilities.checkString( "text", text );
+		beep8.Utilities.checkNumber( "width", width );
+
+		return beep8.TextRenderer.wrapText( text, width );
+
+	}
+
 } )( beep8 || ( beep8 = {} ) );
