@@ -103,7 +103,7 @@
 		beep8.TextRenderer.printBox( width, height );
 
 		beep8.Core.setCursorLocation( xPosition + 2, yPosition + 2 );
-		beep8.TextRenderer.print( message + "\n" );
+		beep8.TextRenderer.print( message + "\n>" );
 
 		const passcode = await beep8.Async.readLine( "", beep8.Passcodes.codeLength );
 		const value = beep8.Passcodes.getId( passcode );
