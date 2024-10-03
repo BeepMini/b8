@@ -244,7 +244,7 @@
 		beep8.Core.drawState.fgColor = beep8.TextRenderer.origFgColor_;
 		beep8.Core.drawState.bgColor = beep8.TextRenderer.origBgColor_;
 
-		beep8.Core.markDirty();
+		beep8.Renderer.markDirty();
 
 	}
 
@@ -318,7 +318,7 @@
 
 		}
 
-		beep8.Core.markDirty();
+		beep8.Renderer.markDirty();
 
 	}
 
@@ -636,7 +636,7 @@
 			beep8.Core.ctx.restore();
 		}
 
-		beep8.Core.markDirty();
+		beep8.Renderer.markDirty();
 
 	}
 

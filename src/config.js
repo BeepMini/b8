@@ -44,9 +44,8 @@
 		// Screen width and height in characters.
 		SCREEN_ROWS: 30,
 		SCREEN_COLS: 24,
-		// If set, this is the opacity of the "scan lines" effect.
-		// If 0 or not set, don't show scan lines.
-		SCAN_LINES_OPACITY: 0.1,
+		// Disable to turn off CRT effect.
+		CRT_ENABLE: true,
 		// Color palette.
 		// Colors count from 0.
 		// The first color is the background color.

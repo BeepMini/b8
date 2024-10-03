@@ -11,6 +11,8 @@
 	beep8.Core.container = null;
 	beep8.Core.startTime = 0;
 	beep8.Core.deltaTime = 0;
+	beep8.Core.crashed = false;
+	beep8.Core.crashing = false;
 
 	beep8.Core.drawState = {
 		fgColor: 7,
@@ -23,15 +25,12 @@
 	};
 
 	let lastFrameTime = null;
-	let crashed = false;
 	let initDone = false;
 	let frameHandler = null;
 	let frameHandlerTargetInterval = null;
 	let animFrameRequested = false;
 	let timeToNextFrame = 0;
-	let scanLinesEl = null;
 	let pendingAsync = null;
-	let dirty = false;
 
 
 	/**
@@ -121,8 +120,6 @@
 		beep8.Core.ctx = beep8.Core.canvas.getContext( "2d" );
 		beep8.Core.ctx.imageSmoothingEnabled = false;
 
-		beep8.Core.addScanlines();
-
 		// Initialize subsystems
 		beep8.Core.inputSys = new beep8.Input();
 		beep8.Core.cursorRenderer = new beep8.CursorRenderer();
@@ -154,7 +151,7 @@
 		await new Promise( resolve => setTimeout( resolve, 1 ) );
 		await callback();
 
-		beep8.Core.render();
+		beep8.Renderer.render();
 
 	}
 
@@ -212,7 +209,7 @@
 	 */
 	beep8.Core.preflight = function( apiMethod ) {
 
-		if ( crashed ) {
+		if ( beep8.Core.crashed ) {
 			throw new Error( `Can't call API method ${apiMethod}() because the engine has crashed.` );
 		}
 
@@ -270,7 +267,7 @@
 			reject,
 		};
 
-		beep8.Core.render();
+		beep8.Renderer.render();
 
 	}
 
@@ -368,49 +365,6 @@
 
 
 	/**
-	 * Renders the screen.
-	 *
-	 * @returns {void}
-	 */
-	beep8.Core.render = function() {
-
-		if ( crashed ) {
-			return;
-		}
-
-		beep8.Core.realCtx.imageSmoothingEnabled = false;
-		beep8.Core.realCtx.clearRect( 0, 0, beep8.Core.realCanvas.width, beep8.Core.realCanvas.height );
-		beep8.Core.realCtx.drawImage(
-			beep8.Core.canvas,
-			0, 0,
-			beep8.Core.realCanvas.width, beep8.Core.realCanvas.height
-		);
-
-		dirty = false;
-
-		beep8.Core.cursorRenderer.drawCursor( beep8.Core.realCtx, beep8.Core.realCanvas.width, beep8.Core.realCanvas.height );
-
-	}
-
-
-	/**
-	 * Marks the screen as dirty, so it will be re-rendered on the next frame.
-	 *
-	 * @returns {void}
-	 */
-	beep8.Core.markDirty = function() {
-
-		if ( dirty ) {
-			return;
-		}
-
-		dirty = true;
-		setTimeout( beep8.Core.render, 1 );
-
-	}
-
-
-	/**
 	 * Clears the screen and resets the cursor to the top-left corner.
 	 *
 	 * It will optionally also set the background colour. By default it uses the
@@ -429,7 +383,7 @@
 		beep8.Core.ctx.fillRect( 0, 0, beep8.Core.canvas.width, beep8.Core.canvas.height );
 
 		beep8.Core.setCursorLocation( 0, 0 );
-		beep8.Core.markDirty();
+		beep8.Renderer.markDirty();
 
 	}
 
@@ -748,7 +702,7 @@
 		}
 
 		// Call the render function to update the visuals
-		beep8.Core.render();
+		beep8.Renderer.render();
 
 		// If there is a frame handler, request the next animation frame
 		if ( frameHandler ) {
@@ -770,7 +724,7 @@
 		beep8.Core.updateLayout2d();
 
 		if ( renderNow ) {
-			beep8.Core.render();
+			beep8.Renderer.render();
 		}
 
 	}
@@ -802,59 +756,6 @@
 
 
 	/**
-	 * Adds scanlines to the screen.
-	 *
-	 * This is a simple effect that makes the screen look like an old CRT monitor.
-	 *
-	 * The scan lines are added as a separate element on top of the canvas and
-	 * drawn using css gradients.
-	 *
-	 * This can be disabled using the SCAN_LINES_OPACITY configuration option.
-	 *
-	 * @returns {void}
-	 */
-	beep8.Core.addScanlines = function() {
-
-		// If the scan lines element already exists, don't add it again.
-		if ( scanLinesEl ) {
-			return;
-		}
-
-		// If the scan lines opacity is set to 0, don't show scan lines.
-		const scanLinesOp = beep8.CONFIG.SCAN_LINES_OPACITY || 0;
-
-		if ( scanLinesOp > 0 ) {
-
-			if ( !scanLinesEl ) {
-				scanLinesEl = document.createElement( "div" );
-				beep8.Core.container.appendChild( scanLinesEl );
-			}
-
-			scanLinesEl.style.background =
-				"linear-gradient(rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 1) 50%), " +
-				"linear-gradient(90deg, rgba(255, 0, 0, .6), rgba(0, 255, 0, .2), rgba(0, 0, 255, .6))";
-
-			scanLinesEl.style.backgroundSize = `100% 4px, 3px 100%`;
-			scanLinesEl.style.opacity = scanLinesOp;
-			scanLinesEl.style.position = "absolute";
-			scanLinesEl.style.left = 0;
-			scanLinesEl.style.top = 0;
-			scanLinesEl.style.width = '100%';
-			scanLinesEl.style.height = '100%';
-			scanLinesEl.style.zIndex = 1;
-			scanLinesEl.style.pointerEvents = "none";
-
-		}
-
-	}
-
-
-
-	//
-	let crashing = false;
-
-
-	/**
 	 * Handles a crash.
 	 *
 	 * @param {string} [errorMessage="Fatal error"] - The error message to display.
@@ -862,19 +763,19 @@
 	 */
 	beep8.Core.handleCrash = function( errorMessage = "Fatal error" ) {
 
-		if ( crashed || crashing ) return;
+		if ( beep8.Core.crashed || beep8.Core.crashing ) return;
 
-		crashing = true;
+		beep8.Core.crashing = true;
 
 		beep8.Core.setColor( beep8.CONFIG.COLORS.length - 1, 0 );
 		beep8.Core.cls();
 
 		beep8.Core.setCursorLocation( 1, 1 );
 		beep8.TextRenderer.print( "*** CRASH ***:\n" + errorMessage, null, beep8.CONFIG.SCREEN_COLS - 2 );
-		beep8.Core.render();
+		beep8.Renderer.render();
 
-		crashing = false;
-		crashed = true;
+		beep8.Core.crashing = false;
+		beep8.Core.crashed = true;
 
 	}
 

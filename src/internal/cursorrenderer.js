@@ -31,7 +31,7 @@
 			beep8.Core.drawState.cursorVisible = visible;
 
 			this.blinkCycle_ = 0;
-			beep8.Core.render();
+			beep8.Renderer.render();
 
 			if ( this.toggleBlinkHandle_ !== null ) {
 				clearInterval( this.toggleBlinkHandle_ );
@@ -58,7 +58,7 @@
 		advanceBlink_() {
 
 			this.blinkCycle_ = ( this.blinkCycle_ + 1 ) % 2;
-			beep8.Core.render();
+			beep8.Renderer.render();
 
 		}
 

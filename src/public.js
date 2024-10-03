@@ -63,7 +63,7 @@
 
 		beep8.Core.preflight( "beep8.render" );
 
-		return beep8.Core.render();
+		return beep8.Renderer.render();
 
 	}
 
