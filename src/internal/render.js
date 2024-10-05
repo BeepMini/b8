@@ -7,14 +7,9 @@
 	let dirty = false;
 
 	// Constants and variables used for phosphor and scanline effects.
-	const phosphor_bleed = 0.2; // Bleed factor for neighboring pixel blending.
-	const phosphor_blend = 1 - phosphor_bleed; // Remaining factor for current pixel blending.
 	const phosphor_bloom = []; // Array to store bloom effect values.
-	const scan_upper_limit = 1;
-	const scan_lower_limit = 0.7;
 	const scale_add = 1; // Additive scaling for bloom.
-	const scale_times = 0.5; // Multiplicative scaling for bloom.
-	const scan_range = []; // Array to store scanline brightness range.
+	const scale_times = 0.4; // Multiplicative scaling for bloom.
 	let canvasImageData = null; // Stores image data for the canvas.
 
 	/**
@@ -24,15 +19,22 @@
 	 */
 	const initCrt = () => {
 
-		// Precompute phosphor bloom values based on a non-linear scale.
+		/**
+		 * Precompute phosphor bloom values to simulate the effect of phosphor
+		 * persistence on older CRT screens.
+		 * CRT displays have a characteristic glow, often caused by the
+		 * persistence of phosphor pixels.
+		 * Here, we calculate bloom values for each possible brightness level
+		 * (0-255) to simulate this effect:
+		 *  - The formula applies gamma correction with a value of 2.2 to mimic
+		 * non-linear brightness response.
+		 *  - A scaling factor of 0.5 reduces the brightness, and adding 1
+		 * ensures a minimum glow intensity.
+		 * These precomputed values are used later when blending pixels,
+		 * creating a glow effect similar to retro CRT displays.
+		 */
 		for ( let i = 0; i < 256; i++ ) {
 			phosphor_bloom[ i ] = ( scale_times * ( i / 255 ) ** ( 1 / 2.2 ) ) + scale_add;
-		}
-
-		// Precompute scanline brightness values from a lower to upper limit.
-		const step = ( scan_upper_limit - scan_lower_limit ) / 256; // Step to go from scan_lower_limit (0.7) to scan_upper_limit (1.0).
-		for ( let i = 0; i < 256; i++ ) {
-			scan_range[ i ] = 0.7 + step * i;
 		}
 
 	};
@@ -68,7 +70,6 @@
 			beep8.Core.realCanvas.height
 		);
 
-
 		beep8.Renderer.applyCrtFilter();
 
 	}
@@ -99,7 +100,8 @@
 	beep8.Renderer.applyCrtFilter = function() {
 
 		// If the CRT effect is disabled, return.
-		if ( !beep8.CONFIG.CRT_ENABLE ) {
+		if ( beep8.CONFIG.CRT_ENABLE <= 0 ) {
+			console.log( 'CRT effect is disabled.', beep8.CONFIG.CRT_ENABLE );
 			return;
 		}
 
@@ -126,19 +128,23 @@
 				const currentPixelPos = getPixelPosition( x, y );
 				// Get the current pixel's RGB data.
 				const current_pixel_data = getPixelData( imageData, currentPixelPos );
-
-				let red, green, blue;
-
 				// Get the previous pixel data to the left (or use the current pixel if on the first column).
 				const previous_pixel_data = ( x > 0 ) ? getPixelData( imageData, getPixelPosition( x - 1, y ) ) : current_pixel_data;
+				const next_pixel_data = x < width - 1 ? getPixelData( imageData, getPixelPosition( x + 1, y ) ) : current_pixel_data;
 
-				// Apply blending for the red, green, and blue channels.
-				red = blendPixel( current_pixel_data[ 0 ], previous_pixel_data[ 0 ] );
-				green = blendPixel( current_pixel_data[ 1 ], current_pixel_data[ 1 ] );
-				blue = blendPixel( current_pixel_data[ 2 ], previous_pixel_data[ 2 ] );
+				// let red, green, blue;
+
+				// // Apply blending for the red, green, and blue channels.
+				// red = blendPixel( current_pixel_data[ 0 ], previous_pixel_data[ 0 ], next_pixel_data[ 0 ] );
+				// green = blendPixel( current_pixel_data[ 1 ], current_pixel_data[ 1 ] );
+				// blue = blendPixel( current_pixel_data[ 2 ], previous_pixel_data[ 2 ] );
 
 				// Set the new pixel values back into the image data array.
-				setPixel( imageData, currentPixelPos, red, green, blue );
+				setPixel(
+					imageData,
+					currentPixelPos,
+					blendPixels( current_pixel_data, previous_pixel_data, next_pixel_data )
+				);
 
 			}
 		}
@@ -157,10 +163,18 @@
 	 * @param {number} previousValue - The previous pixel value.
 	 * @returns {number} The blended pixel value.
 	 */
-	const blendPixel = ( currentValue, previousValue ) => {
+	const blendPixels = ( currentPixel, previousPixel, nextPixel ) => {
 
-		// Blend the current pixel with its neighboring pixel using phosphor effects.
-		return ( currentValue * phosphor_blend ) + ( previousValue * phosphor_bleed * phosphor_bloom[ previousValue ] );
+		// Bleed factor for neighboring pixel blending.
+		const phosphor_bleed = beep8.CONFIG.CRT_ENABLE;
+		// Remaining factor for current pixel blending.
+		const phosphor_blend = ( 1 - phosphor_bleed );
+
+		return {
+			r: ( currentPixel[ 0 ] * phosphor_blend ) + ( ( previousPixel[ 0 ] + nextPixel[ 0 ] ) / 2 * phosphor_bleed * phosphor_bloom[ previousPixel[ 0 ] ] ),
+			g: ( currentPixel[ 1 ] * phosphor_blend ) + ( ( previousPixel[ 1 ] + nextPixel[ 1 ] ) / 2 * phosphor_bleed * phosphor_bloom[ previousPixel[ 1 ] ] ),
+			b: ( currentPixel[ 2 ] * phosphor_blend ) + ( ( previousPixel[ 2 ] + nextPixel[ 2 ] ) / 2 * phosphor_bleed * phosphor_bloom[ previousPixel[ 2 ] ] ),
+		}
 
 	};
 
@@ -189,17 +203,14 @@
 	 *
 	 * @param {Uint8ClampedArray} imageData - The image data array.
 	 * @param {number} pixelPos - The position of the pixel in the image data array.
-	 * @param {number} r - The red value for the pixel.
-	 * @param {number} g - The green value for the pixel.
-	 * @param {number} b - The blue value for the pixel.
+	 * @param {object} color - An object containing red, green, and blue values for the pixel
 	 * @returns {void}
 	 */
-	const setPixel = ( imageData, pixelPos, r, g, b ) => {
+	const setPixel = ( imageData, pixelPos, color ) => {
 
-		// Set the red, green, and blue values for the pixel in the image data array.
-		imageData[ pixelPos + 1 ] = r;
-		imageData[ pixelPos + 2 ] = g;
-		imageData[ pixelPos + 3 ] = b;
+		imageData[ pixelPos + 1 ] = color.r;
+		imageData[ pixelPos + 2 ] = color.g;
+		imageData[ pixelPos + 3 ] = color.b;
 
 	};
 
@@ -219,7 +230,7 @@
 	};
 
 
-	// Call init to precompute phosphor bloom and scanline ranges.
+	// Call init to precompute phosphor bloom.
 	initCrt();
 
 
