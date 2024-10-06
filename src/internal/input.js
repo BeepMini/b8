@@ -224,7 +224,7 @@
 			let curPos = 0;
 
 			const cursorWasVisible = beep8.Core.drawState.cursorVisible;
-			beep8.Core.cursorRenderer.setCursorVisible( true );
+			beep8.CursorRenderer.setCursorVisible( true );
 
 			// Loop until the user presses Enter.
 			while ( true ) {
@@ -256,7 +256,7 @@
 
 						// Handle enter: submit the text.
 						beep8.Core.setCursorLocation( 1, curRow + 1 );
-						beep8.Core.cursorRenderer.setCursorVisible( cursorWasVisible );
+						beep8.CursorRenderer.setCursorVisible( cursorWasVisible );
 
 						beep8.Sfx.play( beep8.CONFIG.SFX.TYPING );
 

@@ -3,7 +3,7 @@
 	beep8.Core = {};
 
 	beep8.Core.inputSys = null;
-	beep8.Core.cursorRenderer = null;
+	beep8.CursorRenderer = null;
 	beep8.Core.realCanvas = null;
 	beep8.Core.realCtx = null;
 	beep8.Core.canvas = null;
@@ -122,7 +122,6 @@
 
 		// Initialize subsystems
 		beep8.Core.inputSys = new beep8.Input();
-		beep8.Core.cursorRenderer = new beep8.CursorRenderer();
 
 		// Load and initialize default fonts.
 		await beep8.TextRenderer.initAsync();

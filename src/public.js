@@ -197,7 +197,7 @@
 		beep8.Core.preflight( "cursor" );
 		beep8.Utilities.checkBoolean( "visible", visible );
 
-		beep8.Core.cursorRenderer.setCursorVisible( visible );
+		beep8.CursorRenderer.setCursorVisible( visible );
 
 	}
 

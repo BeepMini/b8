@@ -64,7 +64,7 @@
 
 		dirty = false;
 
-		beep8.Core.cursorRenderer.drawCursor(
+		beep8.CursorRenderer.drawCursor(
 			beep8.Core.realCtx,
 			beep8.Core.realCanvas.width,
 			beep8.Core.realCanvas.height
