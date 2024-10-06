@@ -55,7 +55,7 @@
 	 * @throws {TypeError} If canvasHeight is not a number
 	 * @returns {void}
 	 */
-	beep8.CursorRenderer.drawCursor = function( targetCtx, canvasWidth, canvasHeight ) {
+	beep8.CursorRenderer.draw = function( targetCtx, canvasWidth, canvasHeight ) {
 
 		beep8.Utilities.checkInstanceOf( "targetCtx", targetCtx, CanvasRenderingContext2D );
 		beep8.Utilities.checkNumber( "canvasWidth", canvasWidth );
