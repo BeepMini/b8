@@ -13,6 +13,7 @@
 	beep8.Core.deltaTime = 0;
 	beep8.Core.crashed = false;
 	beep8.Core.crashing = false;
+	beep8.Core.state = null;
 
 	beep8.Core.drawState = {
 		fgColor: 7,
@@ -122,6 +123,7 @@
 
 		// Initialize subsystems
 		beep8.Core.inputSys = new beep8.Input();
+		beep8.Core.state = new beep8.State();
 
 		// Load and initialize default fonts.
 		await beep8.TextRenderer.initAsync();
