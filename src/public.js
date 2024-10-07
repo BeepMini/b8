@@ -784,4 +784,43 @@
 
 	}
 
+
+	/**
+	 * Add a new game scene.
+	 *
+	 * @param {string} name - The name of the scene.
+	 * @param {Function} update - The update function for the scene.
+	 * @returns {void}
+	 */
+	beep8.addScene = function( name, update = {} ) {
+
+		beep8.Scenes.addScene( name, update );
+
+	}
+
+
+	/**
+	 * Switches to a specified scene by name.
+	 *
+	 * @param {string} name - The name of the scene to switch to.
+	 * @returns {void}
+	 */
+	beep8.switchScene = function( name ) {
+
+		beep8.Scenes.switchScene( name );
+
+	}
+
+
+	/**
+	 * Gets the current active scene.
+	 *
+	 * @returns {Object|null} The active scene object, or null if no scene is active.
+	 */
+	beep8.getScene = function() {
+
+		return beep8.Scenes.getScene();
+
+	}
+
 } )( beep8 || ( beep8 = {} ) );
