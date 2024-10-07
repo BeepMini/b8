@@ -711,4 +711,31 @@
 
 	}
 
+
+	/**
+	 * Generate a new custom event.
+	 *
+	 * @param {string} eventName - The name of the event.
+	 * @param {Object} [detail={}] - The event detail.
+	 * @param {EventTarget} [target=document] - The target of the event.
+	 * @returns {void}
+	 */
+	beep8.Utilities.event = function( eventName, detail = {}, target = document ) {
+
+		beep8.Utilities.checkString( "eventName", eventName );
+		beep8.Utilities.checkObject( "detail", detail );
+		beep8.Utilities.checkObject( "target", target );
+
+		// Prefix event name with beep8.
+		eventName = `beep8.${eventName}`;
+
+		// Create a custom event.
+		const event = new CustomEvent( eventName, { detail } );
+
+		// Dispatch the event.
+		target.dispatchEvent( event );
+
+	};
+
+
 } )( beep8 || ( beep8 = {} ) );
