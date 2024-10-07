@@ -13,7 +13,6 @@
 	 * Set the visibility of the cursor.
 	 *
 	 * @param {boolean} visible - Whether the cursor should be visible
-	 * @throws {TypeError} If visible is not a boolean
 	 * @returns {void}
 	 */
 	beep8.CursorRenderer.setCursorVisible = function( visible ) {
@@ -50,9 +49,6 @@
 	 * @param {CanvasRenderingContext2D} targetCtx - The context to draw the cursor on
 	 * @param {number} canvasWidth - The width of the canvas
 	 * @param {number} canvasHeight - The height of the canvas
-	 * @throws {TypeError} If targetCtx is not a CanvasRenderingContext2D
-	 * @throws {TypeError} If canvasWidth is not a number
-	 * @throws {TypeError} If canvasHeight is not a number
 	 * @returns {void}
 	 */
 	beep8.CursorRenderer.draw = function( targetCtx, canvasWidth, canvasHeight ) {
