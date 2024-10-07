@@ -387,6 +387,31 @@
 	}
 
 
+	randomSeed = Date.now();
+
+	/**
+	 * Returns a random number between 0 and 1.
+	 * If a seed is provided, it will be used to generate the random number.
+	 *
+	 * @param {number} [seed=null] - The seed to use for the random number.
+	 * @returns {number} A random number between 0 and 1.
+	 */
+	beep8.Utilities.random = function( seed = null ) {
+
+		if ( seed !== null ) {
+			randomSeed = seed;
+		}
+
+		const a = 1664525;
+		const c = 1013904223;
+		const m = 4294967296;
+
+		randomSeed = ( randomSeed * a + c ) % m;
+		return randomSeed / m;
+
+	}
+
+
 	/**
 	 * Returns a random integer in the given closed interval.
 	 *
@@ -408,7 +433,7 @@
 
 		return beep8.Utilities.clamp(
 			Math.floor(
-				Math.random() * ( highInclusive - lowInclusive + 1 )
+				beep8.Utilities.random() * ( highInclusive - lowInclusive + 1 )
 			) + lowInclusive,
 			lowInclusive, highInclusive
 		);
