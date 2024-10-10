@@ -41,7 +41,6 @@ zzfxM = ( instruments, patterns, sequence, BPM = 125 ) => {
 	let notFirstBeat;
 	let stop;
 	let instrument;
-	let pitch;
 	let attenuation;
 	let outSampleOffset;
 	let isSequenceEnd;
@@ -60,7 +59,7 @@ zzfxM = ( instruments, patterns, sequence, BPM = 125 ) => {
 	for ( ; hasMore; channelIndex++ ) {
 
 		// reset current values
-		sampleBuffer = [ hasMore = notFirstBeat = pitch = outSampleOffset = 0 ];
+		sampleBuffer = [ hasMore = notFirstBeat = outSampleOffset = 0 ];
 
 		// for each pattern in sequence
 		sequence.map( ( patternIndex, sequenceIndex ) => {
@@ -125,4 +124,5 @@ zzfxM = ( instruments, patterns, sequence, BPM = 125 ) => {
 	}
 
 	return [ leftChannelBuffer, rightChannelBuffer ];
+
 }
