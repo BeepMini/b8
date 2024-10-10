@@ -1,5 +1,7 @@
 ( function( beep8 ) {
 
+	beep8.TextRenderer = {};
+
 	/**
 	 * An array of character codes for each character in the chars string.
 	 * This is used to look up the index of a character in the chars string.
@@ -7,9 +9,6 @@
 	 * @type {number[]}
 	 */
 	const charMap = [];
-
-	beep8.TextRenderer = {};
-
 
 	// beep8.TextRendererFont for each font, keyed by font name. The default font is called "default".
 	beep8.TextRenderer.fonts_ = {};
@@ -261,14 +260,15 @@
 		beep8.Utilities.checkString( "text", text );
 		beep8.Utilities.checkNumber( "width", width );
 
-		const col = beep8.Core.drawState.cursorCol;
-
-		// Split the text into lines.
-		text = text.split( "\n" );
-
 		if ( !text ) {
 			return;
 		}
+
+		const col = beep8.Core.drawState.cursorCol;
+		const rowInc = beep8.TextRenderer.printFont_.getCharRowCount();
+
+		// Split the text into lines.
+		text = text.split( "\n" );
 
 		// Loop through each line of text.
 		for ( let i = 0; i < text.length; i++ ) {
@@ -279,8 +279,11 @@
 			beep8.Core.drawState.cursorCol = tempCol;
 			beep8.TextRenderer.print( text[ i ] );
 
+			beep8.Core.drawState.cursorRow += rowInc;
+
 		}
 
+		// Reset cursor position.
 		beep8.Core.drawState.cursorCol = col;
 
 	}
@@ -535,6 +538,65 @@
 
 
 	/**
+	 * Wraps text to a given width.
+	 *
+	 * @param {string} text - The text to wrap.
+	 * @param {number} wrapWidth - The width to wrap the text to.
+	 * @param {beep8.TextRendererFont} fontName - The font to use.
+	 * @returns {string} The wrapped text.
+	 */
+	beep8.TextRenderer.wrapText = function( text, wrapWidth, font = null ) {
+
+		font = font || beep8.TextRenderer.curFont_;
+
+		// If 0 or less then don't wrap.
+		if ( wrapWidth <= 0 ) {
+			return text;
+		}
+
+		// Adjust the size of the wrap width based on the size of the font.
+		wrapWidth = Math.floor( wrapWidth / font.getCharColCount() );
+
+		// Split the text into lines.
+		const lines = text.split( "\n" );
+
+		// New list of lines.
+		const wrappedLines = [];
+
+		for ( const line of lines ) {
+
+			const words = line.split( " " );
+
+			let wrappedLine = "";
+			let lineWidth = 0;
+
+			for ( const word of words ) {
+
+				const wordWidth = beep8.TextRenderer.measure( word ).cols;
+
+				// Is the line with the new word longer than the line width?
+				if ( lineWidth + ( wordWidth ) > wrapWidth ) {
+					wrappedLines.push( wrappedLine.trim() );
+					wrappedLine = "";
+					lineWidth = 0;
+				}
+
+				// Add a space between words.
+				wrappedLine += word + " ";
+				lineWidth += wordWidth + 1;
+
+			}
+
+			wrappedLines.push( wrappedLine.trim() );
+
+		}
+
+		return wrappedLines.join( "\n" );
+
+	}
+
+
+	/**
 	 * Puts a character at the specified row and column.
 	 *
 	 * @param {number} ch - The character to put.
@@ -566,7 +628,7 @@
 	 * @param {beep8.TextRendererFont} [font=null] - The font to use.
 	 * @returns {void}
 	 */
-	putxy_ = function( ch, x, y, fgColor, bgColor, font = null, direction = 0 ) {
+	const putxy_ = function( ch, x, y, fgColor, bgColor, font = null, direction = 0 ) {
 
 		font = font || beep8.TextRenderer.curTiles_;
 
@@ -637,65 +699,6 @@
 		}
 
 		beep8.Renderer.markDirty();
-
-	}
-
-
-	/**
-	 * Wraps text to a given width.
-	 *
-	 * @param {string} text - The text to wrap.
-	 * @param {number} wrapWidth - The width to wrap the text to.
-	 * @param {beep8.TextRendererFont} fontName - The font to use.
-	 * @returns {string} The wrapped text.
-	 */
-	beep8.TextRenderer.wrapText = function( text, wrapWidth, font = null ) {
-
-		font = font || beep8.TextRenderer.curFont_;
-
-		// If 0 or less then don't wrap.
-		if ( wrapWidth <= 0 ) {
-			return text;
-		}
-
-		// Adjust the size of the wrap width based on the size of the font.
-		wrapWidth = Math.floor( wrapWidth / font.getCharColCount() );
-
-		// Split the text into lines.
-		const lines = text.split( "\n" );
-
-		// New list of lines.
-		const wrappedLines = [];
-
-		for ( const line of lines ) {
-
-			const words = line.split( " " );
-
-			let wrappedLine = "";
-			let lineWidth = 0;
-
-			for ( const word of words ) {
-
-				const wordWidth = beep8.TextRenderer.measure( word ).cols;
-
-				// Is the line with the new word longer than the line width?
-				if ( lineWidth + ( wordWidth ) > wrapWidth ) {
-					wrappedLines.push( wrappedLine.trim() );
-					wrappedLine = "";
-					lineWidth = 0;
-				}
-
-				// Add a space between words.
-				wrappedLine += word + " ";
-				lineWidth += wordWidth + 1;
-
-			}
-
-			wrappedLines.push( wrappedLine.trim() );
-
-		}
-
-		return wrappedLines.join( "\n" );
 
 	}
 
@@ -773,25 +776,25 @@
 			// Set foreground color.
 			case "f":
 			case "c":
-				beep8.Core.drawState.fgColor = arg !== "" ? argNum : this.origFgColor_;
+				beep8.Core.drawState.fgColor = arg !== "" ? argNum : beep8.TextRenderer.origFgColor_;
 				break;
 
 			// Set background color.
 			case "b":
-				beep8.Core.drawState.bgColor = arg !== "" ? argNum : this.origBgColor_;
+				beep8.Core.drawState.bgColor = arg !== "" ? argNum : beep8.TextRenderer.origBgColor_;
 				break;
 
 			// Change font.
 			case "t":
-				this.printFont_ = this.getFontByName( arg );
+				beep8.TextRenderer.printFont_ = beep8.TextRenderer.getFontByName( arg );
 				break;
 
 			// Reset state.
 			case "z":
-				beep8.Core.drawState.fgColor = this.origFgColor_;
-				beep8.Core.drawState.bgColor = this.origBgColor_;
+				beep8.Core.drawState.fgColor = beep8.TextRenderer.origFgColor_;
+				beep8.Core.drawState.bgColor = beep8.TextRenderer.origBgColor_;
 				// Use original font if available, otherwise default.
-				this.printFont_ = this.origFont_ || this.fonts_[ "default" ];
+				beep8.TextRenderer.printFont_ = beep8.TextRenderer.origFont_ || beep8.TextRenderer.fonts_[ "default" ];
 				break;
 
 			default:
@@ -809,7 +812,7 @@
 	beep8.TextRenderer.regenColors = function() {
 
 		// Tell all the fonts to regenerate their glyph images.
-		Object.values( this.fonts_ ).forEach( f => f.regenColors() );
+		Object.values( beep8.TextRenderer.fonts_ ).forEach( f => f.regenColors() );
 
 	}
 
