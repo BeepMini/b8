@@ -35,7 +35,7 @@
 		// If visible, start the blink cycle.
 		if ( visible ) {
 			toggleBlinkHandle_ = setInterval(
-				() => this.advanceBlink_(),
+				() => advanceBlink_(),
 				beep8.CONFIG.CURSOR.BLINK_INTERVAL
 			);
 		}
