@@ -27,6 +27,16 @@
 		scaleDiatonic: [ 2, 2, 2, 2, 2, 2 ], //( bizarre, symmetrical )
 	}
 
+	const SEQUENCE_PATTERNS = [
+		[ 0, 1, 0, 2, 0, 3 ],
+		[ 0, 1, 2, 3 ],
+		[ 0, 0, 1, 1, 2, 2, 3, 3 ],
+		[ 0, 0, 1, 0, 0, 2, 0, 0, 3 ],
+		[ 0, 1, 1, 0, 2, 2, 0, 3 ],
+		[ 0, 1, 1, 0, 2, 3, 3, 2 ]
+	];
+
+
 	/**
 	 * Properties to add
 	 * -----------------
@@ -376,15 +386,7 @@
 	// Generate random sequence of patterns
 	function generateSequence() {
 
-		const sequences = [
-			[ 0, 1, 0, 2, 0, 3 ],
-			[ 0, 1, 2, 3 ],
-			[ 0, 0, 1, 1, 2, 2, 3, 3 ],
-			[ 0, 0, 1, 0, 0, 2, 0, 0, 3 ],
-			[ 0, 1, 1, 0, 2, 2, 0, 3 ],
-			[ 0, 1, 1, 0, 2, 3, 3, 2 ],
-		];
-		return beep8.Random.pick( sequences );
+		return beep8.Random.pick( SEQUENCE_PATTERNS );
 
 	}
 
