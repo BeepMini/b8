@@ -105,7 +105,7 @@
 		beep8.Random.setSeed( seed );
 
 		const activeSong = new Song( name, type, seed ); // Create a new song with name
-		beep8.Music.songs_[ name ] = activeSong.toZzfxM(); // Generate zzfxM song
+		beep8.Music.songs_[ name ] = activeSong.generateSongData(); // Generate zzfxM song
 
 	};
 
@@ -370,45 +370,62 @@
 		}
 
 		// Generate song data in zzfxM format
-		toZzfxM() {
+		generateSongData() {
 
 			// Get instrument key -> id mapping.
 			const instrumentKeys = Object.keys( this.instruments );
 			const songInstruments = Object.values( this.instruments );
 
+			// Generate patterns and sequence
 			const patterns = this.generatePatterns();
 			const sequence = generateSequence();
 
+			// Build the zzfxM song structure
 			let zzfxmSong = [
 				songInstruments,
-				[], // Patterns (generated below)
-				sequence, // Sequence order
+				this.generateTrackPatterns( patterns, instrumentKeys ),
+				sequence,
 				this.bpm
 			];
-
-			// Convert the channels and notes into zzfxM patterns
-			for ( let p of patterns ) {
-				let pattern = [];
-				for ( let t of p ) {
-					let instrumentId = instrumentKeys.indexOf( t.instrument );
-					let track = [ instrumentId, 0 ]; // Instrument index, speaker mode
-					for ( let note of t.notes ) {
-						let value = this.key + note;
-						if ( note === 0 ) value = 0;
-						track.push( parseFloat( value ) );
-					}
-					pattern.push( track );
-				}
-				zzfxmSong[ 1 ].push( pattern );
-			}
 
 			console.log( 'patterns', zzfxmSong[ 1 ][ 0 ] );
 			console.log( 'song', zzfxmSong );
 
 			return zzfxmSong;
 		}
-	}
 
+		generateTrackPatterns( patterns, instrumentKeys ) {
+			let trackPatterns = [];
+
+			patterns.forEach(
+				( pattern ) => {
+					let trackPattern = pattern.map(
+						( channel ) => {
+							return this.convertChannelToTrack( channel, instrumentKeys );
+						}
+					);
+					trackPatterns.push( trackPattern );
+				}
+			);
+
+			return trackPatterns;
+		}
+
+		convertChannelToTrack( channel, instrumentKeys ) {
+
+			let instrumentId = instrumentKeys.indexOf( channel.instrument );
+			let track = [ instrumentId, 0 ]; // Instrument index, speaker mode
+
+			channel.notes.forEach( ( note ) => {
+				let value = this.key + note;
+				if ( note === 0 ) value = 0;
+				track.push( parseFloat( value ) );
+			}
+			);
+
+			return track;
+		}
+	}
 
 	// Generate random sequence of patterns
 	function generateSequence() {
