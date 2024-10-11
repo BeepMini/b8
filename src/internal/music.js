@@ -83,7 +83,6 @@
 		'drum2': [ 1.4, 0, 84, , , , , .7, , , , .5, , 6.7, 1, .01 ],
 	};
 
-
 	/**
 	 * Generate a song.
 	 *
@@ -99,7 +98,6 @@
 		beep8.Music.songs_[ name ] = ActiveSong.toZzfxM(); // Generate zzfxM song
 
 	};
-
 
 	/**
 	 * Play a song.
@@ -125,7 +123,6 @@
 		return ab;
 
 	};
-
 
 	/**
 	 * Stop a song.
@@ -155,7 +152,6 @@
 
 	}
 
-
 	/**
 	 * Check if a song is currently playing.
 	 *
@@ -167,7 +163,6 @@
 		return beep8.Music.activeSongAudioBuffers.some( ab => ab.name === name );
 
 	}
-
 
 	// Song class to encapsulate all song-related logic
 	class Song {
@@ -189,7 +184,6 @@
 			this.pauseChance = songType.pauseChance || 0.25;
 
 		}
-
 
 		mutateInstruments( instruments ) {
 
@@ -232,7 +226,6 @@
 
 		}
 
-
 		// Generate random melody and drum patterns for the song
 		generatePatterns() {
 
@@ -247,20 +240,35 @@
 				let pattern = [];
 
 				// Melody.
-				const channel_melody = new Channel( melodyInstrument );
+				let channel_melody = {
+					id: this.Channels.length,
+					instrument: melodyInstrument,
+					notes: []
+				};
+				this.Channels.push( channel_melody );
 				generateMusicalMelody( channel_melody );
 				pattern.push( channel_melody );
 
 				// Bass.
 				if ( useBass ) {
-					const channel_bass = new Channel( 'bass' );
+					let channel_bass = {
+						id: this.Channels.length,
+						instrument: 'bass',
+						notes: []
+					};
+					this.Channels.push( channel_bass );
 					generateBassLine( channel_bass );
 					pattern.push( channel_bass );
 				}
 
 				// Drums.
 				if ( useDrums ) {
-					const channel_drums = new Channel( 'drum2' );
+					let channel_drums = {
+						id: this.Channels.length,
+						instrument: 'drum2',
+						notes: []
+					};
+					this.Channels.push( channel_drums );
 					generateDrumBeat( channel_drums );
 					pattern.push( channel_drums );
 				}
@@ -314,9 +322,8 @@
 					let instrumentId = instrumentKeys.indexOf( t.instrument );
 					let track = [ instrumentId, 0 ]; // Instrument index, speaker mode
 					for ( let note of t.notes ) {
-						let value = this.key + note.key;
-						if ( note.key === 0 ) value = 0;
-						if ( note.vol < 1 && note.key > 0 ) value = ( value + note.vol ).toFixed( 2 );
+						let value = this.key + note;
+						if ( note === 0 ) value = 0;
 						track.push( parseFloat( value ) );
 					}
 					pattern.push( track );
@@ -328,29 +335,6 @@
 			console.log( 'song', zzfxmSong );
 
 			return zzfxmSong;
-		}
-	}
-
-	// Channel class to hold notes for each instrument
-	class Channel {
-		constructor( instrument ) {
-			this.id = ActiveSong.Channels.length;
-			this.instrument = instrument;
-			this.notes = [];
-			ActiveSong.Channels.push( this );
-		}
-	}
-
-	// Note class to define each note in the song
-	class Note {
-		constructor( channel, key, vol = 1 ) {
-			if ( key < -1 ) key = -1;
-			if ( key > 88 ) key = 88;
-
-			this.channel = channel;
-			this.key = key;
-			this.vol = vol;
-			ActiveSong.Channels[ channel ].notes.push( this );
 		}
 	}
 
@@ -373,9 +357,7 @@
 			// Snare on beats 3, 7, 11, 15
 			if ( noteVal === 2 ) key = 25; // snare
 
-			new Note( channel.id, key );
-
-
+			channel.notes.push( key );
 		}
 
 	}
@@ -399,20 +381,17 @@
 
 			// Optionally, add randomness to occasionally skip notes
 			if ( beep8.Random.num() > 0.2 ) {
-				new Note( channel.id, key ); // Play the bass note
+				channel.notes.push( key ); // Play the bass note
 				// console.log( 'bass', key );
 			}
 		}
 
 	}
 
-
 	function getPerlinInt( x, y, range, frequency = 50 ) {
 
 		let noiseValue = noise.simplex2( x / frequency, y / frequency ) * 10;
 		console.log( 'noise', noiseValue );
-
-
 
 		// Scale the noise to fit within the desired range, then round to integer
 		let scaledValue = Math.round( noiseValue * range );
@@ -453,8 +432,7 @@
 				}
 			}
 
-			new Note( channel.id, key );
-
+			channel.notes.push( key );
 		}
 
 	}
