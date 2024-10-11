@@ -175,9 +175,84 @@
 
 	}
 
-	// Utility function to add a note to a channel
+	// Generic utility function to generate a pattern
+	function generatePattern( song, channel, noteLogic ) {
+		for ( let i = 0; i < PATTERN_LENGTH; i++ ) {
+			const key = noteLogic( i, song );
+			if ( key !== null ) {
+				addNoteToChannel( channel, key );
+			}
+		}
+	}
+
 	function addNoteToChannel( channel, key ) {
 		channel.notes.push( key );
+	}
+
+	// Drum note generation logic
+	function drumNoteLogic( i, song ) {
+		let key = 0;
+		let noteVal = i % 4;
+
+		// Hi-hat with a 70% chance on every beat
+		if ( beep8.Random.num() < 0.7 && noteVal % 2 === 1 ) key = 42;
+
+		// Kick on beats 1, 5, 9, 13
+		if ( noteVal === 0 ) key = 1;
+
+		// Snare on beats 3, 7, 11, 15
+		if ( noteVal === 2 ) key = 25;
+
+		return key;
+	}
+
+	// Bass note generation logic
+	function bassNoteLogic( i, song ) {
+		let key = 0;
+		let noteVal = i % 4;
+		let bassKey = song.notes.slice( 0, 4 );
+
+		// Bass on beats 1 and 3
+		if ( noteVal === 0 || noteVal === 2 ) {
+			key = 12;
+			if ( beep8.Random.num() > 0.5 ) key = beep8.Random.pick( bassKey );
+		}
+
+		// Occasionally skip notes
+		if ( beep8.Random.num() > 0.2 ) key = 0;
+
+		return key;
+
+	}
+
+	// Melody note generation logic
+	function melodyNoteLogic( i, song ) {
+		const noteCount = song.notes.length;
+		let currentNoteId = beep8.Random.int( 0, noteCount );
+		const progression = beep8.Random.pick( [ -2, -1, -1, 0, 0, 0, 0, 1, 1, 2 ] );
+		currentNoteId += progression;
+
+		if ( currentNoteId >= noteCount || currentNoteId < 0 ) {
+			currentNoteId = 0;
+			song.notes.reverse();
+		}
+
+		currentNoteId = beep8.Utilities.clamp( currentNoteId, 0, noteCount - 1 );
+
+		let key = song.notes[ currentNoteId ] + 1;
+		let currentPosition = i % 4;
+
+		if ( currentPosition !== 0 && currentPosition !== 3 && beep8.Random.num() > 0.333 ) {
+			key = 0;
+		}
+
+		return key;
+
+	}
+
+	// Utility function to repeat an array a specified number of times
+	function repeatArray( array, times ) {
+		return Array( times ).fill().flatMap( () => array );
 	}
 
 	// Song class to encapsulate all song-related logic
@@ -221,21 +296,22 @@
 
 		}
 
-		getNoteScale( scale ) {
+		getNoteScale( scale, repetitions = 4, startNote = 0, skipChance = 0 ) {
+			// Generate repeated scale intervals
+			const scaleIntervals = repeatArray( SCALES[ scale ], repetitions );
 
-			// Make a big list of notes to choose from.
-			const scaleIntervals = [ ...SCALES[ scale ], ...SCALES[ scale ], ...SCALES[ scale ], ...SCALES[ scale ] ];
+			// Generate the notes based on the scale intervals and skip chance
+			const notes = [ startNote ];
 
-			// Make a list of notes and include the first one.
-			const notes = [ 0 ];
-
-			// Loop through the notes and add the increments to the list.
-			for ( let interval of scaleIntervals ) {
-				notes.push( notes[ notes.length - 1 ] + interval );
-			}
+			scaleIntervals.forEach(
+				( interval ) => {
+					if ( beep8.Random.num() > skipChance ) {
+						notes.push( notes[ notes.length - 1 ] + interval );
+					}
+				}
+			);
 
 			return notes;
-
 		}
 
 		// Generate random melody and drum patterns for the song
@@ -258,7 +334,7 @@
 					notes: []
 				};
 				this.Channels.push( channel_melody );
-				generateMusicalMelody( this, channel_melody );
+				generatePattern( this, channel_melody, melodyNoteLogic );
 				pattern.push( channel_melody );
 
 				// Bass.
@@ -269,7 +345,7 @@
 						notes: []
 					};
 					this.Channels.push( channel_bass );
-					generateBassLine( this, channel_bass );
+					generatePattern( this, channel_bass, bassNoteLogic );
 					pattern.push( channel_bass );
 				}
 
@@ -281,7 +357,7 @@
 						notes: []
 					};
 					this.Channels.push( channel_drums );
-					generateDrumBeat( this, channel_drums );
+					generatePattern( this, channel_drums, drumNoteLogic );
 					pattern.push( channel_drums );
 				}
 
@@ -333,110 +409,11 @@
 		}
 	}
 
-	// Utility function to generate random drum beats
-	function generateDrumBeat( song, channel ) {
-
-		for ( let i = 0; i < PATTERN_LENGTH; i++ ) {
-
-			let key = 0;
-			let noteVal = i % 4;
-
-			// Hi-hat with a 70% chance on every beat
-			if ( beep8.Random.num() < 0.7 ) {
-				if ( noteVal % 2 === 1 ) key = 42; // hi-hat
-			}
-
-			// Kick on beats 1, 5, 9, 13
-			if ( noteVal === 0 ) key = 1; // kick
-
-			// Snare on beats 3, 7, 11, 15
-			if ( noteVal === 2 ) key = 25; // snare
-
-			addNoteToChannel( channel, key );
-		}
-
-	}
-
-	// Utility function to generate a bass line
-	function generateBassLine( song, channel ) {
-
-		// Get first 4 notes from ActiveSong.notes.
-		let bassKey = song.notes.slice( 0, 4 );
-
-		for ( let i = 0; i < PATTERN_LENGTH; i++ ) {
-
-			let key = 0;
-			let noteVal = i % 4;
-
-			// Bass on beats 1 and 3
-			if ( noteVal === 0 || noteVal === 2 ) {
-				// Assign a bass note (e.g., 36 for C2, you can change this)
-				key = 12;
-				if ( beep8.Random.num() > 0.5 ) key = beep8.Random.pick( bassKey );
-			}
-
-			// Add randomness to occasionally skip notes
-			if ( beep8.Random.num() > 0.2 ) {
-				addNoteToChannel( channel, key );
-			}
-		}
-
-	}
 
 	// Generate random sequence of patterns
 	function generateSequence() {
 
 		return beep8.Random.pick( SEQUENCE_PATTERNS );
-
-	}
-
-
-	function getPerlinInt( x, y, range, frequency = 50 ) {
-
-		let noiseValue = noise.simplex2( x / frequency, y / frequency ) * 10;
-		console.log( 'noise', noiseValue );
-
-		// Scale the noise to fit within the desired range, then round to integer
-		let scaledValue = Math.round( noiseValue * range );
-
-		return scaledValue;
-
-	}
-
-	function generateMusicalMelody( song, channel ) {
-
-		const noteCount = song.notes.length;
-		const songNotes = [ ...song.notes ];
-
-		let currentNoteId = beep8.Random.int( 0, noteCount );
-
-		for ( let i = 0; i < PATTERN_LENGTH; i++ ) {
-
-			// const progression = Math.round( generateMusicPattern( startTime + ( i * channel.id * 10 ), 3 ) );
-			const progression = beep8.Random.pick( [ -2, -1, -1, 0, 0, 0, 0, 1, 1, 2 ] );
-			currentNoteId += progression;
-
-			// Reverse the notes if we reach one of the ends.
-			if ( currentNoteId >= noteCount || currentNoteId < 0 ) {
-				currentNoteId = 0;
-				songNotes.reverse();
-			}
-
-			currentNoteId = beep8.Utilities.clamp( currentNoteId, 0, noteCount - 1 );
-
-			// console.log( 'currentNoteId', currentNoteId, songNotes[ currentNoteId ], progression );
-
-			let key = songNotes[ currentNoteId ] + 1;
-			let currentPosition = i % 4;
-
-			if ( currentPosition !== 0 && currentPosition !== 3 ) {
-				if ( beep8.Random.num() > 0.333 ) {
-					key = 0;
-				}
-			}
-
-			addNoteToChannel( channel, key );
-		}
 
 	}
 
