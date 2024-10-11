@@ -1,19 +1,25 @@
+/**
+ * beep8 Music Module
+ * This module handles the creation, manipulation, and playback of procedurally generated music.
+ */
 ( function( beep8 ) {
 
 	beep8.Music = {};
 
-	const BAR_LENGTH = 8;
-	const BARS_PER_PATTERN = 1;
-	const PATTERN_LENGTH = BAR_LENGTH * BARS_PER_PATTERN;
-	const PATTERN_COUNT = 4;
-	const KEYRANGE = [ 13, 25, 37 ];
+	const BAR_LENGTH = 8; // Number of beats per bar
+	const BARS_PER_PATTERN = 1; // Number of bars per pattern
+	const PATTERN_LENGTH = BAR_LENGTH * BARS_PER_PATTERN; // Total length of a pattern
+	const PATTERN_COUNT = 4; // Number of patterns per song
+	const KEYRANGE = [ 13, 25, 37 ]; // Key range for generating songs
 
-	beep8.Music.songs_ = {};
-	beep8.Music.activeSongAudioBuffers = []; // Store currently playing AudioBufferSourceNodes
 
-	// musical scales in semitone intervals:
+	/**
+	 * Musical scales in semitone intervals.
+	 *
+	 * @type {Object}
+	 */
 	const SCALES = {
-		scaleChromatic: [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ], // (random,atonal: all twelve notes)
+		scaleChromatic: [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ], // (random, atonal: all twelve notes)
 		scaleMajor: [ 2, 2, 1, 2, 2, 2, 1 ], // (classic, happy)
 		scaleHarmonicMinor: [ 2, 1, 2, 2, 1, 3, 1 ], // (haunting, creepy)
 		scaleMinorPentatonic: [ 3, 2, 2, 3, 2 ], // (blues, rock)
@@ -24,9 +30,31 @@
 		scaleMixolydian: [ 2, 2, 1, 2, 2, 1, 2 ], // (progressive, complex)
 		scaleAhavaRaba: [ 1, 3, 1, 2, 1, 2, 2 ], // (exotic, unfamiliar)
 		scaleMajorPentatonic: [ 2, 2, 3, 2, 3 ], // (country, gleeful)
-		scaleDiatonic: [ 2, 2, 2, 2, 2, 2 ], //( bizarre, symmetrical )
-	}
+		scaleDiatonic: [ 2, 2, 2, 2, 2, 2 ], //(bizarre, symmetrical)
+	};
 
+
+	/**
+	 * Improve instruments.
+	 *
+	 * @type {Object}
+	 */
+	const INSTRUMENTS = {
+		'piano': [ 1.5, 0, 90, .01, , .5, 2, 0, , , , , , , , , , , .1 ],
+		'bass': [ 1.2, 0, 45, .04, .6, .46, 1, 2.2, , , , , .17, .1, , , , .65, .09, .04, -548 ],
+		'burp': [ 1.4, 0, 291, .03, .04, .12, 2, 2.7, , 38, , , -0.01, .8, , , .04, .96, .02, , -1137 ],
+		'boop': [ , , 293, .03, .02, .01, , .8, , , , , , .1, , , , .82, .02, .01 ],
+		'buzz': [ 1.2, 0, 90, .01, , .5, 2, 0, , , , , , , , , , , .1 ],
+		'drum1': [ 1.8, 0, 50, , , .2, , 4, -2, 6, 50, .15, , 6 ],
+		'drum2': [ 1.4, 0, 84, , , , , .7, , , , .5, , 6.7, 1, .01 ],
+	};
+
+
+	/**
+	 * Sequence patterns for repeating the mysic.
+	 *
+	 * @type {Array}
+	 */
 	const SEQUENCE_PATTERNS = [
 		[ 0, 1, 0, 2, 0, 3 ],
 		[ 0, 1, 2, 3 ],
@@ -80,117 +108,142 @@
 		},
 	};
 
+
 	/**
-	 * Improve instruments.
+	 * Store generated songs and active playback information.
+	 *
+	 * @type {Object}
 	 */
-	const INSTRUMENTS = {
-		'piano': [ 1.5, 0, 90, .01, , .5, 2, 0, , , , , , , , , , , .1 ],
-		'bass': [ 1.2, 0, 45, .04, .6, .46, 1, 2.2, , , , , .17, .1, , , , .65, .09, .04, -548 ],
-		'burp': [ 1.4, 0, 291, .03, .04, .12, 2, 2.7, , 38, , , -0.01, .8, , , .04, .96, .02, , -1137 ],
-		'boop': [ , , 293, .03, .02, .01, , .8, , , , , , .1, , , , .82, .02, .01 ],
-		'buzz': [ 1.2, 0, 90, .01, , .5, 2, 0, , , , , , , , , , , .1 ],
-		'drum1': [ 1.8, 0, 50, , , .2, , 4, -2, 6, 50, .15, , 6 ],
-		'drum2': [ 1.4, 0, 84, , , , , .7, , , , .5, , 6.7, 1, .01 ],
-	};
+	beep8.Music.songs = {};
+
 
 	/**
 	 * Generate a song.
 	 *
-	 * @param {string} name The name of the song.
-	 * @param {string} type The type of song to generate.
-	 * @param {number} seed The seed for the random number generator.
+	 * @param {string} name - The name of the song.
+	 * @param {string} type - The type of song to generate.
+	 * @param {number} seed - The seed for the random number generator.
 	 */
 	beep8.Music.generate = function( name = '', type = 'jolly', seed = 12345 ) {
 
 		beep8.Random.setSeed( seed );
-
-		const activeSong = new Song( name, type, seed ); // Create a new song with name
-		beep8.Music.songs_[ name ] = activeSong.generateSongData(); // Generate zzfxM song
+		const songData = new Song( name, type, seed ).generateSongData(); // Generate song data
+		beep8.Music.songs[ name ] = { data: songData, buffer: null }; // Store song data
 
 	};
-
 
 	/**
 	 * Play a song.
 	 *
-	 * @param {string} name The name of the song to play.
+	 * @param {string} name - The name of the song to play.
 	 * @returns {AudioBufferSourceNode} The AudioBufferSourceNode that is playing the song.
 	 */
 	beep8.Music.play = function( name = '' ) {
 
-		const zzfxmSong = beep8.Music.songs_[ name ];
+		const songEntry = beep8.Music.songs[ name ];
 
-		if ( !zzfxmSong ) {
+		if ( !songEntry ) {
 			console.error( 'No song found with the name:', name );
 			return;
 		}
 
+		const zzfxmSong = songEntry.data;
 		const ab = zzfxP( ...zzfxM( ...zzfxmSong ) ); // Play the song
 		ab.loop = true;
 		ab.name = name;
 
-		beep8.Music.activeSongAudioBuffers.push( ab ); // Store the reference to stop later
+		// Store the buffer in the song entry
+		songEntry.buffer = ab;
 
 		return ab;
 
 	};
 
+
 	/**
 	 * Stop a song.
 	 *
-	 * @param {string} name The name of the song to stop.
-	 * @returns {void}
+	 * @param {string} name - The name of the song to stop.
 	 */
 	beep8.Music.stop = function( name = '' ) {
 
 		// Stop specific song by name.
 		if ( name ) {
-
-			const songIndex = beep8.Music.activeSongAudioBuffers.findIndex( ab => ab.name === name );
-
-			if ( songIndex !== -1 ) {
-				beep8.Music.activeSongAudioBuffers[ songIndex ].stop();
-				beep8.Music.activeSongAudioBuffers.splice( songIndex, 1 );
+			const songEntry = beep8.Music.songs[ name ];
+			if ( songEntry && songEntry.buffer ) {
+				songEntry.buffer.stop();
+				songEntry.buffer = null;
 			}
-
 			return;
-
 		}
 
 		// Stop all active songs
-		beep8.Music.activeSongAudioBuffers.forEach( ab => ab.stop() );
-		beep8.Music.activeSongAudioBuffers = [];
+		for ( let songName in beep8.Music.songs ) {
+			const songEntry = beep8.Music.songs[ songName ];
+			if ( songEntry.buffer ) {
+				songEntry.buffer.stop();
+				songEntry.buffer = null;
+			}
+		}
 
-	}
+	};
+
 
 	/**
 	 * Check if a song is currently playing.
 	 *
-	 * @param {string} name The name of the song to check.
+	 * @param {string} name - The name of the song to check.
 	 * @returns {boolean} True if the song is playing, false otherwise.
 	 */
 	beep8.Music.playing = function( name = '' ) {
 
-		return beep8.Music.activeSongAudioBuffers.some( ab => ab.name === name );
+		const songEntry = beep8.Music.songs[ name ];
+		return songEntry && songEntry.buffer !== null;
 
-	}
+	};
 
-	// Generic utility function to generate a pattern
+
+	/**
+	 * Generate a generic pattern by applying note logic to a channel.
+	 *
+	 * @param {Object} song - The song object containing song details.
+	 * @param {Array} channel - The channel to add notes to.
+	 * @param {Function} noteLogic - Function that determines note generation logic.
+	 */
 	function generatePattern( song, channel, noteLogic ) {
+
 		for ( let i = 0; i < PATTERN_LENGTH; i++ ) {
 			const key = noteLogic( i, song );
 			if ( key !== null ) {
 				addNoteToChannel( channel, key );
 			}
 		}
+
 	}
 
+
+	/**
+	 * Add a note to a channel.
+	 *
+	 * @param {Array} channel - The channel to add the note to.
+	 * @param {number} key - The note key to add.
+	 */
 	function addNoteToChannel( channel, key ) {
-		channel.notes.push( key );
+
+		channel.push( key );
+
 	}
 
-	// Drum note generation logic
+
+	/**
+	 * Generate drum notes based on beat position.
+	 *
+	 * @param {number} i - The current beat index.
+	 * @param {Object} song - The song object containing song details.
+	 * @returns {number} The key value for the drum note.
+	 */
 	function drumNoteLogic( i, song ) {
+
 		let key = 0;
 		let noteVal = i % 4;
 
@@ -204,10 +257,19 @@
 		if ( noteVal === 2 ) key = 25;
 
 		return key;
+
 	}
 
-	// Bass note generation logic
+
+	/**
+	 * Generate bass notes for a bass channel.
+	 *
+	 * @param {number} i - The current beat index.
+	 * @param {Object} song - The song object containing song details.
+	 * @returns {number} The key value for the bass note.
+	 */
 	function bassNoteLogic( i, song ) {
+
 		let key = 0;
 		let noteVal = i % 4;
 		let bassKey = song.notes.slice( 0, 4 );
@@ -225,21 +287,28 @@
 
 	}
 
-	// Melody note generation logic
-	function melodyNoteLogic( i, song ) {
-		const noteCount = song.notes.length;
-		let currentNoteId = beep8.Random.int( 0, noteCount );
-		const progression = beep8.Random.pick( [ -2, -1, -1, 0, 0, 0, 0, 1, 1, 2 ] );
-		currentNoteId += progression;
 
-		if ( currentNoteId >= noteCount || currentNoteId < 0 ) {
-			currentNoteId = 0;
-			song.notes.reverse();
+	/**
+	 * Generate melody notes for a melody channel.
+	 *
+	 * @param {number} i - The current beat index.
+	 * @param {Object} song - The song object containing song details.
+	 * @returns {number} The key value for the melody note.
+	 */
+	function melodyNoteLogic( i, song ) {
+
+		// If it's the first beat, pick a random note to start with.
+		if ( 0 === i ) {
+			song.currentNoteId = beep8.Random.int( 0, song.notes.length );
 		}
 
-		currentNoteId = beep8.Utilities.clamp( currentNoteId, 0, noteCount - 1 );
+		const noteCount = song.notes.length;
+		const progression = beep8.Random.pick( [ -2, -1, -1, 0, 0, 0, 0, 1, 1, 2 ] );
+		song.currentNoteId += progression;
 
-		let key = song.notes[ currentNoteId ] + 1;
+		song.currentNoteId = beep8.Utilities.clamp( song.currentNoteId, 0, noteCount - 1 );
+
+		let key = song.notes[ song.currentNoteId ] + 1;
 		let currentPosition = i % 4;
 
 		if ( currentPosition !== 0 && currentPosition !== 3 && beep8.Random.num() > 0.333 ) {
@@ -247,17 +316,35 @@
 		}
 
 		return key;
-
 	}
 
-	// Utility function to repeat an array a specified number of times
+
+	/**
+	 * Utility function to repeat an array a specified number of times.
+	 *
+	 * @param {Array} array - The array to repeat.
+	 * @param {number} times - The number of times to repeat the array.
+	 * @returns {Array} The repeated array.
+	 */
 	function repeatArray( array, times ) {
+
 		return Array( times ).fill().flatMap( () => array );
+
 	}
 
-	// Song class to encapsulate all song-related logic
+
+	/**
+	 * Song class to encapsulate all song-related logic.
+	 */
 	class Song {
 
+		/**
+		 * Create a new Song instance.
+		 *
+		 * @param {string} name - The name of the song.
+		 * @param {string} type - The type of song to generate.
+		 * @param {number} seed - The seed for the random number generator.
+		 */
 		constructor( name = '', type = 'jolly', seed = 12345 ) {
 
 			const songType = beep8.Music.types[ type ];
@@ -273,29 +360,39 @@
 			this.key = beep8.Random.pick( songType.keyRange || KEYRANGE );
 			this.noteStep = songType.noteStep || 1;
 			this.pauseChance = songType.pauseChance || 0.25;
-
 		}
 
+		/**
+		 * Mutate instruments to create variations.
+		 *
+		 * @param {Object} instruments - The base instruments.
+		 * @returns {Object} A new set of instruments with random variations.
+		 */
 		mutateInstruments( instruments ) {
-
 			let newInstruments = { ...instruments };
 
 			for ( let key in newInstruments ) {
-
 				let instrument = newInstruments[ key ];
 
 				for ( let i = 4; i < instrument.length; i++ ) {
-					if ( typeof instrument[ i ] == "number" ) {
+					if ( typeof instrument[ i ] == 'number' ) {
 						instrument[ i ] = beep8.Random.range( instrument[ i ] * 0.5, instrument[ i ] * 1.5 );
 					}
 				}
-
 			}
 
 			return newInstruments;
-
 		}
 
+		/**
+		 * Generate a note scale based on the selected scale type.
+		 *
+		 * @param {string} scale - The scale type to generate.
+		 * @param {number} repetitions - Number of times to repeat the scale.
+		 * @param {number} startNote - The starting note value.
+		 * @param {number} skipChance - The chance of skipping a note.
+		 * @returns {Array} The generated note scale.
+		 */
 		getNoteScale( scale, repetitions = 4, startNote = 0, skipChance = 0 ) {
 			// Generate repeated scale intervals
 			const scaleIntervals = repeatArray( SCALES[ scale ], repetitions );
@@ -303,20 +400,21 @@
 			// Generate the notes based on the scale intervals and skip chance
 			const notes = [ startNote ];
 
-			scaleIntervals.forEach(
-				( interval ) => {
-					if ( beep8.Random.num() > skipChance ) {
-						notes.push( notes[ notes.length - 1 ] + interval );
-					}
+			scaleIntervals.forEach( interval => {
+				if ( beep8.Random.num() > skipChance ) {
+					notes.push( notes[ notes.length - 1 ] + interval );
 				}
-			);
+			} );
 
 			return notes;
 		}
 
-		// Generate random melody and drum patterns for the song
+		/**
+		 * Generate random melody and drum patterns for the song.
+		 *
+		 * @returns {Array} The generated patterns for the song.
+		 */
 		generatePatterns() {
-
 			const patterns = [];
 			const useDrums = beep8.Random.num() > 0.5;
 			const useBass = beep8.Random.num() > 0.5;
@@ -324,26 +422,17 @@
 			const melodyInstrument = beep8.Random.pick( melodyInstruments );
 
 			for ( let i = 0; i < PATTERN_COUNT; i++ ) {
-
 				let pattern = [];
 
 				// Melody.
-				let channel_melody = {
-					id: this.Channels.length,
-					instrument: melodyInstrument,
-					notes: []
-				};
+				let channel_melody = [ melodyInstrument, 0 ];
 				this.Channels.push( channel_melody );
 				generatePattern( this, channel_melody, melodyNoteLogic );
 				pattern.push( channel_melody );
 
 				// Bass.
 				if ( useBass ) {
-					let channel_bass = {
-						id: this.Channels.length,
-						instrument: 'bass',
-						notes: []
-					};
+					let channel_bass = [ 'bass', 0 ];
 					this.Channels.push( channel_bass );
 					generatePattern( this, channel_bass, bassNoteLogic );
 					pattern.push( channel_bass );
@@ -351,27 +440,24 @@
 
 				// Drums.
 				if ( useDrums ) {
-					let channel_drums = {
-						id: this.Channels.length,
-						instrument: 'drum2',
-						notes: []
-					};
+					let channel_drums = [ 'drum2', 0 ];
 					this.Channels.push( channel_drums );
 					generatePattern( this, channel_drums, drumNoteLogic );
 					pattern.push( channel_drums );
 				}
 
 				patterns.push( pattern );
-
 			}
 
 			return patterns;
-
 		}
 
-		// Generate song data in zzfxM format
+		/**
+		 * Generate song data in a generic format.
+		 *
+		 * @returns {Array} The generated song data.
+		 */
 		generateSongData() {
-
 			// Get instrument key -> id mapping.
 			const instrumentKeys = Object.keys( this.instruments );
 			const songInstruments = Object.values( this.instruments );
@@ -380,7 +466,7 @@
 			const patterns = this.generatePatterns();
 			const sequence = generateSequence();
 
-			// Build the zzfxM song structure
+			// Build the song structure
 			let zzfxmSong = [
 				songInstruments,
 				this.generateTrackPatterns( patterns, instrumentKeys ),
@@ -394,44 +480,55 @@
 			return zzfxmSong;
 		}
 
+		/**
+		 * Generate track patterns from channel data.
+		 *
+		 * @param {Array} patterns - The list of patterns to convert to tracks.
+		 * @param {Array} instrumentKeys - List of instrument keys to reference.
+		 * @returns {Array} The generated track patterns.
+		 */
 		generateTrackPatterns( patterns, instrumentKeys ) {
 			let trackPatterns = [];
 
-			patterns.forEach(
-				( pattern ) => {
-					let trackPattern = pattern.map(
-						( channel ) => {
-							return this.convertChannelToTrack( channel, instrumentKeys );
-						}
-					);
-					trackPatterns.push( trackPattern );
-				}
-			);
+			patterns.forEach( pattern => {
+				let trackPattern = pattern.map( channel => {
+					return this.convertChannelToTrack( channel, instrumentKeys );
+				} );
+				trackPatterns.push( trackPattern );
+			} );
 
 			return trackPatterns;
 		}
 
+		/**
+		 * Convert a channel into a track format.
+		 *
+		 * @param {Array} channel - The channel data to convert.
+		 * @param {Array} instrumentKeys - List of instrument keys to reference.
+		 * @returns {Array} The generated track data.
+		 */
 		convertChannelToTrack( channel, instrumentKeys ) {
-
-			let instrumentId = instrumentKeys.indexOf( channel.instrument );
+			let instrumentId = instrumentKeys.indexOf( channel[ 0 ] );
 			let track = [ instrumentId, 0 ]; // Instrument index, speaker mode
 
-			channel.notes.forEach( ( note ) => {
+			for ( let i = 2; i < channel.length; i++ ) {
+				let note = channel[ i ];
 				let value = this.key + note;
 				if ( note === 0 ) value = 0;
 				track.push( parseFloat( value ) );
 			}
-			);
 
 			return track;
 		}
 	}
 
-	// Generate random sequence of patterns
+	/**
+	 * Generate a random sequence of patterns for a song.
+	 *
+	 * @returns {Array} The generated sequence of patterns.
+	 */
 	function generateSequence() {
-
 		return beep8.Random.pick( SEQUENCE_PATTERNS );
-
 	}
 
 } )( beep8 || ( beep8 = {} ) );
