@@ -94,10 +94,11 @@
 
 		beep8.Random.setSeed( seed );
 
-		ActiveSong = new Song( name, type, seed ); // Create a new song with name
-		beep8.Music.songs_[ name ] = ActiveSong.toZzfxM(); // Generate zzfxM song
+		const activeSong = new Song( name, type, seed ); // Create a new song with name
+		beep8.Music.songs_[ name ] = activeSong.toZzfxM(); // Generate zzfxM song
 
 	};
+
 
 	/**
 	 * Play a song.
@@ -187,8 +188,6 @@
 
 		mutateInstruments( instruments ) {
 
-			console.log( 'instruments', instruments, INSTRUMENTS );
-
 			let newInstruments = { ...instruments };
 
 			for ( let key in newInstruments ) {
@@ -202,8 +201,6 @@
 				}
 
 			}
-
-			console.log( 'newInstruments', newInstruments );
 
 			return newInstruments;
 
@@ -246,7 +243,7 @@
 					notes: []
 				};
 				this.Channels.push( channel_melody );
-				generateMusicalMelody( channel_melody );
+				generateMusicalMelody( this, channel_melody );
 				pattern.push( channel_melody );
 
 				// Bass.
@@ -281,32 +278,15 @@
 
 		}
 
-		// Generate random sequence of patterns
-		generateSequence() {
-
-			const sequences = [
-				[ 0, 1, 0, 2, 0, 3 ],
-				[ 0, 1, 2, 3 ],
-				[ 0, 0, 1, 1, 2, 2, 3, 3 ],
-				[ 0, 0, 1, 0, 0, 2, 0, 0, 3 ],
-				[ 0, 1, 1, 0, 2, 2, 0, 3 ],
-				[ 0, 1, 1, 0, 2, 3, 3, 2 ],
-			];
-			return beep8.Random.pick( sequences );
-
-		}
-
 		// Generate song data in zzfxM format
 		toZzfxM() {
 
 			// Get instrument key -> id mapping.
-			const instrumentKeys = Object.keys( ActiveSong.instruments );
-			const songInstruments = Object.values( ActiveSong.instruments );
+			const instrumentKeys = Object.keys( this.instruments );
+			const songInstruments = Object.values( this.instruments );
 
 			const patterns = this.generatePatterns();
-			const sequence = this.generateSequence();
-
-			// console.log( 'sequence', sequence );
+			const sequence = generateSequence();
 
 			let zzfxmSong = [
 				songInstruments,
@@ -388,6 +368,22 @@
 
 	}
 
+	// Generate random sequence of patterns
+	function generateSequence() {
+
+		const sequences = [
+			[ 0, 1, 0, 2, 0, 3 ],
+			[ 0, 1, 2, 3 ],
+			[ 0, 0, 1, 1, 2, 2, 3, 3 ],
+			[ 0, 0, 1, 0, 0, 2, 0, 0, 3 ],
+			[ 0, 1, 1, 0, 2, 2, 0, 3 ],
+			[ 0, 1, 1, 0, 2, 3, 3, 2 ],
+		];
+		return beep8.Random.pick( sequences );
+
+	}
+
+
 	function getPerlinInt( x, y, range, frequency = 50 ) {
 
 		let noiseValue = noise.simplex2( x / frequency, y / frequency ) * 10;
@@ -400,10 +396,10 @@
 
 	}
 
-	function generateMusicalMelody( channel ) {
+	function generateMusicalMelody( song, channel ) {
 
-		const noteCount = ActiveSong.notes.length;
-		const songNotes = [ ...ActiveSong.notes ];
+		const noteCount = song.notes.length;
+		const songNotes = [ ...song.notes ];
 
 		let currentNoteId = beep8.Random.int( 0, noteCount );
 
@@ -436,8 +432,5 @@
 		}
 
 	}
-
-	// Initialize the song
-	let ActiveSong = null;
 
 } )( beep8 || ( beep8 = {} ) );
