@@ -165,6 +165,11 @@
 
 	}
 
+	// Utility function to add a note to a channel
+	function addNoteToChannel( channel, key ) {
+		channel.notes.push( key );
+	}
+
 	// Song class to encapsulate all song-related logic
 	class Song {
 
@@ -254,7 +259,7 @@
 						notes: []
 					};
 					this.Channels.push( channel_bass );
-					generateBassLine( channel_bass );
+					generateBassLine( this, channel_bass );
 					pattern.push( channel_bass );
 				}
 
@@ -266,7 +271,7 @@
 						notes: []
 					};
 					this.Channels.push( channel_drums );
-					generateDrumBeat( channel_drums );
+					generateDrumBeat( this, channel_drums );
 					pattern.push( channel_drums );
 				}
 
@@ -319,7 +324,7 @@
 	}
 
 	// Utility function to generate random drum beats
-	function generateDrumBeat( channel ) {
+	function generateDrumBeat( song, channel ) {
 
 		for ( let i = 0; i < PATTERN_LENGTH; i++ ) {
 
@@ -337,18 +342,19 @@
 			// Snare on beats 3, 7, 11, 15
 			if ( noteVal === 2 ) key = 25; // snare
 
-			channel.notes.push( key );
+			addNoteToChannel( channel, key );
 		}
 
 	}
 
 	// Utility function to generate a bass line
-	function generateBassLine( channel ) {
+	function generateBassLine( song, channel ) {
 
 		// Get first 4 notes from ActiveSong.notes.
-		let bassKey = ActiveSong.notes.slice( 0, 4 );
+		let bassKey = song.notes.slice( 0, 4 );
 
 		for ( let i = 0; i < PATTERN_LENGTH; i++ ) {
+
 			let key = 0;
 			let noteVal = i % 4;
 
@@ -359,10 +365,9 @@
 				if ( beep8.Random.num() > 0.5 ) key = beep8.Random.pick( bassKey );
 			}
 
-			// Optionally, add randomness to occasionally skip notes
+			// Add randomness to occasionally skip notes
 			if ( beep8.Random.num() > 0.2 ) {
-				channel.notes.push( key ); // Play the bass note
-				// console.log( 'bass', key );
+				addNoteToChannel( channel, key );
 			}
 		}
 
@@ -417,7 +422,7 @@
 
 			currentNoteId = beep8.Utilities.clamp( currentNoteId, 0, noteCount - 1 );
 
-			console.log( 'currentNoteId', currentNoteId, songNotes[ currentNoteId ], progression );
+			// console.log( 'currentNoteId', currentNoteId, songNotes[ currentNoteId ], progression );
 
 			let key = songNotes[ currentNoteId ] + 1;
 			let currentPosition = i % 4;
@@ -428,7 +433,7 @@
 				}
 			}
 
-			channel.notes.push( key );
+			addNoteToChannel( channel, key );
 		}
 
 	}
