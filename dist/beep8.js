@@ -91,7 +91,9 @@ const beep8 = {};
 		SCREEN_ROWS: 30,
 		SCREEN_COLS: 24,
 		// Disable to turn off CRT effect.
-		CRT_ENABLE: true,
+		// This is a number between 0 and 1, where 0 is no CRT effect and 1 is full CRT effect.
+		// Anything over 0.4 is probably too much.
+		CRT_ENABLE: 0.3,
 		// Color palette.
 		// Colors count from 0.
 		// The first color is the background color.
@@ -352,7 +354,7 @@ const beep8 = {};
 		beep8.Core.preflight( "cursor" );
 		beep8.Utilities.checkBoolean( "visible", visible );
 
-		beep8.Core.cursorRenderer.setCursorVisible( visible );
+		beep8.CursorRenderer.setCursorVisible( visible );
 
 	}
 
@@ -939,6 +941,45 @@ const beep8 = {};
 
 	}
 
+
+	/**
+	 * Add a new game scene.
+	 *
+	 * @param {string} name - The name of the scene.
+	 * @param {Function} update - The update function for the scene.
+	 * @returns {void}
+	 */
+	beep8.addScene = function( name, update = {} ) {
+
+		beep8.Scenes.addScene( name, update );
+
+	}
+
+
+	/**
+	 * Switches to a specified scene by name.
+	 *
+	 * @param {string} name - The name of the scene to switch to.
+	 * @returns {void}
+	 */
+	beep8.switchScene = function( name ) {
+
+		beep8.Scenes.switchScene( name );
+
+	}
+
+
+	/**
+	 * Gets the current active scene.
+	 *
+	 * @returns {Object|null} The active scene object, or null if no scene is active.
+	 */
+	beep8.getScene = function() {
+
+		return beep8.Scenes.getScene();
+
+	}
+
 } )( beep8 || ( beep8 = {} ) );
 
 ( function( beep8 ) {
@@ -1417,7 +1458,7 @@ const beep8 = {};
 	beep8.Core = {};
 
 	beep8.Core.inputSys = null;
-	beep8.Core.cursorRenderer = null;
+	beep8.CursorRenderer = null;
 	beep8.Core.realCanvas = null;
 	beep8.Core.realCtx = null;
 	beep8.Core.canvas = null;
@@ -1427,6 +1468,7 @@ const beep8 = {};
 	beep8.Core.deltaTime = 0;
 	beep8.Core.crashed = false;
 	beep8.Core.crashing = false;
+	beep8.Core.state = null;
 
 	beep8.Core.drawState = {
 		fgColor: 7,
@@ -1536,7 +1578,7 @@ const beep8 = {};
 
 		// Initialize subsystems
 		beep8.Core.inputSys = new beep8.Input();
-		beep8.Core.cursorRenderer = new beep8.CursorRenderer();
+		beep8.Core.state = new beep8.State();
 
 		// Load and initialize default fonts.
 		await beep8.TextRenderer.initAsync();
@@ -2246,112 +2288,101 @@ const beep8 = {};
 
 ( function( beep8 ) {
 
+	/**
+	 * beep8.CursorRenderer handles the rendering and blinking of the cursor.
+	 */
+	beep8.CursorRenderer = {};
+
+	let blinkCycle_ = 0;
+	let toggleBlinkHandle_ = null;
+
 
 	/**
-	 * beep8.CursorRenderer class handles the rendering and blinking of the cursor.
+	 * Set the visibility of the cursor.
+	 *
+	 * @param {boolean} visible - Whether the cursor should be visible
+	 * @returns {void}
 	 */
-	beep8.CursorRenderer = class {
+	beep8.CursorRenderer.setCursorVisible = function( visible ) {
 
-		constructor() {
+		beep8.Utilities.checkBoolean( "visible", visible );
 
-			this.blinkCycle_ = 0;
-			this.toggleBlinkHandle_ = null;
+		// If the cursor is already in the desired state, do nothing.
+		if ( beep8.Core.drawState.cursorVisible === visible ) return;
 
+		beep8.Core.drawState.cursorVisible = visible;
+
+		blinkCycle_ = 0;
+		beep8.Renderer.render();
+
+		if ( toggleBlinkHandle_ !== null ) {
+			clearInterval( toggleBlinkHandle_ );
+			toggleBlinkHandle_ = null;
 		}
 
-
-		/**
-		 * Sets the visibility of the cursor.
-		 *
-		 * @param {boolean} visible - Whether the cursor should be visible
-		 * @throws {TypeError} If visible is not a boolean
-		 * @returns {void}
-		 */
-		setCursorVisible( visible ) {
-
-			beep8.Utilities.checkBoolean( "visible", visible );
-
-			// If the cursor is already in the desired state, do nothing.
-			if ( beep8.Core.drawState.cursorVisible === visible ) return;
-
-			beep8.Core.drawState.cursorVisible = visible;
-
-			this.blinkCycle_ = 0;
-			beep8.Renderer.render();
-
-			if ( this.toggleBlinkHandle_ !== null ) {
-				clearInterval( this.toggleBlinkHandle_ );
-				this.toggleBlinkHandle_ = null;
-			}
-
-			// If visible, start the blink cycle.
-			if ( visible ) {
-				this.toggleBlinkHandle_ = setInterval(
-					() => this.advanceBlink_(),
-					beep8.CONFIG.CURSOR.BLINK_INTERVAL
-				);
-			}
-
-		}
-
-
-		/**
-		 * Advances the cursor blink cycle.
-		 *
-		 * @private
-		 * @returns {void}
-		 */
-		advanceBlink_() {
-
-			this.blinkCycle_ = ( this.blinkCycle_ + 1 ) % 2;
-			beep8.Renderer.render();
-
-		}
-
-
-		/**
-		 * Draws the cursor.
-		 *
-		 * @param {CanvasRenderingContext2D} targetCtx - The context to draw the cursor on
-		 * @param {number} canvasWidth - The width of the canvas
-		 * @param {number} canvasHeight - The height of the canvas
-		 * @throws {TypeError} If targetCtx is not a CanvasRenderingContext2D
-		 * @throws {TypeError} If canvasWidth is not a number
-		 * @throws {TypeError} If canvasHeight is not a number
-		 * @returns {void}
-		 */
-		drawCursor( targetCtx, canvasWidth, canvasHeight ) {
-
-			beep8.Utilities.checkInstanceOf( "targetCtx", targetCtx, CanvasRenderingContext2D );
-			beep8.Utilities.checkNumber( "canvasWidth", canvasWidth );
-			beep8.Utilities.checkNumber( "canvasHeight", canvasHeight );
-
-			// If the cursor is not visible or it is not time to blink, do nothing.
-			if ( !beep8.Core.drawState.cursorVisible || this.blinkCycle_ <= 0 ) return;
-
-			const ratio = canvasWidth / beep8.Core.canvas.width;
-
-			// Calculate the real position of the cursor.
-			const realX = Math.round(
-				( beep8.Core.drawState.cursorCol + 0.5 - beep8.CONFIG.CURSOR.WIDTH_F / 2 + beep8.CONFIG.CURSOR.OFFSET_H ) *
-				beep8.CONFIG.CHR_WIDTH * ratio
+		// If visible, start the blink cycle.
+		if ( visible ) {
+			toggleBlinkHandle_ = setInterval(
+				() => advanceBlink_(),
+				beep8.CONFIG.CURSOR.BLINK_INTERVAL
 			);
-
-			const realY = Math.round(
-				( beep8.Core.drawState.cursorRow + 1 - beep8.CONFIG.CURSOR.HEIGHT_F - beep8.CONFIG.CURSOR.OFFSET_V ) *
-				beep8.CONFIG.CHR_HEIGHT * ratio
-			);
-
-			// Draw the cursor.
-			targetCtx.fillStyle = beep8.Core.getColorHex( beep8.Core.drawState.fgColor );
-
-			targetCtx.fillRect(
-				realX, realY,
-				Math.round( beep8.CONFIG.CURSOR.WIDTH_F * beep8.CONFIG.CHR_WIDTH * ratio ),
-				Math.round( beep8.CONFIG.CURSOR.HEIGHT_F * beep8.CONFIG.CHR_HEIGHT * ratio )
-			);
-
 		}
+
+	}
+
+
+	/**
+	 * Draws the cursor.
+	 *
+	 * @param {CanvasRenderingContext2D} targetCtx - The context to draw the cursor on
+	 * @param {number} canvasWidth - The width of the canvas
+	 * @param {number} canvasHeight - The height of the canvas
+	 * @returns {void}
+	 */
+	beep8.CursorRenderer.draw = function( targetCtx, canvasWidth, canvasHeight ) {
+
+		beep8.Utilities.checkInstanceOf( "targetCtx", targetCtx, CanvasRenderingContext2D );
+		beep8.Utilities.checkNumber( "canvasWidth", canvasWidth );
+		beep8.Utilities.checkNumber( "canvasHeight", canvasHeight );
+
+		// If the cursor is not visible or it is not time to blink, do nothing.
+		if ( !beep8.Core.drawState.cursorVisible || blinkCycle_ <= 0 ) return;
+
+		const ratio = canvasWidth / beep8.Core.canvas.width;
+
+		// Calculate the real position of the cursor.
+		const realX = Math.round(
+			( beep8.Core.drawState.cursorCol + 0.5 - beep8.CONFIG.CURSOR.WIDTH_F / 2 + beep8.CONFIG.CURSOR.OFFSET_H ) *
+			beep8.CONFIG.CHR_WIDTH * ratio
+		);
+
+		const realY = Math.round(
+			( beep8.Core.drawState.cursorRow + 1 - beep8.CONFIG.CURSOR.HEIGHT_F - beep8.CONFIG.CURSOR.OFFSET_V ) *
+			beep8.CONFIG.CHR_HEIGHT * ratio
+		);
+
+		// Draw the cursor.
+		targetCtx.fillStyle = beep8.Core.getColorHex( beep8.Core.drawState.fgColor );
+
+		targetCtx.fillRect(
+			realX, realY,
+			Math.round( beep8.CONFIG.CURSOR.WIDTH_F * beep8.CONFIG.CHR_WIDTH * ratio ),
+			Math.round( beep8.CONFIG.CURSOR.HEIGHT_F * beep8.CONFIG.CHR_HEIGHT * ratio )
+		);
+
+	}
+
+
+	/**
+	 * Advances the cursor blink cycle.
+	 *
+	 * @private
+	 * @returns {void}
+	 */
+	advanceBlink_ = function() {
+
+		blinkCycle_ = ( blinkCycle_ + 1 ) % 2;
+		beep8.Renderer.render();
 
 	}
 
@@ -2584,7 +2615,7 @@ const beep8 = {};
 			let curPos = 0;
 
 			const cursorWasVisible = beep8.Core.drawState.cursorVisible;
-			beep8.Core.cursorRenderer.setCursorVisible( true );
+			beep8.CursorRenderer.setCursorVisible( true );
 
 			// Loop until the user presses Enter.
 			while ( true ) {
@@ -2616,7 +2647,7 @@ const beep8 = {};
 
 						// Handle enter: submit the text.
 						beep8.Core.setCursorLocation( 1, curRow + 1 );
-						beep8.Core.cursorRenderer.setCursorVisible( cursorWasVisible );
+						beep8.CursorRenderer.setCursorVisible( cursorWasVisible );
 
 						beep8.Sfx.play( beep8.CONFIG.SFX.TYPING );
 
@@ -2896,6 +2927,584 @@ const beep8 = {};
 
 } )( beep8 || ( beep8 = {} ) );
 
+/**
+ * beep8 Music Module
+ * This module handles the creation, manipulation, and playback of procedurally generated music.
+ */
+( function( beep8 ) {
+
+	beep8.Music = {};
+
+	const BAR_LENGTH = 8; // Number of beats per bar
+	const BARS_PER_PATTERN = 1; // Number of bars per pattern
+	const PATTERN_LENGTH = BAR_LENGTH * BARS_PER_PATTERN; // Total length of a pattern
+	const PATTERN_COUNT = 4; // Number of patterns per song
+	const KEYRANGE = [ 13, 25, 37 ]; // Key range for generating songs
+
+
+	/**
+	 * Musical scales in semitone intervals.
+	 *
+	 * @type {Object}
+	 */
+	const SCALES = {
+		scaleChromatic: [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ], // (random, atonal: all twelve notes)
+		scaleMajor: [ 2, 2, 1, 2, 2, 2, 1 ], // (classic, happy)
+		scaleHarmonicMinor: [ 2, 1, 2, 2, 1, 3, 1 ], // (haunting, creepy)
+		scaleMinorPentatonic: [ 3, 2, 2, 3, 2 ], // (blues, rock)
+		scaleNaturalMinor: [ 2, 1, 2, 2, 1, 2, 2 ], // (scary, epic)
+		scaleMelodicMinorUp: [ 2, 1, 2, 2, 2, 2, 1 ], // (wistful, mysterious)
+		scaleMelodicMinorDown: [ 2, 2, 1, 2, 2, 1, 2 ], // (sombre, soulful)
+		scaleDorian: [ 2, 1, 2, 2, 2, 1, 2 ], // (cool, jazzy)
+		scaleMixolydian: [ 2, 2, 1, 2, 2, 1, 2 ], // (progressive, complex)
+		scaleAhavaRaba: [ 1, 3, 1, 2, 1, 2, 2 ], // (exotic, unfamiliar)
+		scaleMajorPentatonic: [ 2, 2, 3, 2, 3 ], // (country, gleeful)
+		scaleDiatonic: [ 2, 2, 2, 2, 2, 2 ], //(bizarre, symmetrical)
+	};
+
+
+	/**
+	 * Improve instruments.
+	 *
+	 * @type {Object}
+	 */
+	const INSTRUMENTS = {
+		'piano': [ 1.5, 0, 90, .01, , .5, 2, 0, , , , , , , , , , , .1 ],
+		'bass': [ 1.2, 0, 45, .04, .6, .46, 1, 2.2, , , , , .17, .1, , , , .65, .09, .04, -548 ],
+		'burp': [ 1.4, 0, 291, .03, .04, .12, 2, 2.7, , 38, , , -0.01, .8, , , .04, .96, .02, , -1137 ],
+		'boop': [ 1.5, , 293, .03, .02, .01, , .8, , , , , , .1, , , , .82, .02, .01 ],
+		'buzz': [ 1.2, 0, 90, .01, , .5, 2, 0, , , , , , , , , , , .1 ],
+		'drum1': [ 1.8, 0, 50, , , .2, , 4, -2, 6, 50, .15, , 6 ],
+		'drum2': [ 1.4, 0, 84, , , , , .7, , , , .5, , 6.7, 1, .01 ],
+	};
+
+
+	/**
+	 * Sequence patterns for repeating the mysic.
+	 *
+	 * @type {Array}
+	 */
+	const SEQUENCE_PATTERNS = [
+		[ 0, 1, 0, 2, 0, 3 ],
+		[ 0, 1, 2, 3 ],
+		[ 0, 1, 1, 2, 2, 3 ],
+		[ 0, 1, 1, 2, 3, 3 ],
+		[ 0, 0, 1, 1, 2, 2, 3, 3 ],
+		[ 0, 0, 1, 0, 0, 2, 0, 0, 3 ],
+		[ 0, 1, 1, 0, 2, 2, 0, 3 ],
+		[ 0, 1, 1, 0, 2, 3, 3, 2 ]
+	];
+
+
+	/**
+	 * Properties to add
+	 * -----------------
+	 * instruments
+	 * how many pauses
+	 */
+	beep8.Music.types = {
+		fast: {
+			bpmRange: [ 120, 130 ],
+			scales: [ 'scaleMinorPentatonic', 'scaleMajorPentatonic', 'scaleMajor' ],
+			keyRange: [ 13, 25 ],
+		},
+		slow: {
+			bpmRange: [ 30, 45 ],
+			scales: [ 'scaleDorian', 'scaleMelodicMinorDown', 'scaleMelodicMinorUp' ],
+			keyRange: [ 13, 25 ],
+		},
+		happy: {
+			bpmRange: [ 60, 80 ],
+			scales: [ 'scaleMajor', 'scaleMajorPentatonic' ],
+			keyRange: [ 25, 37 ],
+		},
+		calm: {
+			bpmRange: [ 40, 60 ],
+			scales: [ 'scaleMelodicMinorUp', 'scaleDorian', 'scaleMajor' ],
+			keyRange: [ 13, 25 ],
+		},
+		scary: {
+			bpmRange: [ 60, 80 ],
+			scales: [ 'scaleMelodicMinorDown', 'scaleHarmonicMinor', 'scaleDiatonic', 'scaleChromatic' ],
+			keyRange: [ 13, 25, 37 ],
+			pauseChance: 0.2,
+		},
+		joyful: {
+			bpmRange: [ 80, 100 ],
+			scales: [ 'scaleMajor', 'scaleMajorPentatonic', 'scaleMajorPentatonic' ],
+			keyRange: [ 25, 37 ],
+		},
+	};
+
+
+	/**
+	 * Store generated songs and active playback information.
+	 *
+	 * @type {Object}
+	 */
+	beep8.Music.songs = {};
+
+
+	/**
+	 * Generate a song.
+	 *
+	 * @param {string} name - The name of the song.
+	 * @param {string} type - The type of song to generate.
+	 * @param {number} seed - The seed for the random number generator.
+	 */
+	beep8.Music.generate = function( name = '', type = 'jolly', seed = 12345 ) {
+
+		beep8.Random.setSeed( seed );
+		const songData = new Song( name, type, seed ).generateSongData(); // Generate song data
+		beep8.Music.songs[ name ] = { data: songData, buffer: null }; // Store song data
+
+	};
+
+
+	/**
+	 * Play a song.
+	 *
+	 * @param {string} name - The name of the song to play.
+	 * @returns {AudioBufferSourceNode} The AudioBufferSourceNode that is playing the song.
+	 */
+	beep8.Music.play = function( name = '' ) {
+
+		const songEntry = beep8.Music.songs[ name ];
+
+		if ( !songEntry ) {
+			console.error( 'No song found with the name:', name );
+			return;
+		}
+
+		const zzfxmSong = songEntry.data;
+		const ab = zzfxP( ...zzfxM( ...zzfxmSong ) ); // Play the song
+		ab.loop = true;
+		ab.name = name;
+
+		// Store the buffer in the song entry
+		songEntry.buffer = ab;
+
+		return ab;
+
+	};
+
+
+	/**
+	 * Stop a song.
+	 *
+	 * @param {string} name - The name of the song to stop.
+	 */
+	beep8.Music.stop = function( name = '' ) {
+
+		// Stop specific song by name.
+		if ( name ) {
+			const songEntry = beep8.Music.songs[ name ];
+			if ( songEntry && songEntry.buffer ) {
+				songEntry.buffer.stop();
+				songEntry.buffer = null;
+			}
+			return;
+		}
+
+		// Stop all active songs
+		for ( let songName in beep8.Music.songs ) {
+			const songEntry = beep8.Music.songs[ songName ];
+			if ( songEntry.buffer ) {
+				songEntry.buffer.stop();
+				songEntry.buffer = null;
+			}
+		}
+
+	};
+
+
+	/**
+	 * Check if a song is currently playing.
+	 *
+	 * @param {string} name - The name of the song to check.
+	 * @returns {boolean} True if the song is playing, false otherwise.
+	 */
+	beep8.Music.playing = function( name = '' ) {
+
+		const songEntry = beep8.Music.songs[ name ];
+		return songEntry && songEntry.buffer !== null;
+
+	};
+
+
+	/**
+	 * Add a custom zzfxM song.
+	 *
+	 * You can compose your own songs using the [zzfxM format](https://keithclark.github.io/ZzFXM/)
+	 * and the [zzfxM song tracker](https://keithclark.github.io/ZzFXM/tracker/).
+	 *
+	 * You should use the addSong function to add the song to the music library,
+	 * and then use the play and stop functions as you would with a generated song.
+	 *
+	 * @param {string} name - The name of the custom song.
+	 * @param {Array} zzfxmData - The zzfxM song data composed by the user.
+	 */
+	beep8.Music.addSong = function( name, zzfxmData ) {
+
+		if ( !name || !Array.isArray( zzfxmData ) ) {
+			console.error( "Invalid song name or song data." );
+			return;
+		}
+
+		// Store the custom song in the songs object with buffer as null initially
+		beep8.Music.songs[ name ] = { data: zzfxmData, buffer: null };
+		console.log( `Custom song "${name}" added successfully.` );
+
+	};
+
+
+	/**
+	 * Generate a generic pattern by applying note logic to a channel.
+	 *
+	 * @param {Object} song - The song object containing song details.
+	 * @param {Array} channel - The channel to add notes to.
+	 * @param {Function} noteLogic - Function that determines note generation logic.
+	 */
+	function generatePattern( song, channel, noteLogic ) {
+
+		for ( let i = 0; i < PATTERN_LENGTH; i++ ) {
+			const key = noteLogic( i, song );
+			if ( key !== null ) {
+				addNoteToChannel( channel, key );
+			}
+		}
+
+	}
+
+
+	/**
+	 * Add a note to a channel.
+	 *
+	 * @param {Array} channel - The channel to add the note to.
+	 * @param {number} key - The note key to add.
+	 */
+	function addNoteToChannel( channel, key ) {
+
+		channel.push( key );
+
+	}
+
+
+	/**
+	 * Generate drum notes based on beat position.
+	 *
+	 * @param {number} i - The current beat index.
+	 * @param {Object} song - The song object containing song details.
+	 * @returns {number} The key value for the drum note.
+	 */
+	function drumNoteLogic( i, song ) {
+
+		let key = 0;
+		let noteVal = i % 4;
+
+		// Hi-hat with a 70% chance on every beat
+		if ( beep8.Random.num() < 0.7 && noteVal % 2 === 1 ) key = 42;
+
+		// Kick on beats 1, 5, 9, 13
+		if ( noteVal === 0 ) key = 1;
+
+		// Snare on beats 3, 7, 11, 15
+		if ( noteVal === 2 ) key = 25;
+
+		return key;
+
+	}
+
+
+	/**
+	 * Generate bass notes for a bass channel.
+	 *
+	 * @param {number} i - The current beat index.
+	 * @param {Object} song - The song object containing song details.
+	 * @returns {number} The key value for the bass note.
+	 */
+	function bassNoteLogic( i, song ) {
+
+		let key = 0;
+		let noteVal = i % 4;
+		let bassKey = song.notes.slice( 0, 4 );
+
+		// Bass on beats 1 and 3
+		if ( noteVal === 0 || noteVal === 2 ) {
+			key = 12;
+			if ( beep8.Random.num() > 0.5 ) key = beep8.Random.pick( bassKey );
+		}
+
+		// Occasionally skip notes
+		if ( beep8.Random.num() > 0.2 ) key = 0;
+
+		return key;
+
+	}
+
+
+	/**
+	 * Generate melody notes for a melody channel.
+	 *
+	 * @param {number} i - The current beat index.
+	 * @param {Object} song - The song object containing song details.
+	 * @returns {number} The key value for the melody note.
+	 */
+	function melodyNoteLogic( i, song ) {
+
+		// If it's the first beat, pick a random note to start with.
+		if ( 0 === i ) {
+			song.currentNoteId = beep8.Random.int( 0, song.notes.length / 2 );
+		}
+
+		const noteCount = song.notes.length;
+		const progression = beep8.Random.pick( [ -2, -1, -1, 0, 0, 0, 0, 1, 1, 2 ] );
+		song.currentNoteId += progression;
+
+		song.currentNoteId = beep8.Utilities.clamp( song.currentNoteId, 0, noteCount - 1 );
+
+		let key = song.notes[ song.currentNoteId ] + 1;
+		let currentPosition = i % 4;
+
+		if ( currentPosition !== 0 && currentPosition !== 3 && beep8.Random.num() > 0.333 ) {
+			key = 0;
+		}
+
+		return key;
+
+	}
+
+
+	/**
+	 * Song class to encapsulate all song-related logic.
+	 */
+	class Song {
+
+
+		/**
+		 * Create a new Song instance.
+		 *
+		 * @param {string} name - The name of the song.
+		 * @param {string} type - The type of song to generate.
+		 * @param {number} seed - The seed for the random number generator.
+		 */
+		constructor( name = '', type = 'jolly', seed = 12345 ) {
+
+			const songType = beep8.Music.types[ type ];
+
+			let noteScaleName = beep8.Random.pick( songType.scales );
+
+			this.seed = seed;
+			this.name = name;
+			this.instruments = this.mutateInstruments( INSTRUMENTS );
+			this.Channels = [];
+			this.bpm = beep8.Random.int( songType.bpmRange[ 0 ], songType.bpmRange[ 1 ] );
+			this.notes = this.getNoteScale( noteScaleName );
+			this.key = beep8.Random.pick( songType.keyRange || KEYRANGE );
+			this.pauseChance = songType.pauseChance || 0.25;
+
+		}
+
+
+		/**
+		 * Mutate instruments to create variations.
+		 *
+		 * @param {Object} instruments - The base instruments.
+		 * @returns {Object} A new set of instruments with random variations.
+		 */
+		mutateInstruments( instruments ) {
+
+			let newInstruments = { ...instruments };
+
+			for ( let key in newInstruments ) {
+				let instrument = newInstruments[ key ];
+
+				for ( let i = 4; i < instrument.length; i++ ) {
+					if ( typeof instrument[ i ] == 'number' ) {
+						instrument[ i ] = beep8.Random.range( instrument[ i ] * 0.5, instrument[ i ] * 1.5 );
+					}
+				}
+			}
+
+			return newInstruments;
+
+		}
+
+
+		/**
+		 * Generate a note scale based on the selected scale type.
+		 *
+		 * @param {string} scale - The scale type to generate.
+		 * @param {number} repetitions - Number of times to repeat the scale.
+		 * @param {number} startNote - The starting note value.
+		 * @param {number} skipChance - The chance of skipping a note.
+		 * @returns {Array} The generated note scale.
+		 */
+		getNoteScale( scale, repetitions = 3, startNote = 0, skipChance = 0 ) {
+
+			// Generate repeated scale intervals
+			const scaleIntervals = beep8.Utilities.repeatArray( SCALES[ scale ], repetitions );
+
+			// Generate the notes based on the scale intervals and skip chance
+			const notes = [ startNote ];
+
+			scaleIntervals.forEach(
+				( interval ) => {
+					if ( beep8.Random.num() > skipChance ) {
+						notes.push( notes[ notes.length - 1 ] + interval );
+					}
+				}
+			);
+
+			return notes;
+
+		}
+
+
+		/**
+		 * Generate random melody and drum patterns for the song.
+		 *
+		 * @returns {Array} The generated patterns for the song.
+		 */
+		generatePatterns() {
+
+			const patterns = [];
+			const useDrums = beep8.Random.num() > 0.5;
+			const useBass = beep8.Random.num() > 0.5;
+			// const melodyInstruments = [ 'piano', 'buzz', 'burp', 'boop' ];
+			const melodyInstruments = [ 'boop' ];
+			const melodyInstrument = beep8.Random.pick( melodyInstruments );
+
+			for ( let i = 0; i < PATTERN_COUNT; i++ ) {
+
+				let pattern = [];
+
+				// Melody.
+				let channel_melody = [ melodyInstrument, 0 ];
+				this.Channels.push( channel_melody );
+				generatePattern( this, channel_melody, melodyNoteLogic );
+				pattern.push( channel_melody );
+
+				// Bass.
+				if ( useBass ) {
+					let channel_bass = [ 'bass', 0 ];
+					this.Channels.push( channel_bass );
+					generatePattern( this, channel_bass, bassNoteLogic );
+					pattern.push( channel_bass );
+				}
+
+				// Drums.
+				if ( useDrums ) {
+					let channel_drums = [ 'drum2', 0 ];
+					this.Channels.push( channel_drums );
+					generatePattern( this, channel_drums, drumNoteLogic );
+					pattern.push( channel_drums );
+				}
+
+				patterns.push( pattern );
+			}
+
+			return patterns;
+
+		}
+
+
+		/**
+		 * Generate song data in a generic format.
+		 *
+		 * @returns {Array} The generated song data.
+		 */
+		generateSongData() {
+
+			// Get instrument key -> id mapping.
+			const instrumentKeys = Object.keys( this.instruments );
+			const songInstruments = Object.values( this.instruments );
+
+			// Generate patterns and sequence
+			const patterns = this.generatePatterns();
+			const sequence = generateSequence();
+
+			// Build the song structure
+			let zzfxmSong = [
+				songInstruments,
+				this.generateTrackPatterns( patterns, instrumentKeys ),
+				sequence,
+				this.bpm
+			];
+
+			console.log( 'patterns', zzfxmSong[ 1 ][ 0 ] );
+			console.log( 'song', zzfxmSong );
+
+			return zzfxmSong;
+
+		}
+
+
+		/**
+		 * Generate track patterns from channel data.
+		 *
+		 * @param {Array} patterns - The list of patterns to convert to tracks.
+		 * @param {Array} instrumentKeys - List of instrument keys to reference.
+		 * @returns {Array} The generated track patterns.
+		 */
+		generateTrackPatterns( patterns, instrumentKeys ) {
+			let trackPatterns = [];
+
+			patterns.forEach(
+				( pattern ) => {
+
+					let trackPattern = pattern.map(
+						( channel ) => {
+							return this.convertChannelToTrack( channel, instrumentKeys );
+						}
+					);
+
+					trackPatterns.push( trackPattern );
+
+				}
+			);
+
+			return trackPatterns;
+		}
+
+
+		/**
+		 * Convert a channel into a track format.
+		 *
+		 * @param {Array} channel - The channel data to convert.
+		 * @param {Array} instrumentKeys - List of instrument keys to reference.
+		 * @returns {Array} The generated track data.
+		 */
+		convertChannelToTrack( channel, instrumentKeys ) {
+
+			let instrumentId = instrumentKeys.indexOf( channel[ 0 ] );
+			let track = [ instrumentId, 0 ]; // Instrument index, speaker mode
+
+			for ( let i = 2; i < channel.length; i++ ) {
+				let note = channel[ i ];
+				let value = this.key + note;
+				if ( note === 0 ) value = 0;
+				track.push( parseFloat( value ) );
+			}
+
+			return track;
+
+		}
+	}
+
+
+	/**
+	 * Generate a random sequence of patterns for a song.
+	 *
+	 * @returns {Array} The generated sequence of patterns.
+	 */
+	function generateSequence() {
+
+		return beep8.Random.pick( SEQUENCE_PATTERNS );
+
+	}
+
+} )( beep8 || ( beep8 = {} ) );
 ( function( beep8 ) {
 
 	beep8.Passcodes = {};
@@ -3046,6 +3655,147 @@ const beep8 = {};
 
 ( function( beep8 ) {
 
+	beep8.Random = {};
+
+	/**
+	 * The seed for the random number generator.
+	 *
+	 * @type {number}
+	 */
+	let randomSeed = null;
+
+
+	/**
+	 * Sets the seed for the random number generator.
+	 * If the seed is null, the random number generator will reset to use the current time.
+	 *
+	 * @param {number|string} seed - The seed to use for the random number generator.
+	 * @returns {void}
+	 */
+	beep8.Random.setSeed = function( seed = null ) {
+
+		if ( seed === null ) {
+			seed = Date.now();
+		}
+
+		// convert seed string to number.
+		if ( typeof seed === "string" ) {
+			seed = seed.split( "" ).reduce( ( a, b ) => a + b.charCodeAt( 0 ), 0 );
+		}
+
+		// Set the global seed value.
+		randomSeed = seed;
+
+	}
+
+
+	/**
+	 * Returns a random number between 0 and 1.
+	 *
+	 * @returns {number} A random number between 0 and 1.
+	 */
+	beep8.Random.num = function() {
+
+		const a = 1664525;
+		const c = 1013904223;
+		const m = 4294967296;
+
+		randomSeed = ( randomSeed * a + c ) % m;
+
+		return randomSeed / m;
+
+	}
+
+
+	/**
+	 * Returns a random number (float) in the given closed interval.
+	 *
+	 * @param {number} min - The minimum value (inclusive).
+	 * @param {number} max - The maximum value (inclusive).
+	 * @returns {number} A random number between min and max.
+	 */
+	beep8.Random.range = function( min, max ) {
+
+		beep8.Utilities.checkNumber( "min", min );
+		beep8.Utilities.checkNumber( "max", max );
+
+		return min + beep8.Random.num() * ( max - min );
+
+	}
+
+
+	/**
+	 * Returns a random integer in the given closed interval.
+	 *
+	 * @param {number} min - The minimum value (inclusive).
+	 * @param {number} max - The maximum value (inclusive).
+	 * @returns {number} A random integer between min and max.
+	 */
+	beep8.Random.int = function( min, max ) {
+
+		beep8.Utilities.checkInt( "min", min );
+		beep8.Utilities.checkInt( "max", max );
+
+		if ( max <= min ) {
+			return min;
+		}
+
+		return beep8.Utilities.clamp(
+			Math.floor( beep8.Random.num() * ( max - min + 1 ) ) + min,
+			min,
+			max
+		);
+
+	}
+
+
+	/**
+	 * Returns a randomly picked element of the given array.
+	 *
+	 * @param {Array} array - The array to pick from.
+	 * @returns {any} A randomly picked element of the array, or null if the array is empty.
+	 */
+	beep8.Random.pick = function( array ) {
+
+		beep8.Utilities.checkArray( "array", array );
+
+		return array.length > 0 ? array[ beep8.Random.int( 0, array.length - 1 ) ] : null;
+
+	}
+
+
+	/**
+	 * Shuffles an array, randomly reordering the elements.
+	 * Does not modify the original array. Returns the shuffled array.
+	 *
+	 * @param {Array} array - The array to shuffle.
+	 * @returns {Array} The shuffled array.
+	 */
+	beep8.Random.shuffleArray = function( array ) {
+
+		beep8.Utilities.checkArray( "array", array );
+
+		array = array.slice();
+
+		for ( let i = 0; i < array.length; i++ ) {
+			const j = beep8.Random.int( 0, array.length - 1 );
+			const tmp = array[ i ];
+			array[ i ] = array[ j ];
+			array[ j ] = tmp;
+		}
+
+		return array;
+
+	}
+
+
+	beep8.Random.setSeed();
+
+} )( beep8 || ( beep8 = {} ) );
+
+
+( function( beep8 ) {
+
 	// Define the Renderer object inside beep8.
 	beep8.Renderer = {};
 
@@ -3053,14 +3803,9 @@ const beep8 = {};
 	let dirty = false;
 
 	// Constants and variables used for phosphor and scanline effects.
-	const phosphor_bleed = 0.2; // Bleed factor for neighboring pixel blending.
-	const phosphor_blend = 1 - phosphor_bleed; // Remaining factor for current pixel blending.
 	const phosphor_bloom = []; // Array to store bloom effect values.
-	const scan_upper_limit = 1;
-	const scan_lower_limit = 0.7;
 	const scale_add = 1; // Additive scaling for bloom.
-	const scale_times = 0.5; // Multiplicative scaling for bloom.
-	const scan_range = []; // Array to store scanline brightness range.
+	const scale_times = 0.4; // Multiplicative scaling for bloom.
 	let canvasImageData = null; // Stores image data for the canvas.
 
 	/**
@@ -3070,15 +3815,22 @@ const beep8 = {};
 	 */
 	const initCrt = () => {
 
-		// Precompute phosphor bloom values based on a non-linear scale.
+		/**
+		 * Precompute phosphor bloom values to simulate the effect of phosphor
+		 * persistence on older CRT screens.
+		 * CRT displays have a characteristic glow, often caused by the
+		 * persistence of phosphor pixels.
+		 * Here, we calculate bloom values for each possible brightness level
+		 * (0-255) to simulate this effect:
+		 *  - The formula applies gamma correction with a value of 2.2 to mimic
+		 * non-linear brightness response.
+		 *  - A scaling factor of 0.5 reduces the brightness, and adding 1
+		 * ensures a minimum glow intensity.
+		 * These precomputed values are used later when blending pixels,
+		 * creating a glow effect similar to retro CRT displays.
+		 */
 		for ( let i = 0; i < 256; i++ ) {
 			phosphor_bloom[ i ] = ( scale_times * ( i / 255 ) ** ( 1 / 2.2 ) ) + scale_add;
-		}
-
-		// Precompute scanline brightness values from a lower to upper limit.
-		const step = ( scan_upper_limit - scan_lower_limit ) / 256; // Step to go from scan_lower_limit (0.7) to scan_upper_limit (1.0).
-		for ( let i = 0; i < 256; i++ ) {
-			scan_range[ i ] = 0.7 + step * i;
 		}
 
 	};
@@ -3108,12 +3860,11 @@ const beep8 = {};
 
 		dirty = false;
 
-		beep8.Core.cursorRenderer.drawCursor(
+		beep8.CursorRenderer.draw(
 			beep8.Core.realCtx,
 			beep8.Core.realCanvas.width,
 			beep8.Core.realCanvas.height
 		);
-
 
 		beep8.Renderer.applyCrtFilter();
 
@@ -3145,7 +3896,8 @@ const beep8 = {};
 	beep8.Renderer.applyCrtFilter = function() {
 
 		// If the CRT effect is disabled, return.
-		if ( !beep8.CONFIG.CRT_ENABLE ) {
+		if ( beep8.CONFIG.CRT_ENABLE <= 0 ) {
+			console.log( 'CRT effect is disabled.', beep8.CONFIG.CRT_ENABLE );
 			return;
 		}
 
@@ -3172,19 +3924,23 @@ const beep8 = {};
 				const currentPixelPos = getPixelPosition( x, y );
 				// Get the current pixel's RGB data.
 				const current_pixel_data = getPixelData( imageData, currentPixelPos );
-
-				let red, green, blue;
-
 				// Get the previous pixel data to the left (or use the current pixel if on the first column).
 				const previous_pixel_data = ( x > 0 ) ? getPixelData( imageData, getPixelPosition( x - 1, y ) ) : current_pixel_data;
+				const next_pixel_data = x < width - 1 ? getPixelData( imageData, getPixelPosition( x + 1, y ) ) : current_pixel_data;
 
-				// Apply blending for the red, green, and blue channels.
-				red = blendPixel( current_pixel_data[ 0 ], previous_pixel_data[ 0 ] );
-				green = blendPixel( current_pixel_data[ 1 ], current_pixel_data[ 1 ] );
-				blue = blendPixel( current_pixel_data[ 2 ], previous_pixel_data[ 2 ] );
+				// let red, green, blue;
+
+				// // Apply blending for the red, green, and blue channels.
+				// red = blendPixel( current_pixel_data[ 0 ], previous_pixel_data[ 0 ], next_pixel_data[ 0 ] );
+				// green = blendPixel( current_pixel_data[ 1 ], current_pixel_data[ 1 ] );
+				// blue = blendPixel( current_pixel_data[ 2 ], previous_pixel_data[ 2 ] );
 
 				// Set the new pixel values back into the image data array.
-				setPixel( imageData, currentPixelPos, red, green, blue );
+				setPixel(
+					imageData,
+					currentPixelPos,
+					blendPixels( current_pixel_data, previous_pixel_data, next_pixel_data )
+				);
 
 			}
 		}
@@ -3203,10 +3959,18 @@ const beep8 = {};
 	 * @param {number} previousValue - The previous pixel value.
 	 * @returns {number} The blended pixel value.
 	 */
-	const blendPixel = ( currentValue, previousValue ) => {
+	const blendPixels = ( currentPixel, previousPixel, nextPixel ) => {
 
-		// Blend the current pixel with its neighboring pixel using phosphor effects.
-		return ( currentValue * phosphor_blend ) + ( previousValue * phosphor_bleed * phosphor_bloom[ previousValue ] );
+		// Bleed factor for neighboring pixel blending.
+		const phosphor_bleed = beep8.CONFIG.CRT_ENABLE;
+		// Remaining factor for current pixel blending.
+		const phosphor_blend = ( 1 - phosphor_bleed );
+
+		return {
+			r: ( currentPixel[ 0 ] * phosphor_blend ) + ( ( previousPixel[ 0 ] + nextPixel[ 0 ] ) / 2 * phosphor_bleed * phosphor_bloom[ previousPixel[ 0 ] ] ),
+			g: ( currentPixel[ 1 ] * phosphor_blend ) + ( ( previousPixel[ 1 ] + nextPixel[ 1 ] ) / 2 * phosphor_bleed * phosphor_bloom[ previousPixel[ 1 ] ] ),
+			b: ( currentPixel[ 2 ] * phosphor_blend ) + ( ( previousPixel[ 2 ] + nextPixel[ 2 ] ) / 2 * phosphor_bleed * phosphor_bloom[ previousPixel[ 2 ] ] ),
+		}
 
 	};
 
@@ -3235,17 +3999,14 @@ const beep8 = {};
 	 *
 	 * @param {Uint8ClampedArray} imageData - The image data array.
 	 * @param {number} pixelPos - The position of the pixel in the image data array.
-	 * @param {number} r - The red value for the pixel.
-	 * @param {number} g - The green value for the pixel.
-	 * @param {number} b - The blue value for the pixel.
+	 * @param {object} color - An object containing red, green, and blue values for the pixel
 	 * @returns {void}
 	 */
-	const setPixel = ( imageData, pixelPos, r, g, b ) => {
+	const setPixel = ( imageData, pixelPos, color ) => {
 
-		// Set the red, green, and blue values for the pixel in the image data array.
-		imageData[ pixelPos + 1 ] = r;
-		imageData[ pixelPos + 2 ] = g;
-		imageData[ pixelPos + 3 ] = b;
+		imageData[ pixelPos + 1 ] = color.r;
+		imageData[ pixelPos + 2 ] = color.g;
+		imageData[ pixelPos + 3 ] = color.b;
 
 	};
 
@@ -3265,9 +4026,79 @@ const beep8 = {};
 	};
 
 
-	// Call init to precompute phosphor bloom and scanline ranges.
+	// Call init to precompute phosphor bloom.
 	initCrt();
 
+
+} )( beep8 || ( beep8 = {} ) );
+
+( function( beep8 ) {
+
+	/**
+	 * Stores all scenes by name.
+	 *
+	 * @type {Object}
+	 */
+	beep8.Scenes = {};
+
+
+	/**
+	 * Holds the current active scene object.
+	 *
+	 * @type {Object|null}
+	 */
+	let activeScene = null;
+
+
+	/**
+	 * Adds a new scene to the scene manager.
+	 *
+	 * @param {string} name - The name of the scene.
+	 * @param {Function} update - The update function for the scene, which will be passed to `beep8.frame`.
+	 */
+	beep8.Scenes.addScene = function( name, update = {} ) {
+
+		if ( update !== null ) {
+
+			beep8.Utilities.checkFunction( 'update', update );
+
+		}
+
+		beep8.scenes[ name ] = { update };
+
+	};
+
+
+	/**
+	 * Switches to a specified scene by name.
+	 *
+	 * @param {string} name - The name of the scene to switch to.
+	 */
+	beep8.Scenes.switchScene = function( name ) {
+
+		beep8.Utilities.checkString( 'name', name );
+
+		if ( !beep8.scenes[ name ] ) {
+			beep8.Utilities.fatal( `Scene "${name}" does not exist.` );
+		}
+
+		activeScene = name;
+
+		beep8.frame( beep8.scenes[ name ].update );
+
+	};
+
+
+	/**
+	 * Gets the current active scene.
+	 *
+	 * @returns {Object|null} The active scene object, or null if no scene is active.
+	 */
+	beep8.Scenes.getActiveScene = function() {
+
+		return activeScene;
+
+	};
 
 } )( beep8 || ( beep8 = {} ) );
 
@@ -3282,49 +4113,50 @@ const beep8 = {};
 	 * @type {Object}
 	 */
 	const sfxLibrary = {
-		coin: [ , 0, 1675, , .06, .24, 1, 1.82, , , 837, .06 ],
-		coin2: [ , 0, 523.2511, .01, .06, .3, 1, 1.82, , , 837, .06 ],
-		blip: [ 3, 0, 150, .02, .03, .02, , 2.8, , , , , , , , , , .7, .02 ],
-		blip2: [ 1.5, 0, 200, .02, .03, .02, , 2.8, , , , , , , , , , .7, .02 ],
-		blip3: [ 2, 0, 250, .02, .03, .02, , 2.8, , , , , , , , , , .7, .02 ],
+		coin: [ 1.2, 0, 1675, , .06, .24, 1, 1.82, , , 837, .06 ],
+		coin2: [ 1.2, 0, 523.2511, .01, .06, .3, 1, 1.82, , , 837, .06 ],
+		blip: [ 5, 0, 150, .02, .03, .02, , 2.8, , , , , , , , , , .7, .02 ],
+		blip2: [ 3, 0, 200, .02, .03, .02, , 2.8, , , , , , , , , , .7, .02 ],
+		blip3: [ 3, 0, 250, .02, .03, .02, , 2.8, , , , , , , , , , .7, .02 ],
 
 		hit: [ , 0, 925, .04, .3, .6, 1, .3, , 6.27, -184, .09, .17 ],
-		sparkle: [ , 0, 539, 0, .04, .29, 1, 1.92, , , 567, .02, .02, , , , .04 ],
-		sparkle2: [ , 0, 80, .3, .4, .7, 2, .1, -0.73, 3.42, -430, .09, .17, , , , .19 ],
-		life: [ , 0, 537, .02, .02, .22, 1, 1.59, -6.98, 4.97 ],
-		break: [ , 0, 528, .01, , .48, , .6, -11.6, , , , .32, 4.2 ],
-		life2: [ , 0, 20, .04, , .6, , 1.31, , , -990, .06, .17, , , .04, .07 ],
+		sparkle: [ 1.2, 0, 539, 0, .04, .29, 1, 1.92, , , 567, .02, .02, , , , .04 ],
+		sparkle2: [ 1.2, 0, 80, .3, .4, .7, 2, .1, -0.73, 3.42, -430, .09, .17, , , , .19 ],
+		life: [ 1.5, 0, 537, .02, .02, .22, 1, 1.59, -6.98, 4.97 ],
+		life2: [ 1.4, 0, 20, .04, , .6, , 1.31, , , -990, .06, .17, , , .04, .07 ],
+		break: [ 1.2, 0, 528, .01, , .48, , .6, -11.6, , , , .32, 4.2 ],
+		lazer1: [ 1.5, 0, 515, .05, .07, .09, 1, 2.8, , , 302, .06, .1, , 3.5, .1, .08, .75, .04 ],
 		alien: [ , 0, 662, .82, .11, .33, 1, 0, , -0.2, , , , 1.2, , .26, .01 ],
-		beep: [ 1.5, 0, 270, , .1, , 1, 1.5, , , , , , , , .1, .01 ],
-		beep2: [ 1.2, 0, 150, , .1, , 1, 1.5, , , , , , , , .1, .01 ],
-		beep3: [ 1.5, 0, 200, , .1, , 1, 1.5, , , , , , , , .1, .01 ],
-		ding: [ .9, 0, 685, .01, .03, .17, 1, 1.4, , , , , , , , , , .63, .01, , 420 ],
-		drum: [ , 0, 129, .01, , .15, , , , , , , , 5 ],
-		explode: [ , 0, 333, .01, 0, .9, 4, 1.9, , , , , , .5, , .6 ],
-		explode2: [ , 0, 418, 0, .02, .2, 4, 1.15, -8.5, , , , , .7, , .1 ],
-		explode3: [ , 0, 82, .02, , .2, 4, 4, , , , , , .8, , .2, , .8, .09 ],
-		squeak1: [ , 0, 1975, .08, .56, .02, , , -0.4, , -322, .56, .41, , , , .25 ],
+		beep: [ 2, 0, 270, , .1, , 1, 1.5, , , , , , , , .1, .01 ],
+		beep2: [ 2, 0, 150, , .1, , 1, 1.5, , , , , , , , .1, .01 ],
+		beep3: [ 2, 0, 200, , .1, , 1, 1.5, , , , , , , , .1, .01 ],
+		ding: [ 1, 0, 685, .01, .03, .17, 1, 1.4, , , , , , , , , , .63, .01, , 420 ],
+		drum: [ 1.5, 0, 129, .01, , .15, , , , , , , , 5 ],
+		explode: [ 1.5, 0, 333, .01, 0, .9, 4, 1.9, , , , , , .5, , .6 ],
+		explode2: [ 1.1, 0, 418, 0, .02, .2, 4, 1.15, -8.5, , , , , .7, , .1 ],
+		explode3: [ 1.2, 0, 82, .02, , .2, 4, 4, , , , , , .8, , .2, , .8, .09 ],
+		squeak1: [ 1.2, 0, 1975, .08, .56, .02, , , -0.4, , -322, .56, .41, , , , .25 ],
 		squeak2: [ , 0, 75, .03, .08, .17, 1, 1.88, 7.83, , , , , .4 ],
-		squeak3: [ , 0, 1306, .8, .08, .02, 1, , , , , , .48, , -0.1, .11, .25 ],
-		squeak4: [ , 0, 1e3, .02, , .01, 2, , 18, , 475, .01, .01 ],
+		squeak3: [ 1.2, 0, 1306, .8, .08, .02, 1, , , , , , .48, , -0.1, .11, .25 ],
+		squeak4: [ 1.2, 0, 1e3, .02, , .01, 2, , 18, , 475, .01, .01 ],
 		bell: [ 2, 0, 999, , , , , 1.5, , .3, -99, .1, 1.63, , , .11, .22 ],
 		satellite: [ , 0, 847, .02, .3, .9, 1, 1.67, , , -294, .04, .13, , , , .1 ],
 		phone: [ , 0, 1600, .13, .52, .61, 1, 1.1, , , , , , .1, , .14 ],
-		pop: [ , 0, 224, .02, .02, .08, 1, 1.7, -13.9, , , , , , 6.7 ],
-		rocket: [ , 0, 941, .8, , .8, 4, .74, -222, , , , , .8, , 1 ],
-		rocket2: [ , 0, 172, .8, , .8, 1, .76, 7.7, 3.73, -482, .08, .15, , .14 ],
+		pop: [ 4, 0, 224, .02, .02, .08, 1, 1.7, -13.9, , , , , , 6.7 ],
+		rocket: [ 1.5, 0, 941, .8, , .8, 4, .74, -222, , , , , .8, , 1 ],
+		rocket2: [ 1.2, 0, 172, .8, , .8, 1, .76, 7.7, 3.73, -482, .08, .15, , .14 ],
 		squirt: [ , 0, 448, .01, .1, .3, 3, .39, -0.5, , , , , , .2, .1, .08 ],
-		swing: [ , 0, 150, .05, , .05, , 1.3, , , , , , 3 ],
+		swing: [ 1.5, 0, 150, .05, , .05, , 1.3, , , , , , 3 ],
 		wave: [ , 0, 40, .5, , 1.5, , 11, , , , , , 199 ],
-		warp: [ 2, 0, 713, .16, .09, .24, , .6, -29, -16, , , .09, .5, , , .23, .75, .15, .48 ],
+		warp: [ 3, 0, 713, .16, .09, .24, , .6, -29, -16, , , .09, .5, , , .23, .75, .15, .48 ],
 		radioactive: [ , 0, 130, .02, .9, .39, 2, .8, , , , , .13, .2, , .1, , .93, .06, .28 ],
-		siren: [ , 0, 960, , 1, .01, , .8, -0.01, , -190, .5, , .05, , , 1 ],
-		car_horn: [ 1.5, 0, 250, .02, .02, .2, 2, 2, , , , , .02, , , .02, .01, , , .1 ],
-		engine2: [ , 0, 25, .05, .3, .5, 3, 9, -0.01, , , , , , 13, .1, .2 ],
-		thunder: [ , 0, 471, , .09, .47, 4, 1.06, -6.7, , , , , .9, 61, .1, , .82, .09, .13 ],
+		siren: [ 1.3, 0, 960, , 1, .01, , .8, -0.01, , -190, .5, , .05, , , 1 ],
+		car_horn: [ 1.8, 0, 250, .02, .02, .2, 2, 2, , , , , .02, , , .02, .01, , , .1 ],
+		engine2: [ 1.2, 0, 25, .05, .3, .5, 3, 9, -0.01, , , , , , 13, .1, .2 ],
+		thunder: [ 1.2, 0, 471, , .09, .47, 4, 1.06, -6.7, , , , , .9, 61, .1, , .82, .09, .13 ],
 		sparkle3: [ , 0, 63, , 1, , 1, 1.5, , , , , , , , 3.69, .08 ],
-		sweep: [ , 0, 9220, .01, , , , 5, , , , , , 9 ],
-		click: [ 1.1, 0, 900, , .01, 0, 1, , -10, , -31, .02, , , , , , 1.2, , .16, -1448 ],
+		sweep: [ 1.2, 0, 9220, .01, , , , 5, , , , , , 9 ],
+		click: [ 1.5, 0, 900, , .01, 0, 1, , -10, , -31, .02, , , , , , 1.2, , .16, -1448 ],
 	};
 
 	beep8.Sfx = {};
@@ -3345,11 +4177,9 @@ const beep8 = {};
 		// Check the sfx is a string.
 		beep8.Utilities.checkString( 'sfx', sfx );
 
-		// console.log( `[${sfxLibrary[ sfx ].toString().replace( ' ', '' )}]` );
-
 		// SFX not found.
 		if ( !sfxLibrary[ sfx ] ) {
-			beep8.Utilities.error( `SFX ${sfx} not found.` );
+			beep8.Utilities.fatal( `SFX ${sfx} not found.` );
 		}
 
 		zzfx( ...sfxLibrary[ sfx ] );
@@ -3391,6 +4221,106 @@ const beep8 = {};
 
 ( function( beep8 ) {
 
+	// Define the State object inside beep8.
+	beep8.State = {};
+
+
+	/**
+	 * State management class that wraps a given object in a Proxy
+	 * to enable reactivity and trigger a render function when the state changes.
+	 */
+	beep8.State = class {
+
+		/**
+		 * Constructor for the State class.
+		 *
+		 * @param {Object} initialState - The initial state object.
+		 * @param {Function|null} renderFn - Optional render function to be called when the state changes.
+		 */
+		constructor( initialState = {}, renderFn = null ) {
+
+			this.listeners = {};  // Not used in this version but reserved for future custom listeners.
+			this.renderFn = renderFn;  // Store the render function.
+
+			// Return the proxy wrapping the initial state.
+			return this.createProxy( initialState );
+
+		}
+
+
+		/**
+		 * Recursively creates proxies for nested objects to ensure reactivity.
+		 *
+		 * @param {Object} target - The object to wrap in a proxy.
+		 * @returns {Proxy} - A Proxy that intercepts 'get' and 'set' operations.
+		 */
+		createProxy( target ) {
+
+			return new Proxy(
+				target,
+				{
+
+					/**
+					 * Get trap for the Proxy.
+					 * Intercepts property access on the state object.
+					 *
+					 * @param {Object} obj - The original object being proxied.
+					 * @param {string} prop - The property being accessed.
+					 * @returns {*} - The value of the accessed property.
+					 */
+					get: ( obj, prop ) => {
+
+						// If the property is an object, recursively wrap it in a proxy to handle nested state changes.
+						if ( typeof obj[ prop ] === 'object' && obj[ prop ] !== null ) {
+							return this.createProxy( obj[ prop ] );
+						}
+
+						// Return the value of the property.
+						return obj[ prop ];
+
+					},
+
+
+					/**
+					 * Set trap for the Proxy.
+					 * Intercepts property updates on the state object.
+					 *
+					 * @param {Object} obj - The original object being proxied.
+					 * @param {string} prop - The property being updated.
+					 * @param {*} value - The new value to assign to the property.
+					 * @returns {boolean} - Returns true to indicate the operation was successful.
+					 */
+					set: ( obj, prop, value ) => {
+
+						// Update the property with the new value.
+						obj[ prop ] = value;
+
+						// Fire a custom event 'stateChange' when the state is modified.
+						// It passes the changed property and its new value.
+						beep8.Utilities.event( 'stateChange', { prop, value } );
+
+						// If a render function was provided, call it after the state changes.
+						if ( this.renderFn ) {
+							this.renderFn();
+						}
+
+						// Indicate that the set operation was successful.
+						return true;
+
+					}
+				}
+			);
+
+		}
+
+	};
+
+} )( beep8 || ( beep8 = {} ) );
+
+( function( beep8 ) {
+
+	beep8.TextRenderer = {};
+
 	/**
 	 * An array of character codes for each character in the chars string.
 	 * This is used to look up the index of a character in the chars string.
@@ -3398,9 +4328,6 @@ const beep8 = {};
 	 * @type {number[]}
 	 */
 	const charMap = [];
-
-	beep8.TextRenderer = {};
-
 
 	// beep8.TextRendererFont for each font, keyed by font name. The default font is called "default".
 	beep8.TextRenderer.fonts_ = {};
@@ -3652,14 +4579,15 @@ const beep8 = {};
 		beep8.Utilities.checkString( "text", text );
 		beep8.Utilities.checkNumber( "width", width );
 
-		const col = beep8.Core.drawState.cursorCol;
-
-		// Split the text into lines.
-		text = text.split( "\n" );
-
 		if ( !text ) {
 			return;
 		}
+
+		const col = beep8.Core.drawState.cursorCol;
+		const rowInc = beep8.TextRenderer.printFont_.getCharRowCount();
+
+		// Split the text into lines.
+		text = text.split( "\n" );
 
 		// Loop through each line of text.
 		for ( let i = 0; i < text.length; i++ ) {
@@ -3670,8 +4598,11 @@ const beep8 = {};
 			beep8.Core.drawState.cursorCol = tempCol;
 			beep8.TextRenderer.print( text[ i ] );
 
+			beep8.Core.drawState.cursorRow += rowInc;
+
 		}
 
+		// Reset cursor position.
 		beep8.Core.drawState.cursorCol = col;
 
 	}
@@ -3926,6 +4857,65 @@ const beep8 = {};
 
 
 	/**
+	 * Wraps text to a given width.
+	 *
+	 * @param {string} text - The text to wrap.
+	 * @param {number} wrapWidth - The width to wrap the text to.
+	 * @param {beep8.TextRendererFont} fontName - The font to use.
+	 * @returns {string} The wrapped text.
+	 */
+	beep8.TextRenderer.wrapText = function( text, wrapWidth, font = null ) {
+
+		font = font || beep8.TextRenderer.curFont_;
+
+		// If 0 or less then don't wrap.
+		if ( wrapWidth <= 0 ) {
+			return text;
+		}
+
+		// Adjust the size of the wrap width based on the size of the font.
+		wrapWidth = Math.floor( wrapWidth / font.getCharColCount() );
+
+		// Split the text into lines.
+		const lines = text.split( "\n" );
+
+		// New list of lines.
+		const wrappedLines = [];
+
+		for ( const line of lines ) {
+
+			const words = line.split( " " );
+
+			let wrappedLine = "";
+			let lineWidth = 0;
+
+			for ( const word of words ) {
+
+				const wordWidth = beep8.TextRenderer.measure( word ).cols;
+
+				// Is the line with the new word longer than the line width?
+				if ( lineWidth + ( wordWidth ) > wrapWidth ) {
+					wrappedLines.push( wrappedLine.trim() );
+					wrappedLine = "";
+					lineWidth = 0;
+				}
+
+				// Add a space between words.
+				wrappedLine += word + " ";
+				lineWidth += wordWidth + 1;
+
+			}
+
+			wrappedLines.push( wrappedLine.trim() );
+
+		}
+
+		return wrappedLines.join( "\n" );
+
+	}
+
+
+	/**
 	 * Puts a character at the specified row and column.
 	 *
 	 * @param {number} ch - The character to put.
@@ -3957,7 +4947,7 @@ const beep8 = {};
 	 * @param {beep8.TextRendererFont} [font=null] - The font to use.
 	 * @returns {void}
 	 */
-	putxy_ = function( ch, x, y, fgColor, bgColor, font = null, direction = 0 ) {
+	const putxy_ = function( ch, x, y, fgColor, bgColor, font = null, direction = 0 ) {
 
 		font = font || beep8.TextRenderer.curTiles_;
 
@@ -4028,65 +5018,6 @@ const beep8 = {};
 		}
 
 		beep8.Renderer.markDirty();
-
-	}
-
-
-	/**
-	 * Wraps text to a given width.
-	 *
-	 * @param {string} text - The text to wrap.
-	 * @param {number} wrapWidth - The width to wrap the text to.
-	 * @param {beep8.TextRendererFont} fontName - The font to use.
-	 * @returns {string} The wrapped text.
-	 */
-	beep8.TextRenderer.wrapText = function( text, wrapWidth, font = null ) {
-
-		font = font || beep8.TextRenderer.curFont_;
-
-		// If 0 or less then don't wrap.
-		if ( wrapWidth <= 0 ) {
-			return text;
-		}
-
-		// Adjust the size of the wrap width based on the size of the font.
-		wrapWidth = Math.floor( wrapWidth / font.getCharColCount() );
-
-		// Split the text into lines.
-		const lines = text.split( "\n" );
-
-		// New list of lines.
-		const wrappedLines = [];
-
-		for ( const line of lines ) {
-
-			const words = line.split( " " );
-
-			let wrappedLine = "";
-			let lineWidth = 0;
-
-			for ( const word of words ) {
-
-				const wordWidth = beep8.TextRenderer.measure( word ).cols;
-
-				// Is the line with the new word longer than the line width?
-				if ( lineWidth + ( wordWidth ) > wrapWidth ) {
-					wrappedLines.push( wrappedLine.trim() );
-					wrappedLine = "";
-					lineWidth = 0;
-				}
-
-				// Add a space between words.
-				wrappedLine += word + " ";
-				lineWidth += wordWidth + 1;
-
-			}
-
-			wrappedLines.push( wrappedLine.trim() );
-
-		}
-
-		return wrappedLines.join( "\n" );
 
 	}
 
@@ -4164,25 +5095,25 @@ const beep8 = {};
 			// Set foreground color.
 			case "f":
 			case "c":
-				beep8.Core.drawState.fgColor = arg !== "" ? argNum : this.origFgColor_;
+				beep8.Core.drawState.fgColor = arg !== "" ? argNum : beep8.TextRenderer.origFgColor_;
 				break;
 
 			// Set background color.
 			case "b":
-				beep8.Core.drawState.bgColor = arg !== "" ? argNum : this.origBgColor_;
+				beep8.Core.drawState.bgColor = arg !== "" ? argNum : beep8.TextRenderer.origBgColor_;
 				break;
 
 			// Change font.
 			case "t":
-				this.printFont_ = this.getFontByName( arg );
+				beep8.TextRenderer.printFont_ = beep8.TextRenderer.getFontByName( arg );
 				break;
 
 			// Reset state.
 			case "z":
-				beep8.Core.drawState.fgColor = this.origFgColor_;
-				beep8.Core.drawState.bgColor = this.origBgColor_;
+				beep8.Core.drawState.fgColor = beep8.TextRenderer.origFgColor_;
+				beep8.Core.drawState.bgColor = beep8.TextRenderer.origBgColor_;
 				// Use original font if available, otherwise default.
-				this.printFont_ = this.origFont_ || this.fonts_[ "default" ];
+				beep8.TextRenderer.printFont_ = beep8.TextRenderer.origFont_ || beep8.TextRenderer.fonts_[ "default" ];
 				break;
 
 			default:
@@ -4200,7 +5131,7 @@ const beep8 = {};
 	beep8.TextRenderer.regenColors = function() {
 
 		// Tell all the fonts to regenerate their glyph images.
-		Object.values( this.fonts_ ).forEach( f => f.regenColors() );
+		Object.values( beep8.TextRenderer.fonts_ ).forEach( f => f.regenColors() );
 
 	}
 
@@ -4988,75 +5919,6 @@ const beep8 = {};
 
 
 	/**
-	 * Returns a random integer in the given closed interval.
-	 *
-	 * @param {number} lowInclusive - The minimum value (inclusive).
-	 * @param {number} highInclusive - The maximum value (inclusive).
-	 * @returns {number} A random integer between lowInclusive and highInclusive.
-	 */
-	beep8.Utilities.randomInt = function( lowInclusive, highInclusive ) {
-
-		beep8.Utilities.checkNumber( "lowInclusive", lowInclusive );
-		beep8.Utilities.checkNumber( "highInclusive", highInclusive );
-
-		lowInclusive = Math.round( lowInclusive );
-		highInclusive = Math.round( highInclusive );
-
-		if ( highInclusive <= lowInclusive ) {
-			return lowInclusive;
-		}
-
-		return beep8.Utilities.clamp(
-			Math.floor(
-				Math.random() * ( highInclusive - lowInclusive + 1 )
-			) + lowInclusive,
-			lowInclusive, highInclusive
-		);
-
-	}
-
-
-	/**
-	 * Returns a randomly picked element of the given array.
-	 *
-	 * @param {Array} array - The array to pick from.
-	 * @returns {any} A randomly picked element of the array, or null if the array is empty.
-	 */
-	beep8.Utilities.randomPick = function( array ) {
-
-		beep8.Utilities.checkArray( "array", array );
-
-		return array.length > 0 ? array[ beep8.Utilities.randomInt( 0, array.length - 1 ) ] : null;
-
-	}
-
-
-	/**
-	 * Shuffles an array, randomly reordering the elements.
-	 * Does not modify the original array. Returns the shuffled array.
-	 *
-	 * @param {Array} array - The array to shuffle.
-	 * @returns {Array} The shuffled array.
-	 */
-	beep8.Utilities.shuffleArray = function( array ) {
-
-		beep8.Utilities.checkArray( "array", array );
-
-		array = array.slice();
-
-		for ( let i = 0; i < array.length; i++ ) {
-			const j = beep8.Utilities.randomInt( 0, array.length - 1 );
-			const tmp = array[ i ];
-			array[ i ] = array[ j ];
-			array[ j ] = tmp;
-		}
-
-		return array;
-
-	}
-
-
-	/**
 	 * Calculates a 2D distance between points (x0, y0) and (x1, y1).
 	 *
 	 * @param {number} x0 - The x-coordinate of the first point.
@@ -5285,6 +6147,50 @@ const beep8 = {};
 		return number.toString().padStart( length, '0' );
 
 	}
+
+
+	/**
+	 * Generate a new custom event.
+	 *
+	 * @param {string} eventName - The name of the event.
+	 * @param {Object} [detail={}] - The event detail.
+	 * @param {EventTarget} [target=document] - The target of the event.
+	 * @returns {void}
+	 */
+	beep8.Utilities.event = function( eventName, detail = {}, target = document ) {
+
+		beep8.Utilities.checkString( "eventName", eventName );
+		beep8.Utilities.checkObject( "detail", detail );
+		beep8.Utilities.checkObject( "target", target );
+
+		// Prefix event name with beep8.
+		eventName = `beep8.${eventName}`;
+
+		// Create a custom event.
+		const event = new CustomEvent( eventName, { detail } );
+
+		// Dispatch the event.
+		target.dispatchEvent( event );
+
+	};
+
+
+	/**
+	 * Utility function to repeat an array a specified number of times.
+	 *
+	 * @param {Array} array - The array to repeat.
+	 * @param {number} times - The number of times to repeat the array.
+	 * @returns {Array} The repeated array.
+	 */
+	beep8.Utilities.repeatArray = function( array, times ) {
+
+		beep8.Utilities.checkArray( "array", array );
+		beep8.Utilities.checkInt( "times", times, 0 );
+
+		return Array( times ).fill().flatMap( () => array );
+
+	};
+
 
 } )( beep8 || ( beep8 = {} ) );
 
@@ -5954,317 +6860,6 @@ gap: 5vw;
 
 } )( this );
 
-/*
- * A speed-improved perlin and simplex noise algorithms for 2D.
- *
- * Based on example code by Stefan Gustavson (stegu@itn.liu.se).
- * Optimisations by Peter Eastman (peastman@drizzle.stanford.edu).
- * Better rank ordering method by Stefan Gustavson in 2012.
- * Converted to Javascript by Joseph Gentle.
- *
- * Version 2012-03-09
- *
- * This code was placed in the public domain by its original author,
- * Stefan Gustavson. You may use it as you see fit, but
- * attribution is appreciated.
- *
- */
-
-( function( global ) {
-	var module = global.noise = {};
-
-	function Grad( x, y, z ) {
-		this.x = x; this.y = y; this.z = z;
-	}
-
-	Grad.prototype.dot2 = function( x, y ) {
-		return this.x * x + this.y * y;
-	};
-
-	Grad.prototype.dot3 = function( x, y, z ) {
-		return this.x * x + this.y * y + this.z * z;
-	};
-
-	var grad3 = [ new Grad( 1, 1, 0 ), new Grad( -1, 1, 0 ), new Grad( 1, -1, 0 ), new Grad( -1, -1, 0 ),
-	new Grad( 1, 0, 1 ), new Grad( -1, 0, 1 ), new Grad( 1, 0, -1 ), new Grad( -1, 0, -1 ),
-	new Grad( 0, 1, 1 ), new Grad( 0, -1, 1 ), new Grad( 0, 1, -1 ), new Grad( 0, -1, -1 ) ];
-
-	var p = [ 151, 160, 137, 91, 90, 15,
-		131, 13, 201, 95, 96, 53, 194, 233, 7, 225, 140, 36, 103, 30, 69, 142, 8, 99, 37, 240, 21, 10, 23,
-		190, 6, 148, 247, 120, 234, 75, 0, 26, 197, 62, 94, 252, 219, 203, 117, 35, 11, 32, 57, 177, 33,
-		88, 237, 149, 56, 87, 174, 20, 125, 136, 171, 168, 68, 175, 74, 165, 71, 134, 139, 48, 27, 166,
-		77, 146, 158, 231, 83, 111, 229, 122, 60, 211, 133, 230, 220, 105, 92, 41, 55, 46, 245, 40, 244,
-		102, 143, 54, 65, 25, 63, 161, 1, 216, 80, 73, 209, 76, 132, 187, 208, 89, 18, 169, 200, 196,
-		135, 130, 116, 188, 159, 86, 164, 100, 109, 198, 173, 186, 3, 64, 52, 217, 226, 250, 124, 123,
-		5, 202, 38, 147, 118, 126, 255, 82, 85, 212, 207, 206, 59, 227, 47, 16, 58, 17, 182, 189, 28, 42,
-		223, 183, 170, 213, 119, 248, 152, 2, 44, 154, 163, 70, 221, 153, 101, 155, 167, 43, 172, 9,
-		129, 22, 39, 253, 19, 98, 108, 110, 79, 113, 224, 232, 178, 185, 112, 104, 218, 246, 97, 228,
-		251, 34, 242, 193, 238, 210, 144, 12, 191, 179, 162, 241, 81, 51, 145, 235, 249, 14, 239, 107,
-		49, 192, 214, 31, 181, 199, 106, 157, 184, 84, 204, 176, 115, 121, 50, 45, 127, 4, 150, 254,
-		138, 236, 205, 93, 222, 114, 67, 29, 24, 72, 243, 141, 128, 195, 78, 66, 215, 61, 156, 180 ];
-	// To remove the need for index wrapping, double the permutation table length
-	var perm = new Array( 512 );
-	var gradP = new Array( 512 );
-
-	// This isn't a very good seeding function, but it works ok. It supports 2^16
-	// different seed values. Write something better if you need more seeds.
-	module.seed = function( seed ) {
-		if ( seed > 0 && seed < 1 ) {
-			// Scale the seed out
-			seed *= 65536;
-		}
-
-		seed = Math.floor( seed );
-		if ( seed < 256 ) {
-			seed |= seed << 8;
-		}
-
-		for ( var i = 0; i < 256; i++ ) {
-			var v;
-			if ( i & 1 ) {
-				v = p[ i ] ^ ( seed & 255 );
-			} else {
-				v = p[ i ] ^ ( ( seed >> 8 ) & 255 );
-			}
-
-			perm[ i ] = perm[ i + 256 ] = v;
-			gradP[ i ] = gradP[ i + 256 ] = grad3[ v % 12 ];
-		}
-	};
-
-	module.seed( 0 );
-
-	/*
-	for(var i=0; i<256; i++) {
-	  perm[i] = perm[i + 256] = p[i];
-	  gradP[i] = gradP[i + 256] = grad3[perm[i] % 12];
-	}*/
-
-	// Skewing and unskewing factors for 2, 3, and 4 dimensions
-	var F2 = 0.5 * ( Math.sqrt( 3 ) - 1 );
-	var G2 = ( 3 - Math.sqrt( 3 ) ) / 6;
-
-	var F3 = 1 / 3;
-	var G3 = 1 / 6;
-
-	// 2D simplex noise
-	module.simplex2 = function( xin, yin ) {
-		var n0, n1, n2; // Noise contributions from the three corners
-		// Skew the input space to determine which simplex cell we're in
-		var s = ( xin + yin ) * F2; // Hairy factor for 2D
-		var i = Math.floor( xin + s );
-		var j = Math.floor( yin + s );
-		var t = ( i + j ) * G2;
-		var x0 = xin - i + t; // The x,y distances from the cell origin, unskewed.
-		var y0 = yin - j + t;
-		// For the 2D case, the simplex shape is an equilateral triangle.
-		// Determine which simplex we are in.
-		var i1, j1; // Offsets for second (middle) corner of simplex in (i,j) coords
-		if ( x0 > y0 ) { // lower triangle, XY order: (0,0)->(1,0)->(1,1)
-			i1 = 1; j1 = 0;
-		} else {    // upper triangle, YX order: (0,0)->(0,1)->(1,1)
-			i1 = 0; j1 = 1;
-		}
-		// A step of (1,0) in (i,j) means a step of (1-c,-c) in (x,y), and
-		// a step of (0,1) in (i,j) means a step of (-c,1-c) in (x,y), where
-		// c = (3-sqrt(3))/6
-		var x1 = x0 - i1 + G2; // Offsets for middle corner in (x,y) unskewed coords
-		var y1 = y0 - j1 + G2;
-		var x2 = x0 - 1 + 2 * G2; // Offsets for last corner in (x,y) unskewed coords
-		var y2 = y0 - 1 + 2 * G2;
-		// Work out the hashed gradient indices of the three simplex corners
-		i &= 255;
-		j &= 255;
-		var gi0 = gradP[ i + perm[ j ] ];
-		var gi1 = gradP[ i + i1 + perm[ j + j1 ] ];
-		var gi2 = gradP[ i + 1 + perm[ j + 1 ] ];
-		// Calculate the contribution from the three corners
-		var t0 = 0.5 - x0 * x0 - y0 * y0;
-		if ( t0 < 0 ) {
-			n0 = 0;
-		} else {
-			t0 *= t0;
-			n0 = t0 * t0 * gi0.dot2( x0, y0 );  // (x,y) of grad3 used for 2D gradient
-		}
-		var t1 = 0.5 - x1 * x1 - y1 * y1;
-		if ( t1 < 0 ) {
-			n1 = 0;
-		} else {
-			t1 *= t1;
-			n1 = t1 * t1 * gi1.dot2( x1, y1 );
-		}
-		var t2 = 0.5 - x2 * x2 - y2 * y2;
-		if ( t2 < 0 ) {
-			n2 = 0;
-		} else {
-			t2 *= t2;
-			n2 = t2 * t2 * gi2.dot2( x2, y2 );
-		}
-		// Add contributions from each corner to get the final noise value.
-		// The result is scaled to return values in the interval [-1,1].
-		return 70 * ( n0 + n1 + n2 );
-	};
-
-	// 3D simplex noise
-	module.simplex3 = function( xin, yin, zin ) {
-		var n0, n1, n2, n3; // Noise contributions from the four corners
-
-		// Skew the input space to determine which simplex cell we're in
-		var s = ( xin + yin + zin ) * F3; // Hairy factor for 2D
-		var i = Math.floor( xin + s );
-		var j = Math.floor( yin + s );
-		var k = Math.floor( zin + s );
-
-		var t = ( i + j + k ) * G3;
-		var x0 = xin - i + t; // The x,y distances from the cell origin, unskewed.
-		var y0 = yin - j + t;
-		var z0 = zin - k + t;
-
-		// For the 3D case, the simplex shape is a slightly irregular tetrahedron.
-		// Determine which simplex we are in.
-		var i1, j1, k1; // Offsets for second corner of simplex in (i,j,k) coords
-		var i2, j2, k2; // Offsets for third corner of simplex in (i,j,k) coords
-		if ( x0 >= y0 ) {
-			if ( y0 >= z0 ) { i1 = 1; j1 = 0; k1 = 0; i2 = 1; j2 = 1; k2 = 0; }
-			else if ( x0 >= z0 ) { i1 = 1; j1 = 0; k1 = 0; i2 = 1; j2 = 0; k2 = 1; }
-			else { i1 = 0; j1 = 0; k1 = 1; i2 = 1; j2 = 0; k2 = 1; }
-		} else {
-			if ( y0 < z0 ) { i1 = 0; j1 = 0; k1 = 1; i2 = 0; j2 = 1; k2 = 1; }
-			else if ( x0 < z0 ) { i1 = 0; j1 = 1; k1 = 0; i2 = 0; j2 = 1; k2 = 1; }
-			else { i1 = 0; j1 = 1; k1 = 0; i2 = 1; j2 = 1; k2 = 0; }
-		}
-		// A step of (1,0,0) in (i,j,k) means a step of (1-c,-c,-c) in (x,y,z),
-		// a step of (0,1,0) in (i,j,k) means a step of (-c,1-c,-c) in (x,y,z), and
-		// a step of (0,0,1) in (i,j,k) means a step of (-c,-c,1-c) in (x,y,z), where
-		// c = 1/6.
-		var x1 = x0 - i1 + G3; // Offsets for second corner
-		var y1 = y0 - j1 + G3;
-		var z1 = z0 - k1 + G3;
-
-		var x2 = x0 - i2 + 2 * G3; // Offsets for third corner
-		var y2 = y0 - j2 + 2 * G3;
-		var z2 = z0 - k2 + 2 * G3;
-
-		var x3 = x0 - 1 + 3 * G3; // Offsets for fourth corner
-		var y3 = y0 - 1 + 3 * G3;
-		var z3 = z0 - 1 + 3 * G3;
-
-		// Work out the hashed gradient indices of the four simplex corners
-		i &= 255;
-		j &= 255;
-		k &= 255;
-		var gi0 = gradP[ i + perm[ j + perm[ k ] ] ];
-		var gi1 = gradP[ i + i1 + perm[ j + j1 + perm[ k + k1 ] ] ];
-		var gi2 = gradP[ i + i2 + perm[ j + j2 + perm[ k + k2 ] ] ];
-		var gi3 = gradP[ i + 1 + perm[ j + 1 + perm[ k + 1 ] ] ];
-
-		// Calculate the contribution from the four corners
-		var t0 = 0.6 - x0 * x0 - y0 * y0 - z0 * z0;
-		if ( t0 < 0 ) {
-			n0 = 0;
-		} else {
-			t0 *= t0;
-			n0 = t0 * t0 * gi0.dot3( x0, y0, z0 );  // (x,y) of grad3 used for 2D gradient
-		}
-		var t1 = 0.6 - x1 * x1 - y1 * y1 - z1 * z1;
-		if ( t1 < 0 ) {
-			n1 = 0;
-		} else {
-			t1 *= t1;
-			n1 = t1 * t1 * gi1.dot3( x1, y1, z1 );
-		}
-		var t2 = 0.6 - x2 * x2 - y2 * y2 - z2 * z2;
-		if ( t2 < 0 ) {
-			n2 = 0;
-		} else {
-			t2 *= t2;
-			n2 = t2 * t2 * gi2.dot3( x2, y2, z2 );
-		}
-		var t3 = 0.6 - x3 * x3 - y3 * y3 - z3 * z3;
-		if ( t3 < 0 ) {
-			n3 = 0;
-		} else {
-			t3 *= t3;
-			n3 = t3 * t3 * gi3.dot3( x3, y3, z3 );
-		}
-		// Add contributions from each corner to get the final noise value.
-		// The result is scaled to return values in the interval [-1,1].
-		return 32 * ( n0 + n1 + n2 + n3 );
-
-	};
-
-	// ##### Perlin noise stuff
-
-	function fade( t ) {
-		return t * t * t * ( t * ( t * 6 - 15 ) + 10 );
-	}
-
-	function lerp( a, b, t ) {
-		return ( 1 - t ) * a + t * b;
-	}
-
-	// 2D Perlin Noise
-	module.perlin2 = function( x, y ) {
-		// Find unit grid cell containing point
-		var X = Math.floor( x ), Y = Math.floor( y );
-		// Get relative xy coordinates of point within that cell
-		x = x - X; y = y - Y;
-		// Wrap the integer cells at 255 (smaller integer period can be introduced here)
-		X = X & 255; Y = Y & 255;
-
-		// Calculate noise contributions from each of the four corners
-		var n00 = gradP[ X + perm[ Y ] ].dot2( x, y );
-		var n01 = gradP[ X + perm[ Y + 1 ] ].dot2( x, y - 1 );
-		var n10 = gradP[ X + 1 + perm[ Y ] ].dot2( x - 1, y );
-		var n11 = gradP[ X + 1 + perm[ Y + 1 ] ].dot2( x - 1, y - 1 );
-
-		// Compute the fade curve value for x
-		var u = fade( x );
-
-		// Interpolate the four results
-		return lerp(
-			lerp( n00, n10, u ),
-			lerp( n01, n11, u ),
-			fade( y ) );
-	};
-
-	// 3D Perlin Noise
-	module.perlin3 = function( x, y, z ) {
-		// Find unit grid cell containing point
-		var X = Math.floor( x ), Y = Math.floor( y ), Z = Math.floor( z );
-		// Get relative xyz coordinates of point within that cell
-		x = x - X; y = y - Y; z = z - Z;
-		// Wrap the integer cells at 255 (smaller integer period can be introduced here)
-		X = X & 255; Y = Y & 255; Z = Z & 255;
-
-		// Calculate noise contributions from each of the eight corners
-		var n000 = gradP[ X + perm[ Y + perm[ Z ] ] ].dot3( x, y, z );
-		var n001 = gradP[ X + perm[ Y + perm[ Z + 1 ] ] ].dot3( x, y, z - 1 );
-		var n010 = gradP[ X + perm[ Y + 1 + perm[ Z ] ] ].dot3( x, y - 1, z );
-		var n011 = gradP[ X + perm[ Y + 1 + perm[ Z + 1 ] ] ].dot3( x, y - 1, z - 1 );
-		var n100 = gradP[ X + 1 + perm[ Y + perm[ Z ] ] ].dot3( x - 1, y, z );
-		var n101 = gradP[ X + 1 + perm[ Y + perm[ Z + 1 ] ] ].dot3( x - 1, y, z - 1 );
-		var n110 = gradP[ X + 1 + perm[ Y + 1 + perm[ Z ] ] ].dot3( x - 1, y - 1, z );
-		var n111 = gradP[ X + 1 + perm[ Y + 1 + perm[ Z + 1 ] ] ].dot3( x - 1, y - 1, z - 1 );
-
-		// Compute the fade curve value for x, y, z
-		var u = fade( x );
-		var v = fade( y );
-		var w = fade( z );
-
-		// Interpolate
-		return lerp(
-			lerp(
-				lerp( n000, n100, u ),
-				lerp( n001, n101, u ), w ),
-			lerp(
-				lerp( n010, n110, u ),
-				lerp( n011, n111, u ), w ),
-			v );
-	};
-
-} )( this );
-
 // ZzFX - Zuper Zmall Zound Zynth - Micro Edition
 // MIT License - Copyright 2019 Frank Force
 // https://github.com/KilledByAPixel/ZzFX
@@ -6438,7 +7033,6 @@ zzfxM = ( instruments, patterns, sequence, BPM = 125 ) => {
 	let notFirstBeat;
 	let stop;
 	let instrument;
-	let pitch;
 	let attenuation;
 	let outSampleOffset;
 	let isSequenceEnd;
@@ -6457,7 +7051,7 @@ zzfxM = ( instruments, patterns, sequence, BPM = 125 ) => {
 	for ( ; hasMore; channelIndex++ ) {
 
 		// reset current values
-		sampleBuffer = [ hasMore = notFirstBeat = pitch = outSampleOffset = 0 ];
+		sampleBuffer = [ hasMore = notFirstBeat = outSampleOffset = 0 ];
 
 		// for each pattern in sequence
 		sequence.map( ( patternIndex, sequenceIndex ) => {
@@ -6522,4 +7116,5 @@ zzfxM = ( instruments, patterns, sequence, BPM = 125 ) => {
 	}
 
 	return [ leftChannelBuffer, rightChannelBuffer ];
+
 }
