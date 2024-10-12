@@ -644,4 +644,18 @@
 	};
 
 
+	/**
+	 * Utility function to repeat an array a specified number of times.
+	 *
+	 * @param {Array} array - The array to repeat.
+	 * @param {number} times - The number of times to repeat the array.
+	 * @returns {Array} The repeated array.
+	 */
+	beep8.Utilities.repeatArray = function( array, times ) {
+
+		return Array( times ).fill().flatMap( () => array );
+
+	};
+
+
 } )( beep8 || ( beep8 = {} ) );
