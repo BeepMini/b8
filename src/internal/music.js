@@ -43,7 +43,7 @@
 		'piano': [ 1.5, 0, 90, .01, , .5, 2, 0, , , , , , , , , , , .1 ],
 		'bass': [ 1.2, 0, 45, .04, .6, .46, 1, 2.2, , , , , .17, .1, , , , .65, .09, .04, -548 ],
 		'burp': [ 1.4, 0, 291, .03, .04, .12, 2, 2.7, , 38, , , -0.01, .8, , , .04, .96, .02, , -1137 ],
-		'boop': [ , , 293, .03, .02, .01, , .8, , , , , , .1, , , , .82, .02, .01 ],
+		'boop': [ 1.5, , 293, .03, .02, .01, , .8, , , , , , .1, , , , .82, .02, .01 ],
 		'buzz': [ 1.2, 0, 90, .01, , .5, 2, 0, , , , , , , , , , , .1 ],
 		'drum1': [ 1.8, 0, 50, , , .2, , 4, -2, 6, 50, .15, , 6 ],
 		'drum2': [ 1.4, 0, 84, , , , , .7, , , , .5, , 6.7, 1, .01 ],
@@ -70,9 +70,7 @@
 	/**
 	 * Properties to add
 	 * -----------------
-	 * keyRange
 	 * instruments
-	 * noteStep
 	 * how many pauses
 	 */
 	beep8.Music.types = {
@@ -100,7 +98,6 @@
 			bpmRange: [ 60, 80 ],
 			scales: [ 'scaleMelodicMinorDown', 'scaleHarmonicMinor', 'scaleDiatonic', 'scaleChromatic' ],
 			keyRange: [ 13, 25, 37 ],
-			noteStep: 4,
 			pauseChance: 0.2,
 		},
 		joyful: {
@@ -133,6 +130,7 @@
 		beep8.Music.songs[ name ] = { data: songData, buffer: null }; // Store song data
 
 	};
+
 
 	/**
 	 * Play a song.
@@ -327,7 +325,7 @@
 
 		// If it's the first beat, pick a random note to start with.
 		if ( 0 === i ) {
-			song.currentNoteId = beep8.Random.int( 0, song.notes.length );
+			song.currentNoteId = beep8.Random.int( 0, song.notes.length / 2 );
 		}
 
 		const noteCount = song.notes.length;
@@ -374,7 +372,6 @@
 			this.bpm = beep8.Random.int( songType.bpmRange[ 0 ], songType.bpmRange[ 1 ] );
 			this.notes = this.getNoteScale( noteScaleName );
 			this.key = beep8.Random.pick( songType.keyRange || KEYRANGE );
-			this.noteStep = songType.noteStep || 1;
 			this.pauseChance = songType.pauseChance || 0.25;
 
 		}
@@ -445,7 +442,8 @@
 			const patterns = [];
 			const useDrums = beep8.Random.num() > 0.5;
 			const useBass = beep8.Random.num() > 0.5;
-			const melodyInstruments = [ 'piano', 'buzz', 'burp', 'boop' ];
+			// const melodyInstruments = [ 'piano', 'buzz', 'burp', 'boop' ];
+			const melodyInstruments = [ 'boop' ];
 			const melodyInstrument = beep8.Random.pick( melodyInstruments );
 
 			for ( let i = 0; i < PATTERN_COUNT; i++ ) {
