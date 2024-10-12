@@ -21,7 +21,7 @@
 
 		beep8.Core.preflight( "beep8.Async.key" );
 
-		return await beep8.Core.inputSys.readKeyAsync();
+		return await beep8.Input.readKeyAsync();
 
 	}
 
@@ -35,7 +35,7 @@
 
 		beep8.Core.preflight( "beep8.Async.pointer" );
 
-		return await beep8.Core.inputSys.readPointerAsync();
+		return await beep8.Input.readPointerAsync();
 
 	}
 
@@ -55,7 +55,7 @@
 		beep8.Utilities.checkString( "initString", initString );
 		beep8.Utilities.checkNumber( "maxLen", maxLen );
 
-		return await beep8.Core.inputSys.readLine( initString, maxLen, maxWidth );
+		return await beep8.Input.readLine( initString, maxLen, maxWidth );
 
 	}
 

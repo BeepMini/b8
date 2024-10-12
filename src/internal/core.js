@@ -2,8 +2,6 @@
 
 	beep8.Core = {};
 
-	beep8.Core.inputSys = null;
-	beep8.CursorRenderer = null;
 	beep8.Core.realCanvas = null;
 	beep8.Core.realCtx = null;
 	beep8.Core.canvas = null;
@@ -122,11 +120,11 @@
 		beep8.Core.ctx.imageSmoothingEnabled = false;
 
 		// Initialize subsystems
-		beep8.Core.inputSys = new beep8.Input();
 		beep8.Core.state = new beep8.State();
 
 		// Load and initialize default fonts.
 		await beep8.TextRenderer.initAsync();
+		beep8.Input.init();
 
 		// Update the positioning and size of the canvas.
 		beep8.Core.updateLayout( false );
@@ -693,7 +691,7 @@
 			await frameHandler();
 
 			// Call the input system's end frame handler
-			beep8.Core.inputSys.onEndFrame();
+			beep8.Input.onEndFrame();
 
 			// Decrease the accumulated time by the target interval
 			timeToNextFrame -= frameHandlerTargetInterval;

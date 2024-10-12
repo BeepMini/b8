@@ -247,9 +247,9 @@ gap: 5vw;
 		console.log( 'handleButtonEvent', buttonKeyName, down, evt );
 
 		if ( down ) {
-			beep8.Core.inputSys.onKeyDown( { key: buttonKeyName } );
+			beep8.Input.onKeyDown( { key: buttonKeyName } );
 		} else {
-			beep8.Core.inputSys.onKeyUp( { key: buttonKeyName } );
+			beep8.Input.onKeyUp( { key: buttonKeyName } );
 		}
 
 		evt.preventDefault();

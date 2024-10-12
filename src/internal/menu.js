@@ -122,7 +122,7 @@
 
 			printChoices( choices, selIndex, options );
 
-			const k = await beep8.Core.inputSys.readKeyAsync();
+			const k = await beep8.Input.readKeyAsync();
 
 			if ( k.includes( "ArrowUp" ) ) {
 

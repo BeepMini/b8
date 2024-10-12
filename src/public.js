@@ -561,7 +561,7 @@
 
 		beep8.Utilities.checkString( "keyName", keyName );
 
-		return beep8.Core.inputSys.keyHeld( keyName );
+		return beep8.Input.keyHeld( keyName );
 
 	}
 
@@ -608,7 +608,7 @@
 
 		beep8.Utilities.checkString( "keyName", keyName );
 
-		return beep8.Core.inputSys.keyJustPressed( keyName );
+		return beep8.Input.keyJustPressed( keyName );
 
 	}
 
