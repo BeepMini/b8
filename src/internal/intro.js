@@ -44,11 +44,8 @@
 		if ( beep8.Core.isTouchDevice() ) message = "Tap to start";
 
 		beep8.color( 4, 5 );
-		beep8.locate(
-			Math.round( ( beep8.CONFIG.SCREEN_COLS - message.length ) / 2 ),
-			beep8.CONFIG.SCREEN_ROWS - 2
-		);
-		beep8.print( message );
+		beep8.locate( 0, beep8.CONFIG.SCREEN_ROWS - 2 );
+		beep8.printCentered( message, beep8.CONFIG.SCREEN_COLS );
 
 		// Wait for user input.
 		await beep8.Input.readPointerAsync();
