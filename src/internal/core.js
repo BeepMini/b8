@@ -41,7 +41,12 @@
 	 * @param {Function} callback - The function to call when the engine is initialized.
 	 * @return {void}
 	 */
-	beep8.Core.init = function( callback, options ) {
+	beep8.Core.init = function( callback, options = {} ) {
+
+		beep8.Utilities.checkFunction( "callback", callback );
+		if ( options ) {
+			beep8.Utilities.checkObject( "options", options );
+		}
 
 		// Merge the options with the default configuration.
 		beep8.CONFIG = {
@@ -49,8 +54,10 @@
 			...options,
 		};
 
-		beep8.Utilities.checkFunction( "callback", callback );
+		// Initialize the engine asynchronously.
 		beep8.Core.asyncInit( callback );
+
+		// Initialize the game clock.
 		beep8.Core.startTime = beep8.Core.getNow();
 
 	}
@@ -68,7 +75,7 @@
 	 */
 	beep8.Core.asyncInit = async function( callback = null ) {
 
-		beep8.Utilities.log( "beep8 System initialized" );
+		beep8.Utilities.log( "beep8 System initializing" );
 
 		// Computed values: width and height of screen in virtual pixels.
 		beep8.CONFIG.SCREEN_WIDTH = beep8.CONFIG.SCREEN_COLS * beep8.CONFIG.CHR_WIDTH;
@@ -139,18 +146,15 @@
 
 		initDone = true;
 
+		beep8.Utilities.log( "beep8 System initialized" );
+
 		await beep8.Intro.loading();
 		await beep8.Intro.splash();
 
-		/**
-		 * Work around an init bug where text would initially not render on
-		 * Firefox. I'm not entirely sure I understand why, but this seems to
-		 * fix it (perhaps waiting 1 frame gives the canvas time to initialize).
-		 */
-		await new Promise( resolve => setTimeout( resolve, 1 ) );
-		await callback();
-
-		beep8.Renderer.render();
+		// Call the callback function if it's set.
+		if ( callback ) {
+			await callback();
+		}
 
 	}
 
