@@ -653,6 +653,9 @@
 	 */
 	beep8.Utilities.repeatArray = function( array, times ) {
 
+		beep8.Utilities.checkArray( "array", array );
+		beep8.Utilities.checkInt( "times", times, 0 );
+
 		return Array( times ).fill().flatMap( () => array );
 
 	};
