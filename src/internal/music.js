@@ -19,18 +19,74 @@
 	 * @type {Object}
 	 */
 	const SCALES = {
-		scaleChromatic: [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ], // (random, atonal: all twelve notes)
+		scaleChromatic: [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ], // (random, atonal, tension, unease, chaotic)
 		scaleMajor: [ 2, 2, 1, 2, 2, 2, 1 ], // (classic, happy)
-		scaleHarmonicMinor: [ 2, 1, 2, 2, 1, 3, 1 ], // (haunting, creepy)
-		scaleMinorPentatonic: [ 3, 2, 2, 3, 2 ], // (blues, rock)
-		scaleNaturalMinor: [ 2, 1, 2, 2, 1, 2, 2 ], // (scary, epic)
-		scaleMelodicMinorUp: [ 2, 1, 2, 2, 2, 2, 1 ], // (wistful, mysterious)
-		scaleMelodicMinorDown: [ 2, 2, 1, 2, 2, 1, 2 ], // (sombre, soulful)
-		scaleDorian: [ 2, 1, 2, 2, 2, 1, 2 ], // (cool, jazzy)
-		scaleMixolydian: [ 2, 2, 1, 2, 2, 1, 2 ], // (progressive, complex)
+		scaleHarmonicMinor: [ 2, 1, 2, 2, 1, 3, 1 ], // (haunting, creepy, dramatic, sad)
+		scaleMinorPentatonic: [ 3, 2, 2, 3, 2 ], // (blues, rock, longing, sad)
+		scaleNaturalMinor: [ 2, 1, 2, 2, 1, 2, 2 ], // (scary, epic, melancholy, sad)
+		scaleMelodicMinorUp: [ 2, 1, 2, 2, 2, 2, 1 ], // (wistful, mysterious, unresolved tension, sad)
+		scaleMelodicMinorDown: [ 2, 2, 1, 2, 2, 1, 2 ], // (sombre, soulful, sad)
+		scaleDorian: [ 2, 1, 2, 2, 2, 1, 2 ], // (cool, jazzy, bittersweet, melancholy)
+		scaleMixolydian: [ 2, 2, 1, 2, 2, 1, 2 ], // (progressive, complex, wistful, melancholy)
 		scaleAhavaRaba: [ 1, 3, 1, 2, 1, 2, 2 ], // (exotic, unfamiliar)
 		scaleMajorPentatonic: [ 2, 2, 3, 2, 3 ], // (country, gleeful)
-		scaleDiatonic: [ 2, 2, 2, 2, 2, 2 ], //(bizarre, symmetrical)
+		scaleDiatonic: [ 2, 2, 2, 2, 2, 2 ], // (bizarre, symmetrical)
+	};
+
+
+	/**
+	 * Properties to add
+	 * -----------------
+	 * instruments
+	 * how many pauses
+	 */
+	beep8.Music.types = {
+		fast: {
+			bpmRange: [ 120, 130 ],
+			scales: [ 'scaleMinorPentatonic', 'scaleMajorPentatonic', 'scaleMajor', 'scaleDorian', 'scaleMixolydian' ],
+			keyRange: [ 13, 25 ],
+			chance: {
+				melodyPause: 0.1,
+				bass: 0.5,
+				drums: 0.5,
+			}
+		},
+		slow: {
+			bpmRange: [ 30, 45 ],
+			scales: [ 'scaleDorian', 'scaleMelodicMinorDown', 'scaleMelodicMinorUp', 'scaleMinorPentatonic' ],
+			keyRange: [ 13, 25 ],
+		},
+		happy: {
+			bpmRange: [ 60, 80 ],
+			scales: [ 'scaleMajor', 'scaleMajorPentatonic' ],
+			keyRange: [ 25, 37 ],
+		},
+		sad: {
+			bpmRange: [ 35, 45 ],
+			scales: [ 'scaleHarmonicMinor', 'scaleMinorPentatonic', 'scaleNaturalMinor', 'scaleMelodicMinorUp', 'scaleMelodicMinorDown' ],
+			keyRange: [ 13 ],
+		},
+		calm: {
+			bpmRange: [ 40, 60 ],
+			scales: [ 'scaleMelodicMinorUp', 'scaleDorian', 'scaleMajor', 'scaleAhavaRaba' ],
+			keyRange: [ 13, 25 ],
+		},
+		epic: {
+			bpmRange: [ 80, 100 ],
+			scales: [ 'scaleNaturalMinor', 'scaleMixolydian', 'scaleMajorPentatonic' ],
+			keyRange: [ 13, 25, 37 ],
+		},
+		scary: {
+			bpmRange: [ 60, 80 ],
+			scales: [ 'scaleMelodicMinorDown', 'scaleHarmonicMinor', 'scaleDiatonic', 'scaleChromatic', 'scaleNaturalMinor' ],
+			keyRange: [ 13, 25, 37 ],
+			pauseChance: 0.2,
+		},
+		joyful: {
+			bpmRange: [ 80, 100 ],
+			scales: [ 'scaleMajor', 'scaleMajorPentatonic', 'scaleAhavaRaba' ],
+			keyRange: [ 25, 37 ],
+		},
 	};
 
 
@@ -41,12 +97,15 @@
 	 */
 	const INSTRUMENTS = {
 		'piano': [ 1.5, 0, 90, .01, , .5, 2, 0, , , , , , , , , , , .1 ],
-		'bass': [ 1.2, 0, 45, .04, .6, .46, 1, 2.2, , , , , .17, .1, , , , .65, .09, .04, -548 ],
-		'burp': [ 1.4, 0, 291, .03, .04, .12, 2, 2.7, , 38, , , -0.01, .8, , , .04, .96, .02, , -1137 ],
-		'boop': [ 1.5, , 293, .03, .02, .01, , .8, , , , , , .1, , , , .82, .02, .01 ],
-		'buzz': [ 1.2, 0, 90, .01, , .5, 2, 0, , , , , , , , , , , .1 ],
-		'drum1': [ 1.8, 0, 50, , , .2, , 4, -2, 6, 50, .15, , 6 ],
+		'burp': [ 2.4, 0, 291, .03, .04, .12, 2, 2.7, , 38, , , -0.01, .8, , , .04, .96, .02, , -1137 ],
+		'boop': [ 1.8, 0, 293, .03, .02, .01, , .8, , , , , , .1, , , , .82, .02, .01 ],
+		'melody': [ 1.5, 0, 77, , 0.3, 0.7, 2, 0.41, , , , , , , , 0.06 ],
+
+		'bass1': [ 1, 0, 45, .04, .6, .46, 1, 2.2, , , , , .17, .1, , , , .65, .09, .04, -548 ],
+
+		'drum1': [ 1.4, 0, 50, , , .2, , 4, -2, 6, 50, .15, , 6 ],
 		'drum2': [ 1.4, 0, 84, , , , , .7, , , , .5, , 6.7, 1, .01 ],
+		'drum3': [ 1, 0, 270, , , 0.12, 3, 1.65, -2, , , , , 4.5, , 0.02 ],
 	};
 
 
@@ -63,49 +122,11 @@
 		[ 0, 0, 1, 1, 2, 2, 3, 3 ],
 		[ 0, 0, 1, 0, 0, 2, 0, 0, 3 ],
 		[ 0, 1, 1, 0, 2, 2, 0, 3 ],
-		[ 0, 1, 1, 0, 2, 3, 3, 2 ]
+		[ 0, 1, 1, 0, 2, 3, 3, 2 ],
+		[ 0, 1, 1, 0, 2, 2, 3, 3 ],
+		[ 0, 1, 0, 2, 2, 0, 3 ],
+		[ 0, 1, 2, 2, 3, 2, 2, 1, 0 ],
 	];
-
-
-	/**
-	 * Properties to add
-	 * -----------------
-	 * instruments
-	 * how many pauses
-	 */
-	beep8.Music.types = {
-		fast: {
-			bpmRange: [ 120, 130 ],
-			scales: [ 'scaleMinorPentatonic', 'scaleMajorPentatonic', 'scaleMajor' ],
-			keyRange: [ 13, 25 ],
-		},
-		slow: {
-			bpmRange: [ 30, 45 ],
-			scales: [ 'scaleDorian', 'scaleMelodicMinorDown', 'scaleMelodicMinorUp' ],
-			keyRange: [ 13, 25 ],
-		},
-		happy: {
-			bpmRange: [ 60, 80 ],
-			scales: [ 'scaleMajor', 'scaleMajorPentatonic' ],
-			keyRange: [ 25, 37 ],
-		},
-		calm: {
-			bpmRange: [ 40, 60 ],
-			scales: [ 'scaleMelodicMinorUp', 'scaleDorian', 'scaleMajor' ],
-			keyRange: [ 13, 25 ],
-		},
-		scary: {
-			bpmRange: [ 60, 80 ],
-			scales: [ 'scaleMelodicMinorDown', 'scaleHarmonicMinor', 'scaleDiatonic', 'scaleChromatic' ],
-			keyRange: [ 13, 25, 37 ],
-			pauseChance: 0.2,
-		},
-		joyful: {
-			bpmRange: [ 80, 100 ],
-			scales: [ 'scaleMajor', 'scaleMajorPentatonic', 'scaleMajorPentatonic' ],
-			keyRange: [ 25, 37 ],
-		},
-	};
 
 
 	/**
@@ -235,11 +256,13 @@
 	 * @param {Object} song - The song object containing song details.
 	 * @param {Array} channel - The channel to add notes to.
 	 * @param {Function} noteLogic - Function that determines note generation logic.
+	 * @param {number} patternId - The pattern ID to use for note generation.
+	 * @returns {Array} The generated pattern for the channel.
 	 */
-	function generatePattern( song, channel, noteLogic ) {
+	function generatePattern( song, channel, noteLogic, patternId ) {
 
 		for ( let i = 0; i < PATTERN_LENGTH; i++ ) {
-			const key = noteLogic( i, song );
+			const key = noteLogic( i, song, patternId );
 			if ( key !== null ) {
 				addNoteToChannel( channel, key );
 			}
@@ -266,9 +289,15 @@
 	 *
 	 * @param {number} i - The current beat index.
 	 * @param {Object} song - The song object containing song details.
+	 * @param {number} patternId - The pattern ID to use for note generation.
 	 * @returns {number} The key value for the drum note.
 	 */
-	function drumNoteLogic( i, song ) {
+	function drumNoteLogic( i, song, patternId ) {
+
+		// Skip the first pattern for drum channels.
+		if ( 0 === patternId ) {
+			return 0;
+		}
 
 		let key = 0;
 		let noteVal = i % 4;
@@ -292,9 +321,10 @@
 	 *
 	 * @param {number} i - The current beat index.
 	 * @param {Object} song - The song object containing song details.
+	 * @param {number} patternId - The pattern ID to use for note generation.
 	 * @returns {number} The key value for the bass note.
 	 */
-	function bassNoteLogic( i, song ) {
+	function bassNoteLogic( i, song, patternId ) {
 
 		let key = 0;
 		let noteVal = i % 4;
@@ -319,9 +349,10 @@
 	 *
 	 * @param {number} i - The current beat index.
 	 * @param {Object} song - The song object containing song details.
+	 * @param {number} patternId - The pattern ID to use for note generation.
 	 * @returns {number} The key value for the melody note.
 	 */
-	function melodyNoteLogic( i, song ) {
+	function melodyNoteLogic( i, song, patternId ) {
 
 		// If it's the first beat, pick a random note to start with.
 		if ( 0 === i ) {
@@ -350,7 +381,6 @@
 	 * Song class to encapsulate all song-related logic.
 	 */
 	class Song {
-
 
 		/**
 		 * Create a new Song instance.
@@ -392,7 +422,7 @@
 
 				for ( let i = 4; i < instrument.length; i++ ) {
 					if ( typeof instrument[ i ] == 'number' ) {
-						instrument[ i ] = beep8.Random.range( instrument[ i ] * 0.5, instrument[ i ] * 1.5 );
+						instrument[ i ] = beep8.Random.range( instrument[ i ] * 0.8, instrument[ i ] * 1.2 );
 					}
 				}
 			}
@@ -440,39 +470,46 @@
 		generatePatterns() {
 
 			const patterns = [];
-			const useDrums = beep8.Random.num() > 0.5;
-			const useBass = beep8.Random.num() > 0.5;
-			// const melodyInstruments = [ 'piano', 'buzz', 'burp', 'boop' ];
-			const melodyInstruments = [ 'boop' ];
-			const melodyInstrument = beep8.Random.pick( melodyInstruments );
 
-			for ( let i = 0; i < PATTERN_COUNT; i++ ) {
+			// Percentage change of using the different instruments.
+			const useDrums = beep8.Random.num() > 0.5;
+			const useBass = beep8.Random.num() > 0.3;
+
+			// Select instruments for melody, drums, and bass.
+			// Select them outside the loop to keep them consistent.
+			const melodyInstrument = beep8.Random.pick( [ 'piano', 'burp', 'boop', 'melody' ] );
+			const drumInstrument = beep8.Random.pick( [ 'drum1', 'drum2', 'drum3' ] );
+			const bassInstrument = beep8.Random.pick( [ 'bass1' ] );
+
+			// Create PATTERN_COUNT patterns.
+			for ( let p = 0; p < PATTERN_COUNT; p++ ) {
 
 				let pattern = [];
 
 				// Melody.
 				let channel_melody = [ melodyInstrument, 0 ];
 				this.Channels.push( channel_melody );
-				generatePattern( this, channel_melody, melodyNoteLogic );
+				generatePattern( this, channel_melody, melodyNoteLogic, p );
 				pattern.push( channel_melody );
 
 				// Bass.
 				if ( useBass ) {
-					let channel_bass = [ 'bass', 0 ];
+					let channel_bass = [ bassInstrument, 0 ];
 					this.Channels.push( channel_bass );
-					generatePattern( this, channel_bass, bassNoteLogic );
+					generatePattern( this, channel_bass, bassNoteLogic, p );
 					pattern.push( channel_bass );
 				}
 
 				// Drums.
 				if ( useDrums ) {
-					let channel_drums = [ 'drum2', 0 ];
+					let channel_drums = [ drumInstrument, 0 ];
 					this.Channels.push( channel_drums );
-					generatePattern( this, channel_drums, drumNoteLogic );
+					generatePattern( this, channel_drums, drumNoteLogic, p );
 					pattern.push( channel_drums );
 				}
 
 				patterns.push( pattern );
+
 			}
 
 			return patterns;
@@ -519,6 +556,7 @@
 		 * @returns {Array} The generated track patterns.
 		 */
 		generateTrackPatterns( patterns, instrumentKeys ) {
+
 			let trackPatterns = [];
 
 			patterns.forEach(
@@ -536,6 +574,7 @@
 			);
 
 			return trackPatterns;
+
 		}
 
 
@@ -561,6 +600,7 @@
 			return track;
 
 		}
+
 	}
 
 
