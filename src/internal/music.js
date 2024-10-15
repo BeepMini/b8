@@ -161,6 +161,7 @@
 	 */
 	beep8.Music.play = function( name = '' ) {
 
+		beep8.Utilities.checkString( 'name', name );
 		const songEntry = beep8.Music.songs[ name ];
 
 		if ( !songEntry ) {
@@ -187,6 +188,8 @@
 	 * @param {string} name - The name of the song to stop.
 	 */
 	beep8.Music.stop = function( name = '' ) {
+
+		beep8.Utilities.checkString( 'name', name );
 
 		// Stop specific song by name.
 		if ( name ) {
@@ -218,6 +221,8 @@
 	 */
 	beep8.Music.playing = function( name = '' ) {
 
+		beep8.Utilities.checkString( 'name', name );
+
 		const songEntry = beep8.Music.songs[ name ];
 		return songEntry && songEntry.buffer !== null;
 
@@ -237,6 +242,9 @@
 	 * @param {Array} zzfxmData - The zzfxM song data composed by the user.
 	 */
 	beep8.Music.addSong = function( name, zzfxmData ) {
+
+		beep8.Utilities.checkString( 'name', name );
+		beep8.Utilities.checkArray( 'zzfxmData', zzfxmData );
 
 		if ( !name || !Array.isArray( zzfxmData ) ) {
 			console.error( "Invalid song name or song data." );
