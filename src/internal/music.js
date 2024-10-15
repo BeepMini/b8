@@ -144,7 +144,13 @@
 	 * @param {string} type - The type of song to generate.
 	 * @param {number} seed - The seed for the random number generator.
 	 */
-	beep8.Music.generate = function( name = '', type = 'jolly', seed = 12345 ) {
+	beep8.Music.generate = function( name = '', type = 'joyful', seed = 12345 ) {
+
+		beep8.Utilities.checkString( 'name', name );
+		beep8.Utilities.checkString( 'type', type );
+		if ( !beep8.Music.types[ type ] ) {
+			beep8.Utilities.fatal( 'Invalid song type:', type );
+		}
 
 		beep8.Random.setSeed( seed );
 		const songData = new Song( name, type, seed ).generateSongData(); // Generate song data
@@ -155,6 +161,8 @@
 
 	/**
 	 * Play a song.
+	 * If the song is already playing, it will not be played again.
+	 * You can only play one song at a time. If another song is already playing it will be stopped.
 	 *
 	 * @param {string} name - The name of the song to play.
 	 * @returns {AudioBufferSourceNode} The AudioBufferSourceNode that is playing the song.
@@ -162,16 +170,28 @@
 	beep8.Music.play = function( name = '' ) {
 
 		beep8.Utilities.checkString( 'name', name );
-		const songEntry = beep8.Music.songs[ name ];
 
-		if ( !songEntry ) {
-			console.error( 'No song found with the name:', name );
+		// Check if the song exists.
+		if ( !beep8.Music.songs[ name ] ) {
+			beep8.Utilities.fatal( 'No song found with the name:', name );
 			return;
 		}
 
-		const zzfxmSong = songEntry.data;
-		const ab = zzfxP( ...zzfxM( ...zzfxmSong ) ); // Play the song
+		const songEntry = beep8.Music.songs[ name ];
+
+		// Check if the song is already playing.
+		if ( beep8.Music.playing( name ) ) {
+			return;
+		}
+
+		// Stop all other songs.
+		beep8.Music.stop();
+
+		// Load the song into an audio buffer and play it.
+		const ab = zzfxP( ...zzfxM( ...songEntry.data ) );
+		// Loop it.
 		ab.loop = true;
+		// Set the name so we can control it later.
 		ab.name = name;
 
 		// Store the buffer in the song entry
@@ -184,8 +204,10 @@
 
 	/**
 	 * Stop a song.
+	 * If the name is not provided, all songs will be stopped.
 	 *
 	 * @param {string} name - The name of the song to stop.
+	 * @returns {void}
 	 */
 	beep8.Music.stop = function( name = '' ) {
 
@@ -397,7 +419,7 @@
 		 * @param {string} type - The type of song to generate.
 		 * @param {number} seed - The seed for the random number generator.
 		 */
-		constructor( name = '', type = 'jolly', seed = 12345 ) {
+		constructor( name = '', type = 'joyful', seed = 12345 ) {
 
 			const songType = beep8.Music.types[ type ];
 
