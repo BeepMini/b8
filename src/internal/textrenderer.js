@@ -253,9 +253,12 @@
 	 *
 	 * @param {string} text - The text to print.
 	 * @param {number} width - The width to center the text within.
+	 * @param {beep8.TextRendererFont} [font=null] - The font to use.
 	 * @returns {void}
 	 */
-	beep8.TextRenderer.printCentered = function( text, width ) {
+	beep8.TextRenderer.printCentered = function( text, width, font = null ) {
+
+		beep8.TextRenderer.printFont_ = font || beep8.TextRenderer.curFont_;
 
 		beep8.Utilities.checkString( "text", text );
 		beep8.Utilities.checkNumber( "width", width );
@@ -277,7 +280,7 @@
 			const tempCol = Math.floor( col + ( width - textWidth ) / 2 );
 
 			beep8.Core.drawState.cursorCol = tempCol;
-			beep8.TextRenderer.print( text[ i ] );
+			beep8.TextRenderer.print( text[ i ], font );
 
 			beep8.Core.drawState.cursorRow += rowInc;
 

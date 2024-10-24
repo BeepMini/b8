@@ -225,14 +225,20 @@
 	 * @param {number} [wrapWidth=-1] - The width to wrap text at. -1 for no wrapping.
 	 * @returns {void}
 	 */
-	beep8.print = function( text, wrapWidth = -1 ) {
+	beep8.print = function( text, wrapWidth = -1, fontId = null ) {
 
 		beep8.Core.preflight( "beep8.text" );
 
 		beep8.Utilities.checkString( "text", text );
 		beep8.Utilities.checkNumber( "wrapWidth", wrapWidth );
 
-		beep8.TextRenderer.print( text, null, wrapWidth );
+		let font = fontId;
+		if ( null !== font ) {
+			beep8.Utilities.checkString( "fontId", fontId );
+			font = beep8.TextRenderer.getFontByName( fontId );
+		}
+
+		beep8.TextRenderer.print( text, font, wrapWidth );
 
 	}
 
@@ -246,14 +252,20 @@
 	 * @param {number} width - The width of the field, in characters.
 	 * @returns {void}
 	 */
-	beep8.printCentered = function( text, width ) {
+	beep8.printCentered = function( text, width, fontId = null ) {
 
 		beep8.Core.preflight( "beep8.printCentered" );
 
 		beep8.Utilities.checkString( "text", text );
 		beep8.Utilities.checkNumber( "width", width );
 
-		beep8.TextRenderer.printCentered( text, width );
+		let font = fontId;
+		if ( null !== font ) {
+			beep8.Utilities.checkString( "fontId", fontId );
+			font = beep8.TextRenderer.getFontByName( fontId );
+		}
+
+		beep8.TextRenderer.printCentered( text, width, font );
 
 	}
 
