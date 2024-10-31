@@ -338,6 +338,61 @@
 
 
 	/**
+	 * Makes a color transparent in an image.
+	 *
+	 * This function is asynchronous because it uses an HTMLImageElement.
+	 *
+	 * Uses a range because I found that occassionally the RGB values of a saved
+	 * png are not exactly as they were set in the image. Possibly due to
+	 * compression.
+	 *
+	 * @param {HTMLImageElement} img - The image to process.
+	 * @param {array} color - The color to make transparent. By default this is pure magenta [255,0,255].
+	 * @param {number} range - The range of RGB values to consider as the target color.
+	 * @returns The processed image.
+	 */
+	beep8.Utilities.makeColorTransparent = async function( img, color = [ 255, 0, 255 ], range = 5 ) {
+
+		// Create a canvas the same size as the image and draw the image on it.
+		const canvas = document.createElement( "canvas" );
+		const ctx = canvas.getContext( "2d" );
+
+		canvas.width = img.width;
+		canvas.height = img.height;
+
+		ctx.drawImage( img, 0, 0 );
+
+		// Get the image data.
+		const imageData = ctx.getImageData( 0, 0, canvas.width, canvas.height );
+		const data = imageData.data;
+
+		// Loop through the image data and set the alpha channel to 0 for the specified color.
+		for ( let i = 0; i < data.length; i += 4 ) {
+
+			const r = data[ i ];
+			const g = data[ i + 1 ];
+			const b = data[ i + 2 ];
+
+			// Check if the pixel's RGB values are within the range of the target color
+			if (
+				Math.abs( r - color[ 0 ] ) <= range &&
+				Math.abs( g - color[ 1 ] ) <= range &&
+				Math.abs( b - color[ 2 ] ) <= range
+			) {
+				data[ i + 3 ] = 0; // Set alpha to 0 (fully transparent)
+			}
+
+		}
+
+		// Put the modified image data back on the canvas.
+		ctx.putImageData( imageData, 0, 0 );
+
+		return canvas;
+
+	}
+
+
+	/**
 	 * Loads a file asynchronously.
 	 *
 	 * @param {string} url - The URL of the file.
