@@ -654,7 +654,7 @@
 		}
 
 		// Foreground and background are the same so don't draw anything else.
-		if ( bgColor === fgColor ) {
+		if ( beep8.CONFIG.SCREEN_COLORS === 1 && bgColor === fgColor ) {
 			return;
 		}
 

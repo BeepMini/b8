@@ -44,12 +44,15 @@
 		// Screen width and height in characters.
 		SCREEN_ROWS: 30,
 		SCREEN_COLS: 24,
+		// EXPERIMENTAL
+		// This is an experimental feature and is subject to change at any time.
 		// The number of colors to use.
 		// 1 = each tile is 2 colors (foreground and background).
 		// 2 = each tile could be multiple colours. A background colour, and
 		// shades of a foreground colour based upon the greyscale colours used
 		// in the tiles.
-		SCREEN_COLORS: 2,
+		// Make sure to change the tiles image as well if you change this.
+		SCREEN_COLORS: 1,
 		// Disable to turn off CRT effect.
 		// This is a number between 0 and 1, where 0 is no CRT effect and 1 is full CRT effect.
 		// Anything over 0.4 is probably too much.
