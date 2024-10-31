@@ -90,6 +90,15 @@ const beep8 = {};
 		// Screen width and height in characters.
 		SCREEN_ROWS: 30,
 		SCREEN_COLS: 24,
+		// EXPERIMENTAL
+		// This is an experimental feature and is subject to change at any time.
+		// The number of colors to use.
+		// 1 = each tile is 2 colors (foreground and background).
+		// 2 = each tile could be multiple colours. A background colour, and
+		// shades of a foreground colour based upon the greyscale colours used
+		// in the tiles.
+		// Make sure to change the tiles image as well if you change this.
+		SCREEN_COLORS: 1,
 		// Disable to turn off CRT effect.
 		// This is a number between 0 and 1, where 0 is no CRT effect and 1 is full CRT effect.
 		// Anything over 0.4 is probably too much.
@@ -5074,7 +5083,7 @@ const beep8 = {};
 		}
 
 		// Foreground and background are the same so don't draw anything else.
-		if ( bgColor === fgColor ) {
+		if ( beep8.CONFIG.SCREEN_COLORS === 1 && bgColor === fgColor ) {
 			return;
 		}
 
@@ -5386,6 +5395,9 @@ const beep8 = {};
 				`${this.origImg_.width}x${this.origImg_.height}.`
 			);
 
+			// Make the black in the image transparent.
+			this.origImg_ = await beep8.Utilities.makeColorTransparent( this.origImg_ );
+
 			this.charWidth_ = imageCharWidth;
 			this.charHeight_ = imageCharHeight;
 			this.imageWidth_ = this.origImg_.width;
@@ -5410,14 +5422,17 @@ const beep8 = {};
 		 */
 		async regenColors() {
 
-			const tempCanvas = document.createElement( 'canvas' );
-			tempCanvas.width = this.origImg_.width;
-			tempCanvas.height = this.origImg_.height;
-
-			const ctx = tempCanvas.getContext( '2d' );
 			this.chrImages_ = [];
 
+			// Loop through each color.
 			for ( let c = 0; c < beep8.CONFIG.COLORS.length; c++ ) {
+
+				// Create a temp context to draw the font image to.
+				const tempCanvas = document.createElement( 'canvas' );
+				tempCanvas.width = this.origImg_.width;
+				tempCanvas.height = this.origImg_.height;
+
+				const ctx = tempCanvas.getContext( '2d' );
 
 				beep8.Utilities.log( `Initializing font ${this.fontName_}, color ${c} = ${beep8.CONFIG.COLORS[ c ]}` );
 
@@ -5436,27 +5451,16 @@ const beep8 = {};
 				ctx.fillStyle = beep8.CONFIG.COLORS[ c ];
 				ctx.fillRect( 0, 0, this.origImg_.width, this.origImg_.height );
 
-				// Now extract the canvas contents as an image.
-				const thisImg = await this.createImageFromCanvas( tempCanvas );
-				this.chrImages_.push( thisImg );
+				// Now draw with multiply blend mode to add shading.
+				// But only if we the config is set.
+				if ( beep8.CONFIG.SCREEN_COLORS === 2 ) {
+					ctx.globalCompositeOperation = 'multiply';
+					ctx.drawImage( this.origImg_, 0, 0, this.origImg_.width, this.origImg_.height );
+				}
+
+				this.chrImages_.push( tempCanvas );
 
 			}
-
-			// Delete the canvas.
-			tempCanvas.remove();
-
-		}
-
-		// Function to create an image and wait for it to load
-		createImageFromCanvas( canvas ) {
-
-			return new Promise(
-				( resolve ) => {
-					const img = new Image();
-					img.src = canvas.toDataURL();
-					img.onload = () => resolve( img );
-				}
-			);
 
 		}
 
@@ -5970,6 +5974,61 @@ const beep8 = {};
 				img.onload = () => resolver( img );
 			}
 		);
+
+	}
+
+
+	/**
+	 * Makes a color transparent in an image.
+	 *
+	 * This function is asynchronous because it uses an HTMLImageElement.
+	 *
+	 * Uses a range because I found that occassionally the RGB values of a saved
+	 * png are not exactly as they were set in the image. Possibly due to
+	 * compression.
+	 *
+	 * @param {HTMLImageElement} img - The image to process.
+	 * @param {array} color - The color to make transparent. By default this is pure magenta [255,0,255].
+	 * @param {number} range - The range of RGB values to consider as the target color.
+	 * @returns The processed image.
+	 */
+	beep8.Utilities.makeColorTransparent = async function( img, color = [ 255, 0, 255 ], range = 5 ) {
+
+		// Create a canvas the same size as the image and draw the image on it.
+		const canvas = document.createElement( "canvas" );
+		const ctx = canvas.getContext( "2d" );
+
+		canvas.width = img.width;
+		canvas.height = img.height;
+
+		ctx.drawImage( img, 0, 0 );
+
+		// Get the image data.
+		const imageData = ctx.getImageData( 0, 0, canvas.width, canvas.height );
+		const data = imageData.data;
+
+		// Loop through the image data and set the alpha channel to 0 for the specified color.
+		for ( let i = 0; i < data.length; i += 4 ) {
+
+			const r = data[ i ];
+			const g = data[ i + 1 ];
+			const b = data[ i + 2 ];
+
+			// Check if the pixel's RGB values are within the range of the target color
+			if (
+				Math.abs( r - color[ 0 ] ) <= range &&
+				Math.abs( g - color[ 1 ] ) <= range &&
+				Math.abs( b - color[ 2 ] ) <= range
+			) {
+				data[ i + 3 ] = 0; // Set alpha to 0 (fully transparent)
+			}
+
+		}
+
+		// Put the modified image data back on the canvas.
+		ctx.putImageData( imageData, 0, 0 );
+
+		return canvas;
 
 	}
 
