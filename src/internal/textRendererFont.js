@@ -143,6 +143,9 @@
 				`${this.origImg_.width}x${this.origImg_.height}.`
 			);
 
+			// Make the black in the image transparent.
+			this.origImg_ = await beep8.Utilities.makeColorTransparent( this.origImg_ );
+
 			this.charWidth_ = imageCharWidth;
 			this.charHeight_ = imageCharHeight;
 			this.imageWidth_ = this.origImg_.width;
@@ -167,14 +170,17 @@
 		 */
 		async regenColors() {
 
-			const tempCanvas = document.createElement( 'canvas' );
-			tempCanvas.width = this.origImg_.width;
-			tempCanvas.height = this.origImg_.height;
-
-			const ctx = tempCanvas.getContext( '2d' );
 			this.chrImages_ = [];
 
+			// Loop through each color.
 			for ( let c = 0; c < beep8.CONFIG.COLORS.length; c++ ) {
+
+				// Create a temp context to draw the font image to.
+				const tempCanvas = document.createElement( 'canvas' );
+				tempCanvas.width = this.origImg_.width;
+				tempCanvas.height = this.origImg_.height;
+
+				const ctx = tempCanvas.getContext( '2d' );
 
 				beep8.Utilities.log( `Initializing font ${this.fontName_}, color ${c} = ${beep8.CONFIG.COLORS[ c ]}` );
 
@@ -193,27 +199,16 @@
 				ctx.fillStyle = beep8.CONFIG.COLORS[ c ];
 				ctx.fillRect( 0, 0, this.origImg_.width, this.origImg_.height );
 
-				// Now extract the canvas contents as an image.
-				const thisImg = await this.createImageFromCanvas( tempCanvas );
-				this.chrImages_.push( thisImg );
+				// Now draw with multiply blend mode to add shading.
+				// But only if we the config is set.
+				if ( beep8.CONFIG.SCREEN_COLORS === 2 ) {
+					ctx.globalCompositeOperation = 'multiply';
+					ctx.drawImage( this.origImg_, 0, 0, this.origImg_.width, this.origImg_.height );
+				}
+
+				this.chrImages_.push( tempCanvas );
 
 			}
-
-			// Delete the canvas.
-			tempCanvas.remove();
-
-		}
-
-		// Function to create an image and wait for it to load
-		createImageFromCanvas( canvas ) {
-
-			return new Promise(
-				( resolve ) => {
-					const img = new Image();
-					img.src = canvas.toDataURL();
-					img.onload = () => resolve( img );
-				}
-			);
 
 		}
 
