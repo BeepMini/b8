@@ -63,6 +63,18 @@
 	}
 
 
+	/**
+	 * Checks if the engine has been initialized.
+	 *
+	 * @returns {boolean} True if the engine has been initialized.
+	 */
+	beep8.Core.initialized = function() {
+
+		return initDone;
+
+	}
+
+
 
 	/**
 	 * Asynchronously initializes the engine.
