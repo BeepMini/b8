@@ -1539,6 +1539,18 @@ const beep8 = {};
 	}
 
 
+	/**
+	 * Checks if the engine has been initialized.
+	 *
+	 * @returns {boolean} True if the engine has been initialized.
+	 */
+	beep8.Core.initialized = function() {
+
+		return initDone;
+
+	}
+
+
 
 	/**
 	 * Asynchronously initializes the engine.
@@ -5445,8 +5457,6 @@ const beep8 = {};
 
 				// Now draw a filled rect with the desired color using the 'source-in' pixel
 				// operation, which will tint the white pixels to that color.
-				// TODO: Research how we can use overlay to add shading to the assets.
-				// Perhaps enabled through a config flag?
 				ctx.globalCompositeOperation = 'source-in';
 				ctx.fillStyle = beep8.CONFIG.COLORS[ c ];
 				ctx.fillRect( 0, 0, this.origImg_.width, this.origImg_.height );
