@@ -3970,10 +3970,12 @@ const beep8 = {};
 		}
 
 		beep8.Core.realCtx.imageSmoothingEnabled = false;
+
 		beep8.Core.realCtx.clearRect(
 			0, 0,
 			beep8.Core.realCanvas.width, beep8.Core.realCanvas.height
 		);
+
 		beep8.Core.realCtx.drawImage(
 			beep8.Core.canvas,
 			0, 0,
