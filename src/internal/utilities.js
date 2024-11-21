@@ -469,6 +469,12 @@
 	/**
 	 * Calculates the intersection between two integer number intervals.
 	 *
+	 * Given 2 ranges it will see if these ranges overlap and if they do it will
+	 * optionally return the intersection range.
+	 *
+	 * For example if the first interval is [1, 5] and the second interval is [3, 7]
+	 * the intersection is [3, 5].
+	 *
 	 * @param {number} as - The start of the first interval.
 	 * @param {number} ae - The end of the first interval.
 	 * @param {number} bs - The start of the second interval.
@@ -606,7 +612,6 @@
 		return str;
 
 	}
-
 
 
 	/**
