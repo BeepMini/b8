@@ -721,4 +721,33 @@
 	};
 
 
+	/**
+	 * Downloads a file.
+	 *
+	 * @param {string} filename - The name of the file.
+	 * @param {string} src - The source URL of the file.
+	 * @returns {void}
+	 */
+	beep8.Utilities.downloadFile = function( filename = '', src = '' ) {
+
+		beep8.Utilities.checkString( "filename", filename );
+		beep8.Utilities.checkString( "src", src );
+
+		// Create a link element to use to download the image.
+		const element = document.createElement( 'a' );
+		element.setAttribute( 'href', src );
+		element.setAttribute( 'download', filename );
+
+		// Append the element to the body.
+		document.body.appendChild( element );
+
+		// Click the link to download.
+		element.click();
+
+		// Tidy up.
+		document.body.removeChild( element );
+
+	};
+
+
 } )( beep8 || ( beep8 = {} ) );

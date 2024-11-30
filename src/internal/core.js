@@ -656,6 +656,22 @@
 
 
 	/**
+	 * Download the current screen as a PNG image.
+	 *
+	 * @returns {void}
+	 */
+	beep8.Core.downloadScreenshot = function() {
+
+		// Grab the image data from the drawn canvas (to include screen effects).
+		const dataUrl = beep8.Core.realCanvas.toDataURL( "image/png" );
+
+		// Save as a file.
+		beep8.Utilities.downloadFile( "beep8-screenshot.png", dataUrl );
+
+	}
+
+
+	/**
 	 * Restores the screen.
 	 *
 	 * @param {ImageData} screenData - The screen to restore.
