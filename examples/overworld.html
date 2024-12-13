@@ -88,8 +88,8 @@
 			"I'm a placeholder\ncharacter in an\nexample game.",
 		];
 
-		let curMap = "OVERWORLD";  // Current map name
-		let px = 10, py = 10;      // Current player position.
+		let curMap = "OVERWORLD";  // Initial map name
+		let px = 9, py = 9;    // Initial player position.
 		let facingLeft = 1;    // If true, player is looking to the left.
 
 		async function main() {
@@ -163,7 +163,7 @@
 			px = candX, py = candY;
 
 			// Change maps?
-			if ( tile === "T" ) goToMap( "TOWN", 15, 3 );
+			if ( tile === "T" ) goToMap( "TOWN", 12, 2 );
 			if ( tile === "O" ) goToMap( "OVERWORLD", 9, 15 );
 
 		}
