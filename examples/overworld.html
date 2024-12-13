@@ -14,50 +14,50 @@
 
 		const MAPS = {
 			"OVERWORLD": [
-				"                             ".split( '' ),
-				" ~~~~~     ^^^     ~~   ^^   ".split( '' ),
-				" ~~~~|,   ^^^^     ~~ ^^^||  ".split( '' ),
-				" ~~||| ,   ,^^     ~,^^||    ".split( '' ),
-				" ||||     ,^^^     ~~  ||    ".split( '' ),
-				" |||,   ||,   ^^    ~~ ,     ".split( '' ),
-				"      |||||||^^    ~~   ||^^ ".split( '' ),
-				" ^     ,||||^^^^|, ~~  |||^^ ".split( '' ),
-				"  ^^^|    ,     ,  ==     ^^ ".split( '' ),
-				"   ^|| ,     |^^   ~~ ,, ^^^ ".split( '' ),
-				"  ^^^^|      ^^^^ ~~  , ^^^^ ".split( '' ),
-				"  ^^^^        ^^^~~       ~  ".split( '' ),
-				"    ^    ,       ~~      ~~  ".split( '' ),
-				"             ,  ~~    ||~~~  ".split( '' ),
-				"     ,      ,  ~~   ,||||~~  ".split( '' ),
-				"      |        ~~  ,,  |     ".split( '' ),
-				"   | ,|||T|^  ~~~ ,,      ^^ ".split( '' ),
-				"  |||   ^^^^ ~~~        ^^^^ ".split( '' ),
-				" ^^^||      ~~~~     ^^^^^^^ ".split( '' ),
-				"  ^^^,     ~~~    ^^^^^^^^^^ ".split( '' ),
-				"                             ".split( '' ),
+				"                           ".split( '' ),
+				" ~~~~~     ^^^     ~~  ^^  ".split( '' ),
+				" ~~~~|,   ^^^^     ~~ ^^|| ".split( '' ),
+				" ~~||| ,   ,^^     ~,^^||  ".split( '' ),
+				" ||||     ,^^^     ~~  ||  ".split( '' ),
+				" |||,   ||,   ^^    ~~ ,   ".split( '' ),
+				"      |||||||^^    ~~ ||^^ ".split( '' ),
+				" ^     ,||||^^^^|, ~~|||^^ ".split( '' ),
+				"  ^^^|    ,     ,  ==   ^^ ".split( '' ),
+				"   ^|| ,     |^^   ~~ ,,^^ ".split( '' ),
+				"  ^^^^|      ^^^^ ~~  ,^^^ ".split( '' ),
+				"  ^^^^        ^^^~~     ~  ".split( '' ),
+				"    ^    ,       ~~    ~~  ".split( '' ),
+				"             ,  ~~  ||~~~  ".split( '' ),
+				"     ,      ,  ~~  ,||||~~ ".split( '' ),
+				"      |        ~~  ,,  |   ".split( '' ),
+				"   | ,|||T|^  ~~~ ,,    ^^ ".split( '' ),
+				"  |||   ^^^^ ~~~      ^^^^ ".split( '' ),
+				" ^^^||      ~~~    ^^^^^^^ ".split( '' ),
+				"  ^^^,     ~~~   ^^^^^^^^^ ".split( '' ),
+				"                           ".split( '' ),
 			],
 			"TOWN": [
-				"                             ".split( '' ),
-				"              OO             ".split( '' ),
-				" #############..############ ".split( '' ),
-				" #        ,   ..    #    ] # ".split( '' ),
-				" # #########  .     #    ] # ".split( '' ),
-				" # # ]     #   .    +    ]2# ".split( '' ),
-				" # # ]     #   .    ######## ".split( '' ),
-				" # #0]     +  .   , #    ] # ".split( '' ),
-				" # # ]     #  ..    +    ]1# ".split( '' ),
-				" # #########  ..    #    ] # ".split( '' ),
-				" #... ...   ...    ######### ".split( '' ),
-				" #..,.   .. . ..   ,       # ".split( '' ),
-				" ######       .        2   # ".split( '' ),
-				" #    +      ....          # ".split( '' ),
-				" #  ###     ..~~..  ...  ..# ".split( '' ),
-				" #0 #  ,    ..~~... ,. ....# ".split( '' ),
-				" ####   1    ....          # ".split( '' ),
-				" #     0           ,    1 |# ".split( '' ),
-				" #|||   2    ||| ,    |||||# ".split( '' ),
-				" #|||| ,,   ||||||  ,||||||# ".split( '' ),
-				" ########################### ".split( '' ),
+				"                         ".split( '' ),
+				"            OO           ".split( '' ),
+				" ###########..########## ".split( '' ),
+				" #      ,   ..    #  ] # ".split( '' ),
+				" # #######  .     #  ] # ".split( '' ),
+				" # # ]   #   .    +  ]2# ".split( '' ),
+				" # # ]   #   .    ###### ".split( '' ),
+				" # #0]   +  .   , #  ] # ".split( '' ),
+				" # # ]   #  ..    +  ]1# ".split( '' ),
+				" # #######  ..    #  ] # ".split( '' ),
+				" #.. ..   ...     ###### ".split( '' ),
+				" #.,.  .. . ..   ,     # ".split( '' ),
+				" ####       .      2   # ".split( '' ),
+				" #  +      ....        # ".split( '' ),
+				" #  #     ..~~..  .. ..# ".split( '' ),
+				" #0 #  ,  ..~~... ,. ..# ".split( '' ),
+				" ####   1  ....        # ".split( '' ),
+				" #     0         ,  1 |# ".split( '' ),
+				" #||  2    ||| ,  |||||# ".split( '' ),
+				" #||| ,,  ||||  ,||||||# ".split( '' ),
+				" ####################### ".split( '' ),
 			],
 		};
 
@@ -65,15 +65,15 @@
 			"~": { color: 3, bg: 5, char: 188, solid: true },	// water.
 			"|": { color: 12, char: 185, solid: true },			// tree.
 			"^": { color: 2, char: 187, solid: true },			// mountain.
-			"=": { color: 1, char: 222, solid: false },			// bridge.
-			",": { color: 13, char: 274, solid: false },			// grass.
-			" ": { color: 1, char: 0, solid: false },				// empty.
-			"T": { color: 15, char: 326, solid: false },			// town.
-			"O": { color: 0, char: 0x20, solid: false },			//
-			"#": { color: 7, char: 298, solid: true },				// wall.
-			".": { color: 1, char: 301, solid: false },			// stones.
+			"=": { color: 1, char: 248, solid: false },			// bridge.
+			",": { color: 13, char: 289, solid: false },		// grass.
+			" ": { color: 1, char: 0, solid: false },			// empty.
+			"T": { color: 15, char: 362, solid: false },		// town.
+			"O": { color: 0, char: 0x20, solid: false },		//
+			"#": { color: 7, char: 334, solid: true },			// wall.
+			".": { color: 1, char: 85, solid: false },			// stones.
 			"+": { color: 6, char: 234, solid: false },			// doorway.
-			"]": { color: 10, char: 74, solid: true },		// force field.
+			"]": { color: 10, char: 74, solid: true },			// force field.
 
 			// Villagers.
 			"0": { color: 15, char: 0xd0, solid: true, talk: true },
