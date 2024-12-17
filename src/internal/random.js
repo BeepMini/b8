@@ -23,13 +23,20 @@
 			seed = Date.now();
 		}
 
-		// convert seed string to number.
+		// Convert seed string to number.
 		if ( typeof seed === "string" ) {
 			seed = seed.split( "" ).reduce( ( a, b ) => a + b.charCodeAt( 0 ), 0 );
 		}
 
 		// Set the global seed value.
 		randomSeed = seed;
+
+		// Generate a few seeds to get past the initial values which can be
+		// similar for closely related numbers.
+		// The numbers diverge after a few iterations.
+		for ( let i = 0; i < 10; i++ ) {
+			beep8.Random.num();
+		}
 
 	}
 
@@ -85,11 +92,7 @@
 			return min;
 		}
 
-		return beep8.Utilities.clamp(
-			Math.floor( beep8.Random.num() * ( max - min + 1 ) ) + min,
-			min,
-			max
-		);
+		return Math.floor( beep8.Random.range( min, max ) );
 
 	}
 
