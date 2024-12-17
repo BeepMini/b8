@@ -246,10 +246,13 @@ gap: 5vw;
 
 		console.log( 'handleButtonEvent', buttonKeyName, down, evt );
 
+		// Add key property to event.
+		evt.key = buttonKeyName;
+
 		if ( down ) {
-			beep8.Input.onKeyDown( { key: buttonKeyName } );
+			beep8.Input.onKeyDown( evt );
 		} else {
-			beep8.Input.onKeyUp( { key: buttonKeyName } );
+			beep8.Input.onKeyUp( evt );
 		}
 
 		evt.preventDefault();
