@@ -103,6 +103,9 @@ const beep8 = {};
 		// This is a number between 0 and 1, where 0 is no CRT effect and 1 is full CRT effect.
 		// Anything over 0.4 is probably too much.
 		CRT_ENABLE: 0.3,
+		// Enable/ Disable vignette effect.
+		// This is a boolean value.
+		CRT_VIGNETTE: true,
 		// Color palette.
 		// Colors count from 0.
 		// The first color is the background color.
@@ -111,21 +114,21 @@ const beep8 = {};
 		// = more memory.
 		// You can redefine the colors at runtime with beep8.redefineColors([]).
 		COLORS: [
-			"#0E0F17", // Very dark blue - almost black. The darkest colour.
-			"#2A3752", // Dark blue
-			"#9DB1BF", // Mid grey
-			"#8DF0F7", // Light blue
-			"#44BDF9", // Mid blue
-			"#3C55B0", // Blue
-			"#54002A", // Dark red/ burgundy
-			"#754B3B", // Brown
-			"#B51212", // Red
-			"#F7883D", // Orange
-			"#FFCF66", // Yellow
-			"#93C76B", // Light green
-			"#3EB865", // Green
-			"#12897C", // Dark Green
-			"#F078DC", // Pink
+			"#0A0C1F", // Very dark blue - almost black. The darkest colour.
+			"#263264", // Dark blue
+			"#A0ABB6", // Mid grey
+			"#B2EFEB", // Light blue
+			"#3FB0F1", // Mid blue
+			"#3548A3", // Blue
+			"#420241", // Dark red/ purple
+			"#6A3E49", // Brown
+			"#C22D44", // Red
+			"#E08355", // Orange
+			"#FFC763", // Yellow
+			"#A7D171", // Light green
+			"#30AB62", // Green
+			"#20878A", // Dark Green
+			"#FF76D7", // Pink
 			"#F4F4F4", // Off white
 		],
 		// The passkey for the game.
@@ -236,6 +239,8 @@ const beep8 = {};
 
 	/**
 	 * Sets the foreground and/or background color.
+	 *
+	 * If you set the background color to -1, it will be transparent.
 	 *
 	 * @param {number} fg - The foreground color.
 	 * @param {number} [bg=undefined] - The background color (optional).
@@ -2132,6 +2137,51 @@ const beep8 = {};
 
 
 	/**
+	 * Download the current screen as a PNG image.
+	 *
+	 * @returns {void}
+	 */
+	beep8.Core.downloadScreenshot = function() {
+
+		// Grab the image data from the drawn canvas (to include screen effects).
+		// const dataUrl = beep8.Core.realCanvas.toDataURL( "image/png" );
+		const dataUrl = beep8.Core.getHighResDataURL( beep8.Core.realCanvas );
+
+		// Save as a file.
+		beep8.Utilities.downloadFile( "beep8-screenshot.png", dataUrl );
+
+	}
+
+
+	/**
+	 * Get a high-resolution data URL for the specified canvas.
+	 *
+	 * @param {HTMLCanvasElement} canvas - The canvas to get the data URL for.
+	 * @param {number} [scale=4] - The scale factor.
+	 * @param {string} [mimeType="image/png"] - The MIME type.
+	 * @param {number} [quality=1] - The quality.
+	 * @returns {string} The data URL.
+	 */
+	beep8.Core.getHighResDataURL = function( canvas, scale = 4, mimeType = "image/png", quality = 1 ) {
+
+		// Create an offscreen canvas
+		const offscreenCanvas = document.createElement( "canvas" );
+		offscreenCanvas.width = canvas.width * scale;
+		offscreenCanvas.height = canvas.height * scale;
+
+		// Copy and scale the content
+		const offscreenCtx = offscreenCanvas.getContext( "2d" );
+		offscreenCtx.imageSmoothingEnabled = false; // Disable filtering
+		offscreenCtx.scale( scale, scale ); // Use nearest-neighbor scaling
+		offscreenCtx.drawImage( canvas, 0, 0 );
+
+		// Get the data URL
+		return offscreenCanvas.toDataURL( mimeType, quality );
+
+	}
+
+
+	/**
 	 * Restores the screen.
 	 *
 	 * @param {ImageData} screenData - The screen to restore.
@@ -2769,7 +2819,7 @@ const beep8 = {};
 	beep8.Intro.splash = async function() {
 
 		// Load title screen image.
-		const titleScreen = beep8.Tilemap.load( `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gwEEAIMBBACDFwMEgwEDBIMYGAMEgwADBIMBBACDGHQDBIMYhgMEgwAFBIMBBAAADwAADwCYIIMBBACDAQQAgwEEAIMBBACDAQQAgwAPBIMBBACDAQQAgwEEAIMXAwSDAgMEgwEDBIMYGAMEgwEEAIMBBACDAQQAgwEEAIMBBACDAQQAgwADBIMAAwSDGHQDBIMZAUYFBIMBBACDGQFGBQSDAQQAAA8AAA8AmCCDFgUEgxAFBIMWAwSDGCgDBIMBBACDAQQAgxh0AwSDEAMEgwEEAIMBBACDAQQAgwEEAIMBBACDAQQAgwEEAIMBBACDFgMEgxgoAwSDGHQDBIMYhgMEgxh0AwSDGLQFBIMABQWDAQUEgwEFBIMBBQQADwAADwCYIIMBBQSDAQUEgxgoBQODAAUDgxgoAwSDGHQDBIMBBACDAQQAgxkBMwMEgwEEAIMBBACDGHQDBIMYhgMEgxYDBIMYKAMEgxYDBIMBAwSDAQMEgxADBIMAAwSDAQQAgwEFBIMABQWDAQUEgwEFBIMBBQQADwAADwCYIIMBBQSDAQUEgwEFBIMYKAUDgwAFA4MYKAMEgxi4BQSDAQQAgwEEAIMYhgMEgxh0AwSDGLgFBIMPAwSDCwMEgwEDBIMBAwSDGQFJBQODAQMEgwEDBIMYKAMEgwEEAIMBBQSDAAUFgwEFBIMBBQSDAQUEAA8AAA8AmCCDCQEFgwEFBIMBBQSDAQUEgwEFBIMBBQSDAQUEgwEFBIMBBQSDAQUEgwEFBIMBBQSDAQUEgwEFBIMBBQSDAQUEgwEFBIMBBQSDAQUEgwEFBIMBBQSDAQUEgwEFBIMPAQWDAQUEgwEFBAAPAAAPAJgYgwAPAYMJAQWDAA8FgwAPBYMADwWDAA8FgwAPBYMADwWDAA8FgwABBYMADwWDAA8FgwAPBYMADwWDAA8FgwAPBYMADwWDAA8FgwAPBYMADwWDAA8FgwkBBYMADwWDAA8BmBiDAA8BgwAPAYMADwGDEAEFgwAPBYMADwWDAA8FgwAPBYMADwWDAQEFgxABBYMADwWDAA8FgwAPBYMADwWDAA8FgwkBBYMADwWDAA8FgwQBBYMADwGDAA8BgwAPAYMADwE=` );
+		const titleScreen = beep8.Tilemap.load( `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gwEEAIMBBACDAQQAgwEEAIMXAwSDAQMEgxgYAwSDAAMEgwEEAIMYdAMEgxiGAwSDAAUEgwEEAAAPAAAPAJgggwEEAIMBBACDAQQAgwEEAIMBBACDAA8EgwEEAIMBBACDAQQAgxcDBIMCAwSDAQMEgxgYAwSDAQQAgwEEAIMBBACDAQQAgwEEAIMBBACDAAMEgwADBIMYdAMEgxkBbAUEgwEEAIMZAUYFBIMBBAAADwAADwCYIIMWBQSDEAUEgxYDBIMYKAMEgwEEAIMBBACDGHQDBIMQAwSDAQQAgwEEAIMBBACDAQQAgwEEAIMBBACDAQQAgwEEAIMWAwSDGCgDBIMYdAMEgxiGAwSDGHQDBIMYtAUEgwAFBYMBBQSDAQUEgwEFBAAPAAAPAJgggwEFBIMBBQSDGCgFA4MABQODGCgDBIMYdAMEgwEEAIMBBACDDQUEgwEEAIMBBACDGHQDBIMYhgMEgxYDBIMYKAMEgxYDBIMBAwSDAQMEgxADBIMAAwSDAQQAgwEFBIMABQWDAQUEgwEFBIMBBQQADwAADwCYIIMBBQSDAQUEgwEFBIMYKAUDgwAFA4MYKAMEgxi4BQSDAQQAgwEEAIMYhgMEgxh0AwSDGLgFBIMPAwSDCwMEgwEDBIMBAwSDGQFqBQODAQMEgwEDBIMYKAMEgwEEAIMBBQSDAAUFgw8BBYMBBQSDAQUEAA8AAA8AmCCDCQEFgwEFBIMBBQSDAQUEgwEFBIMBBQSDAQUEgwEFBIMBBQSDAQUEgwEFBIMBBQSDAQUEgwEFBIMBBQSDAQUEgwEFBIMBBQSDAQUEgwEFBIMBBQSDAQUEgw8BBYMDBQGDAQUEgwEFBAAPAAAPAJgYgwAPAYMJAQWDAA8FgwAPBYMADwWDAA8FgwAPBYMADwWDAA8FgwABBYMADwWDAA8FgwAPBYMADwWDAA8FgwAPBYMADwWDAA8FgwAPBYMADwWDAA8FgwkBBYMYWAUBgwAPAZgYgwAPAYMADwGDAA8BgxABBYMADwWDAA8FgwAPBYMADwWDAA8FgwEBBYMQAQWDAA8FgwAPBYMADwWDAA8FgwAPBYMJAQWDAA8FgwAPBYMEAQWDAA8BgwAPAYMADwGDAAUB` );
 
 		// Draw title screen.
 		beep8.locate( 0, 0 );
@@ -3800,13 +3850,20 @@ const beep8 = {};
 			seed = Date.now();
 		}
 
-		// convert seed string to number.
+		// Convert seed string to number.
 		if ( typeof seed === "string" ) {
 			seed = seed.split( "" ).reduce( ( a, b ) => a + b.charCodeAt( 0 ), 0 );
 		}
 
 		// Set the global seed value.
 		randomSeed = seed;
+
+		// Generate a few seeds to get past the initial values which can be
+		// similar for closely related numbers.
+		// The numbers diverge after a few iterations.
+		for ( let i = 0; i < 10; i++ ) {
+			beep8.Random.num();
+		}
 
 	}
 
@@ -3862,11 +3919,7 @@ const beep8 = {};
 			return min;
 		}
 
-		return beep8.Utilities.clamp(
-			Math.floor( beep8.Random.num() * ( max - min + 1 ) ) + min,
-			min,
-			max
-		);
+		return Math.floor( beep8.Random.range( min, max ) );
 
 	}
 
@@ -4020,8 +4073,10 @@ const beep8 = {};
 	beep8.Renderer.applyCrtFilter = function() {
 
 		// If the CRT effect is disabled, return.
-		if ( beep8.CONFIG.CRT_ENABLE <= 0 ) {
-			console.log( 'CRT effect is disabled.', beep8.CONFIG.CRT_ENABLE );
+		if (
+			beep8.CONFIG.CRT_ENABLE <= 0
+			|| !beep8.CONFIG.CRT_VIGNETTE
+		) {
 			return;
 		}
 
@@ -4033,6 +4088,74 @@ const beep8 = {};
 
 		// Cache the data array for faster access.
 		const imageData = canvasImageData.data;
+
+		drawVignette( imageData );
+		drawScanlines( imageData );
+
+		// Write the modified image data back to the canvas.
+		beep8.Core.realCtx.putImageData( canvasImageData, 0, 0 );
+
+	};
+
+
+	/**
+	 * Function to draw a vignette effect on the screen.
+	 *
+	 * @param {Uint8ClampedArray} imageData - The image data array.
+	 * @returns {void}
+	 */
+	const drawVignette = ( imageData ) => {
+
+		// Vignette constants.
+		// ---
+		if ( !beep8.CONFIG.CRT_VIGNETTE ) {
+			return imageData;
+		}
+
+		// Get the screen width and height.
+		const width = beep8.CONFIG.SCREEN_WIDTH;
+		const height = beep8.CONFIG.SCREEN_HEIGHT;
+
+		// The center of the vignette effect is a circle with a radius of 0.5 of the screen.
+		const centerRadius = 0.85;
+		// The maximum darkness of the vignette effect.
+		const maxDarkness = 0.4;
+		// Calculate the center of the screen and the maximum distance from the center.
+		const centerX = width / 2, centerY = height / 2;
+		// Calculate the inner radius of the vignette effect and the scaling factor.
+		const maxDistance = Math.sqrt( centerX ** 2 + centerY ** 2 );
+		// The inner radius is a fraction of the center radius.
+		const innerRadius = centerRadius * maxDistance;
+		// Calculate the scaling factor based on the maximum darkness and distance.
+		const scaleFactor = maxDarkness / ( maxDistance * ( 1 - centerRadius ) );
+
+		// Apply vignette effect pixel by pixel
+		for ( let i = 0; i < imageData.length; i += 4 ) {
+			const x = ( i / 4 ) % width;
+			const y = Math.floor( ( i / 4 ) / width );
+			const distance = Math.sqrt( ( x - centerX ) ** 2 + ( y - centerY ) ** 2 );
+
+			// Calculate the vignette factor based on the distance from the center.
+			const vignetteFactor = distance < innerRadius
+				? 1
+				: Math.max( 0, 1 - ( distance - innerRadius ) * scaleFactor );
+
+			// Apply the vignette factor to the RGB channels
+			imageData[ i ] *= vignetteFactor;     // Red
+			imageData[ i + 1 ] *= vignetteFactor; // Green
+			imageData[ i + 2 ] *= vignetteFactor; // Blue
+		}
+
+	};
+
+
+	/**
+	 * Function to draw scanlines and color distortion on the screen.
+	 *
+	 * @param {Uint8ClampedArray} imageData - The image data array.
+	 * @returns {void}
+	 */
+	const drawScanlines = ( imageData ) => {
 
 		// Get the screen width and height.
 		const width = beep8.CONFIG.SCREEN_WIDTH;
@@ -4052,13 +4175,6 @@ const beep8 = {};
 				const previous_pixel_data = ( x > 0 ) ? getPixelData( imageData, getPixelPosition( x - 1, y ) ) : current_pixel_data;
 				const next_pixel_data = x < width - 1 ? getPixelData( imageData, getPixelPosition( x + 1, y ) ) : current_pixel_data;
 
-				// let red, green, blue;
-
-				// // Apply blending for the red, green, and blue channels.
-				// red = blendPixel( current_pixel_data[ 0 ], previous_pixel_data[ 0 ], next_pixel_data[ 0 ] );
-				// green = blendPixel( current_pixel_data[ 1 ], current_pixel_data[ 1 ] );
-				// blue = blendPixel( current_pixel_data[ 2 ], previous_pixel_data[ 2 ] );
-
 				// Set the new pixel values back into the image data array.
 				setPixel(
 					imageData,
@@ -4069,10 +4185,8 @@ const beep8 = {};
 			}
 		}
 
-		// Write the modified image data back to the canvas.
-		beep8.Core.realCtx.putImageData( canvasImageData, 0, 0 );
-
 	};
+
 
 
 	/**
@@ -4081,7 +4195,7 @@ const beep8 = {};
 	 *
 	 * @param {number} currentValue - The current pixel value.
 	 * @param {number} previousValue - The previous pixel value.
-	 * @returns {number} The blended pixel value.
+	 * @returns {object} The blended pixel value as an rgb object.
 	 */
 	const blendPixels = ( currentPixel, previousPixel, nextPixel ) => {
 
@@ -6122,6 +6236,12 @@ const beep8 = {};
 	/**
 	 * Calculates the intersection between two integer number intervals.
 	 *
+	 * Given 2 ranges it will see if these ranges overlap and if they do it will
+	 * optionally return the intersection range.
+	 *
+	 * For example if the first interval is [1, 5] and the second interval is [3, 7]
+	 * the intersection is [3, 5].
+	 *
 	 * @param {number} as - The start of the first interval.
 	 * @param {number} ae - The end of the first interval.
 	 * @param {number} bs - The start of the second interval.
@@ -6261,7 +6381,6 @@ const beep8 = {};
 	}
 
 
-
 	/**
 	 * Performs a deep merge of objects and returns new object. Does not modify
 	 * objects (immutable) and merges arrays via concatenation.
@@ -6365,6 +6484,35 @@ const beep8 = {};
 		beep8.Utilities.checkInt( "times", times, 0 );
 
 		return Array( times ).fill().flatMap( () => array );
+
+	};
+
+
+	/**
+	 * Downloads a file.
+	 *
+	 * @param {string} filename - The name of the file.
+	 * @param {string} src - The source URL of the file.
+	 * @returns {void}
+	 */
+	beep8.Utilities.downloadFile = function( filename = '', src = '' ) {
+
+		beep8.Utilities.checkString( "filename", filename );
+		beep8.Utilities.checkString( "src", src );
+
+		// Create a link element to use to download the image.
+		const element = document.createElement( 'a' );
+		element.setAttribute( 'href', src );
+		element.setAttribute( 'download', filename );
+
+		// Append the element to the body.
+		document.body.appendChild( element );
+
+		// Click the link to download.
+		element.click();
+
+		// Tidy up.
+		document.body.removeChild( element );
 
 	};
 
@@ -6619,10 +6767,13 @@ gap: 5vw;
 
 		console.log( 'handleButtonEvent', buttonKeyName, down, evt );
 
+		// Add key property to event.
+		evt.key = buttonKeyName;
+
 		if ( down ) {
-			beep8.Input.onKeyDown( { key: buttonKeyName } );
+			beep8.Input.onKeyDown( evt );
 		} else {
-			beep8.Input.onKeyUp( { key: buttonKeyName } );
+			beep8.Input.onKeyUp( evt );
 		}
 
 		evt.preventDefault();
