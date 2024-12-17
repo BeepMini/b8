@@ -146,9 +146,9 @@
 		const height = beep8.CONFIG.SCREEN_HEIGHT;
 
 		// The center of the vignette effect is a circle with a radius of 0.5 of the screen.
-		const centerRadius = 0.85;
+		const centerRadius = 0.8;
 		// The maximum darkness of the vignette effect.
-		const maxDarkness = 0.4;
+		const maxDarkness = 0.25;
 		// Calculate the center of the screen and the maximum distance from the center.
 		const centerX = width / 2, centerY = height / 2;
 		// Calculate the inner radius of the vignette effect and the scaling factor.
