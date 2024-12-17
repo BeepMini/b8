@@ -55,7 +55,14 @@
 				for ( let j = 0; j < MAX_COLORS; j++ ) {
 					beep8.locate( i + 2, 4 + j );
 					beep8.color( i, j );
-					beep8.print( i === selFg && j === selBg ? "*" : "•" );
+					// beep8.print( i === selFg && j === selBg ? "*" : "•" );
+					if ( i === selFg && j === selBg ) {
+						// Current selection.
+						beep8.printChar( 119 );
+					} else {
+						beep8.printChar( 110 );
+					}
+					// beep8.printChar( i === selFg && j === selBg ? 128 : 110 );
 				}
 			}
 
