@@ -71,6 +71,8 @@
 	/**
 	 * Sets the foreground and/or background color.
 	 *
+	 * If you set the background color to -1, it will be transparent.
+	 *
 	 * @param {number} fg - The foreground color.
 	 * @param {number} [bg=undefined] - The background color (optional).
 	 * @returns {void}
