@@ -102,8 +102,10 @@
 	beep8.Renderer.applyCrtFilter = function() {
 
 		// If the CRT effect is disabled, return.
-		if ( beep8.CONFIG.CRT_ENABLE <= 0 ) {
-			console.log( 'CRT effect is disabled.', beep8.CONFIG.CRT_ENABLE );
+		if (
+			beep8.CONFIG.CRT_ENABLE <= 0
+			|| !beep8.CONFIG.CRT_VIGNETTE
+		) {
 			return;
 		}
 
@@ -115,6 +117,74 @@
 
 		// Cache the data array for faster access.
 		const imageData = canvasImageData.data;
+
+		drawVignette( imageData );
+		drawScanlines( imageData );
+
+		// Write the modified image data back to the canvas.
+		beep8.Core.realCtx.putImageData( canvasImageData, 0, 0 );
+
+	};
+
+
+	/**
+	 * Function to draw a vignette effect on the screen.
+	 *
+	 * @param {Uint8ClampedArray} imageData - The image data array.
+	 * @returns {void}
+	 */
+	const drawVignette = ( imageData ) => {
+
+		// Vignette constants.
+		// ---
+		if ( !beep8.CONFIG.CRT_VIGNETTE ) {
+			return imageData;
+		}
+
+		// Get the screen width and height.
+		const width = beep8.CONFIG.SCREEN_WIDTH;
+		const height = beep8.CONFIG.SCREEN_HEIGHT;
+
+		// The center of the vignette effect is a circle with a radius of 0.5 of the screen.
+		const centerRadius = 0.85;
+		// The maximum darkness of the vignette effect.
+		const maxDarkness = 0.4;
+		// Calculate the center of the screen and the maximum distance from the center.
+		const centerX = width / 2, centerY = height / 2;
+		// Calculate the inner radius of the vignette effect and the scaling factor.
+		const maxDistance = Math.sqrt( centerX ** 2 + centerY ** 2 );
+		// The inner radius is a fraction of the center radius.
+		const innerRadius = centerRadius * maxDistance;
+		// Calculate the scaling factor based on the maximum darkness and distance.
+		const scaleFactor = maxDarkness / ( maxDistance * ( 1 - centerRadius ) );
+
+		// Apply vignette effect pixel by pixel
+		for ( let i = 0; i < imageData.length; i += 4 ) {
+			const x = ( i / 4 ) % width;
+			const y = Math.floor( ( i / 4 ) / width );
+			const distance = Math.sqrt( ( x - centerX ) ** 2 + ( y - centerY ) ** 2 );
+
+			// Calculate the vignette factor based on the distance from the center.
+			const vignetteFactor = distance < innerRadius
+				? 1
+				: Math.max( 0, 1 - ( distance - innerRadius ) * scaleFactor );
+
+			// Apply the vignette factor to the RGB channels
+			imageData[ i ] *= vignetteFactor;     // Red
+			imageData[ i + 1 ] *= vignetteFactor; // Green
+			imageData[ i + 2 ] *= vignetteFactor; // Blue
+		}
+
+	};
+
+
+	/**
+	 * Function to draw scanlines and color distortion on the screen.
+	 *
+	 * @param {Uint8ClampedArray} imageData - The image data array.
+	 * @returns {void}
+	 */
+	const drawScanlines = ( imageData ) => {
 
 		// Get the screen width and height.
 		const width = beep8.CONFIG.SCREEN_WIDTH;
@@ -134,13 +204,6 @@
 				const previous_pixel_data = ( x > 0 ) ? getPixelData( imageData, getPixelPosition( x - 1, y ) ) : current_pixel_data;
 				const next_pixel_data = x < width - 1 ? getPixelData( imageData, getPixelPosition( x + 1, y ) ) : current_pixel_data;
 
-				// let red, green, blue;
-
-				// // Apply blending for the red, green, and blue channels.
-				// red = blendPixel( current_pixel_data[ 0 ], previous_pixel_data[ 0 ], next_pixel_data[ 0 ] );
-				// green = blendPixel( current_pixel_data[ 1 ], current_pixel_data[ 1 ] );
-				// blue = blendPixel( current_pixel_data[ 2 ], previous_pixel_data[ 2 ] );
-
 				// Set the new pixel values back into the image data array.
 				setPixel(
 					imageData,
@@ -151,10 +214,8 @@
 			}
 		}
 
-		// Write the modified image data back to the canvas.
-		beep8.Core.realCtx.putImageData( canvasImageData, 0, 0 );
-
 	};
+
 
 
 	/**
@@ -163,7 +224,7 @@
 	 *
 	 * @param {number} currentValue - The current pixel value.
 	 * @param {number} previousValue - The previous pixel value.
-	 * @returns {number} The blended pixel value.
+	 * @returns {object} The blended pixel value as an rgb object.
 	 */
 	const blendPixels = ( currentPixel, previousPixel, nextPixel ) => {
 

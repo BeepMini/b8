@@ -57,6 +57,9 @@
 		// This is a number between 0 and 1, where 0 is no CRT effect and 1 is full CRT effect.
 		// Anything over 0.4 is probably too much.
 		CRT_ENABLE: 0.3,
+		// Enable/ Disable vignette effect.
+		// This is a boolean value.
+		CRT_VIGNETTE: true,
 		// Color palette.
 		// Colors count from 0.
 		// The first color is the background color.
