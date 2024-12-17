@@ -663,10 +663,39 @@
 	beep8.Core.downloadScreenshot = function() {
 
 		// Grab the image data from the drawn canvas (to include screen effects).
-		const dataUrl = beep8.Core.realCanvas.toDataURL( "image/png" );
+		// const dataUrl = beep8.Core.realCanvas.toDataURL( "image/png" );
+		const dataUrl = beep8.Core.getHighResDataURL( beep8.Core.realCanvas );
 
 		// Save as a file.
 		beep8.Utilities.downloadFile( "beep8-screenshot.png", dataUrl );
+
+	}
+
+
+	/**
+	 * Get a high-resolution data URL for the specified canvas.
+	 *
+	 * @param {HTMLCanvasElement} canvas - The canvas to get the data URL for.
+	 * @param {number} [scale=4] - The scale factor.
+	 * @param {string} [mimeType="image/png"] - The MIME type.
+	 * @param {number} [quality=1] - The quality.
+	 * @returns {string} The data URL.
+	 */
+	beep8.Core.getHighResDataURL = function( canvas, scale = 4, mimeType = "image/png", quality = 1 ) {
+
+		// Create an offscreen canvas
+		const offscreenCanvas = document.createElement( "canvas" );
+		offscreenCanvas.width = canvas.width * scale;
+		offscreenCanvas.height = canvas.height * scale;
+
+		// Copy and scale the content
+		const offscreenCtx = offscreenCanvas.getContext( "2d" );
+		offscreenCtx.imageSmoothingEnabled = false; // Disable filtering
+		offscreenCtx.scale( scale, scale ); // Use nearest-neighbor scaling
+		offscreenCtx.drawImage( canvas, 0, 0 );
+
+		// Get the data URL
+		return offscreenCanvas.toDataURL( mimeType, quality );
 
 	}
 
