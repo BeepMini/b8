@@ -81,7 +81,7 @@
 			"#FFC763", // Yellow
 			"#A7D171", // Light green
 			"#30AB62", // Green
-			"#20878A", // Dark Green
+			"#1E7F82", // Dark Green
 			"#FF76D7", // Pink
 			"#F4F4F4", // Off white
 		],
