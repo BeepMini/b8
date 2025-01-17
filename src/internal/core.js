@@ -807,6 +807,7 @@
 
 		beep8.Core.realCanvas.style.width = '100%';
 		beep8.Core.realCanvas.style.height = '100%';
+		beep8.Core.realCanvas.style.filter = 'blur(0.5px)';
 		beep8.Core.realCanvas.width = beep8.CONFIG.SCREEN_REAL_WIDTH;
 		beep8.Core.realCanvas.height = beep8.CONFIG.SCREEN_REAL_HEIGHT;
 
