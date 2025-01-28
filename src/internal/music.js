@@ -7,7 +7,7 @@
 	beep8.Music = {};
 
 	const BAR_LENGTH = 8; // Number of beats per bar
-	const BARS_PER_PATTERN = 1; // Number of bars per pattern
+	const BARS_PER_PATTERN = 2; // Number of bars per pattern
 	const PATTERN_LENGTH = BAR_LENGTH * BARS_PER_PATTERN; // Total length of a pattern
 	const PATTERN_COUNT = 4; // Number of patterns per song
 	const KEYRANGE = [ 13, 25, 37 ]; // Key range for generating songs
@@ -101,10 +101,10 @@
 		'boop': [ 1.8, 0, 293, .03, .02, .01, , .8, , , , , , .1, , , , .82, .02, .01 ],
 		'melody': [ 1.5, 0, 77, , 0.3, 0.7, 2, 0.41, , , , , , , , 0.06 ],
 
-		'bass1': [ 1, 0, 45, .04, .6, .46, 1, 2.2, , , , , .17, .1, , , , .65, .09, .04, -548 ],
+		'bass1': [ 1.4, 0, 45, .04, .6, .46, 1, 2.2, , , , , .17, .1, , , , .65, .09, .04, -548 ],
 
-		'drum1': [ 1.4, 0, 50, , , .2, , 4, -2, 6, 50, .15, , 6 ],
-		'drum2': [ 1.4, 0, 84, , , , , .7, , , , .5, , 6.7, 1, .01 ],
+		'drum1': [ 1, 0, 50, , , .2, , 4, -2, 6, 50, .15, , 6 ],
+		'drum2': [ 1, 0, 84, , , , , .7, , , , .5, , 6.7, 1, .01 ],
 		'drum3': [ 1, 0, 270, , , 0.12, 3, 1.65, -2, , , , , 4.5, , 0.02 ],
 	};
 
@@ -324,16 +324,11 @@
 	 */
 	function drumNoteLogic( i, song, patternId ) {
 
-		// Skip the first pattern for drum channels.
-		if ( 0 === patternId ) {
-			return 0;
-		}
-
 		let key = 0;
 		let noteVal = i % 4;
 
-		// Hi-hat with a 70% chance on every beat
-		if ( beep8.Random.num() < 0.7 && noteVal % 2 === 1 ) key = 42;
+		// Hi-hat with a 50% chance on every beat
+		if ( beep8.Random.num() < 0.5 && noteVal % 2 === 1 ) key = 42;
 
 		// Kick on beats 1, 5, 9, 13
 		if ( noteVal === 0 ) key = 1;
@@ -474,7 +469,8 @@
 		getNoteScale( scale, repetitions = 3, startNote = 0, skipChance = 0 ) {
 
 			// Generate repeated scale intervals
-			const scaleIntervals = beep8.Utilities.repeatArray( SCALES[ scale ], repetitions );
+			// const scaleIntervals = beep8.Utilities.repeatArray( SCALES[ scale ], repetitions );
+			const scaleIntervals = SCALES[ scale ];
 
 			// Generate the notes based on the scale intervals and skip chance
 			const notes = [ startNote ];
@@ -511,6 +507,14 @@
 			const drumInstrument = beep8.Random.pick( [ 'drum1', 'drum2', 'drum3' ] );
 			const bassInstrument = beep8.Random.pick( [ 'bass1' ] );
 
+			// Precalculate the drum pattern and use the same one for each loop.
+			// This is because drums are usually consistent throughout a song.
+			let channel_drums = [ drumInstrument, 0 ];
+			if ( useDrums ) {
+				this.Channels.push( channel_drums );
+				generatePattern( this, channel_drums, drumNoteLogic, 0 );
+			}
+
 			// Create PATTERN_COUNT patterns.
 			for ( let p = 0; p < PATTERN_COUNT; p++ ) {
 
@@ -532,9 +536,6 @@
 
 				// Drums.
 				if ( useDrums ) {
-					let channel_drums = [ drumInstrument, 0 ];
-					this.Channels.push( channel_drums );
-					generatePattern( this, channel_drums, drumNoteLogic, p );
 					pattern.push( channel_drums );
 				}
 
@@ -589,6 +590,7 @@
 
 			let trackPatterns = [];
 
+			// Loop through the patterns.
 			patterns.forEach(
 				( pattern ) => {
 
