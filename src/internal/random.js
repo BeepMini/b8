@@ -33,7 +33,7 @@
 
 		// Generate a few seeds to get past the initial values which can be
 		// similar for closely related numbers.
-		// The numbers diverge after a few iterations.
+		// The numbers diverge a lot after a few iterations.
 		for ( let i = 0; i < 10; i++ ) {
 			beep8.Random.num();
 		}
