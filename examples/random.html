@@ -9,6 +9,7 @@
 
 	<script src="../dist/beep8.js"></script>
 
+<body>
 	<!-- Replace with a separate style.css file if you want -->
 	<style type="text/css">
 		body {
@@ -41,23 +42,23 @@
 		<input type="number" id="seed" value="100" />
 		<button>Generate</button>
 	</div>
+</body>
+<script>
 
-	<script>
+	const button = document.querySelector( 'button' );
 
-		const button = document.querySelector( 'button' );
+	button.addEventListener( 'click', () => {
+		const textarea = document.querySelector( 'textarea' );
+		const seed = document.querySelector( '#seed' ).value;
 
-		button.addEventListener( 'click', () => {
-			const textarea = document.querySelector( 'textarea' );
-			const seed = document.querySelector( '#seed' ).value;
+		beep8.Random.setSeed( seed );
 
-			beep8.Random.setSeed( seed );
+		let textareaContent = '';
+		for ( let i = 0; i < 10; i++ ) {
+			textareaContent += `${beep8.Random.num()}\n`;
+		}
 
-			let textareaContent = '';
-			for ( let i = 0; i < 10; i++ ) {
-				textareaContent += `${beep8.Random.num()}\n`;
-			}
+		textarea.value = textareaContent;
+	} );
 
-			textarea.value = textareaContent;
-		} );
-
-	</script>
+</script>

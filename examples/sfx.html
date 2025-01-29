@@ -16,13 +16,6 @@
 			color: white;
 		}
 
-		.interface {
-			padding: 5vw;
-			display: flex;
-			flex-wrap: wrap;
-			gap: 10px;
-		}
-
 		button {
 			padding: 10px 20px;
 			font-size: 20px;
@@ -37,22 +30,35 @@
 		p a {
 			color: white;
 		}
+
+		.interface {
+			padding: 5vw;
+		}
 	</style>
 
+<body>
+	<style>
+		.interface {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 10px;
+		}
+	</style>
 	<p><a href="https://killedbyapixel.github.io/ZzFX/">ZZFX Synth</a></p>
 	<div class="interface"></div>
+</body>
 
-	<script>
+<script>
 
-		const buttons = beep8.Sfx.get();
-		// Loop through buttons and add them to the .interface div.
-		buttons.forEach( ( button, index ) => {
-			const buttonElement = document.createElement( 'button' );
-			buttonElement.innerText = button;
-			buttonElement.addEventListener( 'click', () => {
-				beep8.Sfx.play( button );
-			} );
-			document.querySelector( '.interface' ).appendChild( buttonElement );
+	const buttons = beep8.Sfx.get();
+	// Loop through buttons and add them to the .interface div.
+	buttons.forEach( ( button, index ) => {
+		const buttonElement = document.createElement( 'button' );
+		buttonElement.innerText = button;
+		buttonElement.addEventListener( 'click', () => {
+			beep8.Sfx.play( button );
 		} );
+		document.querySelector( '.interface' ).appendChild( buttonElement );
+	} );
 
-	</script>
+</script>
