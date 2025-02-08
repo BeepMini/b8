@@ -92,7 +92,7 @@
 	 */
 	beep8.Passcodes.input = async function() {
 
-		const message = 'Level code:';
+		const message = 'Enter code:';
 		const width = message.length + 2 + 2;
 		const height = 6;
 
