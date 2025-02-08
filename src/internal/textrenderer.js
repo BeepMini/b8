@@ -280,7 +280,7 @@
 			const tempCol = Math.floor( col + ( width - textWidth ) / 2 );
 
 			beep8.Core.drawState.cursorCol = tempCol;
-			beep8.TextRenderer.print( text[ i ], font );
+			beep8.TextRenderer.print( text[ i ], font, width );
 
 			beep8.Core.drawState.cursorRow += rowInc;
 
