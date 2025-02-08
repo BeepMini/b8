@@ -4,3 +4,4 @@ package-lock.json
 todo.txt
 /src/ignore
 /assets/inspo
+.env
