@@ -137,6 +137,21 @@
 	}
 
 
+	/**
+	 * Returns a random boolean value based upon the probability percentage provided.
+	 *
+	 * @param {number} probability - A percentage value between 0 and 100 representing the chance of returning true.
+	 * @returns {boolean} True with the specified probability, false otherwise.
+	 */
+	beep8.Random.chance = function( probability ) {
+
+		beep8.Utilities.checkNumber( "probability", probability );
+
+		return beep8.Random.num() < ( probability / 100 );
+
+	}
+
+
 	beep8.Random.setSeed();
 
 } )( beep8 || ( beep8 = {} ) );
