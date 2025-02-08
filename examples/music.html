@@ -9,7 +9,6 @@
 
 	<link rel="stylesheet" href="example.css">
 	<script src="../dist/beep8.js"></script>
-
 </head>
 
 <body>
@@ -26,35 +25,40 @@
 
 <script>
 	const GOODSEEDS = [ 25101 ];
+
 	// Get list of song types.
-	const songTypes = Object.keys( beep8.Music.types );
+	// const songTypes = Object.keys( beep8.Music.types );
 
 	const initialSeed = 46605;
+	const songName = 'song';
+	const playText = 'Generate and Play Song';
 
 	let html = '';
-	html += `<select id="song-type">${songTypes.map( type => `<option value="${type}">${type}</option>` ).join( '' )}</select>`;
+	// html += `<select id="song-type">${songTypes.map( type => `<option value="${type}">${type}</option>` ).join( '' )}</select>`;
 	html += `<div class="flex">`;
 	html += `<input type="text" id="song-seed" value="${initialSeed}">`;
 	html += `<button id="random-seed">Random Seed</button>`;
 	html += `</div>`;
-	html += `<button id="play-music">Generate and Play Song</button>`;
+	html += `<button id="play-music">${playText}</button>`;
 
-
-	const songName = 'song';
-
-	// Function to play the generated zzfxM song
+	// Function to play the generated zzfxM song.
 	const playSong = function() {
 
-		if ( beep8.Music.playing( songName ) ) {
+		const playButton = document.getElementById( 'play-music' );
+
+		if ( beep8.Music.isPlaying( songName ) ) {
 			beep8.Music.stop( songName );
+			playButton.textContent = playText;
 			return;
 		}
 
-		const type = document.getElementById( 'song-type' ).value; // Get the selected song type.
+		playButton.textContent = 'Stop Song';
+
+		// const type = document.getElementById( 'song-type' ).value; // Get the selected song type.
 		const seed = document.getElementById( 'song-seed' ).value; // Get the seed.
-		console.log( 'Generating song with type:', type, 'and seed:', seed );
-		beep8.Music.generate( songName, type, seed ); // Generate the song.
-		beep8.Music.play( songName );
+		console.log( 'Generating song with seed:', seed );
+		const song = beep8.Music.generate( { seed } ); // Generate the song.
+		beep8.Music.play( song );
 
 	}
 
