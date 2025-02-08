@@ -232,4 +232,19 @@
 
 	}
 
+
+	/**
+	 * Waits for the user to press a key to continue.
+	 *
+	 * @returns {Promise<void>} Resolves when the user presses a key.
+	 */
+	beep8.Async.waitForContinue = async function() {
+
+		while ( true ) {
+			const key = await beep8.Async.key();
+			if ( key.includes( "Enter" ) || key.includes( "ButtonA" ) ) break;
+		}
+
+	}
+
 } )( beep8 || ( beep8 = {} ) );

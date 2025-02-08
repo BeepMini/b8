@@ -211,6 +211,9 @@
 	 * The text can contain embedded newlines and they will behave as expected:
 	 * printing will continue at the next line.
 	 *
+	 * Fonts use the defined tile size as their dimensions. Each character will
+	 * be one tile. By default the tile size is: 12x12 pixels.
+	 *
 	 * If PRINT_ESCAPE_START and PRINT_ESCAPE_END are defined in CONFIG, then
 	 * you can also use escape sequences. For example:
 	 * - {{c1}} sets the color to 1
@@ -248,7 +251,7 @@
 	/**
 	 * Prints text centered horizontally in a field of the given width.
 	 *
-	 * If the text is bigger than the width, it will overflow it.
+	 * If the text is bigger than the width, it will wrap.
 	 *
 	 * @param {string} text - The text to print.
 	 * @param {number} width - The width of the field, in characters.
