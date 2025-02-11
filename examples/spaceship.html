@@ -74,18 +74,10 @@
 			beep8.print( "Controls:\n  SPACE or 'A' button\n  to shoot." );
 			await beep8.Async.key();
 			beep8.cls();
-			beep8.frame( doFrame );
+			beep8.frame( doFrame, render );
 		}
 
 		async function doFrame() {
-
-			beep8.cls();
-			beep8.drawImage( 0, 0, backgroundImg );
-			// Update and draw everything.
-			updateAndDrawPlayer();
-			if ( laser ) updateAndDrawLaser();
-			enemies.forEach( updateAndDrawEnemy );
-			updateAndDrawPartFx();
 
 			// Spawn enemy, if it's time. Or if we are below the minimum number of enemies.
 			if ( --spawnCountdown < 0 || enemies.length < calcParam( MIN_ENEMIES ) ) spawnEnemy();
@@ -105,6 +97,18 @@
 				beep8.frame( null );
 				showGameOver();
 			}
+
+		}
+
+		function render() {
+
+			beep8.cls();
+			beep8.drawImage( 0, 0, backgroundImg );
+			// Update and draw everything.
+			updateAndDrawPlayer();
+			if ( laser ) updateAndDrawLaser();
+			enemies.forEach( updateAndDrawEnemy );
+			updateAndDrawPartFx();
 
 		}
 

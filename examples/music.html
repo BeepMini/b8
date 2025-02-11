@@ -40,6 +40,7 @@
 	html += `<button id="random-seed">Random Seed</button>`;
 	html += `</div>`;
 	html += `<button id="play-music">${playText}</button>`;
+	html += `<div id="song-info"></div>`;
 
 	// Function to play the generated zzfxM song.
 	const playSong = function() {
@@ -59,6 +60,8 @@
 		console.log( 'Generating song with seed:', seed );
 		const song = beep8.Music.generate( { seed } ); // Generate the song.
 		beep8.Music.play( song );
+
+		document.querySelector( '#song-info' ).textContent = JSON.stringify( beep8.Music.currentSongProperties, null, 2 );
 
 	}
 
