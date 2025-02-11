@@ -22,15 +22,21 @@
 	 * @param {string} name - The name of the scene.
 	 * @param {Function} update - The update function for the scene, which will be passed to `beep8.frame`.
 	 */
-	beep8.Scenes.addScene = function( name, update = {} ) {
+	beep8.Scenes.addScene = function( name, update = null, render = null, frameRate = 30 ) {
+
+		beep8.Utilities.checkString( 'name', name );
 
 		if ( update !== null ) {
-
 			beep8.Utilities.checkFunction( 'update', update );
-
 		}
 
-		beep8.scenes[ name ] = { update };
+		if ( render !== null ) {
+			beep8.Utilities.checkFunction( 'render', render );
+		}
+
+		beep8.Utilities.checkInt( 'frameRate', frameRate );
+
+		beep8.scenes[ name ] = { update, render, frameRate };
 
 	};
 
@@ -50,7 +56,7 @@
 
 		activeScene = name;
 
-		beep8.frame( beep8.scenes[ name ].update );
+		beep8.frame( beep8.scenes[ name ].update, beep8.scenes[ name ].render, beep8.scenes[ name ].frameRate );
 
 	};
 
