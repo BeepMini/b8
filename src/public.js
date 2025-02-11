@@ -33,17 +33,21 @@
 	 * @param {number} [fps=30] - The target frames per second. Recommended: 30.
 	 * @returns {void}
 	 */
-	beep8.frame = function( handler, fps = 30 ) {
+	beep8.frame = function( renderHandler = null, updateHandler = null, fps = 30 ) {
 
 		beep8.Core.preflight( "beep8.frame" );
 
-		if ( handler !== null ) {
-			beep8.Utilities.checkFunction( "handler", handler );
+		if ( renderHandler !== null ) {
+			beep8.Utilities.checkFunction( "render handler", renderHandler );
+		}
+
+		if ( updateHandler !== null ) {
+			beep8.Utilities.checkFunction( "update handler", updateHandler );
 		}
 
 		beep8.Utilities.checkNumber( "fps", fps );
 
-		return beep8.Core.setFrameHandler( handler, fps );
+		return beep8.Core.setFrameHandlers( renderHandler, updateHandler, fps );
 
 	}
 

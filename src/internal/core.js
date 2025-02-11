@@ -25,8 +25,11 @@
 
 	let lastFrameTime = null;
 	let initDone = false;
-	let frameHandler = null;
-	let frameHandlerTargetInterval = null;
+	let updateHandler = null;
+	let renderHandler = null;
+	let targetDt = 0;
+	// let frameHandler = null;
+	// let frameHandlerTargetInterval = null;
 	let animFrameRequested = false;
 	let timeToNextFrame = 0;
 	let pendingAsync = null;
@@ -359,22 +362,82 @@
 
 
 	/**
-	 * Set the callback function for the game loop. Will be called targetFps
-	 * times per second.
+	 * Set the update and render callbacks for the game loop.
 	 *
-	 * @param {Function} callback - The function to call.
-	 * @param {number} [targetFps=30] - The target frames per second.
+	 * @param {Function|null} updateCallback - The update function. Optional.
+	 * @param {Function} renderCallback - The render function.
+	 * @param {number} [targetFps=30] - Target frames per second.
 	 * @returns {void}
 	 */
-	beep8.Core.setFrameHandler = function( callback, targetFps = 30 ) {
+	beep8.Core.setFrameHandlers = function( renderCallback = null, updateCallback = null, targetFps = 30 ) {
 
-		frameHandler = callback;
-		frameHandlerTargetInterval = 1.0 / ( targetFps || 30 );
+		updateHandler = updateCallback || ( () => { } );
+		renderHandler = renderCallback || ( () => { } );
+		targetDt = 1 / targetFps;
 		timeToNextFrame = 0;
+		lastFrameTime = beep8.Core.getNow();
+		animFrameRequested = false;
+		window.requestAnimationFrame( beep8.Core.doFrame );
 
-		if ( !animFrameRequested ) {
-			window.requestAnimationFrame( beep8.Core.doFrame );
+	}
+
+
+	/**
+	 * Run the game loop using a refined timestep.
+	 *
+	 * This function calls the update phase as many times as needed
+	 * (capped to prevent spiraling) and then calls the render phase.
+	 *
+	 * @returns {void}
+	 */
+	beep8.Core.doFrame = async function() {
+
+		// Reset frame request flag.
+		animFrameRequested = false;
+
+		// Get current time and compute delta (in seconds).
+		const now = beep8.Core.getNow();
+		let delta = ( now - lastFrameTime ) / 1000;
+		lastFrameTime = now;
+
+		// Cap delta to avoid large time steps.
+		delta = Math.min( delta, 0.05 );
+
+		// Accumulate time.
+		timeToNextFrame += delta;
+
+		// Determine how many update steps to run.
+		let numUpdates = Math.floor( timeToNextFrame / targetDt );
+		const MAX_UPDATES = 10;
+		if ( numUpdates > MAX_UPDATES ) {
+			numUpdates = MAX_UPDATES;
+			// Reset accumulator to prevent spiral of death.
+			timeToNextFrame = 0;
 		}
+
+		// Run fixed update steps.
+		for ( let i = 0; i < numUpdates; i++ ) {
+			if ( updateHandler ) {
+				await updateHandler( targetDt );
+			}
+			if ( beep8.Input && typeof beep8.Input.onEndFrame === 'function' ) {
+				beep8.Input.onEndFrame();
+			}
+		}
+
+		// Retain the fractional remainder for accurate timing.
+		timeToNextFrame %= targetDt;
+
+		// Render phase.
+		if ( renderHandler ) {
+			renderHandler();
+		}
+
+		beep8.Renderer.render();
+
+		// Request the next frame.
+		animFrameRequested = true;
+		window.requestAnimationFrame( beep8.Core.doFrame );
 
 	}
 
@@ -710,65 +773,6 @@
 
 		beep8.Utilities.checkInstanceOf( "screenData", screenData, ImageData );
 		beep8.Core.ctx.putImageData( screenData, 0, 0 );
-
-	}
-
-
-	/**
-	 * Run the game loop.
-	 *
-	 * This function ensures we stay as close to the target frame rate as
-	 * possible.
-	 *
-	 * @returns {void}
-	 */
-	beep8.Core.doFrame = async function() {
-
-		// Flag to track if an animation frame has been requested is reset
-		animFrameRequested = false;
-
-		// Get the current time
-		const now = beep8.Core.getNow();
-
-		// Calculate the time difference between the current and last frame, or use a default value if this is the first frame
-		beep8.Core.deltaTime = lastFrameTime !== null ? 0.001 * ( now - lastFrameTime ) : ( 1 / 60.0 );
-
-		// Cap the delta time to prevent large time steps (e.g., if the browser tab was inactive)
-		beep8.Core.deltaTime = Math.min( beep8.Core.deltaTime, 0.05 );
-
-		// Update the last frame time to the current time
-		lastFrameTime = now;
-
-		// Accumulate the time to the next frame
-		timeToNextFrame += beep8.Core.deltaTime;
-
-		// Initialize the counter for the number of frames processed in this loop
-		let numFramesDone = 0;
-
-		// Process frames while there is a frame handler, the number of processed frames is less than 4, and the accumulated time exceeds the target interval
-		// This helps to catch up with missed frames.
-		while ( frameHandler && numFramesDone < 4 && timeToNextFrame > frameHandlerTargetInterval ) {
-			// Await the frame handler's completion
-			await frameHandler();
-
-			// Call the input system's end frame handler
-			beep8.Input.onEndFrame();
-
-			// Decrease the accumulated time by the target interval
-			timeToNextFrame -= frameHandlerTargetInterval;
-
-			// Increment the count of processed frames
-			++numFramesDone;
-		}
-
-		// Call the render function to update the visuals
-		beep8.Renderer.render();
-
-		// If there is a frame handler, request the next animation frame
-		if ( frameHandler ) {
-			animFrameRequested = true;
-			window.requestAnimationFrame( beep8.Core.doFrame );
-		}
 
 	}
 
