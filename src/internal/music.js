@@ -501,6 +501,8 @@
 		// Merge default options with provided options.
 		const opts = Object.assign( {}, defaultOptions, options );
 
+		beep8.Music.currentSongProperties = opts;
+
 		console.log( opts );
 
 		beep8.Random.setSeed( opts.seed );
