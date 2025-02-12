@@ -1560,6 +1560,9 @@ const beep8 = {};
 			...options,
 		};
 
+		// Setup screenshot taking.
+		beep8.Core.initScreenshot();
+
 		// Initialize the engine asynchronously.
 		beep8.Core.asyncInit( callback );
 
@@ -2203,6 +2206,30 @@ const beep8 = {};
 			Math.round( x ) + 0.5, Math.round( y ) + 0.5,
 			Math.round( width ) - 1, Math.round( height ) - 1
 		);
+	}
+
+
+	/**
+	 * Take a screenshot when the 0 key is pressed.
+	 *
+	 * @returns {void}
+	 */
+	beep8.Core.initScreenshot = function() {
+
+		if ( beep8.Core.initialized() ) {
+			return;
+		}
+
+		// Take a screenshot when the 0 key is pressed.
+		document.addEventListener(
+			'keyup',
+			( e ) => {
+				if ( e.key === '0' ) {
+					beep8.Core.downloadScreenshot();
+				}
+			}
+		);
+
 	}
 
 
