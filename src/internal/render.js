@@ -12,6 +12,10 @@
 	const scale_times = 0.4; // Multiplicative scaling for bloom.
 	let canvasImageData = null; // Stores image data for the canvas.
 
+	// Effects.
+	let screenshakeDuration = 0;
+
+
 	/**
 	 * Initialization function that precomputes bloom and scanline ranges.
 	 *
@@ -37,7 +41,7 @@
 			phosphor_bloom[ i ] = ( scale_times * ( i / 255 ) ** ( 1 / 2.2 ) ) + scale_add;
 		}
 
-	};
+	}
 
 
 	/**
@@ -53,6 +57,17 @@
 
 		beep8.Core.realCtx.imageSmoothingEnabled = false;
 
+		// Canvas Drawing location.
+		let x = 0;
+		let y = 0;
+
+		// Do screenshake.
+		if ( screenshakeDuration > 0 ) {
+			x = Math.min( 10, Math.round( ( Math.random() * screenshakeDuration ) - ( screenshakeDuration / 2 ) ) );
+			y = Math.min( 10, Math.round( ( Math.random() * screenshakeDuration ) - ( screenshakeDuration / 2 ) ) );
+			screenshakeDuration -= 1;
+		}
+
 		beep8.Core.realCtx.clearRect(
 			0, 0,
 			beep8.Core.realCanvas.width, beep8.Core.realCanvas.height
@@ -60,7 +75,7 @@
 
 		beep8.Core.realCtx.drawImage(
 			beep8.Core.canvas,
-			0, 0,
+			x, y,
 			beep8.Core.realCanvas.width, beep8.Core.realCanvas.height
 		);
 
@@ -73,6 +88,19 @@
 		);
 
 		beep8.Renderer.applyCrtFilter();
+
+	}
+
+
+	/**
+	 * Triggers the screenshake effect.
+	 *
+	 * @param {number} duration - The duration of the screenshake effect in ms.
+	 * @returns {void}
+	 */
+	beep8.Renderer.shakeScreen = function( duration ) {
+
+		screenshakeDuration = duration;
 
 	}
 
