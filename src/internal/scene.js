@@ -22,18 +22,17 @@
 	 * Adds a new scene to the scene manager.
 	 *
 	 * @param {string} name - The name of the scene.
-	 * @param {Function} update - The update function for the scene, which will be passed to `beep8.frame`.
+	 * @param {object} gameObject - An object that includes init, update, and
+	 * render methods as well as other properties for the scene. If update and
+	 * render are set then these will be passed to `beep8.frame`.
+	 * @param {number} frameRate - The frame rate at which to update and render
 	 */
-	beep8.Scenes.addScene = function( name, update = null, render = null, frameRate = 30 ) {
+	beep8.Scenes.add = function( name, gameObject = null, frameRate = 30 ) {
 
 		beep8.Utilities.checkString( 'name', name );
 
-		if ( update !== null ) {
-			beep8.Utilities.checkFunction( 'update', update );
-		}
-
-		if ( render !== null ) {
-			beep8.Utilities.checkFunction( 'render', render );
+		if ( gameObject !== null ) {
+			beep8.Utilities.checkObject( 'gameObject', gameObject );
 		}
 
 		beep8.Utilities.checkInt( 'frameRate', frameRate );
@@ -52,7 +51,7 @@
 	 *
 	 * @param {string} name - The name of the scene to switch to.
 	 */
-	beep8.Scenes.switchScene = function( name ) {
+	beep8.Scenes.setActive = function( name ) {
 
 		beep8.Utilities.checkString( 'name', name );
 
@@ -60,9 +59,24 @@
 			beep8.Utilities.fatal( `Scene "${name}" does not exist.` );
 		}
 
+		// Stop the current game loop.
+		beep8.Core.stopFrame();
+
+		// Store the active scene.
 		activeScene = name;
 
-		beep8.frame( beep8.scenes[ name ].update, beep8.scenes[ name ].render, beep8.scenes[ name ].frameRate );
+		// Get the scene object.
+		const currentScene = sceneList[ name ];
+
+		// If there's an init method, call it.
+		if ( currentScene.init ) {
+			currentScene.init();
+		}
+
+		// If there's an update or render method, call frame to create a synchronous game.
+		if ( currentScene.update || currentScene.render ) {
+			beep8.frame( currentScene.render, currentScene.update, currentScene.frameRate );
+		}
 
 	};
 
@@ -72,7 +86,7 @@
 	 *
 	 * @returns {Object|null} The active scene object, or null if no scene is active.
 	 */
-	beep8.Scenes.getActiveScene = function() {
+	beep8.Scenes.getActive = function() {
 
 		return activeScene;
 
