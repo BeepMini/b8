@@ -28,9 +28,6 @@
 	let updateHandler = null;
 	let renderHandler = null;
 	let targetDt = 0;
-	// let frameHandler = null;
-	// let frameHandlerTargetInterval = null;
-	let animFrameRequested = false;
 	let timeToNextFrame = 0;
 	let pendingAsync = null;
 
@@ -364,6 +361,10 @@
 	}
 
 
+	let running = false;
+	let animationFrameId = null;
+
+
 	/**
 	 * Set the update and render callbacks for the game loop.
 	 *
@@ -379,14 +380,15 @@
 		targetDt = 1 / targetFps;
 		timeToNextFrame = 0;
 		lastFrameTime = beep8.Core.getNow();
-		animFrameRequested = false;
-		window.requestAnimationFrame( beep8.Core.doFrame );
+
+		running = true;
+		animationFrameId = window.requestAnimationFrame( beep8.Core.doFrame );
 
 	}
 
 
 	/**
-	 * Run the game loop using a refined timestep.
+	 * Get the current state of the running flag.
 	 *
 	 * This function calls the update phase as many times as needed
 	 * (capped to prevent spiraling) and then calls the render phase.
@@ -395,8 +397,8 @@
 	 */
 	beep8.Core.doFrame = async function() {
 
-		// Reset frame request flag.
-		animFrameRequested = false;
+		// Stop if not running.
+		if ( !running ) return;
 
 		// Get current time and compute delta (in seconds).
 		const now = beep8.Core.getNow();
@@ -438,9 +440,23 @@
 
 		beep8.Renderer.render();
 
-		// Request the next frame.
-		animFrameRequested = true;
-		window.requestAnimationFrame( beep8.Core.doFrame );
+		animationFrameId = window.requestAnimationFrame( beep8.Core.doFrame );
+
+	}
+
+
+	/**
+	 * Stop the game loop.
+	 *
+	 * @returns {void}
+	 */
+	beep8.Core.stopFrame = function() {
+
+		running = false;
+		if ( animationFrameId ) {
+			window.cancelAnimationFrame( animationFrameId );
+			animationFrameId = null;
+		}
 
 	}
 
