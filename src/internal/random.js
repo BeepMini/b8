@@ -111,7 +111,10 @@
 
 		beep8.Utilities.checkArray( "array", array );
 
-		return array.length > 0 ? array[ beep8.Random.int( 0, array.length - 1 ) ] : null;
+		// Pick a random number from 0 to array.length.
+		const index = beep8.Random.int( 0, array.length - 1 );
+
+		return array[ index ];
 
 	}
 
