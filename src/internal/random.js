@@ -88,11 +88,15 @@
 		beep8.Utilities.checkInt( "min", min );
 		beep8.Utilities.checkInt( "max", max );
 
+		// Reverse max and min.
 		if ( max <= min ) {
-			return min;
+			const tmp = max;
+			max = min;
+			min = tmp;
 		}
 
-		return Math.floor( beep8.Random.range( min, max ) );
+		const randomValue = beep8.Random.range( min, max );
+		return Math.round( randomValue );
 
 	}
 
