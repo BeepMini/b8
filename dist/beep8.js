@@ -1531,9 +1531,6 @@ const beep8 = {};
 	let updateHandler = null;
 	let renderHandler = null;
 	let targetDt = 0;
-	// let frameHandler = null;
-	// let frameHandlerTargetInterval = null;
-	let animFrameRequested = false;
 	let timeToNextFrame = 0;
 	let pendingAsync = null;
 
@@ -1867,6 +1864,10 @@ const beep8 = {};
 	}
 
 
+	let running = false;
+	let animationFrameId = null;
+
+
 	/**
 	 * Set the update and render callbacks for the game loop.
 	 *
@@ -1882,14 +1883,15 @@ const beep8 = {};
 		targetDt = 1 / targetFps;
 		timeToNextFrame = 0;
 		lastFrameTime = beep8.Core.getNow();
-		animFrameRequested = false;
-		window.requestAnimationFrame( beep8.Core.doFrame );
+
+		running = true;
+		animationFrameId = window.requestAnimationFrame( beep8.Core.doFrame );
 
 	}
 
 
 	/**
-	 * Run the game loop using a refined timestep.
+	 * Get the current state of the running flag.
 	 *
 	 * This function calls the update phase as many times as needed
 	 * (capped to prevent spiraling) and then calls the render phase.
@@ -1898,8 +1900,8 @@ const beep8 = {};
 	 */
 	beep8.Core.doFrame = async function() {
 
-		// Reset frame request flag.
-		animFrameRequested = false;
+		// Stop if not running.
+		if ( !running ) return;
 
 		// Get current time and compute delta (in seconds).
 		const now = beep8.Core.getNow();
@@ -1941,9 +1943,23 @@ const beep8 = {};
 
 		beep8.Renderer.render();
 
-		// Request the next frame.
-		animFrameRequested = true;
-		window.requestAnimationFrame( beep8.Core.doFrame );
+		animationFrameId = window.requestAnimationFrame( beep8.Core.doFrame );
+
+	}
+
+
+	/**
+	 * Stop the game loop.
+	 *
+	 * @returns {void}
+	 */
+	beep8.Core.stopFrame = function() {
+
+		running = false;
+		if ( animationFrameId ) {
+			window.cancelAnimationFrame( animationFrameId );
+			animationFrameId = null;
+		}
 
 	}
 
@@ -3898,11 +3914,15 @@ const beep8 = {};
 		beep8.Utilities.checkInt( "min", min );
 		beep8.Utilities.checkInt( "max", max );
 
+		// Reverse max and min.
 		if ( max <= min ) {
-			return min;
+			const tmp = max;
+			max = min;
+			min = tmp;
 		}
 
-		return Math.floor( beep8.Random.range( min, max ) );
+		const randomValue = beep8.Random.range( min, max );
+		return Math.round( randomValue );
 
 	}
 
@@ -3917,7 +3937,10 @@ const beep8 = {};
 
 		beep8.Utilities.checkArray( "array", array );
 
-		return array.length > 0 ? array[ beep8.Random.int( 0, array.length - 1 ) ] : null;
+		// Pick a random number from 0 to array.length.
+		const index = beep8.Random.int( 0, array.length - 1 );
+
+		return array[ index ];
 
 	}
 
@@ -3981,6 +4004,10 @@ const beep8 = {};
 	const scale_times = 0.4; // Multiplicative scaling for bloom.
 	let canvasImageData = null; // Stores image data for the canvas.
 
+	// Effects.
+	let screenshakeDuration = 0;
+
+
 	/**
 	 * Initialization function that precomputes bloom and scanline ranges.
 	 *
@@ -4006,7 +4033,7 @@ const beep8 = {};
 			phosphor_bloom[ i ] = ( scale_times * ( i / 255 ) ** ( 1 / 2.2 ) ) + scale_add;
 		}
 
-	};
+	}
 
 
 	/**
@@ -4022,6 +4049,17 @@ const beep8 = {};
 
 		beep8.Core.realCtx.imageSmoothingEnabled = false;
 
+		// Canvas Drawing location.
+		let x = 0;
+		let y = 0;
+
+		// Do screenshake.
+		if ( screenshakeDuration > 0 ) {
+			x = Math.min( 10, Math.round( ( Math.random() * screenshakeDuration ) - ( screenshakeDuration / 2 ) ) );
+			y = Math.min( 10, Math.round( ( Math.random() * screenshakeDuration ) - ( screenshakeDuration / 2 ) ) );
+			screenshakeDuration -= 1;
+		}
+
 		beep8.Core.realCtx.clearRect(
 			0, 0,
 			beep8.Core.realCanvas.width, beep8.Core.realCanvas.height
@@ -4029,7 +4067,7 @@ const beep8 = {};
 
 		beep8.Core.realCtx.drawImage(
 			beep8.Core.canvas,
-			0, 0,
+			x, y,
 			beep8.Core.realCanvas.width, beep8.Core.realCanvas.height
 		);
 
@@ -4042,6 +4080,19 @@ const beep8 = {};
 		);
 
 		beep8.Renderer.applyCrtFilter();
+
+	}
+
+
+	/**
+	 * Triggers the screenshake effect.
+	 *
+	 * @param {number} duration - The duration of the screenshake effect in ms.
+	 * @returns {void}
+	 */
+	beep8.Renderer.shakeScreen = function( duration ) {
+
+		screenshakeDuration = duration;
 
 	}
 
@@ -4285,28 +4336,33 @@ const beep8 = {};
 	 */
 	let activeScene = null;
 
+	const sceneList = {};
+
 
 	/**
 	 * Adds a new scene to the scene manager.
 	 *
 	 * @param {string} name - The name of the scene.
-	 * @param {Function} update - The update function for the scene, which will be passed to `beep8.frame`.
+	 * @param {object} gameObject - An object that includes init, update, and
+	 * render methods as well as other properties for the scene. If update and
+	 * render are set then these will be passed to `beep8.frame`.
+	 * @param {number} frameRate - The frame rate at which to update and render
 	 */
-	beep8.Scenes.addScene = function( name, update = null, render = null, frameRate = 30 ) {
+	beep8.Scenes.add = function( name, gameObject = null, frameRate = 30 ) {
 
 		beep8.Utilities.checkString( 'name', name );
 
-		if ( update !== null ) {
-			beep8.Utilities.checkFunction( 'update', update );
-		}
-
-		if ( render !== null ) {
-			beep8.Utilities.checkFunction( 'render', render );
+		if ( gameObject !== null ) {
+			beep8.Utilities.checkObject( 'gameObject', gameObject );
 		}
 
 		beep8.Utilities.checkInt( 'frameRate', frameRate );
 
-		beep8.scenes[ name ] = { update, render, frameRate };
+		const init = gameObject.init || null;
+		const update = gameObject.update || null;
+		const render = gameObject.render || null;
+
+		sceneList[ name ] = { init, update, render, frameRate };
 
 	};
 
@@ -4316,17 +4372,32 @@ const beep8 = {};
 	 *
 	 * @param {string} name - The name of the scene to switch to.
 	 */
-	beep8.Scenes.switchScene = function( name ) {
+	beep8.Scenes.setActive = function( name ) {
 
 		beep8.Utilities.checkString( 'name', name );
 
-		if ( !beep8.scenes[ name ] ) {
+		if ( !sceneList[ name ] ) {
 			beep8.Utilities.fatal( `Scene "${name}" does not exist.` );
 		}
 
+		// Stop the current game loop.
+		beep8.Core.stopFrame();
+
+		// Store the active scene.
 		activeScene = name;
 
-		beep8.frame( beep8.scenes[ name ].update, beep8.scenes[ name ].render, beep8.scenes[ name ].frameRate );
+		// Get the scene object.
+		const currentScene = sceneList[ name ];
+
+		// If there's an init method, call it.
+		if ( currentScene.init ) {
+			currentScene.init();
+		}
+
+		// If there's an update or render method, call frame to create a synchronous game.
+		if ( currentScene.update || currentScene.render ) {
+			beep8.frame( currentScene.render, currentScene.update, currentScene.frameRate );
+		}
 
 	};
 
@@ -4336,9 +4407,21 @@ const beep8 = {};
 	 *
 	 * @returns {Object|null} The active scene object, or null if no scene is active.
 	 */
-	beep8.Scenes.getActiveScene = function() {
+	beep8.Scenes.getActive = function() {
 
 		return activeScene;
+
+	};
+
+
+	/**
+	 * Gets all scenes.
+	 *
+	 * @returns {Object} All scenes.
+	 */
+	beep8.Scenes.getAll = function() {
+
+		return sceneList;
 
 	};
 
