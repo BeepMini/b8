@@ -15,6 +15,8 @@
 	 */
 	let activeScene = null;
 
+	const sceneList = {};
+
 
 	/**
 	 * Adds a new scene to the scene manager.
@@ -36,7 +38,11 @@
 
 		beep8.Utilities.checkInt( 'frameRate', frameRate );
 
-		beep8.scenes[ name ] = { update, render, frameRate };
+		const init = gameObject.init || null;
+		const update = gameObject.update || null;
+		const render = gameObject.render || null;
+
+		sceneList[ name ] = { init, update, render, frameRate };
 
 	};
 
@@ -50,7 +56,7 @@
 
 		beep8.Utilities.checkString( 'name', name );
 
-		if ( !beep8.scenes[ name ] ) {
+		if ( !sceneList[ name ] ) {
 			beep8.Utilities.fatal( `Scene "${name}" does not exist.` );
 		}
 
@@ -69,6 +75,18 @@
 	beep8.Scenes.getActiveScene = function() {
 
 		return activeScene;
+
+	};
+
+
+	/**
+	 * Gets all scenes.
+	 *
+	 * @returns {Object} All scenes.
+	 */
+	beep8.Scenes.getAll = function() {
+
+		return sceneList;
 
 	};
 
