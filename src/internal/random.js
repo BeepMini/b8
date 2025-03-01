@@ -120,6 +120,24 @@
 
 
 	/**
+	 * Returns a randomly picked element of the given array, with a weighted probability.
+	 *
+	 * @param {Array} array - The array to pick from, with each element repeated a number of times.
+	 * @param {number} decayFactor - The decay factor for the weighted array.
+	 * @returns {any} A randomly picked element of the array, or null if the array is empty.
+	 */
+	beep8.Random.pickWeighted = function( array, decayFactor = 0.2 ) {
+
+		beep8.Utilities.checkArray( "array", array );
+
+		const weightedArray = beep8.Random.weightedArray( array, decayFactor );
+
+		return beep8.Random.pick( weightedArray );
+
+	}
+
+
+	/**
 	 * Shuffles an array, randomly reordering the elements.
 	 * Does not modify the original array. Returns the shuffled array.
 	 *
@@ -155,6 +173,32 @@
 		beep8.Utilities.checkNumber( "probability", probability );
 
 		return beep8.Random.num() < ( probability / 100 );
+
+	}
+
+
+	/**
+	 * Returns a weighted array of elements.
+	 * The array uses a decay factor to determine the number of times each element should be repeated.
+	 *
+	 * @param {Array} array - The array to weight.
+	 * @param {number} decayFactor - The decay factor for the weighted array.
+	 * @returns {Array} The weighted array.
+	 */
+	beep8.Random.weightedArray = function( array, decayFactor = 0.2 ) {
+
+		beep8.Utilities.checkArray( "array", array );
+
+		const weightedArray = [];
+
+		for ( let i = 0; i < array.length; i++ ) {
+			const count = Math.pow( decayFactor, i ) * 10;
+			for ( let j = 0; j < count; j++ ) {
+				weightedArray.push( array[ i ] );
+			}
+		}
+
+		return weightedArray;
 
 	}
 
