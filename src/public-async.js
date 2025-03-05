@@ -127,43 +127,21 @@
 	 * @param {number} [delay=0.05] - The delay between characters in seconds.
 	 * @returns {Promise<void>} Resolves after the text is printed.
 	 */
-	beep8.Async.typewriter = async function( text, wrapWidth = -1, delay = 0.05 ) {
+	beep8.Async.typewriter = async function( text, wrapWidth = -1, delay = 0.05, fontId = null, ) {
 
 		beep8.Core.preflight( "beep8.Async.typewriter" );
 
 		beep8.Utilities.checkString( "text", text );
+		beep8.Utilities.checkNumber( "wrapWidth", wrapWidth );
 		beep8.Utilities.checkNumber( "delay", delay );
 
-		const startCol = beep8.col();
-		const startRow = beep8.row();
-
-		text = beep8.TextRenderer.wrapText( text, wrapWidth );
-
-		for ( let i = 0; i <= text.length; i++ ) {
-
-			// If this is the start of an escape sequence, skip to the end of it.
-			if (
-				beep8.CONFIG.PRINT_ESCAPE_START &&
-				text.substring( i, i + beep8.CONFIG.PRINT_ESCAPE_START.length ) === beep8.CONFIG.PRINT_ESCAPE_START
-			) {
-
-				const endPos = text.indexOf( beep8.CONFIG.PRINT_ESCAPE_END, i + beep8.CONFIG.PRINT_ESCAPE_START.length );
-
-				if ( endPos >= 0 ) {
-					i = endPos + beep8.CONFIG.PRINT_ESCAPE_END.length;
-				}
-
-			}
-
-			const c = text.charCodeAt( i );
-			beep8.locate( startCol, startRow );
-			beep8.print( text.substring( 0, i ) );
-
-			if ( c !== 32 ) {
-				await beep8.Async.wait( delay );
-			}
-
+		let font = fontId;
+		if ( null !== font ) {
+			beep8.Utilities.checkString( "fontId", fontId );
+			font = beep8.TextRenderer.getFontByName( fontId );
 		}
+
+		await beep8.TextRenderer.printTypewriter( text, wrapWidth, delay, font );
 
 	}
 
