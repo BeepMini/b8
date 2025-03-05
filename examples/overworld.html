@@ -71,7 +71,7 @@
 			"T": { color: 15, char: 362, solid: false },		// town.
 			"O": { color: 0, char: 0x20, solid: false },		//
 			"#": { color: 7, char: 334, solid: true },			// wall.
-			".": { color: 1, char: 85, solid: false },			// stones.
+			".": { color: 1, char: 346, solid: false },			// stone path.
 			"+": { color: 6, char: 234, solid: false },			// doorway.
 			"]": { color: 10, char: 74, solid: true },			// force field.
 
@@ -112,7 +112,7 @@
 				animation = 'move-left';
 			}
 
-			beep8.drawActor( 0, animation );
+			beep8.drawActor( 14, animation );
 
 		}
 
@@ -124,6 +124,24 @@
 				beep8.locate( 0, y );
 				for ( let x = 0; x < MAP_WIDTH; x++ ) {
 					const tile = TILES[ map[ y ][ x ] ];
+
+					if ( [ '0', '1', '2', '3' ].includes( map[ y ][ x ] ) ) {
+						beep8.color( 15, 0 );
+						beep8.print( ' ' ); // Increment x position so there are no gaps.
+
+						// Save current cursor position
+						const cursorCol = beep8.Core.drawState.cursorCol;
+						const cursorRow = beep8.Core.drawState.cursorRow;
+
+						// Position the actor
+						beep8.locate( cursorCol - 1, cursorRow );
+						beep8.drawActor( parseInt( map[ y ][ x ] ), 'idle' ); // draw character.
+
+						// Restore cursor position
+						beep8.locate( cursorCol, cursorRow );
+						continue;
+					}
+
 					if ( tile ) {
 						beep8.color(
 							tile.color,
@@ -136,8 +154,8 @@
 			beep8.locate( 1, 22 );
 			beep8.color( 8, 0 );
 			beep8.print(
-				"ROBIN    HP 34/34   Gold:72\n" +
-				"Paladin Lvl 6      XP:18,390" );
+				"ROBIN  HP 34/34  Gold:72\n" +
+				"Paladin Lvl 6  XP:18,390" );
 		}
 
 		async function movePlayer() {
@@ -171,7 +189,9 @@
 		function goToMap( mapName, x, y ) { curMap = mapName, px = x, py = y; }
 
 		async function randomGreeting() {
+
 			await beep8.Async.dialog( "VILLAGER:\n" + GREETINGS[ Math.floor( Math.random() * GREETINGS.length ) ] );
+
 		}
 
 		window.addEventListener( "load", () => beep8.init( main ) );
