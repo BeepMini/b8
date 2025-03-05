@@ -234,6 +234,24 @@
 
 
 	/**
+	 * Waits for a given number of seconds and then continues execution.
+	 *
+	 * @param {number} seconds - The duration to wait.
+	 * @returns {Promise<void>} Resolves after the specified time.
+	 */
+	beep8.Async.wait = async function( seconds ) {
+
+		beep8.Core.preflight( "beep8.Async.wait" );
+
+		beep8.Utilities.checkNumber( "seconds", seconds );
+		beep8.Renderer.render();
+
+		return await new Promise( resolve => setTimeout( resolve, Math.round( seconds * 1000 ) ) );
+
+	}
+
+
+	/**
 	 * Waits for the user to press a key to continue.
 	 *
 	 * @returns {Promise<void>} Resolves when the user presses a key.
