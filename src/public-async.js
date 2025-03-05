@@ -102,20 +102,19 @@
 	}
 
 
-	/**
-	 * Waits for a given number of seconds.
-	 *
-	 * @param {number} seconds - The duration to wait.
-	 * @returns {Promise<void>} Resolves after the specified time.
-	 */
-	beep8.Async.wait = async function( seconds ) {
+	beep8.Async.dialogTypewriter = async function( prompt, choices = [ "OK" ], wrapWidth = -1, delay = 0.05 ) {
 
-		beep8.Core.preflight( "beep8.Async.wait" );
+		beep8.Core.preflight( "beep8.Async.dialogTypewriter" );
 
-		beep8.Utilities.checkNumber( "seconds", seconds );
-		beep8.Renderer.render();
+		beep8.Utilities.checkString( "prompt", prompt );
+		beep8.Utilities.checkArray( "choices", choices );
+		beep8.Utilities.checkNumber( "delay", delay );
 
-		return await new Promise( resolve => setTimeout( resolve, Math.round( seconds * 1000 ) ) );
+		if ( wrapWidth > 0 ) {
+			prompt = beep8.TextRenderer.wrapText( prompt, wrapWidth );
+		}
+
+		return await beep8.Async.menu( choices, { prompt, typewriter: true } );
 
 	}
 
@@ -242,5 +241,6 @@
 		}
 
 	}
+
 
 } )( beep8 || ( beep8 = {} ) );
