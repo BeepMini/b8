@@ -24,6 +24,7 @@
 	 * - options.padding - The padding around the prompt and choices.
 	 * - options.selIndex - The index of the initially selected choice.
 	 * - options.cancelable - Whether the menu can be canceled with the Escape key.
+	 * - options.typewriter - display the prompt as a typewriter effect.
 	 *
 	 * @param {string[]} choices - The choices to display.
 	 * @param {object} [options] - Options for the menu.
@@ -49,6 +50,7 @@
 				padding: 1,
 				selIndex: 0,
 				cancelable: false,
+				typewriter: false
 			},
 			options
 		);
@@ -98,6 +100,7 @@
 				beep8.Core.drawState.cursorCol = startCol + Math.round( ( totalCols - t.length ) / 2 );
 				beep8.TextRenderer.print( t );
 			}
+
 		}
 
 		if ( options.prompt ) {
@@ -105,7 +108,12 @@
 				( startCol + border01 + options.padding ) :
 				( startCol + Math.round( ( totalCols - promptSize.cols ) / 2 ) );
 			beep8.Core.drawState.cursorRow = startRow + border01 + options.padding;
-			beep8.TextRenderer.print( options.prompt );
+
+			if ( options.typewriter ) {
+				await beep8.Async.typewriter( options.prompt );
+			} else {
+				beep8.TextRenderer.print( options.prompt );
+			}
 		}
 
 		// TODO: save the screen image before showing the menu and restore it later.
