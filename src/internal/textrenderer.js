@@ -188,6 +188,7 @@
 
 		beep8.TextRenderer.printFont_ = font || beep8.TextRenderer.curFont_;
 
+		// Property validation.
 		beep8.Utilities.checkString( "text", text );
 		beep8.Utilities.checkNumber( "wrapWidth", wrapWidth );
 		if ( font !== null ) beep8.Utilities.checkObject( "font", font );
@@ -244,6 +245,55 @@
 		beep8.Core.drawState.bgColor = beep8.TextRenderer.origBgColor_;
 
 		beep8.Renderer.markDirty();
+
+	}
+
+
+	/**
+	 * Prints text character by character, as in a typewriter.
+	 *
+	 * @param {string} text - The text to print.
+	 * @param {number} [wrapWidth=-1] - The width to wrap text at.
+	 * @param {number} [delay=0.05] - The delay between characters in seconds.
+	 * @param {beep8.TextRendererFont} [font=null] - The font to use.
+	 * @returns {Promise<void>} Resolves after the text is printed.
+	 */
+	beep8.TextRenderer.printTypewriter = async function( text, wrapWidth = -1, delay = 0.05, font = null ) {
+
+		beep8.Utilities.checkString( "text", text );
+		beep8.Utilities.checkNumber( "wrapWidth", wrapWidth );
+		beep8.Utilities.checkNumber( "delay", delay );
+
+		const startCol = beep8.col();
+		const startRow = beep8.row();
+
+		text = beep8.TextRenderer.wrapText( text, wrapWidth );
+
+		for ( let i = 0; i <= text.length; i++ ) {
+
+			// If this is the start of an escape sequence, skip to the end of it.
+			if (
+				beep8.CONFIG.PRINT_ESCAPE_START &&
+				text.substring( i, i + beep8.CONFIG.PRINT_ESCAPE_START.length ) === beep8.CONFIG.PRINT_ESCAPE_START
+			) {
+
+				const endPos = text.indexOf( beep8.CONFIG.PRINT_ESCAPE_END, i + beep8.CONFIG.PRINT_ESCAPE_START.length );
+
+				if ( endPos >= 0 ) {
+					i = endPos + beep8.CONFIG.PRINT_ESCAPE_END.length;
+				}
+
+			}
+
+			const c = text.charCodeAt( i );
+			beep8.Core.setCursorLocation( startCol, startRow );
+			beep8.TextRenderer.print( text.substring( 0, i ), font );
+
+			if ( c !== 32 ) {
+				await beep8.Async.wait( delay );
+			}
+
+		}
 
 	}
 
