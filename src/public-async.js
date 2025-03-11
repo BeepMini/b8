@@ -8,7 +8,6 @@
 	 * const k = await beep8.Async.key();
 	 * console.log("The user pressed " + k);
 	 */
-
 	beep8.Async = {};
 
 
@@ -102,6 +101,15 @@
 	}
 
 
+	/**
+	 * Displays a dialog with the given prompt and choices, showing the text character by character.
+	 *
+	 * @param {string} prompt - The text to show.
+	 * @param {string[]} [choices=["OK"]] - The choices to present to the user.
+	 * @param {number} [wrapWidth=-1] - The width at which to wrap the text.
+	 * @param {number} [delay=0.05] - The delay between characters in seconds.
+	 * @returns {Promise<number>} The index of the selected item.
+	 */
 	beep8.Async.dialogTypewriter = async function( prompt, choices = [ "OK" ], wrapWidth = -1, delay = 0.05 ) {
 
 		beep8.Core.preflight( "beep8.Async.dialogTypewriter" );
