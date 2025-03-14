@@ -36,8 +36,8 @@
 	 */
 	const VJOY_CSS = `
 :root {
-	--vjoy-button-color: #444;
-	--vjoy-button-dpad-size: 40vw;
+	--b8-vjoy-button-color: #333;
+	--b8-vjoy-button-dpad-size: 40vw;
 }
 
 .vjoy-container,
@@ -84,18 +84,20 @@ gap: 5vw;
 	flex-direction: row;
 	align-items: center;
 	justify-content: center;
-	background: #444;
+	background: var(--b8-vjoy-button-color) !important;
 	border: none;
 	font: bold 14px monospace;
-	color: #888;
+	color: #999 !important;
 	user-select: none;
 	touch-callout: none;
 	-webkit-user-select: none;
 	-webkit-touch-callout: none;
+	text-shadow: 0 -2px 0 black;
 }
+
 .vjoy-button:active,
 .vjoy-button:active {
-	background: #888;
+	background: black;
 }
 
 #vjoy-button-up {
@@ -121,7 +123,7 @@ gap: 5vw;
 #vjoy-button-center {
 	grid-column: 2;
 	grid-row: 2;
-	background: #444;
+	background: var(--b8-vjoy-button-color);
 }
 
 #vjoy-button-pri {
