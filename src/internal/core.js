@@ -381,7 +381,14 @@
 		timeToNextFrame = 0;
 		lastFrameTime = beep8.Core.getNow();
 
+		// Cancel current animation frame if running.
+		if ( animationFrameId ) {
+			window.cancelAnimationFrame( animationFrameId );
+			animationFrameId = null;
+		}
+
 		running = true;
+
 		animationFrameId = window.requestAnimationFrame( beep8.Core.doFrame );
 
 	}
@@ -423,7 +430,7 @@
 		// Run fixed update steps.
 		for ( let i = 0; i < numUpdates; i++ ) {
 			if ( updateHandler ) {
-				await updateHandler( targetDt );
+				updateHandler( targetDt );
 			}
 			if ( beep8.Input && typeof beep8.Input.onEndFrame === 'function' ) {
 				beep8.Input.onEndFrame();
@@ -433,7 +440,7 @@
 		// Retain the fractional remainder for accurate timing.
 		timeToNextFrame %= targetDt;
 
-		// Render phase.
+		// if pending async then skip render.
 		if ( renderHandler ) {
 			renderHandler();
 		}
@@ -687,7 +694,6 @@
 			Math.round( x ) + halfLineWidth, Math.round( y ) + halfLineWidth,
 			Math.round( width ) - lineWidth, Math.round( height ) - lineWidth
 		);
-
 
 		// Restore properties.
 		beep8.Core.ctx.strokeStyle = oldStrokeStyle;
