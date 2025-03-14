@@ -40,6 +40,24 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+/**
+ * An example project structure.
+ *
+ * const playGame = {
+ *   init: () => { }
+ *   update: async ( dt ) => { }
+ *   render: () => { }
+ * }
+ *
+ * window.addEventListener( "load", () => {
+ *   beep8.init( async () => {
+ *     // A function to run after everything loads.
+ *     beep8.Scene.add( 'game', playGame, 30 );
+ *     beep8.Scene.set( 'game' );
+ *   } );
+ * } );
+ */
+
 const beep8 = {};
 
 
