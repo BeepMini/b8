@@ -222,6 +222,8 @@
 	 * This function checks if the engine has crashed, if the initAsync() method
 	 * has been called, and if there is a pending asynchronous operation.
 	 *
+	 * This should be called at the start of any async operation.
+	 *
 	 * @param {string} apiMethod - The name of the API method being called.
 	 * @returns {void}
 	 */
