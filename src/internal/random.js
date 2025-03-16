@@ -46,6 +46,18 @@
 
 
 	/**
+	 * Returns the seed for the random number generator.
+	 *
+	 * @returns {number} The seed for the random number generator.
+	 */
+	beep8.Random.getSeed = function() {
+
+		return randomSeed;
+
+	}
+
+
+	/**
 	 * Returns a random number between 0 and 1.
 	 *
 	 * @returns {number} A random number between 0 and 1.

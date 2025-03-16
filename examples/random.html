@@ -24,6 +24,7 @@
 			gap: 10px;
 		}
 
+		label,
 		button {
 			padding: 10px 20px;
 			font-size: 20px;
@@ -39,6 +40,7 @@
 	<div class="interface">
 		<p>Reproducible random numbers based upon a seed.</p>
 		<textarea style="width:100%" rows="10" cols="10"></textarea>
+		<label>Seed:</label>
 		<input type="number" id="seed" value="100" />
 		<button>Generate</button>
 	</div>
@@ -52,6 +54,7 @@
 		const seed = document.querySelector( '#seed' ).value;
 
 		beep8.Random.setSeed( seed );
+		console.log( seed, beep8.Random.getSeed() );
 
 		let textareaContent = '';
 		for ( let i = 0; i < 10; i++ ) {
