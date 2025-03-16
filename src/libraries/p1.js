@@ -19,7 +19,7 @@
 	let loopDuration = 0; // Duration (in seconds) of one full loop.
 	const lookaheadTime = 0.5; // Seconds to schedule ahead.
 	const schedulerIntervalMs = 1000 * ( lookaheadTime - 0.1 ); // Scheduler check interval.
-	const volumeMultiplier = 0.1; // Volume multiplier.
+	const volumeMultiplier = 0.2; // Volume multiplier.
 
 	// iOS audio unlock flag.
 	let unlocked = false;
@@ -43,58 +43,59 @@
 		) * volumeMultiplier;
 	};
 
+	const piano2WaveForm = ( x ) => {
+		return ( Math.sin( x * 6.28 ) * Math.sin( x * 3.14 ) ) * volumeMultiplier;
+	};
+
+	// Sine waveform
+	const sineWaveform = ( x ) => {
+		return Math.sin( 2 * Math.PI * x ) * volumeMultiplier;
+	};
+
+	// Square waveform
+	const squareWaveform = ( x ) => {
+		return ( Math.sin( 2 * Math.PI * x ) >= 0 ? 1 : -1 ) * volumeMultiplier;
+	};
+
+	// Sawtooth waveform
+	const sawtoothWaveform = ( x ) => {
+		let t = x - Math.floor( x );
+		return ( 2 * t - 1 ) * volumeMultiplier;
+	};
+
+	// Triangle waveform
+	const triangleWaveform = ( x ) => {
+		let t = x - Math.floor( x );
+		return ( 2 * Math.abs( 2 * t - 1 ) - 1 ) * volumeMultiplier;
+	};
+
 	// Drum: a simple noise burst.
 	const drumWaveform = ( x ) => {
 		return ( ( Math.random() * 2 - 1 ) * Math.exp( -x / 10 ) ) * volumeMultiplier;
 	};
 
-	const cymbalWaveform = ( x ) => {
-		return ( 1 * Math.sin( x * 2 ) + 0.3 * ( Math.random() - 0.5 ) ) * Math.exp( -x / 15 ) * volumeMultiplier;
-	};
-
-	// Guitar: a simple modulated sine (not a true Karplus–Strong).
-	const guitarWaveform = ( x ) => {
-		return ( Math.sin( x * 6.28 ) * Math.sin( x * 3.14 ) ) * volumeMultiplier;
-	};
-
-	// Sawtooth waveform.
-	const sawtoothWaveform = ( x ) => {
-		let rad = x * 6.28;
-		let phase = rad % ( 2 * Math.PI );
-		let norm = phase / ( 2 * Math.PI );
-		return ( 2 * norm - 1 ) * volumeMultiplier;
-	};
-
-	// Square waveform.
-	const squareWaveform = ( x ) => {
-		let rad = x * 6.28;
-		return Math.sin( rad ) >= 0 ? volumeMultiplier : -volumeMultiplier;
-	};
-
-	// Triangle waveform.
-	const triangleWaveform = ( x ) => {
-		let rad = x * 6.28;
-		let phase = rad % ( 2 * Math.PI );
-		let norm = phase / ( 2 * Math.PI );
-		return ( 1 - 4 * Math.abs( norm - 0.5 ) ) * volumeMultiplier;
+	const softDrumWaveform = ( x ) => {
+		return ( 1 * Math.sin( x * 2 ) + 0.3 * ( Math.random() - 0.5 ) ) * Math.exp( -x / 15 ) * volumeMultiplier * 2;
 	};
 
 	// Mapping of instrument ids to synthesis functions.
 	// 0: Piano (default)
-	// 1: Guitar
-	// 2: Sawtooth
-	// 3: Square
-	// 4: Triangle
-	// 5: Drum
-	// 6: Cymbal
+	// 1: Piano 2
+	// 2: Sine
+	// 3: Sawtooth
+	// 4: Square
+	// 5: Triangle
+	// 6: Drum
+	// 7: Soft Drum
 	const instrumentMapping = [
 		pianoWaveform,
-		guitarWaveform,
+		piano2WaveForm,
+		sineWaveform,
 		sawtoothWaveform,
 		squareWaveform,
 		triangleWaveform,
 		drumWaveform,
-		cymbalWaveform,
+		softDrumWaveform,
 	];
 
 	// -----------------------------
@@ -197,8 +198,7 @@
 			}
 		);
 
-		// console.log( 'schedules', schedules );
-
+		// Initialize scheduler.
 		schedulePointers = schedules.map( () => 0 );
 		loopDuration = Math.max(
 			...schedules.map( events =>
@@ -207,10 +207,7 @@
 		);
 		playbackStartTime = audioContexts[ 0 ].currentTime + 0.1;
 
-		if ( schedulerInterval !== null ) {
-			clearInterval( schedulerInterval );
-			schedulerInterval = null;
-		}
+		p1.stop();
 
 		schedulerInterval = setInterval( schedulerFunction, schedulerIntervalMs );
 
@@ -279,6 +276,10 @@
 			clearInterval( schedulerInterval );
 			schedulerInterval = null;
 		}
+
+		// Stop all currently playing sources
+		playingSources.forEach( source => source.stop() );
+		playingSources = [];
 
 	};
 
@@ -350,6 +351,9 @@
 	};
 
 
+	// Add this array to keep track of currently playing sources
+	let playingSources = [];
+
 	/**
 	 * Play an audio buffer using a given AudioContext at a scheduled time.
 	 *
@@ -366,9 +370,25 @@
 		source.connect( context.destination );
 		source.start( when );
 
+		playingSources.push( source );
+
+		/**
+		 * The stopImmediately parameter is likely to unlock audio on iOS devices.
+		 * iOS requires a user interaction to start audio playback, so this parameter
+		 * allows the function to start and immediately stop the audio buffer to
+		 * unlock the audio context without actually playing any sound.
+		 */
 		if ( stopImmediately ) {
 			source.stop();
 		}
+
+		// Remove the source from the playingSources array when it ends
+		source.onended = () => {
+			const index = playingSources.indexOf( source );
+			if ( index !== -1 ) {
+				playingSources.splice( index, 1 );
+			}
+		};
 
 	};
 
