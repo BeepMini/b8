@@ -28,12 +28,16 @@
 			seed = seed.split( "" ).reduce( ( a, b ) => a + b.charCodeAt( 0 ), 0 );
 		}
 
+		// Extra mixing step using xorshift.
+		seed ^= seed << 13;
+		seed ^= seed >> 17;
+		seed ^= seed << 5;
+		seed >>>= 0; // Ensure an unsigned 32-bit integer
+
 		// Set the global seed value.
 		randomSeed = seed;
 
-		// Generate a few seeds to get past the initial values which can be
-		// similar for closely related numbers.
-		// The numbers diverge a lot after a few iterations.
+		// Burn a few random numbers to mix up initial values.
 		for ( let i = 0; i < 10; i++ ) {
 			beep8.Random.num();
 		}
