@@ -20,21 +20,29 @@
 			loop: true
 		},
 		'move-left': {
-			frames: [ 1, 2 ],
+			frames: [ -1, -2 ],
+			fps: 4,
+			loop: true
+		},
+		'move-up': {
+			frames: [ 4, -4 ],
+			fps: 4,
+			loop: true
+		},
+		'move-down': {
+			frames: [ 3, -3 ],
 			fps: 4,
 			loop: true,
-			direction: 1
 		},
 		'jump-right': {
-			frames: [ 3 ],
+			frames: [ 5 ],
 			fps: 1,
 			loop: false
 		},
 		'jump-left': {
-			frames: [ 3 ],
+			frames: [ -5 ],
 			fps: 1,
-			loop: false,
-			direction: 1
+			loop: false
 		},
 		'explode': {
 			frames: [ 0, 1, 2, 3 ],
@@ -42,6 +50,32 @@
 			loop: false
 		}
 	};
+
+
+	/**
+	 * Draw an actor at the specified x, y position.
+	 *
+	 * @param {number} ch - The character to draw.
+	 * @param {string} animation - The animation to draw.
+	 * @param {number} x - The x coordinate to draw the actor at.
+	 * @param {number} y - The y coordinate to draw the actor at.
+	 * @param {number} direction - The direction to draw the actor in. 0 = right, 1 = left.
+	 * @returns {void}
+	 */
+	const drawActor = function( ch, animation, x, y, direction ) {
+
+		const font = beep8.TextRenderer.curActors_;
+		const chrIndex = ( ch * font.getColCount() ) + Math.abs( animationFrame( animation ) );
+
+		beep8.TextRenderer.spr(
+			chrIndex,
+			x,
+			y,
+			font,
+			direction || 0
+		);
+
+	}
 
 
 	/**
@@ -58,17 +92,13 @@
 		beep8.Utilities.checkString( "animation", animation );
 
 		const frame = animationFrame( animation );
+		const direction = frame >= 0 ? 0 : 1;
 
-		const font = beep8.TextRenderer.curActors_;
-
-		const chrIndex = ( ch * font.getColCount() ) + frame;
-
-		beep8.TextRenderer.spr(
-			chrIndex,
+		drawActor(
+			ch, animation,
 			beep8.Core.drawState.cursorCol * beep8.CONFIG.CHR_WIDTH,
 			beep8.Core.drawState.cursorRow * beep8.CONFIG.CHR_HEIGHT,
-			font,
-			beep8.Actors.animations[ animation ].direction || 0
+			direction || 0
 		);
 
 	};
@@ -105,26 +135,14 @@
 		if ( startTime !== null ) beep8.Utilities.checkNumber( "startTime", startTime );
 
 		const frame = animationFrame( animation, startTime );
-
-		const font = beep8.TextRenderer.curActors_;
-
-		const chrIndex = ( ch * font.getColCount() ) + frame;
-
 		const anim = beep8.Actors.animations[ animation ];
+		const direction = frame >= 0 ? 0 : 1;
 
-		// Example usage:
 		if ( !shouldLoopAnimation( anim, startTime ) ) {
 			return false;
 		}
 
-		// Draw the actor.
-		beep8.TextRenderer.spr(
-			chrIndex,
-			x,
-			y,
-			font,
-			anim.direction || 0
-		);
+		drawActor( ch, animation, x, y, direction || 0 );
 
 		// The animation is still playing.
 		return true;
