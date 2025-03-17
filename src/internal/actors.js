@@ -44,11 +44,17 @@
 			fps: 1,
 			loop: false
 		},
-		'explode': {
-			frames: [ 0, 1, 2, 3 ],
-			fps: 16,
-			loop: false
+		'spin-left': {
+			frames: [ 0, 1, 4, -1 ],
+			fps: 4,
+			loop: true
+		},
+		'spin-right': {
+			frames: [ 0, -1, 4, 1 ],
+			fps: 4,
+			loop: true
 		}
+
 	};
 
 
