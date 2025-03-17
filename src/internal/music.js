@@ -6,6 +6,7 @@
 
 	beep8.Music = {};
 
+
 	/**
 	 * Calls a function n times and collects the results in an array.
 	 *
@@ -25,7 +26,8 @@
 	// --- p1.js Note Conversion ---
 
 	// p1.js supports 52 keys using these 52 characters.
-	var p1Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+	const p1Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
 
 	/**
 	 * Converts a note string (e.g. "C4" or "D#4") to a MIDI note number.
@@ -229,9 +231,9 @@
 	 *
 	 * @type {Array<number>}
 	 */
-	const instrumentOptions = [ 0, 1, 2, 3, 4 ];
+	const instrumentOptions = [ 0, 1, 2, 3, 4, 5 ];
 
-	const drumOptions = [ 5, 6 ];
+	const drumOptions = [ 6, 7 ];
 
 
 	/**
@@ -494,8 +496,8 @@
 			noteLength: beep8.Random.pick( [ 16, 32, 48, 64 ] ),
 			partCount: beep8.Random.int( 2, 5 ),
 			drumPartRatio: 0.3,
-			tempo: beep8.Random.pick( [ 70, 100, 140, 170, 200, 240, 280, 300 ] ), // Default tempo (BPM).
-			hold: beep8.Random.pick( [ 10, 20, 30, 40, 50, 60, 60, 70, 70, 70, 80, 80, 80, 80, 90, 90, 90, 100 ] )    // Default hold duration.
+			tempo: beep8.Random.pick( [ 70, 100, 140, 170, 200, 240, 280 ] ), // Default tempo (BPM).
+			hold: beep8.Random.pick( [ 40, 50, 60, 60, 70, 70, 70, 80, 80, 80, 80, 90, 90, 90, 100, 110, 120, 130, 140, 150 ] )    // Default hold duration.
 		};
 
 		// Merge default options with provided options.
