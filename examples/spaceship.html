@@ -57,6 +57,12 @@
 		let sfxHit = null;
 		let sfxBlast = null;
 
+		beep8.Actors.animations.explode = {
+			frames: [ 0, 1, 2, 3 ],
+			fps: 16,
+			loop: false
+		};
+
 		async function main() {
 			beep8.cls();
 			beep8.print( "Loading..." );
