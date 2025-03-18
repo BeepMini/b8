@@ -373,8 +373,6 @@
 		beep8.Utilities.checkArray( "grid", grid );
 		beep8.Utilities.checkObject( "tilePattern", tilePattern );
 
-		console.log( 'createFromArray', grid, tilePattern );
-
 		const tilemap = [];
 
 		for ( let y = 0; y < grid.length; y++ ) {
@@ -392,6 +390,7 @@
 
 				const tile = tilePattern[ grid[ y ][ x ] ];
 
+				// Tile character code.
 				let tileId = tile.t;
 
 				// If tileId is a string and begins with "wall_" then compute bitmask.
@@ -404,10 +403,22 @@
 					tileId = beep8.Random.pickWeighted( tileId );
 				}
 
+				// Foreground colour.
+				let fg = tile.fg || 15;
+				if ( Array.isArray( fg ) ) {
+					fg = beep8.Random.pickWeighted( fg );
+				}
+
+				// Background colour.
+				let bg = tile.bg || 0;
+				if ( Array.isArray( bg ) ) {
+					bg = beep8.Random.pickWeighted( bg );
+				}
+
 				tilemap[ y ][ x ] = [
 					tileId,
-					tile.fg || 15,
-					tile.bg || 0,
+					fg,
+					bg,
 					tile.coll || 0,
 					tile.data || {},
 				];
