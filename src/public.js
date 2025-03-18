@@ -328,16 +328,33 @@
 	 * @param {number|string} charCode - The character to print, as an integer
 	 * (ASCII code) or a one-character string.
 	 * @param {number} [numTimes=1] - How many times to print the character.
+	 * @param {string} fontId - The font id for the font to draw with.
 	 * @returns {void}
 	 */
-	beep8.printChar = function( charCode, numTimes = 1 ) {
+	beep8.printChar = function( charCode, numTimes = 1, fontId = null ) {
 
 		beep8.Core.preflight( "beep8.printChar" );
-		charCode = beep8.convChar( charCode );
-		beep8.Utilities.checkNumber( "charCode", charCode );
-		beep8.Utilities.checkNumber( "numTimes", numTimes );
 
-		beep8.TextRenderer.printChar( charCode, numTimes );
+		charCode = beep8.convChar( charCode );
+		beep8.Utilities.checkInt( "charCode", charCode );
+		beep8.Utilities.checkInt( "numTimes", numTimes );
+
+		if ( numTimes < 0 ) {
+			beep8.Utilities.fatal( "[beep8.printChar] numTimes must be a positive integer" );
+		}
+
+		// Nothing to print.
+		if ( 0 === numTimes ) {
+			return;
+		}
+
+		let font = fontId;
+		if ( null !== font ) {
+			beep8.Utilities.checkString( "fontId", fontId );
+			font = beep8.TextRenderer.getFontByName( fontId );
+		}
+
+		beep8.TextRenderer.printChar( charCode, numTimes, font );
 
 	}
 
