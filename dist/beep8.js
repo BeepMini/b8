@@ -40,6 +40,24 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+/**
+ * An example project structure.
+ *
+ * const playGame = {
+ *   init: () => { }
+ *   update: async ( dt ) => { }
+ *   render: () => { }
+ * }
+ *
+ * window.addEventListener( "load", () => {
+ *   beep8.init( async () => {
+ *     // A function to run after everything loads.
+ *     beep8.Scene.add( 'game', playGame, 30 );
+ *     beep8.Scene.set( 'game' );
+ *   } );
+ * } );
+ */
+
 const beep8 = {};
 
 
@@ -497,16 +515,33 @@ const beep8 = {};
 	 * @param {number|string} charCode - The character to print, as an integer
 	 * (ASCII code) or a one-character string.
 	 * @param {number} [numTimes=1] - How many times to print the character.
+	 * @param {string} fontId - The font id for the font to draw with.
 	 * @returns {void}
 	 */
-	beep8.printChar = function( charCode, numTimes = 1 ) {
+	beep8.printChar = function( charCode, numTimes = 1, fontId = null ) {
 
 		beep8.Core.preflight( "beep8.printChar" );
-		charCode = beep8.convChar( charCode );
-		beep8.Utilities.checkNumber( "charCode", charCode );
-		beep8.Utilities.checkNumber( "numTimes", numTimes );
 
-		beep8.TextRenderer.printChar( charCode, numTimes );
+		charCode = beep8.convChar( charCode );
+		beep8.Utilities.checkInt( "charCode", charCode );
+		beep8.Utilities.checkInt( "numTimes", numTimes );
+
+		if ( numTimes < 0 ) {
+			beep8.Utilities.fatal( "[beep8.printChar] numTimes must be a positive integer" );
+		}
+
+		// Nothing to print.
+		if ( 0 === numTimes ) {
+			return;
+		}
+
+		let font = fontId;
+		if ( null !== font ) {
+			beep8.Utilities.checkString( "fontId", fontId );
+			font = beep8.TextRenderer.getFontByName( fontId );
+		}
+
+		beep8.TextRenderer.printChar( charCode, numTimes, font );
 
 	}
 
@@ -984,7 +1019,7 @@ const beep8 = {};
 	 */
 	beep8.addScene = function( name, update = {} ) {
 
-		beep8.Scenes.addScene( name, update );
+		beep8.Scene.add( name, update );
 
 	}
 
@@ -997,7 +1032,7 @@ const beep8 = {};
 	 */
 	beep8.switchScene = function( name ) {
 
-		beep8.Scenes.switchScene( name );
+		beep8.Scene.switchScene( name );
 
 	}
 
@@ -1009,7 +1044,7 @@ const beep8 = {};
 	 */
 	beep8.getScene = function() {
 
-		return beep8.Scenes.getScene();
+		return beep8.Scene.get();
 
 	}
 
@@ -1025,7 +1060,6 @@ const beep8 = {};
 	 * const k = await beep8.Async.key();
 	 * console.log("The user pressed " + k);
 	 */
-
 	beep8.Async = {};
 
 
@@ -1120,19 +1154,27 @@ const beep8 = {};
 
 
 	/**
-	 * Waits for a given number of seconds.
+	 * Displays a dialog with the given prompt and choices, showing the text character by character.
 	 *
-	 * @param {number} seconds - The duration to wait.
-	 * @returns {Promise<void>} Resolves after the specified time.
+	 * @param {string} prompt - The text to show.
+	 * @param {string[]} [choices=["OK"]] - The choices to present to the user.
+	 * @param {number} [wrapWidth=-1] - The width at which to wrap the text.
+	 * @param {number} [delay=0.05] - The delay between characters in seconds.
+	 * @returns {Promise<number>} The index of the selected item.
 	 */
-	beep8.Async.wait = async function( seconds ) {
+	beep8.Async.dialogTypewriter = async function( prompt, choices = [ "OK" ], wrapWidth = -1, delay = 0.05 ) {
 
-		beep8.Core.preflight( "beep8.Async.wait" );
+		beep8.Core.preflight( "beep8.Async.dialogTypewriter" );
 
-		beep8.Utilities.checkNumber( "seconds", seconds );
-		beep8.Renderer.render();
+		beep8.Utilities.checkString( "prompt", prompt );
+		beep8.Utilities.checkArray( "choices", choices );
+		beep8.Utilities.checkNumber( "delay", delay );
 
-		return await new Promise( resolve => setTimeout( resolve, Math.round( seconds * 1000 ) ) );
+		if ( wrapWidth > 0 ) {
+			prompt = beep8.TextRenderer.wrapText( prompt, wrapWidth );
+		}
+
+		return await beep8.Async.menu( choices, { prompt, typewriter: true } );
 
 	}
 
@@ -1144,43 +1186,21 @@ const beep8 = {};
 	 * @param {number} [delay=0.05] - The delay between characters in seconds.
 	 * @returns {Promise<void>} Resolves after the text is printed.
 	 */
-	beep8.Async.typewriter = async function( text, wrapWidth = -1, delay = 0.05 ) {
+	beep8.Async.typewriter = async function( text, wrapWidth = -1, delay = 0.05, fontId = null, ) {
 
 		beep8.Core.preflight( "beep8.Async.typewriter" );
 
 		beep8.Utilities.checkString( "text", text );
+		beep8.Utilities.checkNumber( "wrapWidth", wrapWidth );
 		beep8.Utilities.checkNumber( "delay", delay );
 
-		const startCol = beep8.col();
-		const startRow = beep8.row();
-
-		text = beep8.TextRenderer.wrapText( text, wrapWidth );
-
-		for ( let i = 0; i <= text.length; i++ ) {
-
-			// If this is the start of an escape sequence, skip to the end of it.
-			if (
-				beep8.CONFIG.PRINT_ESCAPE_START &&
-				text.substring( i, i + beep8.CONFIG.PRINT_ESCAPE_START.length ) === beep8.CONFIG.PRINT_ESCAPE_START
-			) {
-
-				const endPos = text.indexOf( beep8.CONFIG.PRINT_ESCAPE_END, i + beep8.CONFIG.PRINT_ESCAPE_START.length );
-
-				if ( endPos >= 0 ) {
-					i = endPos + beep8.CONFIG.PRINT_ESCAPE_END.length;
-				}
-
-			}
-
-			const c = text.charCodeAt( i );
-			beep8.locate( startCol, startRow );
-			beep8.print( text.substring( 0, i ) );
-
-			if ( c !== 32 ) {
-				await beep8.Async.wait( delay );
-			}
-
+		let font = fontId;
+		if ( null !== font ) {
+			beep8.Utilities.checkString( "fontId", fontId );
+			font = beep8.TextRenderer.getFontByName( fontId );
 		}
+
+		await beep8.TextRenderer.printTypewriter( text, wrapWidth, delay, font );
 
 	}
 
@@ -1251,6 +1271,24 @@ const beep8 = {};
 
 
 	/**
+	 * Waits for a given number of seconds and then continues execution.
+	 *
+	 * @param {number} seconds - The duration to wait.
+	 * @returns {Promise<void>} Resolves after the specified time.
+	 */
+	beep8.Async.wait = async function( seconds ) {
+
+		beep8.Core.preflight( "beep8.Async.wait" );
+
+		beep8.Utilities.checkNumber( "seconds", seconds );
+		beep8.Renderer.render();
+
+		return await new Promise( resolve => setTimeout( resolve, Math.round( seconds * 1000 ) ) );
+
+	}
+
+
+	/**
 	 * Waits for the user to press a key to continue.
 	 *
 	 * @returns {Promise<void>} Resolves when the user presses a key.
@@ -1263,6 +1301,7 @@ const beep8 = {};
 		}
 
 	}
+
 
 } )( beep8 || ( beep8 = {} ) );
 
@@ -1288,28 +1327,68 @@ const beep8 = {};
 			loop: true
 		},
 		'move-left': {
-			frames: [ 1, 2 ],
+			frames: [ -1, -2 ],
+			fps: 4,
+			loop: true
+		},
+		'move-up': {
+			frames: [ 4, -4 ],
+			fps: 4,
+			loop: true
+		},
+		'move-down': {
+			frames: [ 3, -3 ],
 			fps: 4,
 			loop: true,
-			direction: 1
 		},
 		'jump-right': {
-			frames: [ 3 ],
+			frames: [ 5 ],
 			fps: 1,
 			loop: false
 		},
 		'jump-left': {
-			frames: [ 3 ],
+			frames: [ -5 ],
 			fps: 1,
-			loop: false,
-			direction: 1
-		},
-		'explode': {
-			frames: [ 0, 1, 2, 3 ],
-			fps: 16,
 			loop: false
+		},
+		'spin-left': {
+			frames: [ 0, 1, 4, -1 ],
+			fps: 4,
+			loop: true
+		},
+		'spin-right': {
+			frames: [ 0, -1, 4, 1 ],
+			fps: 4,
+			loop: true
 		}
+
 	};
+
+
+	/**
+	 * Draw an actor at the specified x, y position.
+	 *
+	 * @param {number} ch - The character to draw.
+	 * @param {string} animation - The animation to draw.
+	 * @param {number} x - The x coordinate to draw the actor at.
+	 * @param {number} y - The y coordinate to draw the actor at.
+	 * @param {number} direction - The direction to draw the actor in. 0 = right, 1 = left.
+	 * @returns {void}
+	 */
+	const drawActor = function( ch, animation, x, y, direction ) {
+
+		const font = beep8.TextRenderer.curActors_;
+		const chrIndex = ( ch * font.getColCount() ) + Math.abs( animationFrame( animation ) );
+
+		beep8.TextRenderer.spr(
+			chrIndex,
+			x,
+			y,
+			font,
+			direction || 0
+		);
+
+	}
 
 
 	/**
@@ -1326,17 +1405,13 @@ const beep8 = {};
 		beep8.Utilities.checkString( "animation", animation );
 
 		const frame = animationFrame( animation );
+		const direction = frame >= 0 ? 0 : 1;
 
-		const font = beep8.TextRenderer.curActors_;
-
-		const chrIndex = ( ch * font.getColCount() ) + frame;
-
-		beep8.TextRenderer.spr(
-			chrIndex,
+		drawActor(
+			ch, animation,
 			beep8.Core.drawState.cursorCol * beep8.CONFIG.CHR_WIDTH,
 			beep8.Core.drawState.cursorRow * beep8.CONFIG.CHR_HEIGHT,
-			font,
-			beep8.Actors.animations[ animation ].direction || 0
+			direction || 0
 		);
 
 	};
@@ -1373,26 +1448,14 @@ const beep8 = {};
 		if ( startTime !== null ) beep8.Utilities.checkNumber( "startTime", startTime );
 
 		const frame = animationFrame( animation, startTime );
-
-		const font = beep8.TextRenderer.curActors_;
-
-		const chrIndex = ( ch * font.getColCount() ) + frame;
-
 		const anim = beep8.Actors.animations[ animation ];
+		const direction = frame >= 0 ? 0 : 1;
 
-		// Example usage:
 		if ( !shouldLoopAnimation( anim, startTime ) ) {
 			return false;
 		}
 
-		// Draw the actor.
-		beep8.TextRenderer.spr(
-			chrIndex,
-			x,
-			y,
-			font,
-			anim.direction || 0
-		);
+		drawActor( ch, animation, x, y, direction || 0 );
 
 		// The animation is still playing.
 		return true;
@@ -1725,6 +1788,8 @@ const beep8 = {};
 	 * This function checks if the engine has crashed, if the initAsync() method
 	 * has been called, and if there is a pending asynchronous operation.
 	 *
+	 * This should be called at the start of any async operation.
+	 *
 	 * @param {string} apiMethod - The name of the API method being called.
 	 * @returns {void}
 	 */
@@ -1884,7 +1949,14 @@ const beep8 = {};
 		timeToNextFrame = 0;
 		lastFrameTime = beep8.Core.getNow();
 
+		// Cancel current animation frame if running.
+		if ( animationFrameId ) {
+			window.cancelAnimationFrame( animationFrameId );
+			animationFrameId = null;
+		}
+
 		running = true;
+
 		animationFrameId = window.requestAnimationFrame( beep8.Core.doFrame );
 
 	}
@@ -1926,7 +1998,7 @@ const beep8 = {};
 		// Run fixed update steps.
 		for ( let i = 0; i < numUpdates; i++ ) {
 			if ( updateHandler ) {
-				await updateHandler( targetDt );
+				updateHandler( targetDt );
 			}
 			if ( beep8.Input && typeof beep8.Input.onEndFrame === 'function' ) {
 				beep8.Input.onEndFrame();
@@ -1936,7 +2008,7 @@ const beep8 = {};
 		// Retain the fractional remainder for accurate timing.
 		timeToNextFrame %= targetDt;
 
-		// Render phase.
+		// if pending async then skip render.
 		if ( renderHandler ) {
 			renderHandler();
 		}
@@ -2190,7 +2262,6 @@ const beep8 = {};
 			Math.round( x ) + halfLineWidth, Math.round( y ) + halfLineWidth,
 			Math.round( width ) - lineWidth, Math.round( height ) - lineWidth
 		);
-
 
 		// Restore properties.
 		beep8.Core.ctx.strokeStyle = oldStrokeStyle;
@@ -2940,6 +3011,7 @@ const beep8 = {};
 	 * - options.padding - The padding around the prompt and choices.
 	 * - options.selIndex - The index of the initially selected choice.
 	 * - options.cancelable - Whether the menu can be canceled with the Escape key.
+	 * - options.typewriter - display the prompt as a typewriter effect.
 	 *
 	 * @param {string[]} choices - The choices to display.
 	 * @param {object} [options] - Options for the menu.
@@ -2965,6 +3037,7 @@ const beep8 = {};
 				padding: 1,
 				selIndex: 0,
 				cancelable: false,
+				typewriter: false
 			},
 			options
 		);
@@ -3014,6 +3087,7 @@ const beep8 = {};
 				beep8.Core.drawState.cursorCol = startCol + Math.round( ( totalCols - t.length ) / 2 );
 				beep8.TextRenderer.print( t );
 			}
+
 		}
 
 		if ( options.prompt ) {
@@ -3021,7 +3095,12 @@ const beep8 = {};
 				( startCol + border01 + options.padding ) :
 				( startCol + Math.round( ( totalCols - promptSize.cols ) / 2 ) );
 			beep8.Core.drawState.cursorRow = startRow + border01 + options.padding;
-			beep8.TextRenderer.print( options.prompt );
+
+			if ( options.typewriter ) {
+				await beep8.Async.typewriter( options.prompt );
+			} else {
+				beep8.TextRenderer.print( options.prompt );
+			}
 		}
 
 		// TODO: save the screen image before showing the menu and restore it later.
@@ -3107,6 +3186,7 @@ const beep8 = {};
 
 	beep8.Music = {};
 
+
 	/**
 	 * Calls a function n times and collects the results in an array.
 	 *
@@ -3126,7 +3206,8 @@ const beep8 = {};
 	// --- p1.js Note Conversion ---
 
 	// p1.js supports 52 keys using these 52 characters.
-	var p1Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+	const p1Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
 
 	/**
 	 * Converts a note string (e.g. "C4" or "D#4") to a MIDI note number.
@@ -3330,9 +3411,9 @@ const beep8 = {};
 	 *
 	 * @type {Array<number>}
 	 */
-	const instrumentOptions = [ 0, 1, 2, 3, 4 ];
+	const instrumentOptions = [ 0, 1, 2, 3, 4, 5 ];
 
-	const drumOptions = [ 5, 6 ];
+	const drumOptions = [ 6, 7 ];
 
 
 	/**
@@ -3595,8 +3676,8 @@ const beep8 = {};
 			noteLength: beep8.Random.pick( [ 16, 32, 48, 64 ] ),
 			partCount: beep8.Random.int( 2, 5 ),
 			drumPartRatio: 0.3,
-			tempo: beep8.Random.pick( [ 70, 100, 140, 170, 200, 240, 280, 300 ] ), // Default tempo (BPM).
-			hold: beep8.Random.pick( [ 10, 20, 30, 40, 50, 60, 60, 70, 70, 70, 80, 80, 80, 80, 90, 90, 90, 100 ] )    // Default hold duration.
+			tempo: beep8.Random.pick( [ 70, 100, 140, 170, 200, 240, 280 ] ), // Default tempo (BPM).
+			hold: beep8.Random.pick( [ 40, 50, 60, 60, 70, 70, 70, 80, 80, 80, 80, 90, 90, 90, 100, 110, 120, 130, 140, 150 ] )    // Default hold duration.
 		};
 
 		// Merge default options with provided options.
@@ -3854,15 +3935,31 @@ const beep8 = {};
 			seed = seed.split( "" ).reduce( ( a, b ) => a + b.charCodeAt( 0 ), 0 );
 		}
 
+		// Extra mixing step using xorshift.
+		seed ^= seed << 13;
+		seed ^= seed >> 17;
+		seed ^= seed << 5;
+		seed >>>= 0; // Ensure an unsigned 32-bit integer
+
 		// Set the global seed value.
 		randomSeed = seed;
 
-		// Generate a few seeds to get past the initial values which can be
-		// similar for closely related numbers.
-		// The numbers diverge a lot after a few iterations.
+		// Burn a few random numbers to mix up initial values.
 		for ( let i = 0; i < 10; i++ ) {
 			beep8.Random.num();
 		}
+
+	}
+
+
+	/**
+	 * Returns the seed for the random number generator.
+	 *
+	 * @returns {number} The seed for the random number generator.
+	 */
+	beep8.Random.getSeed = function() {
+
+		return randomSeed;
 
 	}
 
@@ -3946,6 +4043,24 @@ const beep8 = {};
 
 
 	/**
+	 * Returns a randomly picked element of the given array, with a weighted probability.
+	 *
+	 * @param {Array} array - The array to pick from, with each element repeated a number of times.
+	 * @param {number} decayFactor - The decay factor for the weighted array.
+	 * @returns {any} A randomly picked element of the array, or null if the array is empty.
+	 */
+	beep8.Random.pickWeighted = function( array, decayFactor = 0.2 ) {
+
+		beep8.Utilities.checkArray( "array", array );
+
+		const weightedArray = beep8.Random.weightedArray( array, decayFactor );
+
+		return beep8.Random.pick( weightedArray );
+
+	}
+
+
+	/**
 	 * Shuffles an array, randomly reordering the elements.
 	 * Does not modify the original array. Returns the shuffled array.
 	 *
@@ -3981,6 +4096,32 @@ const beep8 = {};
 		beep8.Utilities.checkNumber( "probability", probability );
 
 		return beep8.Random.num() < ( probability / 100 );
+
+	}
+
+
+	/**
+	 * Returns a weighted array of elements.
+	 * The array uses a decay factor to determine the number of times each element should be repeated.
+	 *
+	 * @param {Array} array - The array to weight.
+	 * @param {number} decayFactor - The decay factor for the weighted array.
+	 * @returns {Array} The weighted array.
+	 */
+	beep8.Random.weightedArray = function( array, decayFactor = 0.2 ) {
+
+		beep8.Utilities.checkArray( "array", array );
+
+		const weightedArray = [];
+
+		for ( let i = 0; i < array.length; i++ ) {
+			const count = Math.pow( decayFactor, i ) * 10;
+			for ( let j = 0; j < count; j++ ) {
+				weightedArray.push( array[ i ] );
+			}
+		}
+
+		return weightedArray;
 
 	}
 
@@ -4326,7 +4467,7 @@ const beep8 = {};
 	 *
 	 * @type {Object}
 	 */
-	beep8.Scenes = {};
+	beep8.Scene = {};
 
 
 	/**
@@ -4342,13 +4483,29 @@ const beep8 = {};
 	/**
 	 * Adds a new scene to the scene manager.
 	 *
+	 * A scene should be a javascript object with at least one of the following functions:
+	 *
+	 * - init (optional): A function that will be called when the scene is set.
+	 * - update (optional): A function that will be called multiple times a frame and passed a deltatime value as a parameter.
+	 * - render (optional): A function that will be called every frame.
+	 *
+	 * Init can be used to set up the scene. For asynchronous games you can add a while loop here and use await functions (eg for keypresses) and then render yourself.
+	 * For synchronous games you can use the update and render functions to manage game logic and rendering efficiently.
+	 *
+	 * eg:
+	 * const game = {
+	 *  init: () => { }
+	 *  update: ( dt ) => { }
+	 *  render: () => { }
+	 * }
+	 *
 	 * @param {string} name - The name of the scene.
 	 * @param {object} gameObject - An object that includes init, update, and
 	 * render methods as well as other properties for the scene. If update and
 	 * render are set then these will be passed to `beep8.frame`.
 	 * @param {number} frameRate - The frame rate at which to update and render
 	 */
-	beep8.Scenes.add = function( name, gameObject = null, frameRate = 30 ) {
+	beep8.Scene.add = function( name, gameObject = null, frameRate = 30 ) {
 
 		beep8.Utilities.checkString( 'name', name );
 
@@ -4372,7 +4529,7 @@ const beep8 = {};
 	 *
 	 * @param {string} name - The name of the scene to switch to.
 	 */
-	beep8.Scenes.setActive = function( name ) {
+	beep8.Scene.set = function( name ) {
 
 		beep8.Utilities.checkString( 'name', name );
 
@@ -4403,11 +4560,51 @@ const beep8 = {};
 
 
 	/**
+	 * Pauses the current scene.
+	 *
+	 * @param {string} name - The name of the scene to pause.
+	 * @returns {void}
+	 */
+	beep8.Scene.pause = function() {
+
+		beep8.frame( null );
+
+	};
+
+
+	/**
+	 * Resumes the current scene.
+	 *
+	 * @returns {void}
+	 */
+	beep8.Scene.resume = function() {
+
+		// If there's no active scene, do nothing.
+		if ( !activeScene ) {
+			return;
+		}
+
+		// Get the currentScene.
+		const currentScene = sceneList[ activeScene ];
+
+		// If there's an update or render method, call frame to create a synchronous game.
+		if ( currentScene.update || currentScene.render ) {
+			beep8.frame(
+				currentScene.render || ( () => { } ),
+				currentScene.update || ( () => { } ),
+				currentScene.frameRate || 30
+			);
+		}
+
+	};
+
+
+	/**
 	 * Gets the current active scene.
 	 *
 	 * @returns {Object|null} The active scene object, or null if no scene is active.
 	 */
-	beep8.Scenes.getActive = function() {
+	beep8.Scene.get = function() {
 
 		return activeScene;
 
@@ -4419,7 +4616,7 @@ const beep8 = {};
 	 *
 	 * @returns {Object} All scenes.
 	 */
-	beep8.Scenes.getAll = function() {
+	beep8.Scene.getAll = function() {
 
 		return sceneList;
 
@@ -4832,6 +5029,7 @@ const beep8 = {};
 
 		beep8.TextRenderer.printFont_ = font || beep8.TextRenderer.curFont_;
 
+		// Property validation.
 		beep8.Utilities.checkString( "text", text );
 		beep8.Utilities.checkNumber( "wrapWidth", wrapWidth );
 		if ( font !== null ) beep8.Utilities.checkObject( "font", font );
@@ -4888,6 +5086,55 @@ const beep8 = {};
 		beep8.Core.drawState.bgColor = beep8.TextRenderer.origBgColor_;
 
 		beep8.Renderer.markDirty();
+
+	}
+
+
+	/**
+	 * Prints text character by character, as in a typewriter.
+	 *
+	 * @param {string} text - The text to print.
+	 * @param {number} [wrapWidth=-1] - The width to wrap text at.
+	 * @param {number} [delay=0.05] - The delay between characters in seconds.
+	 * @param {beep8.TextRendererFont} [font=null] - The font to use.
+	 * @returns {Promise<void>} Resolves after the text is printed.
+	 */
+	beep8.TextRenderer.printTypewriter = async function( text, wrapWidth = -1, delay = 0.05, font = null ) {
+
+		beep8.Utilities.checkString( "text", text );
+		beep8.Utilities.checkNumber( "wrapWidth", wrapWidth );
+		beep8.Utilities.checkNumber( "delay", delay );
+
+		const startCol = beep8.col();
+		const startRow = beep8.row();
+
+		text = beep8.TextRenderer.wrapText( text, wrapWidth );
+
+		for ( let i = 0; i <= text.length; i++ ) {
+
+			// If this is the start of an escape sequence, skip to the end of it.
+			if (
+				beep8.CONFIG.PRINT_ESCAPE_START &&
+				text.substring( i, i + beep8.CONFIG.PRINT_ESCAPE_START.length ) === beep8.CONFIG.PRINT_ESCAPE_START
+			) {
+
+				const endPos = text.indexOf( beep8.CONFIG.PRINT_ESCAPE_END, i + beep8.CONFIG.PRINT_ESCAPE_START.length );
+
+				if ( endPos >= 0 ) {
+					i = endPos + beep8.CONFIG.PRINT_ESCAPE_END.length;
+				}
+
+			}
+
+			const c = text.charCodeAt( i );
+			beep8.Core.setCursorLocation( startCol, startRow );
+			beep8.TextRenderer.print( text.substring( 0, i ), font );
+
+			if ( c !== 32 ) {
+				await beep8.Async.wait( delay );
+			}
+
+		}
 
 	}
 
@@ -5705,6 +5952,119 @@ const beep8 = {};
 	beep8.Tilemap.MAP_DATA = 4;
 
 
+	// Define a mapping from bitmask value to your desired tile name or index.
+	const wallTiles = {
+		'solid': {
+			0: 1,  // wall_isolated.
+			1: 1,  // wall_end_bottom.
+			2: 1,  // wall_end_left.
+			3: 36,  // wall_corner_bottomLeft.
+			4: 1,  // wall_end_top.
+			5: 1,  // wall_vertical.
+			6: 18,  // wall_corner_topLeft.
+			7: 1,  // wall_t_right.
+			8: 1,  // wall_end_right.
+			9: 37,  // wall_corner_bottomRight.
+			10: 1, // wall_horizontal.
+			11: 1, // wall_t_bottom.
+			12: 19, // wall_corner_topRight.
+			13: 1, // wall_t_left.
+			14: 1, // wall_t_top.
+			15: 1  // wall_cross.
+		},
+		'rounded': {
+			0: 1,  // wall_isolated.
+			1: 42,  // wall_end_bottom.
+			2: 23,  // wall_end_left.
+			3: 36,  // wall_corner_bottomLeft.
+			4: 41,  // wall_end_top.
+			5: 1,  // wall_vertical.
+			6: 18,  // wall_corner_topLeft.
+			7: 1,  // wall_t_right.
+			8: 24,  // wall_end_right.
+			9: 37,  // wall_corner_bottomRight.
+			10: 1, // wall_horizontal.
+			11: 1, // wall_t_bottom.
+			12: 19, // wall_corner_topRight.
+			13: 1, // wall_t_left.
+			14: 1, // wall_t_top.
+			15: 1  // wall_cross.
+		},
+		'half': {
+			0: 128,  // wall_isolated.
+			1: 75,  // wall_end_bottom.
+			2: 58,  // wall_end_left.
+			3: 93,  // wall_corner_bottomLeft.
+			4: 75,  // wall_end_top.
+			5: 75,  // wall_vertical.
+			6: 57,  // wall_corner_topLeft.
+			7: 129,  // wall_t_right.
+			8: 58,  // wall_end_right.
+			9: 95,  // wall_corner_bottomRight.
+			10: 58, // wall_horizontal.
+			11: 111, // wall_t_bottom.
+			12: 59, // wall_corner_topRight.
+			13: 130, // wall_t_left.
+			14: 112, // wall_t_top.
+			15: 113  // wall_cross.
+		},
+		'half_rounded': {
+			0: 128,  // wall_isolated.
+			1: 148,  // wall_end_bottom.
+			2: 166,  // wall_end_left.
+			3: 93,  // wall_corner_bottomLeft.
+			4: 149,  // wall_end_top.
+			5: 75,  // wall_vertical.
+			6: 57,  // wall_corner_topLeft.
+			7: 129,  // wall_t_right.
+			8: 167,  // wall_end_right.
+			9: 95,  // wall_corner_bottomRight.
+			10: 58, // wall_horizontal.
+			11: 111, // wall_t_bottom.
+			12: 59, // wall_corner_topRight.
+			13: 130, // wall_t_left.
+			14: 112, // wall_t_top.
+			15: 113  // wall_cross.
+		},
+		'pipe': {
+			0: 128,  // wall_isolated.
+			1: 148,  // wall_end_bottom.
+			2: 166,  // wall_end_left.
+			3: 93,  // wall_corner_bottomLeft.
+			4: 149,  // wall_end_top.
+			5: [ 75, 77 ],  // wall_vertical.
+			6: 57,  // wall_corner_topLeft.
+			7: 129,  // wall_t_right.
+			8: 167,  // wall_end_right.
+			9: 95,  // wall_corner_bottomRight.
+			10: [ 58, 94 ], // wall_horizontal.
+			11: 111, // wall_t_bottom.
+			12: 59, // wall_corner_topRight.
+			13: 130, // wall_t_left.
+			14: 112, // wall_t_top.
+			15: [ 113, 131, 76 ]  // wall_cross.
+		},
+		'thin': {
+			0: 110,  // wall_isolated.
+			1: 173,  // wall_end_bottom.
+			2: 172,  // wall_end_left.
+			3: 164,  // wall_corner_bottomLeft.
+			4: 154,  // wall_end_top.
+			5: 72,  // wall_vertical.
+			6: 146,  // wall_corner_topLeft.
+			7: 126,  // wall_t_right.
+			8: 155,  // wall_end_right.
+			9: 165,  // wall_corner_bottomRight.
+			10: 55, // wall_horizontal.
+			11: 108, // wall_t_bottom.
+			12: 147, // wall_corner_topRight.
+			13: 127, // wall_t_left.
+			14: 109, // wall_t_top.
+			15: 73  // wall_cross.
+		},
+	};
+
+
 	/**
 	 * Convert a tilemap array to a string.
 	 *
@@ -5835,6 +6195,67 @@ const beep8 = {};
 
 
 	/**
+	 * Shift and wrap a tilemap array by the specified amount.
+	 *
+	 * @param {Array} tilemap The tilemap array to shift.
+	 * @param {number} dx The amount to shift the tilemap in the x direction.
+	 * @param {number} dy The amount to shift the tilemap in the y direction.
+	 * @returns {void}
+	 */
+	beep8.Tilemap.shift = function( tilemap, dx, dy ) {
+
+		beep8.Utilities.checkArray( "tilemap", tilemap );
+		beep8.Utilities.checkNumber( "dx", dx );
+		beep8.Utilities.checkNumber( "dy", dy );
+
+		const width = tilemap[ 0 ].length;
+		const height = tilemap.length;
+
+		const newTilemap = beep8.Tilemap.createEmptyTilemap( width, height );
+
+		for ( let y = 0; y < height; y++ ) {
+			for ( let x = 0; x < width; x++ ) {
+				const newX = ( x + dx + width ) % width;
+				const newY = ( y + dy + height ) % height;
+				newTilemap[ newY ][ newX ] = [ ...tilemap[ y ][ x ] ];
+			}
+		}
+
+		return newTilemap;
+
+	};
+
+
+	/**
+	 * Resize a tilemap array to the specified width and height.
+	 *
+	 * @param {Array} tilemap The tilemap array to resize.
+	 * @param {number} width The new width of the tilemap.
+	 * @param {number} height The new height of the tilemap.
+	 * @returns {Array} The resized tilemap array.
+	 */
+	beep8.Tilemap.resize = function( tilemap, width, height ) {
+
+		beep8.Utilities.checkArray( "tilemap", tilemap );
+		beep8.Utilities.checkNumber( "width", width );
+		beep8.Utilities.checkNumber( "height", height );
+
+		const newTilemap = beep8.Tilemap.createEmptyTilemap( width, height );
+
+		for ( let y = 0; y < height; y++ ) {
+			for ( let x = 0; x < width; x++ ) {
+				if ( tilemap[ y ] && tilemap[ y ][ x ] ) {
+					newTilemap[ y ][ x ] = [ ...tilemap[ y ][ x ] ];
+				}
+			}
+		}
+
+		return newTilemap;
+
+	};
+
+
+	/**
 	 * Get the default tile for a tilemap.
 	 *
 	 * @returns {Array} The default tile.
@@ -5843,11 +6264,158 @@ const beep8 = {};
 
 		return [
 			0,
-			data.colors.FG,
-			data.colors.BG,
+			15,
+			0,
+			0,
+			{}
 		]
 
 	};
+
+
+	/**
+	 * Get a text map and convert it to an array of arrays.
+	 *
+	 * @param {string} mapText The text map to convert.
+	 * @returns {Array} The converted tilemap array.
+	 */
+	beep8.Tilemap.convertFromText = function( mapText ) {
+
+		beep8.Utilities.checkString( "text", mapText );
+
+		const lines = mapText.trim().split( '\n' );
+		const map = lines.map( row => row.trim().split( '' ) );
+
+		return map;
+
+	}
+
+
+	/**
+	 * Create a tilemap from an array of arrays.
+	 * The tilePattern is an object that maps tile characters to tile properties.
+	 *
+	 * @param {Array} grid The grid array to create the tilemap from.
+	 * @param {Object} tilePattern The tile pattern object.
+	 * @returns {Array} The created tilemap array.
+	 */
+	beep8.Tilemap.createFromArray = function( grid, tilePattern ) {
+
+		beep8.Utilities.checkArray( "grid", grid );
+		beep8.Utilities.checkObject( "tilePattern", tilePattern );
+
+		const tilemap = [];
+
+		for ( let y = 0; y < grid.length; y++ ) {
+			tilemap[ y ] = [];
+			for ( let x = 0; x < grid[ y ].length; x++ ) {
+
+				// Set default properties.
+				tilemap[ y ][ x ] = beep8.Tilemap.getDefaultTile();
+
+				// If tile pattern not defined assume tile is empty and continue.
+				if ( !tilePattern[ grid[ y ][ x ] ] ) {
+					beep8.Utilities.log( "Tile pattern not found for: " + grid[ y ][ x ] );
+					continue;
+				}
+
+				const tile = tilePattern[ grid[ y ][ x ] ];
+
+				// Tile character code.
+				let tileId = tile.t;
+
+				// If tileId is a string and begins with "wall_" then compute bitmask.
+				if ( typeof tileId === "string" && tileId.startsWith( "wall_" ) ) {
+					tileId = beep8.Tilemap.wallTile( x, y, grid, tileId );
+				}
+
+				// If is an array of ids then do a weighted pick from those.
+				if ( Array.isArray( tileId ) ) {
+					tileId = beep8.Random.pickWeighted( tileId );
+				}
+
+				// Foreground colour.
+				let fg = tile.fg || 15;
+				if ( Array.isArray( fg ) ) {
+					fg = beep8.Random.pickWeighted( fg );
+				}
+
+				// Background colour.
+				let bg = tile.bg || 0;
+				if ( Array.isArray( bg ) ) {
+					bg = beep8.Random.pickWeighted( bg );
+				}
+
+				tilemap[ y ][ x ] = [
+					tileId,
+					fg,
+					bg,
+					tile.coll || 0,
+					tile.data || {},
+				];
+
+			}
+		}
+
+		return tilemap;
+
+	};
+
+
+	/**
+	 * Select a wall tile from a predefined list based on the surrounding tiles.
+	 * The grid is the 2D array of tile ids.
+	 * The x and y are the coordinates of the tile to check.
+	 *
+	 * @param {number} x The x coordinate of the tile.
+	 * @param {number} y The y coordinate of the tile.
+	 * @param {Array} grid The 2D array of tile ids.
+	 * @param {string} name The name of the wall tile to select. Picked from the default lists of wall patterns.
+	 * @returns {number} The selected wall tile id.
+	 */
+	beep8.Tilemap.wallTile = function( x, y, grid, name = null ) {
+
+		beep8.Utilities.checkNumber( "x", x );
+		beep8.Utilities.checkNumber( "y", y );
+		beep8.Utilities.checkArray( "grid", grid );
+		beep8.Utilities.checkString( "name", name );
+
+		if ( null === name ) {
+			beep8.Utilities.fatal( "Wall tile name not given: " + name );
+		}
+
+		// Remove wall_ prefix from name.
+		const tileType = name.substring( 5 );
+
+		if ( !wallTiles[ tileType ] ) {
+			beep8.Utilities.fatal( "Wall tile type not found: " + tileType );
+		}
+
+		const mask = computeBitmask( grid, x, y );
+		return wallTiles[ tileType ][ mask ];
+
+	};
+
+
+	// A helper function to compute a 4-bit bitmask for a wall tile.
+	// Bit values: 1 = North, 2 = East, 4 = South, 8 = West.
+	function computeBitmask( grid, x, y ) {
+
+		let bitmask = 0;
+		const tileId = grid[ y ][ x ];
+
+		// Check North
+		if ( y > 0 && grid[ y - 1 ][ x ] === tileId ) bitmask += 1;
+		// Check East
+		if ( x < grid[ y ].length - 1 && grid[ y ][ x + 1 ] === tileId ) bitmask += 2;
+		// Check South
+		if ( y < grid.length - 1 && grid[ y + 1 ][ x ] === tileId ) bitmask += 4;
+		// Check West
+		if ( x > 0 && grid[ y ][ x - 1 ] === tileId ) bitmask += 8;
+
+		return bitmask;
+
+	}
 
 
 } )( beep8 || ( beep8 = {} ) );
@@ -6644,8 +7212,8 @@ const beep8 = {};
 	 */
 	const VJOY_CSS = `
 :root {
-	--vjoy-button-color: #444;
-	--vjoy-button-dpad-size: 40vw;
+	--b8-vjoy-button-color: #333;
+	--b8-vjoy-button-dpad-size: 40vw;
 }
 
 .vjoy-container,
@@ -6692,18 +7260,20 @@ gap: 5vw;
 	flex-direction: row;
 	align-items: center;
 	justify-content: center;
-	background: #444;
+	background: var(--b8-vjoy-button-color) !important;
 	border: none;
 	font: bold 14px monospace;
-	color: #888;
+	color: #999 !important;
 	user-select: none;
 	touch-callout: none;
 	-webkit-user-select: none;
 	-webkit-touch-callout: none;
+	text-shadow: 0 -2px 0 black;
 }
+
 .vjoy-button:active,
 .vjoy-button:active {
-	background: #888;
+	background: black;
 }
 
 #vjoy-button-up {
@@ -6729,7 +7299,7 @@ gap: 5vw;
 #vjoy-button-center {
 	grid-column: 2;
 	grid-row: 2;
-	background: #444;
+	background: var(--b8-vjoy-button-color);
 }
 
 #vjoy-button-pri {
@@ -7296,7 +7866,7 @@ gap: 5vw;
 	let loopDuration = 0; // Duration (in seconds) of one full loop.
 	const lookaheadTime = 0.5; // Seconds to schedule ahead.
 	const schedulerIntervalMs = 1000 * ( lookaheadTime - 0.1 ); // Scheduler check interval.
-	const volumeMultiplier = 0.1; // Volume multiplier.
+	const volumeMultiplier = 0.2; // Volume multiplier.
 
 	// iOS audio unlock flag.
 	let unlocked = false;
@@ -7320,58 +7890,59 @@ gap: 5vw;
 		) * volumeMultiplier;
 	};
 
+	const piano2WaveForm = ( x ) => {
+		return ( Math.sin( x * 6.28 ) * Math.sin( x * 3.14 ) ) * volumeMultiplier;
+	};
+
+	// Sine waveform
+	const sineWaveform = ( x ) => {
+		return Math.sin( 2 * Math.PI * x ) * volumeMultiplier;
+	};
+
+	// Square waveform
+	const squareWaveform = ( x ) => {
+		return ( Math.sin( 2 * Math.PI * x ) >= 0 ? 1 : -1 ) * volumeMultiplier;
+	};
+
+	// Sawtooth waveform
+	const sawtoothWaveform = ( x ) => {
+		let t = x - Math.floor( x );
+		return ( 2 * t - 1 ) * volumeMultiplier;
+	};
+
+	// Triangle waveform
+	const triangleWaveform = ( x ) => {
+		let t = x - Math.floor( x );
+		return ( 2 * Math.abs( 2 * t - 1 ) - 1 ) * volumeMultiplier;
+	};
+
 	// Drum: a simple noise burst.
 	const drumWaveform = ( x ) => {
 		return ( ( Math.random() * 2 - 1 ) * Math.exp( -x / 10 ) ) * volumeMultiplier;
 	};
 
-	const cymbalWaveform = ( x ) => {
-		return ( 1 * Math.sin( x * 2 ) + 0.3 * ( Math.random() - 0.5 ) ) * Math.exp( -x / 15 ) * volumeMultiplier;
-	};
-
-	// Guitar: a simple modulated sine (not a true Karplus–Strong).
-	const guitarWaveform = ( x ) => {
-		return ( Math.sin( x * 6.28 ) * Math.sin( x * 3.14 ) ) * volumeMultiplier;
-	};
-
-	// Sawtooth waveform.
-	const sawtoothWaveform = ( x ) => {
-		let rad = x * 6.28;
-		let phase = rad % ( 2 * Math.PI );
-		let norm = phase / ( 2 * Math.PI );
-		return ( 2 * norm - 1 ) * volumeMultiplier;
-	};
-
-	// Square waveform.
-	const squareWaveform = ( x ) => {
-		let rad = x * 6.28;
-		return Math.sin( rad ) >= 0 ? volumeMultiplier : -volumeMultiplier;
-	};
-
-	// Triangle waveform.
-	const triangleWaveform = ( x ) => {
-		let rad = x * 6.28;
-		let phase = rad % ( 2 * Math.PI );
-		let norm = phase / ( 2 * Math.PI );
-		return ( 1 - 4 * Math.abs( norm - 0.5 ) ) * volumeMultiplier;
+	const softDrumWaveform = ( x ) => {
+		return ( 1 * Math.sin( x * 2 ) + 0.3 * ( Math.random() - 0.5 ) ) * Math.exp( -x / 15 ) * volumeMultiplier * 2;
 	};
 
 	// Mapping of instrument ids to synthesis functions.
 	// 0: Piano (default)
-	// 1: Guitar
-	// 2: Sawtooth
-	// 3: Square
-	// 4: Triangle
-	// 5: Drum
-	// 6: Cymbal
+	// 1: Piano 2
+	// 2: Sine
+	// 3: Sawtooth
+	// 4: Square
+	// 5: Triangle
+	// 6: Drum
+	// 7: Soft Drum
 	const instrumentMapping = [
 		pianoWaveform,
-		guitarWaveform,
+		piano2WaveForm,
+		sineWaveform,
 		sawtoothWaveform,
 		squareWaveform,
 		triangleWaveform,
 		drumWaveform,
-		cymbalWaveform,
+		softDrumWaveform,
 	];
 
 	// -----------------------------
@@ -7474,8 +8045,7 @@ gap: 5vw;
 			}
 		);
 
-		// console.log( 'schedules', schedules );
-
+		// Initialize scheduler.
 		schedulePointers = schedules.map( () => 0 );
 		loopDuration = Math.max(
 			...schedules.map( events =>
@@ -7484,10 +8054,7 @@ gap: 5vw;
 		);
 		playbackStartTime = audioContexts[ 0 ].currentTime + 0.1;
 
-		if ( schedulerInterval !== null ) {
-			clearInterval( schedulerInterval );
-			schedulerInterval = null;
-		}
+		p1.stop();
 
 		schedulerInterval = setInterval( schedulerFunction, schedulerIntervalMs );
 
@@ -7556,6 +8123,10 @@ gap: 5vw;
 			clearInterval( schedulerInterval );
 			schedulerInterval = null;
 		}
+
+		// Stop all currently playing sources
+		playingSources.forEach( source => source.stop() );
+		playingSources = [];
 
 	};
 
@@ -7627,6 +8198,9 @@ gap: 5vw;
 	};
 
 
+	// Add this array to keep track of currently playing sources
+	let playingSources = [];
+
 	/**
 	 * Play an audio buffer using a given AudioContext at a scheduled time.
 	 *
@@ -7643,9 +8217,25 @@ gap: 5vw;
 		source.connect( context.destination );
 		source.start( when );
 
+		playingSources.push( source );
+
+		/**
+		 * The stopImmediately parameter is likely to unlock audio on iOS devices.
+		 * iOS requires a user interaction to start audio playback, so this parameter
+		 * allows the function to start and immediately stop the audio buffer to
+		 * unlock the audio context without actually playing any sound.
+		 */
 		if ( stopImmediately ) {
 			source.stop();
 		}
+
+		// Remove the source from the playingSources array when it ends
+		source.onended = () => {
+			const index = playingSources.indexOf( source );
+			if ( index !== -1 ) {
+				playingSources.splice( index, 1 );
+			}
+		};
 
 	};
 
