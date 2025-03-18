@@ -832,7 +832,7 @@
 	 */
 	beep8.addScene = function( name, update = {} ) {
 
-		beep8.Scenes.addScene( name, update );
+		beep8.Scene.add( name, update );
 
 	}
 
@@ -845,7 +845,7 @@
 	 */
 	beep8.switchScene = function( name ) {
 
-		beep8.Scenes.switchScene( name );
+		beep8.Scene.switchScene( name );
 
 	}
 
@@ -857,7 +857,7 @@
 	 */
 	beep8.getScene = function() {
 
-		return beep8.Scenes.getScene();
+		return beep8.Scene.get();
 
 	}
 
