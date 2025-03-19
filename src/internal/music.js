@@ -325,17 +325,17 @@
 	/**
 	 * Generates a melody note string based on note length and chord progression.
 	 *
-	 * @param {number} noteLength - The number of beats/positions.
+	 * @param {number} noteCount - The number of beats/positions.
 	 * @param {Array<Array<string>>} chordProgressionNotes - The chord progression notes.
 	 * @returns {string} The compressed melody note string.
 	 */
-	function generateMelodyNote( noteLength, chordProgressionNotes ) {
+	function generateMelodyNote( noteCount, chordProgressionNotes ) {
 
 		var notes = [ beep8.Random.pick( instrumentOptions ), '|' ];
-		var pattern = createRandomPattern( noteLength, 4, 8, 3 );
+		var pattern = createRandomPattern( noteCount, 4, 8, 3 );
 		var octaveOffset = beep8.Random.int( -1, 1 );
 
-		for ( var i = 0; i < noteLength; i++ ) {
+		for ( var i = 0; i < noteCount; i++ ) {
 
 			// Occasionally adjust the octave offset.
 			if ( beep8.Random.chance( 10 ) ) {
@@ -371,11 +371,11 @@
 	/**
 	 * Generates a chord or arpeggio note string based on note length and chord progression.
 	 *
-	 * @param {number} noteLength - The number of beats/positions.
+	 * @param {number} noteCount - The number of beats/positions.
 	 * @param {Array<Array<string>>} chordProgressionNotes - The chord progression notes.
 	 * @returns {string} The compressed chord/arpeggio note string.
 	 */
-	function generateChordNote( noteLength, chordProgressionNotes ) {
+	function generateChordNote( noteCount, chordProgressionNotes ) {
 
 		const notes = [ beep8.Random.pick( instrumentOptions ), '|' ];
 
@@ -391,18 +391,18 @@
 		var interval = beep8.Random.pick( [ 2, 4, 8 ] );
 		var pattern = isArpeggio
 			? times(
-				noteLength,
+				noteCount,
 				function() {
 					return true;
 				}
 			)
-			: createRandomPattern( noteLength, beep8.Random.pick( [ 1, 1, interval / 2 ] ), interval, 2 );
+			: createRandomPattern( noteCount, beep8.Random.pick( [ 1, 1, interval / 2 ] ), interval, 2 );
 
 		var baseOctave = beep8.Random.int( -1, 1 );
 		var isReciprocatingOctave = beep8.Random.chance( isArpeggio ? 30 : 80 );
 		var octaveOffset = 0;
 
-		for ( var i = 0; i < noteLength; i++ ) {
+		for ( var i = 0; i < noteCount; i++ ) {
 
 			// Adjust octave offset at set intervals.
 			if ( isReciprocatingOctave && i % interval === 0 ) {
@@ -437,17 +437,17 @@
 	/**
 	 * Generates a drum note string for a given note length.
 	 *
-	 * @param {number} noteLength - The number of beats/positions.
+	 * @param {number} noteCount - The number of beats/positions.
 	 * @returns {string} The compressed drum note string.
 	 */
-	function generateDrumNote( noteLength ) {
+	function generateDrumNote( noteCount ) {
 
 		// Pick an instrument and add the starting pipe.
 		const notes = [ beep8.Random.pick( drumOptions ), '|' ];
 
 		// Create a random pattern for drum hits.
 		const pattern = createRandomPattern(
-			noteLength,
+			noteCount,
 			beep8.Random.int( 1, 3 ),
 			beep8.Random.pick( [ 4, 8 ] ),
 			3
@@ -455,7 +455,7 @@
 
 		// Fixed drum hit note (using "C4" converted to p1.js).
 		var drumHit = noteToP1( "C4" );
-		for ( var i = 0; i < noteLength; i++ ) {
+		for ( var i = 0; i < noteCount; i++ ) {
 			notes.push( pattern[ i ] ? drumHit : " " );
 		}
 
@@ -473,8 +473,8 @@
 	 *
 	 * @param {Object} [options] - Options for music generation.
 	 * @param {number} [options.seed] - Random seed.
-	 * @param {number} [options.noteLength] - Number of beats/positions.
-	 * @param {number} [options.partCount] - Number of parts to generate.
+	 * @param {number} [options.noteCount] - Number of beats/positions.
+	 * @param {number} [options.channelCount] - Number of parts to generate.
 	 * @param {number} [options.drumPartRatio] - Ratio of parts to be drums.
 	 * @param {number|null} [options.tempo] - Tempo in BPM. If null, tempo info is omitted.
 	 * @param {number|null} [options.hold] - Hold duration. If null, hold info is omitted.
@@ -493,8 +493,8 @@
 		 */
 		const defaultOptions = {
 			seed: beep8.Random.int( 10000, 99999 ),
-			noteLength: beep8.Random.pick( [ 16, 32, 48, 64 ] ),
-			partCount: beep8.Random.int( 2, 5 ),
+			noteCount: beep8.Random.pick( [ 16, 32, 48, 64 ] ),
+			channelCount: beep8.Random.int( 2, 5 ),
 			drumPartRatio: 0.3,
 			tempo: beep8.Random.pick( [ 70, 100, 140, 170, 200, 240, 280 ] ), // Default tempo (BPM).
 			hold: beep8.Random.pick( [ 40, 50, 60, 60, 70, 70, 70, 80, 80, 80, 80, 90, 90, 90, 100, 110, 120, 130, 140, 150 ] )    // Default hold duration.
@@ -508,18 +508,18 @@
 		console.log( opts );
 
 		beep8.Random.setSeed( opts.seed );
-		var chordProgressionNotes = generateChordProgression( opts.noteLength );
+		var chordProgressionNotes = generateChordProgression( opts.noteCount );
 		var parts = times(
-			opts.partCount,
+			opts.channelCount,
 			function() {
 				var isDrum = beep8.Random.num() < opts.drumPartRatio;
 				if ( isDrum ) {
-					return generateDrumNote( opts.noteLength );
+					return generateDrumNote( opts.noteCount );
 				} else {
 					if ( beep8.Random.num() < 0.5 ) {
-						return generateMelodyNote( opts.noteLength, chordProgressionNotes );
+						return generateMelodyNote( opts.noteCount, chordProgressionNotes );
 					} else {
-						return generateChordNote( opts.noteLength, chordProgressionNotes );
+						return generateChordNote( opts.noteCount, chordProgressionNotes );
 					}
 				}
 			}
@@ -561,6 +561,21 @@
 	beep8.Music.play = function( song ) {
 
 		p1( song );
+
+	}
+
+
+	/**
+	 * Set the tempo of a currently playing song.
+	 *
+	 * @param {number} tempo - The new tempo in BPM.
+	 * @returns {void}
+	 */
+	beep8.Music.setTempo = function( tempo ) {
+
+		beep8.Utilities.checkInt( "tempo", tempo );
+
+		p1.setTempo( tempo );
 
 	}
 
