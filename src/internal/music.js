@@ -575,6 +575,11 @@
 
 		beep8.Utilities.checkInt( "tempo", tempo );
 
+		// Ensure tempo is within a valid range.
+		if ( tempo < 50 ) {
+			tempo = 50;
+		}
+
 		p1.setTempo( tempo );
 
 	}
