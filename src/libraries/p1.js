@@ -17,6 +17,7 @@
 	let schedulePointers = []; // Next event index per track.
 	let playbackStartTime = 0; // When playback starts.
 	let loopDuration = 0; // Duration (in seconds) of one full loop.
+	let tempo = 120; // Default tempo.
 	const lookaheadTime = 0.5; // Seconds to schedule ahead.
 	const schedulerIntervalMs = 1000 * ( lookaheadTime - 0.1 ); // Scheduler check interval.
 	const volumeMultiplier = 0.2; // Volume multiplier.
@@ -134,7 +135,7 @@
 		}
 
 		// Default settings.
-		let tempo = 125; // ms per note step.
+		tempo = 125; // ms per note step.
 		let baseNoteDuration = 0.5; // seconds per note.
 		schedules = [];
 
@@ -292,6 +293,34 @@
 	p1.isPlaying = function() {
 
 		return schedulerInterval !== null;
+
+	};
+
+
+	/**
+	 * Set the tempo of the music.
+	 *
+	 * @param {number} newTempo - The new tempo in beats per minute.
+	 * @returns {void}
+	 */
+	p1.setTempo = function( newTempo ) {
+
+		const currentTime = audioContexts[ 0 ].currentTime;
+		const oldInterval = tempo / 1000;
+		// Calculate how many note steps have already elapsed.
+		const elapsed = currentTime - playbackStartTime;
+		const stepsElapsed = elapsed / oldInterval;
+		// Update tempo.
+		tempo = newTempo;
+		const newInterval = newTempo / 1000;
+		// Recalculate loopDuration for the new tempo.
+		loopDuration = Math.max(
+			...schedules.map( events =>
+				events.length > 0 ? ( events.length ) * newInterval : 0
+			)
+		);
+		// Shift playbackStartTime so that the current step remains aligned.
+		playbackStartTime = currentTime - ( stepsElapsed * newInterval );
 
 	};
 
