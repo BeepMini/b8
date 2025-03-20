@@ -1,5 +1,7 @@
 ( function( beep8 ) {
 
+	beep8.Sfx = {};
+
 
 	/**
 	 * Sound effect library.
@@ -8,7 +10,7 @@
 	 * @see https://codepen.io/KilledByAPixel/pen/BaowKzv?editors=1000
 	 * @type {Object}
 	 */
-	const sfxLibrary = {
+	beep8.Sfx.library = {
 		coin: [ 1.2, 0, 1675, , .06, .24, 1, 1.82, , , 837, .06 ],
 		coin2: [ 1.2, 0, 523.2511, .01, .06, .3, 1, 1.82, , , 837, .06 ],
 		blip: [ 5, 0, 150, .02, .03, .02, , 2.8, , , , , , , , , , .7, .02 ],
@@ -55,8 +57,6 @@
 		click: [ 1.5, 0, 900, , .01, 0, 1, , -10, , -31, .02, , , , , , 1.2, , .16, -1448 ],
 	};
 
-	beep8.Sfx = {};
-
 
 	/**
 	 * Play a named sound effect.
@@ -74,11 +74,11 @@
 		beep8.Utilities.checkString( 'sfx', sfx );
 
 		// SFX not found.
-		if ( !sfxLibrary[ sfx ] ) {
+		if ( !beep8.Sfx.library[ sfx ] ) {
 			beep8.Utilities.fatal( `SFX ${sfx} not found.` );
 		}
 
-		zzfx( ...sfxLibrary[ sfx ] );
+		zzfx( ...beep8.Sfx.library[ sfx ] );
 
 	}
 
@@ -97,7 +97,7 @@
 		beep8.Utilities.checkString( 'sfxName', sfxName );
 		beep8.Utilities.checkArray( 'sfxArray', sfxArray );
 
-		sfxLibrary[ sfxName ] = sfxArray;
+		beep8.Sfx.library[ sfxName ] = sfxArray;
 
 	}
 
@@ -109,7 +109,7 @@
 	 */
 	beep8.Sfx.get = function() {
 
-		return Object.keys( sfxLibrary );
+		return Object.keys( beep8.Sfx.library );
 
 	}
 
