@@ -397,7 +397,7 @@
 
 
 	/**
-	 * Get the current state of the running flag.
+	 * Update the game loop for realtime games.
 	 *
 	 * This function calls the update phase as many times as needed
 	 * (capped to prevent spiraling) and then calls the render phase.
@@ -437,6 +437,7 @@
 			if ( beep8.Input && typeof beep8.Input.onEndFrame === 'function' ) {
 				beep8.Input.onEndFrame();
 			}
+			beep8.Particles.update( targetDt );
 		}
 
 		// Retain the fractional remainder for accurate timing.
@@ -727,6 +728,7 @@
 			Math.round( x ) + 0.5, Math.round( y ) + 0.5,
 			Math.round( width ) - 1, Math.round( height ) - 1
 		);
+
 	}
 
 
