@@ -13,12 +13,12 @@
 	 * Adds a new particle to the system.
 	 *
 	 * Each particle is an object with properties:
-	 * x, y - position,
-	 * vx, vy - velocity (pixels per second, default=0),
-	 * life - remaining life time (seconds, default=1),
-	 * size - square size (pixels, default=1),
-	 * color - fill color (a beep8 palette id, default=15).
-	 * gravity - gravity (pixels per second, default=0).
+	 * - x, y: position,
+	 * - vx, vy: velocity (pixels per second, default=0),
+	 * - life: remaining life time (seconds, default=1),
+	 * - size: square size (pixels, default=1),
+	 * - color: fill color (a beep8 palette id, default=15).
+	 * - gravity: gravity (pixels per second, default=0).
 	 *
 	 * @param {object} particle - The particle object to add.
 	 * @returns {void}
@@ -63,11 +63,11 @@
 	 * The explosion is created at the x, y position with a number of particles.
 	 *
 	 * The optional properties include:
-	 * size - The size of the particles (in pixels, default=1).
-	 * color - The color of the particles (a beep8 palette id, default=fgColor).
-	 * life - The life of the particles (in seconds, default=2).
-	 * speed - The speed of the particles (in pixels per second, default=25).
-	 * gravity - The gravity of the particles (in pixels per second, default=0).
+	 * - size: The size of the particles (in pixels, default=1).
+	 * - color: The color of the particles (a beep8 palette id, default=fgColor).
+	 * - life: The life of the particles (in seconds, default=2).
+	 * - speed: The speed of the particles (in pixels per second, default=25).
+	 * - gravity: The gravity of the particles (in pixels per second, default=0).
 	 *
 	 * @param {number} x - The x position of the explosion.
 	 * @param {number} y - The y position of the explosion.
