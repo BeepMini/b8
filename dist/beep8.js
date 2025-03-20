@@ -1963,7 +1963,7 @@ const beep8 = {};
 
 
 	/**
-	 * Get the current state of the running flag.
+	 * Update the game loop for realtime games.
 	 *
 	 * This function calls the update phase as many times as needed
 	 * (capped to prevent spiraling) and then calls the render phase.
@@ -2003,6 +2003,7 @@ const beep8 = {};
 			if ( beep8.Input && typeof beep8.Input.onEndFrame === 'function' ) {
 				beep8.Input.onEndFrame();
 			}
+			beep8.Particles.update( targetDt );
 		}
 
 		// Retain the fractional remainder for accurate timing.
@@ -2293,6 +2294,7 @@ const beep8 = {};
 			Math.round( x ) + 0.5, Math.round( y ) + 0.5,
 			Math.round( width ) - 1, Math.round( height ) - 1
 		);
+
 	}
 
 
@@ -3505,17 +3507,17 @@ const beep8 = {};
 	/**
 	 * Generates a melody note string based on note length and chord progression.
 	 *
-	 * @param {number} noteLength - The number of beats/positions.
+	 * @param {number} noteCount - The number of beats/positions.
 	 * @param {Array<Array<string>>} chordProgressionNotes - The chord progression notes.
 	 * @returns {string} The compressed melody note string.
 	 */
-	function generateMelodyNote( noteLength, chordProgressionNotes ) {
+	function generateMelodyNote( noteCount, chordProgressionNotes ) {
 
 		var notes = [ beep8.Random.pick( instrumentOptions ), '|' ];
-		var pattern = createRandomPattern( noteLength, 4, 8, 3 );
+		var pattern = createRandomPattern( noteCount, 4, 8, 3 );
 		var octaveOffset = beep8.Random.int( -1, 1 );
 
-		for ( var i = 0; i < noteLength; i++ ) {
+		for ( var i = 0; i < noteCount; i++ ) {
 
 			// Occasionally adjust the octave offset.
 			if ( beep8.Random.chance( 10 ) ) {
@@ -3551,11 +3553,11 @@ const beep8 = {};
 	/**
 	 * Generates a chord or arpeggio note string based on note length and chord progression.
 	 *
-	 * @param {number} noteLength - The number of beats/positions.
+	 * @param {number} noteCount - The number of beats/positions.
 	 * @param {Array<Array<string>>} chordProgressionNotes - The chord progression notes.
 	 * @returns {string} The compressed chord/arpeggio note string.
 	 */
-	function generateChordNote( noteLength, chordProgressionNotes ) {
+	function generateChordNote( noteCount, chordProgressionNotes ) {
 
 		const notes = [ beep8.Random.pick( instrumentOptions ), '|' ];
 
@@ -3571,18 +3573,18 @@ const beep8 = {};
 		var interval = beep8.Random.pick( [ 2, 4, 8 ] );
 		var pattern = isArpeggio
 			? times(
-				noteLength,
+				noteCount,
 				function() {
 					return true;
 				}
 			)
-			: createRandomPattern( noteLength, beep8.Random.pick( [ 1, 1, interval / 2 ] ), interval, 2 );
+			: createRandomPattern( noteCount, beep8.Random.pick( [ 1, 1, interval / 2 ] ), interval, 2 );
 
 		var baseOctave = beep8.Random.int( -1, 1 );
 		var isReciprocatingOctave = beep8.Random.chance( isArpeggio ? 30 : 80 );
 		var octaveOffset = 0;
 
-		for ( var i = 0; i < noteLength; i++ ) {
+		for ( var i = 0; i < noteCount; i++ ) {
 
 			// Adjust octave offset at set intervals.
 			if ( isReciprocatingOctave && i % interval === 0 ) {
@@ -3617,17 +3619,17 @@ const beep8 = {};
 	/**
 	 * Generates a drum note string for a given note length.
 	 *
-	 * @param {number} noteLength - The number of beats/positions.
+	 * @param {number} noteCount - The number of beats/positions.
 	 * @returns {string} The compressed drum note string.
 	 */
-	function generateDrumNote( noteLength ) {
+	function generateDrumNote( noteCount ) {
 
 		// Pick an instrument and add the starting pipe.
 		const notes = [ beep8.Random.pick( drumOptions ), '|' ];
 
 		// Create a random pattern for drum hits.
 		const pattern = createRandomPattern(
-			noteLength,
+			noteCount,
 			beep8.Random.int( 1, 3 ),
 			beep8.Random.pick( [ 4, 8 ] ),
 			3
@@ -3635,7 +3637,7 @@ const beep8 = {};
 
 		// Fixed drum hit note (using "C4" converted to p1.js).
 		var drumHit = noteToP1( "C4" );
-		for ( var i = 0; i < noteLength; i++ ) {
+		for ( var i = 0; i < noteCount; i++ ) {
 			notes.push( pattern[ i ] ? drumHit : " " );
 		}
 
@@ -3653,8 +3655,8 @@ const beep8 = {};
 	 *
 	 * @param {Object} [options] - Options for music generation.
 	 * @param {number} [options.seed] - Random seed.
-	 * @param {number} [options.noteLength] - Number of beats/positions.
-	 * @param {number} [options.partCount] - Number of parts to generate.
+	 * @param {number} [options.noteCount] - Number of beats/positions.
+	 * @param {number} [options.channelCount] - Number of parts to generate.
 	 * @param {number} [options.drumPartRatio] - Ratio of parts to be drums.
 	 * @param {number|null} [options.tempo] - Tempo in BPM. If null, tempo info is omitted.
 	 * @param {number|null} [options.hold] - Hold duration. If null, hold info is omitted.
@@ -3673,8 +3675,8 @@ const beep8 = {};
 		 */
 		const defaultOptions = {
 			seed: beep8.Random.int( 10000, 99999 ),
-			noteLength: beep8.Random.pick( [ 16, 32, 48, 64 ] ),
-			partCount: beep8.Random.int( 2, 5 ),
+			noteCount: beep8.Random.pick( [ 16, 32, 48, 64 ] ),
+			channelCount: beep8.Random.int( 2, 5 ),
 			drumPartRatio: 0.3,
 			tempo: beep8.Random.pick( [ 70, 100, 140, 170, 200, 240, 280 ] ), // Default tempo (BPM).
 			hold: beep8.Random.pick( [ 40, 50, 60, 60, 70, 70, 70, 80, 80, 80, 80, 90, 90, 90, 100, 110, 120, 130, 140, 150 ] )    // Default hold duration.
@@ -3688,18 +3690,18 @@ const beep8 = {};
 		console.log( opts );
 
 		beep8.Random.setSeed( opts.seed );
-		var chordProgressionNotes = generateChordProgression( opts.noteLength );
+		var chordProgressionNotes = generateChordProgression( opts.noteCount );
 		var parts = times(
-			opts.partCount,
+			opts.channelCount,
 			function() {
 				var isDrum = beep8.Random.num() < opts.drumPartRatio;
 				if ( isDrum ) {
-					return generateDrumNote( opts.noteLength );
+					return generateDrumNote( opts.noteCount );
 				} else {
 					if ( beep8.Random.num() < 0.5 ) {
-						return generateMelodyNote( opts.noteLength, chordProgressionNotes );
+						return generateMelodyNote( opts.noteCount, chordProgressionNotes );
 					} else {
-						return generateChordNote( opts.noteLength, chordProgressionNotes );
+						return generateChordNote( opts.noteCount, chordProgressionNotes );
 					}
 				}
 			}
@@ -3746,6 +3748,26 @@ const beep8 = {};
 
 
 	/**
+	 * Set the tempo of a currently playing song.
+	 *
+	 * @param {number} tempo - The new tempo in BPM.
+	 * @returns {void}
+	 */
+	beep8.Music.setTempo = function( tempo ) {
+
+		beep8.Utilities.checkInt( "tempo", tempo );
+
+		// Ensure tempo is within a valid range.
+		if ( tempo < 50 ) {
+			tempo = 50;
+		}
+
+		p1.setTempo( tempo );
+
+	}
+
+
+	/**
 	 * Checks if music is currently playing.
 	 *
 	 * @returns {boolean} True if music is playing, otherwise false.
@@ -3757,6 +3779,225 @@ const beep8 = {};
 	}
 
 } )( beep8 );
+( function( beep8 ) {
+
+	/**
+	 * beep8.Particles handles particles.
+	 */
+	beep8.Particles = {};
+
+	// Private particle array.
+	let particles_ = [];
+
+
+	/**
+	 * Adds a new particle to the system.
+	 *
+	 * Each particle is an object with properties:
+	 * x, y - position,
+	 * vx, vy - velocity (pixels per second, default=0),
+	 * life - remaining life time (seconds, default=1),
+	 * size - square size (pixels, default=1),
+	 * color - fill color (a beep8 palette id, default=15).
+	 * gravity - gravity (pixels per second, default=0).
+	 *
+	 * @param {object} particle - The particle object to add.
+	 * @returns {void}
+	 */
+	beep8.Particles.add = function( x, y, props ) {
+
+		beep8.Utilities.checkNumber( 'x', x );
+		beep8.Utilities.checkNumber( 'y', y );
+		beep8.Utilities.checkObject( 'props', props );
+
+		const defaults = {
+			x: x,
+			y: y,
+			vx: 0,
+			vy: 0,
+			life: 1,
+			size: 1,
+			color: 15,
+			gravity: 0,
+		}
+
+		const newParticle = Object.assign( {}, defaults, props );
+
+		// Particle Color.
+		if ( Array.isArray( newParticle.color ) ) {
+			newParticle.color = beep8.Random.pick( newParticle.color );
+		}
+
+		// Particle Size.
+		if ( Array.isArray( newParticle.size ) ) {
+			newParticle.size = beep8.Random.pick( newParticle.size );
+		}
+
+		particles_.push( newParticle );
+
+	};
+
+
+	/**
+	 * Adds an explosion of particles to the system.
+	 *
+	 * The explosion is created at the x, y position with a number of particles.
+	 *
+	 * The optional properties include:
+	 * size - The size of the particles (in pixels, default=1).
+	 * color - The color of the particles (a beep8 palette id, default=fgColor).
+	 * life - The life of the particles (in seconds, default=2).
+	 * speed - The speed of the particles (in pixels per second, default=25).
+	 * gravity - The gravity of the particles (in pixels per second, default=0).
+	 *
+	 * @param {number} x - The x position of the explosion.
+	 * @param {number} y - The y position of the explosion.
+	 * @param {number} count - The number of particles to add.
+	 * @param {object} props - The properties of the explosion.
+	 * @returns {void}
+	 */
+	beep8.Particles.createExplosion = function( x, y, count = 10, props = {} ) {
+
+		beep8.Utilities.checkNumber( 'x', x );
+		beep8.Utilities.checkNumber( 'y', y );
+		beep8.Utilities.checkNumber( 'count', count );
+		beep8.Utilities.checkObject( 'props', props );
+
+		const defaults = {
+			size: 1,
+			color: beep8.Core.drawState.fgColor,
+			life: 2,
+			speed: 25,
+			gravity: 0,
+		};
+
+		const newExplosion = Object.assign( {}, defaults, props );
+
+		for ( let i = 0; i < count; i++ ) {
+
+			const angle = beep8.Random.range( 0, Math.PI * 2 );
+			const speed = beep8.Random.range( newExplosion.speed / 2, newExplosion.speed );
+
+			beep8.Particles.add(
+				x,
+				y,
+				{
+					size: newExplosion.size,
+					color: newExplosion.color,
+					life: newExplosion.life,
+					vx: Math.cos( angle ) * speed,
+					vy: Math.sin( angle ) * speed,
+					g: newExplosion.gravity,
+				}
+			);
+
+		}
+
+	};
+
+
+	/**
+	 * Updates all particles.
+	 *
+	 * If you are using Beep8 scenes or the Beep8 game loop (doframe) then this
+	 * is called automatically and you don't need to call it manually.
+	 *
+	 * @param {number} dt - Delta time to update particle movement.
+	 * @returns {void}
+	 */
+	beep8.Particles.update = function( dt ) {
+
+		// Loop backwards to allow for removal.
+		for ( let i = particles_.length - 1; i >= 0; i-- ) {
+
+			const p = particles_[ i ];
+			// Apply gravity.
+			p.vy += ( p.g * dt );
+			// Update position based on velocity.
+			p.x += p.vx * dt;
+			p.y += p.vy * dt;
+			// Decrease life.
+			p.life -= dt;
+
+			// Remove particle if life expired.
+			if ( p.life <= 0 ) {
+				particles_.splice( i, 1 );
+			}
+
+		}
+
+	};
+
+
+	/**
+	 * Renders all particles as squares.
+	 *
+	 * This should be called in your render method. This is not called
+	 * automatically which allows you to control the draw order.
+	 *
+	 * @returns {void}
+	 */
+	beep8.Particles.render = function() {
+
+		for ( let i = 0; i < particles_.length; i++ ) {
+
+			const p = particles_[ i ];
+			const center = p.size / 2;
+
+			// Draw the square particle with p.x, p.y at the center.
+			beep8.Core.ctx.fillStyle = beep8.Core.getColorHex( p.color );
+			beep8.Core.ctx.fillRect( Math.round( p.x - center ), Math.round( p.y - center ), Math.round( p.size ), Math.round( p.size ) );
+
+		}
+
+	};
+
+
+	/**
+	 * Clears all particles from the system.
+	 *
+	 * @returns {void}
+	 */
+	beep8.Particles.clearAll = function() {
+
+		particles_ = [];
+
+	};
+
+
+	/**
+	 * Returns the particles array.
+	 *
+	 * This is useful for debugging or if you want to manipulate the particles
+	 * directly.
+	 *
+	 * @returns {array} The particles array.
+	 */
+	beep8.Particles.getParticles = function() {
+
+		return [ ...particles_ ];
+
+	};
+
+
+	/**
+	 * Sets the particles array.
+	 *
+	 * Can be used with Particles.getParticles to manipulate the particles directly.
+	 *
+	 * @param {array} particles - The particles array.
+	 * @returns {void}
+	 */
+	beep8.Particles.setParticles = function( particles ) {
+
+		beep8.Utilities.checkArray( 'particles', particles );
+
+		particles_ = particles;
+
+	};
+
+} )( beep8 || ( beep8 = {} ) );
+
 ( function( beep8 ) {
 
 	beep8.Passcodes = {};
@@ -4626,6 +4867,8 @@ const beep8 = {};
 
 ( function( beep8 ) {
 
+	beep8.Sfx = {};
+
 
 	/**
 	 * Sound effect library.
@@ -4634,7 +4877,7 @@ const beep8 = {};
 	 * @see https://codepen.io/KilledByAPixel/pen/BaowKzv?editors=1000
 	 * @type {Object}
 	 */
-	const sfxLibrary = {
+	beep8.Sfx.library = {
 		coin: [ 1.2, 0, 1675, , .06, .24, 1, 1.82, , , 837, .06 ],
 		coin2: [ 1.2, 0, 523.2511, .01, .06, .3, 1, 1.82, , , 837, .06 ],
 		blip: [ 5, 0, 150, .02, .03, .02, , 2.8, , , , , , , , , , .7, .02 ],
@@ -4681,8 +4924,6 @@ const beep8 = {};
 		click: [ 1.5, 0, 900, , .01, 0, 1, , -10, , -31, .02, , , , , , 1.2, , .16, -1448 ],
 	};
 
-	beep8.Sfx = {};
-
 
 	/**
 	 * Play a named sound effect.
@@ -4700,11 +4941,11 @@ const beep8 = {};
 		beep8.Utilities.checkString( 'sfx', sfx );
 
 		// SFX not found.
-		if ( !sfxLibrary[ sfx ] ) {
+		if ( !beep8.Sfx.library[ sfx ] ) {
 			beep8.Utilities.fatal( `SFX ${sfx} not found.` );
 		}
 
-		zzfx( ...sfxLibrary[ sfx ] );
+		zzfx( ...beep8.Sfx.library[ sfx ] );
 
 	}
 
@@ -4723,7 +4964,7 @@ const beep8 = {};
 		beep8.Utilities.checkString( 'sfxName', sfxName );
 		beep8.Utilities.checkArray( 'sfxArray', sfxArray );
 
-		sfxLibrary[ sfxName ] = sfxArray;
+		beep8.Sfx.library[ sfxName ] = sfxArray;
 
 	}
 
@@ -4735,7 +4976,7 @@ const beep8 = {};
 	 */
 	beep8.Sfx.get = function() {
 
-		return Object.keys( sfxLibrary );
+		return Object.keys( beep8.Sfx.library );
 
 	}
 
@@ -7847,25 +8088,20 @@ gap: 5vw;
 
 ( function() {
 
-	// Constants for audio setup.
-	const NUMBER_OF_TRACKS = 4;
-	const CONTEXTS_PER_TRACK = 3;
-	const TOTAL_CONTEXTS = Math.ceil( NUMBER_OF_TRACKS * CONTEXTS_PER_TRACK * 1.2 );
+	// AudioContext.
+	const audioCtx = new AudioContext();
 
 	// Cache for generated note buffers.
 	const noteBuffers = {};
-
-	// Create multiple AudioContext objects.
-	const audioContexts = Array.from( { length: TOTAL_CONTEXTS }, () => new AudioContext() );
 
 	// Scheduler variables.
 	let schedulerInterval = null;
 	let schedules = []; // Array of event arrays per track.
 	let schedulePointers = []; // Next event index per track.
 	let playbackStartTime = 0; // When playback starts.
-	let loopDuration = 0; // Duration (in seconds) of one full loop.
-	const lookaheadTime = 0.5; // Seconds to schedule ahead.
-	const schedulerIntervalMs = 1000 * ( lookaheadTime - 0.1 ); // Scheduler check interval.
+	let tempo = 120; // Default tempo.
+	const lookaheadTime = 0.5; // Only schedule events within the next 0.5 seconds.
+	const schedulerIntervalMs = 50; // Check every 50ms.
 	const volumeMultiplier = 0.2; // Volume multiplier.
 
 	// iOS audio unlock flag.
@@ -7874,66 +8110,41 @@ gap: 5vw;
 	// -----------------------------
 	// Instrument synthesis functions.
 	// -----------------------------
+	const sineComponent = ( x, offset ) => Math.sin( x * 6.28 + offset );
 
-	// Helper sine component.
-	const sineComponent = ( x, offset ) => {
-		return Math.sin( x * 6.28 + offset );
-	};
-
-	// Piano: uses a more complex modulation.
 	const pianoWaveform = ( x ) => {
-		return sineComponent(
-			x,
-			Math.pow( sineComponent( x, 0 ), 2 ) +
+		return sineComponent( x, Math.pow( sineComponent( x, 0 ), 2 ) +
 			sineComponent( x, 0.25 ) * 0.75 +
-			sineComponent( x, 0.5 ) * 0.1
-		) * volumeMultiplier;
-	};
+			sineComponent( x, 0.5 ) * 0.1 ) * volumeMultiplier;
+	}
 
 	const piano2WaveForm = ( x ) => {
 		return ( Math.sin( x * 6.28 ) * Math.sin( x * 3.14 ) ) * volumeMultiplier;
-	};
-
-	// Sine waveform
+	}
 	const sineWaveform = ( x ) => {
 		return Math.sin( 2 * Math.PI * x ) * volumeMultiplier;
-	};
-
-	// Square waveform
+	}
 	const squareWaveform = ( x ) => {
 		return ( Math.sin( 2 * Math.PI * x ) >= 0 ? 1 : -1 ) * volumeMultiplier;
-	};
-
-	// Sawtooth waveform
+	}
 	const sawtoothWaveform = ( x ) => {
 		let t = x - Math.floor( x );
 		return ( 2 * t - 1 ) * volumeMultiplier;
 	};
-
-	// Triangle waveform
 	const triangleWaveform = ( x ) => {
 		let t = x - Math.floor( x );
 		return ( 2 * Math.abs( 2 * t - 1 ) - 1 ) * volumeMultiplier;
 	};
-
-	// Drum: a simple noise burst.
 	const drumWaveform = ( x ) => {
 		return ( ( Math.random() * 2 - 1 ) * Math.exp( -x / 10 ) ) * volumeMultiplier;
 	};
-
 	const softDrumWaveform = ( x ) => {
-		return ( 1 * Math.sin( x * 2 ) + 0.3 * ( Math.random() - 0.5 ) ) * Math.exp( -x / 15 ) * volumeMultiplier * 2;
+		return ( Math.sin( x * 2 ) + 0.3 * ( Math.random() - 0.5 ) ) *
+			Math.exp( -x / 15 ) * volumeMultiplier * 2;
 	};
 
 	// Mapping of instrument ids to synthesis functions.
-	// 0: Piano (default)
-	// 1: Piano 2
-	// 2: Sine
-	// 3: Sawtooth
-	// 4: Square
-	// 5: Triangle
-	// 6: Drum
-	// 7: Soft Drum
+	// 0: Piano, 1: Piano 2, 2: Sine, 3: Sawtooth, 4: Square, 5: Triangle, 6: Drum, 7: Soft Drum
 	const instrumentMapping = [
 		pianoWaveform,
 		piano2WaveForm,
@@ -7946,13 +8157,10 @@ gap: 5vw;
 	];
 
 	// -----------------------------
-	// Music player with lookahead scheduling.
+	// Main Music Player Function (p1)
 	// -----------------------------
-
 	/**
-	 * Main function to play music in the p1 format.
-	 *
-	 * Use it as a tag template literal. For example:
+	 * Use as a tag template literal:
 	 *
 	 *     p1`
 	 *     0|f  dh   d T-X   X  T    X X V|
@@ -7961,215 +8169,196 @@ gap: 5vw;
 	 *     0|c fVa a-   X T R  aQT Ta   RO- X|
 	 *     [70.30]
 	 *     `
-	 *
-	 * Tempo lines are detected if the line is entirely numeric (or wrapped in [ ]).
-	 * Track lines must be in the format: instrument|track data|
-	 *
-	 * Passing an empty string stops playback.
-	 *
-	 * @param {Array|string} params Music data.
 	 */
 	function p1( params ) {
 
 		if ( Array.isArray( params ) ) {
 			params = params[ 0 ];
 		}
-
 		if ( !params || params.trim() === '' ) {
 			p1.stop();
 			return;
 		}
 
-		// Default settings.
-		let tempo = 125; // ms per note step.
+		if ( noteBuffers.length > 200 ) {
+			console.warn( "Beep8.Music: Note buffers exceeded limit, clearing old buffers." );
+			noteBuffers = {};
+		}
+
+		// Reset defaults.
+		tempo = 125;
 		let baseNoteDuration = 0.5; // seconds per note.
 		schedules = [];
 
 		// Split input into lines.
 		const rawLines = params.split( '\n' ).map( line => line.trim() );
-		let noteInterval = tempo / 1000; // in seconds
+		let noteInterval = tempo / 1000; // seconds per note step.
 
-		// Regular expression for track lines: instrument digit, then |, then track data, then |
+		// Regular expression for track lines: instrument|track data|
 		const trackLineRegex = /^([0-9])\|(.*)\|$/;
 
-		rawLines.forEach(
-			line => {
+		rawLines.forEach( line => {
+			if ( !line ) return;
 
-				if ( !line ) return;
-
-				// Check for tempo/note duration line.
-				// Tempo lines are entirely numeric or wrapped in [ ].
-				if ( ( line.startsWith( '[' ) && line.endsWith( ']' ) ) || ( /^\d+(\.\d+)?$/.test( line ) ) ) {
-					const timing = line.replace( /[\[\]]/g, '' ).split( '.' );
-					tempo = parseFloat( timing[ 0 ] ) || tempo;
-					baseNoteDuration = ( parseFloat( timing[ 1 ] ) || 50 ) / 100;
-					noteInterval = tempo / 1000;
-					return;
-				}
-
-				// Check for track lines in the new format.
-				if ( !trackLineRegex.test( line ) ) {
-					console.error( "Track lines must be in the format 'instrument id|track data|': " + line );
-					return;
-				}
-
-				const match = line.match( trackLineRegex );
-				const instrumentId = parseInt( match[ 1 ], 10 );
-				const instrumentFn = instrumentMapping[ instrumentId ] || instrumentMapping[ 0 ];
-				const trackData = match[ 2 ].trim();
-
-				let events = [];
-				// Parse trackData character by character.
-				for ( let i = 0; i < trackData.length; i++ ) {
-					const char = trackData[ i ];
-					let dashCount = 1;
-					while ( i + dashCount < trackData.length && trackData[ i + dashCount ] === '-' ) {
-						dashCount++;
-					}
-					let eventTime = i * noteInterval;
-					if ( char === ' ' ) {
-						events.push( { startTime: eventTime, noteBuffer: null } );
-						i += dashCount - 1;
-						continue;
-					}
-					let noteValue = char.charCodeAt( 0 );
-					noteValue -= noteValue > 90 ? 71 : 65;
-					let noteDuration = dashCount * baseNoteDuration * ( tempo / 125 );
-					let noteBuffer = createNoteBuffer( noteValue, noteDuration, 44100, instrumentFn );
-					events.push( { startTime: eventTime, noteBuffer: noteBuffer } );
-					i += dashCount - 1;
-				}
-
-				schedules.push( events );
-
+			// Tempo/note duration lines.
+			if ( ( line.startsWith( '[' ) && line.endsWith( ']' ) ) || ( /^\d+(\.\d+)?$/.test( line ) ) ) {
+				const timing = line.replace( /[\[\]]/g, '' ).split( '.' );
+				tempo = parseFloat( timing[ 0 ] ) || tempo;
+				baseNoteDuration = ( parseFloat( timing[ 1 ] ) || 50 ) / 100;
+				noteInterval = tempo / 1000;
+				return;
 			}
-		);
 
-		// Initialize scheduler.
+			// Track lines.
+			if ( !trackLineRegex.test( line ) ) {
+				console.error( "Track lines must be in the format 'instrument|track data|': " + line );
+				return;
+			}
+
+			const match = line.match( trackLineRegex );
+			const instrumentId = parseInt( match[ 1 ], 10 );
+			const instrumentFn = instrumentMapping[ instrumentId ] || instrumentMapping[ 0 ];
+			const trackData = match[ 2 ].trim();
+
+			let events = [];
+			// Parse trackData character by character.
+			for ( let i = 0; i < trackData.length; i++ ) {
+				const char = trackData[ i ];
+				let dashCount = 1;
+				while ( i + dashCount < trackData.length && trackData[ i + dashCount ] === '-' ) {
+					dashCount++;
+				}
+				let eventTime = i * noteInterval;
+				if ( char === ' ' ) {
+					events.push( { startTime: eventTime, noteBuffer: null } );
+					i += dashCount - 1;
+					continue;
+				}
+				let noteValue = char.charCodeAt( 0 );
+				noteValue -= noteValue > 90 ? 71 : 65;
+				let noteDuration = dashCount * baseNoteDuration * ( tempo / 125 );
+				let noteBuffer = createNoteBuffer( noteValue, noteDuration, 44100, instrumentFn );
+				events.push( { startTime: eventTime, noteBuffer: noteBuffer } );
+				i += dashCount - 1;
+			}
+			schedules.push( events );
+		} );
+
+		// Initialize schedule pointers and calculate loop duration.
 		schedulePointers = schedules.map( () => 0 );
-		loopDuration = Math.max(
-			...schedules.map( events =>
-				events.length > 0 ? events[ events.length - 1 ].startTime + noteInterval : 0
-			)
-		);
-		playbackStartTime = audioContexts[ 0 ].currentTime + 0.1;
+		playbackStartTime = audioCtx.currentTime + 0.1;
 
 		p1.stop();
-
 		schedulerInterval = setInterval( schedulerFunction, schedulerIntervalMs );
-
 	}
 
 
 	/**
-	 * Lookahead scheduler to schedule note events ahead of time.
-	 * This function is called at regular intervals to schedule note events.
+	 * The scheduler function ensures the notes are played at the right time.
 	 *
-	 * The scheduler uses a lookahead time to schedule events ahead of time.
+	 * This function is called every 50ms to check if any notes need to be played.
 	 *
-	 * The scheduler will stop playback if all tracks have reached the end of their events.
+	 * The scheduler keeps track of the current time and the current note interval.
+	 * It then checks each track to see if a note needs to be played.
 	 *
-	 * The scheduler will stop playback if the p1.loop property is set to false.
-	 *
-	 * This function iterates over scheduled events and plays them when appropriate.
-	 *
+	 * @returns {void}
 	 */
 	function schedulerFunction() {
-		const currentTime = audioContexts[ 0 ].currentTime;
-		schedules.forEach(
-			( events, trackIndex ) => {
-				let pointer = schedulePointers[ trackIndex ];
-				while ( true ) {
-					if ( events.length === 0 ) break;
 
-					const localIndex = pointer % events.length;
-					const loopCount = Math.floor( pointer / events.length );
-					const event = events[ localIndex ];
-					const eventTime = playbackStartTime + event.startTime + loopCount * loopDuration;
-					if ( eventTime < currentTime + lookaheadTime ) {
-						if ( event.noteBuffer ) {
-							const contextIndex =
-								( trackIndex * CONTEXTS_PER_TRACK ) +
-								( localIndex % CONTEXTS_PER_TRACK );
-							playNoteBuffer( event.noteBuffer, audioContexts[ contextIndex ], eventTime );
-						}
-						pointer++;
-						schedulePointers[ trackIndex ] = pointer;
-					} else {
-						break;
-					}
+		const currentTime = audioCtx.currentTime;
+		const noteInterval = tempo / 1000; // note duration in seconds
+		// Use the larger of the fixed lookahead and the current note interval.
+		const effectiveLookahead = Math.max( lookaheadTime, noteInterval );
+		schedules.forEach( ( events, trackIndex ) => {
+			let pointer = schedulePointers[ trackIndex ];
+			const trackLength = events.length;
+			if ( trackLength === 0 ) return;
+			const step = pointer % trackLength;
+			const loopCount = Math.floor( pointer / trackLength );
+			const eventTime = playbackStartTime + ( step * noteInterval ) + ( loopCount * trackLength * noteInterval );
+			if ( eventTime < currentTime + effectiveLookahead ) {
+				const event = events[ step ];
+				if ( event.noteBuffer ) {
+					playNoteBuffer( event.noteBuffer, audioCtx, eventTime );
 				}
+				schedulePointers[ trackIndex ]++;
 			}
-		);
-
+		} );
 		if ( !p1.loop ) {
 			const done = schedules.every( ( events, i ) => schedulePointers[ i ] >= events.length );
 			if ( done ) {
 				p1.stop();
 			}
 		}
-
 	}
 
 
 	/**
-	 * Stop playback by clearing the scheduler.
-	 *
-	 * @returns {void}
+	 * Stop playback by clearing the scheduler and stopping all playing sources.
 	 */
 	p1.stop = function() {
-
 		if ( schedulerInterval !== null ) {
 			clearInterval( schedulerInterval );
 			schedulerInterval = null;
 		}
-
-		// Stop all currently playing sources
 		playingSources.forEach( source => source.stop() );
 		playingSources = [];
-
 	};
 
 
 	/**
 	 * Check if music is currently playing.
-	 *
-	 * @returns {boolean} True if playing, else false.
 	 */
 	p1.isPlaying = function() {
-
 		return schedulerInterval !== null;
+	};
 
+
+	/**
+	 * Set the tempo (in BPM).
+	 */
+	p1.setTempo = function( newTempo ) {
+		if ( newTempo < 50 ) newTempo = 50;
+
+		// Calculate old and new note intervals in seconds.
+		const oldNoteInterval = tempo / 1000;
+		const newNoteInterval = newTempo / 1000;
+
+		// Determine how much time has elapsed since playback started.
+		const elapsed = audioCtx.currentTime - playbackStartTime;
+
+		// Compute the current note position (could be fractional).
+		const currentIndex = elapsed / oldNoteInterval;
+
+		// Rebase playbackStartTime so that the currentIndex now corresponds to the current time.
+		playbackStartTime = audioCtx.currentTime - currentIndex * newNoteInterval;
+
+		// Finally, update the tempo.
+		tempo = newTempo;
+	};
+
+
+	p1.clearCache = function() {
+		noteBuffers = {};
 	};
 
 
 	// Loop property: set to true to repeat playback.
 	p1.loop = true;
 
-
 	/**
 	 * Create an audio buffer for a given note.
-	 *
-	 * @param {number} note - Note value.
-	 * @param {number} durationSeconds - Duration in seconds.
-	 * @param {number} sampleRate - Sample rate.
-	 * @param {function} instrumentFn - Instrument synthesis function.
-	 * @returns {AudioBuffer} The generated buffer.
 	 */
 	const createNoteBuffer = ( note, durationSeconds, sampleRate, instrumentFn ) => {
-
-		// Include instrument function name in key for caching.
 		const key = note + '-' + durationSeconds + '-' + instrumentFn.name;
 		let buffer = noteBuffers[ key ];
-
 		if ( note >= 0 && !buffer ) {
 			const frequencyFactor = 65.406 * Math.pow( 1.06, note ) / sampleRate;
 			const totalSamples = Math.floor( sampleRate * durationSeconds );
 			const attackSamples = 88;
 			const decaySamples = sampleRate * ( durationSeconds - 0.002 );
-			buffer = noteBuffers[ key ] = audioContexts[ 0 ].createBuffer( 1, totalSamples, sampleRate );
+			buffer = noteBuffers[ key ] = audioCtx.createBuffer( 1, totalSamples, sampleRate );
 			const channelData = buffer.getChannelData( 0 );
-
 			for ( let i = 0; i < totalSamples; i++ ) {
 				let amplitude;
 				if ( i < attackSamples ) {
@@ -8182,63 +8371,38 @@ gap: 5vw;
 				}
 				channelData[ i ] = amplitude * instrumentFn( i * frequencyFactor );
 			}
-
 			// Unlock audio on iOS if needed.
 			if ( !unlocked ) {
-				audioContexts.forEach(
-					( context ) => {
-						playNoteBuffer( buffer, context, context.currentTime, true );
-					}
-				);
+				playNoteBuffer( buffer, audioCtx, audioCtx.currentTime, true );
 				unlocked = true;
 			}
 		}
 		return buffer;
-
 	};
 
-
-	// Add this array to keep track of currently playing sources
+	// Array to keep track of currently playing sources.
 	let playingSources = [];
 
+
 	/**
-	 * Play an audio buffer using a given AudioContext at a scheduled time.
-	 *
-	 * @param {AudioBuffer} buffer - The note buffer.
-	 * @param {AudioContext} context - The audio context.
-	 * @param {number} when - Absolute time (in seconds) to start playback.
-	 * @param {boolean} [stopImmediately=false] - Whether to stop immediately after starting.
-	 * @returns {void}
+	 * Play an audio buffer at a scheduled time.
 	 */
 	const playNoteBuffer = ( buffer, context, when, stopImmediately = false ) => {
-
 		const source = context.createBufferSource();
 		source.buffer = buffer;
 		source.connect( context.destination );
 		source.start( when );
-
 		playingSources.push( source );
-
-		/**
-		 * The stopImmediately parameter is likely to unlock audio on iOS devices.
-		 * iOS requires a user interaction to start audio playback, so this parameter
-		 * allows the function to start and immediately stop the audio buffer to
-		 * unlock the audio context without actually playing any sound.
-		 */
 		if ( stopImmediately ) {
 			source.stop();
 		}
-
-		// Remove the source from the playingSources array when it ends
 		source.onended = () => {
 			const index = playingSources.indexOf( source );
 			if ( index !== -1 ) {
 				playingSources.splice( index, 1 );
 			}
 		};
-
 	};
-
 
 	// Expose the p1 function globally.
 	window.p1 = p1;
