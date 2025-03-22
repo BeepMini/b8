@@ -13,7 +13,10 @@
 
 
 	const VJOY_HTML = `
+<div class="vjoy-options">
 <button id='vjoy-button-ter' class='vjoy-button'>Start</button>
+<button id='vjoy-button-ter' class='vjoy-button'>Screenshot</button>
+</div>
 <div class="vjoy-controls">
 <div class="vjoy-dpad">
 <button id='vjoy-button-up' class='vjoy-button'>Up</button>
@@ -38,6 +41,7 @@
 :root {
 	--b8-vjoy-button-color: #333;
 	--b8-vjoy-button-dpad-size: 40vw;
+	--b8-vjoy-button-size: 15vw;
 }
 
 .vjoy-container,
@@ -50,7 +54,15 @@
 
 .vjoy-container {
 width: 100%;
-padding: 0 5vw;
+padding: 4vw;
+}
+
+.vjoy-options {
+display: flex;
+gap: 5vw;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 5vw;
 }
 
 .vjoy-controls {
@@ -70,12 +82,12 @@ width: var(--vjoy-button-dpad-size);
 
 .vjoy-buttons {
 display: flex;
-gap: 5vw;
+gap: 4vw;
 }
 
 .vjoy-buttons button {
-	width: calc( var(--vjoy-button-dpad-size) / 3 );
-	height: calc( var(--vjoy-button-dpad-size) / 3 );
+	width: var(--b8-vjoy-button-size);
+	height: var(--b8-vjoy-button-size);
 	border-radius: 5rem;
 }
 
@@ -131,7 +143,8 @@ gap: 5vw;
 }
 
 #vjoy-button-ter {
-	height: 10vw;
+	height: 6vw;
+	padding: 0 4vw;
 	border-radius: 1rem;
 }
 `;
