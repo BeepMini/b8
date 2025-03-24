@@ -12,10 +12,13 @@
 	beep8.Joystick = {};
 
 
+	let repeatIntervals = null;
+
+
 	const VJOY_HTML = `
 <div class="vjoy-options">
 <button id='vjoy-button-ter' class='vjoy-button'>Start</button>
-<button id='vjoy-button-ter' class='vjoy-button'>Screenshot</button>
+<button id='vjoy-button-screenshot' class='vjoy-button'>Screenshot</button>
 </div>
 <div class="vjoy-controls">
 <div class="vjoy-dpad">
@@ -191,10 +194,30 @@ gap: 4vw;
 		beep8.Joystick.setUpButton( "vjoy-button-pri", "ButtonA" );
 		beep8.Joystick.setUpButton( "vjoy-button-sec", "ButtonB" );
 		beep8.Joystick.setUpButton( "vjoy-button-ter", "Escape" );
+		beep8.Joystick.setUpButton( "vjoy-button-screenshot", "0" );
 
 		// Prevent touches on the document body from doing what they usually do (opening
 		// context menus, selecting stuff, etc).
 		document.body.addEventListener( "touchstart", e => e.preventDefault() );
+
+		document.addEventListener( 'pointerup', ( e ) => {
+			// Loop over any active buttons stored in repeatIntervals.
+			for ( const buttonKey in repeatIntervals ) {
+				if ( repeatIntervals.hasOwnProperty( buttonKey ) ) {
+					// Call handleButtonEvent with false to release the button.
+					beep8.Joystick.handleButtonEvent( buttonKey, false, e );
+				}
+			}
+		} );
+
+		document.addEventListener( 'pointercancel', ( e ) => {
+			for ( const buttonKey in repeatIntervals ) {
+				if ( repeatIntervals.hasOwnProperty( buttonKey ) ) {
+					beep8.Joystick.handleButtonEvent( buttonKey, false, e );
+				}
+			}
+		} );
+
 
 	}
 
@@ -228,7 +251,11 @@ gap: 4vw;
 
 		button.addEventListener(
 			"pointerstart",
-			( e ) => beep8.Joystick.handleButtonEvent( buttonKeyName, true, e )
+			( e ) => {
+				e.preventDefault();
+				beep8.Joystick.handleButtonEvent( buttonKeyName, true, e );
+			},
+			{ passive: false }
 		);
 
 		button.addEventListener(
@@ -239,6 +266,15 @@ gap: 4vw;
 		button.addEventListener(
 			"pointerend",
 			( e ) => beep8.Joystick.handleButtonEvent( buttonKeyName, false, e )
+		);
+
+		button.addEventListener(
+			"pointermove",
+			( e ) => {
+				// Prevent default behavior for pointermove events.
+				e.preventDefault();
+			},
+			{ passive: false }
 		);
 
 		button.addEventListener(
@@ -264,10 +300,50 @@ gap: 4vw;
 		// Add key property to event.
 		evt.key = buttonKeyName;
 
+		// Initialize repeat intervals container if not already created.
+		if ( !repeatIntervals ) {
+			repeatIntervals = {};
+		}
+
 		if ( down ) {
+
+			// Call onKeyDown immediately.
 			beep8.Input.onKeyDown( evt );
+
+			// If no timer exists for this button, start one.
+			if ( !repeatIntervals[ buttonKeyName ] ) {
+				repeatIntervals[ buttonKeyName ] = {};
+
+				// Set a timeout for the initial delay.
+				repeatIntervals[ buttonKeyName ].initialTimeout = setTimeout(
+					function() {
+						// After the delay, start repeating.
+						repeatIntervals[ buttonKeyName ].interval = setInterval(
+							function() {
+								beep8.Input.onKeyDown( evt );
+							},
+							150
+						);
+					},
+					150
+				);
+			}
+
 		} else {
+
+			// Clear any timers if they exist.
+			if ( repeatIntervals[ buttonKeyName ] ) {
+				if ( repeatIntervals[ buttonKeyName ].initialTimeout ) {
+					clearTimeout( repeatIntervals[ buttonKeyName ].initialTimeout );
+				}
+				if ( repeatIntervals[ buttonKeyName ].interval ) {
+					clearInterval( repeatIntervals[ buttonKeyName ].interval );
+				}
+				delete repeatIntervals[ buttonKeyName ];
+			}
+
 			beep8.Input.onKeyUp( evt );
+
 		}
 
 		evt.preventDefault();
