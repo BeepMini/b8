@@ -133,6 +133,8 @@
 	 */
 	beep8.Input.onKeyUp = function( e ) {
 
+		if ( !e.key ) return;
+
 		const key = e.key.toUpperCase();
 		const keys = beep8.Input.getKeys( key );
 
