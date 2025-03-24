@@ -14,7 +14,7 @@
 	let tempo = 120; // Default tempo.
 	const lookaheadTime = 0.5; // Only schedule events within the next 0.5 seconds.
 	const schedulerIntervalMs = 50; // Check every 50ms.
-	const volumeMultiplier = 0.2; // Volume multiplier.
+	const volumeMultiplier = 0.1; // Volume multiplier.
 
 	// iOS audio unlock flag.
 	let unlocked = false;
