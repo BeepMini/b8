@@ -22,10 +22,10 @@
 </div>
 <div class="vjoy-controls">
 <div class="vjoy-dpad">
-<button id='vjoy-button-up' class='vjoy-button'>Up</button>
-<button id='vjoy-button-down' class='vjoy-button'>Down</button>
-<button id='vjoy-button-left' class='vjoy-button'>Left</button>
-<button id='vjoy-button-right' class='vjoy-button'>Right</button>
+<button id='vjoy-button-up' class='vjoy-button'>U</button>
+<button id='vjoy-button-down' class='vjoy-button'>D</button>
+<button id='vjoy-button-left' class='vjoy-button'>L</button>
+<button id='vjoy-button-right' class='vjoy-button'>R</button>
 <div id='vjoy-button-center'></div>
 </div>
 <div class="vjoy-buttons">
@@ -43,8 +43,9 @@
 	const VJOY_CSS = `
 :root {
 	--b8-vjoy-button-color: #333;
-	--b8-vjoy-button-dpad-size: 40vw;
 	--b8-vjoy-button-size: 15vw;
+	--b8-vjoy-button-dpad-size: calc( var(--b8-vjoy-button-size ) * 3 );
+	--b8-console-radius: 2rem;
 }
 
 .vjoy-container,
@@ -53,11 +54,15 @@
 	user-select: none;
 	-webkit-user-select: none;
 	-webkit-touch-callout: none;
+	touch-action: none;
 }
 
 .vjoy-container {
 width: 100%;
-padding: 4vw;
+padding: 3vw;
+padding-bottom: 8vw;
+background: deeppink;
+border-radius: 0 0 var(--b8-console-radius) var(--b8-console-radius);
 }
 
 .vjoy-options {
@@ -80,7 +85,8 @@ aspect-ratio: 1;
 display: grid;
 grid-template-columns: 1fr 1fr 1fr;
 grid-template-rows: 1fr 1fr 1fr;
-width: var(--vjoy-button-dpad-size);
+width: var(--b8-vjoy-button-dpad-size);
+max-width: 10rem;
 }
 
 .vjoy-buttons {
@@ -89,9 +95,13 @@ gap: 4vw;
 }
 
 .vjoy-buttons button {
+	display: block;
 	width: var(--b8-vjoy-button-size);
+	max-width: 5rem;
+	max-height: 5rem;
 	height: var(--b8-vjoy-button-size);
 	border-radius: 5rem;
+	touch-action: none;
 }
 
 .vjoy-button {
@@ -145,8 +155,9 @@ gap: 4vw;
 	margin-top: 5vw;
 }
 
+#vjoy-button-screenshot,
 #vjoy-button-ter {
-	height: 6vw;
+	height: 2rem;
 	padding: 0 4vw;
 	border-radius: 1rem;
 }
