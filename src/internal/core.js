@@ -743,15 +743,15 @@
 			return;
 		}
 
-		// Take a screenshot when the 0 key is pressed.
-		document.addEventListener(
-			'keyup',
-			( e ) => {
-				if ( e.key === '0' ) {
-					beep8.Core.downloadScreenshot();
-				}
+		const takeScreenshot = ( e ) => {
+			if ( e.key === '0' ) {
+				beep8.Core.downloadScreenshot();
 			}
-		);
+		};
+
+		// Take a screenshot when the 0 key is pressed.
+		document.addEventListener( 'pointerup', takeScreenshot );
+		document.addEventListener( 'keyup', takeScreenshot );
 
 	}
 
