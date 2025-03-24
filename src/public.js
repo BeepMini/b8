@@ -861,4 +861,34 @@
 
 	}
 
+
+	/**
+	 * Speaks the given text using the Web Speech API.
+	 *
+	 * @param {string} text - The text to speak.
+	 * @param {Object} [options] - Optional settings for speech synthesis.
+	 * @param {number} [options.pitch=1] - The pitch of the voice.
+	 * @param {number} [options.rate=1] - The rate of speech.
+	 * @param {number} [options.volume=1] - The volume of the speech.
+	 * @returns {void}
+	 */
+	beep8.speak = function( text, options = {} ) {
+
+		// Speech synthesis is not supported in this browser.
+		if ( !window.speechSynthesis ) return;
+
+		beep8.Utilities.checkString( "text", text );
+		beep8.Utilities.checkObject( "options", options );
+
+		const utterance = new SpeechSynthesisUtterance( text );
+
+		// Optional settings
+		utterance.pitch = options.pitch ?? 1;
+		utterance.rate = options.rate ?? 1;
+		utterance.volume = options.volume ?? 1;
+
+		speechSynthesis.speak( utterance );
+
+	};
+
 } )( beep8 || ( beep8 = {} ) );
