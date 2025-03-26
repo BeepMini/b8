@@ -11,22 +11,19 @@
 	 */
 	beep8.Joystick = {};
 
-
 	let repeatIntervals = null;
-
 
 	const VJOY_HTML = `
 <div class="vjoy-options">
 <button id='vjoy-button-ter' class='vjoy-button'>Start</button>
-<button id='vjoy-button-screenshot' class='vjoy-button'>Screenshot</button>
+<button id='vjoy-button-screenshot' class='vjoy-button'>Snap</button>
 </div>
 <div class="vjoy-controls">
 <div class="vjoy-dpad">
-<button id='vjoy-button-up' class='vjoy-button'>U</button>
-<button id='vjoy-button-down' class='vjoy-button'>D</button>
-<button id='vjoy-button-left' class='vjoy-button'>L</button>
-<button id='vjoy-button-right' class='vjoy-button'>R</button>
-<div id='vjoy-button-center'></div>
+<button id='vjoy-button-up' class='vjoy-button'><span>U</span></button>
+<button id='vjoy-button-right' class='vjoy-button'><span>R</span></button>
+<button id='vjoy-button-left' class='vjoy-button'><span>L</span></button>
+<button id='vjoy-button-down' class='vjoy-button'><span>D</span></button>
 </div>
 <div class="vjoy-buttons">
 <button id='vjoy-button-pri' class='vjoy-button'>A</button>
@@ -43,8 +40,8 @@
 	const VJOY_CSS = `
 :root {
 	--b8-vjoy-button-color: #333;
-	--b8-vjoy-button-size: 15vw;
-	--b8-vjoy-button-dpad-size: calc( var(--b8-vjoy-button-size ) * 3 );
+	--b8-vjoy-button-size: 14vw;
+	--b8-vjoy-button-dpad-size: calc(var(--b8-vjoy-button-size) * 2);
 	--b8-console-radius: 2rem;
 }
 
@@ -58,19 +55,25 @@
 }
 
 .vjoy-container {
+position: relative;
 width: 100%;
-padding: 3vw;
-padding-bottom: 8vw;
+padding: 8vw 6vw;
 background: deeppink;
 border-radius: 0 0 var(--b8-console-radius) var(--b8-console-radius);
 }
 
 .vjoy-options {
+border-radius: 5rem;
+position: absolute;
 display: flex;
-gap: 5vw;
-justify-content: space-between;
+gap: 2vw;
 align-items: center;
-margin-bottom: 5vw;
+padding: 2vw;
+border-radius: 2rem;
+background: inherit;
+top: -4vw;
+left: 50%;
+transform: translateX(-50%);
 }
 
 .vjoy-controls {
@@ -82,20 +85,34 @@ align-items: center;
 
 .vjoy-dpad {
 aspect-ratio: 1;
+max-width: var(--b8-vjoy-button-dpad-size);
+width: 100%;
 display: grid;
-grid-template-columns: 1fr 1fr 1fr;
-grid-template-rows: 1fr 1fr 1fr;
-width: var(--b8-vjoy-button-dpad-size);
-max-width: 10rem;
+grid-template-columns: 1fr 1fr;
+grid-template-rows: 1fr 1fr;
+flex-wrap: wrap;
+transform: rotate(45deg);
+border-radius: calc(var(--b8-vjoy-button-dpad-size) / 5);
+overflow: hidden;
+background:black;
+gap: 1px;
+border: 2px solid black;
+}
+
+.vjoy-dpad button {
+	width: 100%;
+	height: 100%;
+}
+.vjoy-dpad button span {
+	transform: rotate(-45deg);
 }
 
 .vjoy-buttons {
 display: flex;
-gap: 4vw;
+gap: 2vw;
 }
 
 .vjoy-buttons button {
-	display: block;
 	width: var(--b8-vjoy-button-size);
 	max-width: 5rem;
 	max-height: 5rem;
@@ -118,6 +135,7 @@ gap: 4vw;
 	-webkit-user-select: none;
 	-webkit-touch-callout: none;
 	text-shadow: 0 -2px 0 black;
+	padding: 0;
 }
 
 .vjoy-button:active,
@@ -125,40 +143,14 @@ gap: 4vw;
 	background: black;
 }
 
-#vjoy-button-up {
-	grid-area: 1 / 2;
-	border-radius: 1rem 1rem 0 0;
-}
-
-#vjoy-button-down {
-	grid-area: 3 / 2;
-	border-radius: 0 0 1rem 1rem;
-}
-
-#vjoy-button-left {
-	grid-area: 2 / 1;
-	border-radius: 1rem 0 0 1rem;
-}
-
-#vjoy-button-right {
-	grid-area: 2 / 3;
-	border-radius: 0 1rem 1rem 0;
-}
-
-#vjoy-button-center {
-	grid-column: 2;
-	grid-row: 2;
-	background: var(--b8-vjoy-button-color);
-}
-
 #vjoy-button-pri {
-	margin-top: 5vw;
+	margin-top: calc(var(--b8-vjoy-button-size) / 2);
 }
 
 #vjoy-button-screenshot,
 #vjoy-button-ter {
-	height: 2rem;
-	padding: 0 4vw;
+	width: calc(var(--b8-vjoy-button-size) * 1.4);
+	padding: 1vw;
 	border-radius: 1rem;
 }
 `;
@@ -204,7 +196,7 @@ gap: 4vw;
 		beep8.Joystick.setUpButton( "vjoy-button-right", "ArrowRight" );
 		beep8.Joystick.setUpButton( "vjoy-button-pri", "ButtonA" );
 		beep8.Joystick.setUpButton( "vjoy-button-sec", "ButtonB" );
-		beep8.Joystick.setUpButton( "vjoy-button-ter", "Escape" );
+		beep8.Joystick.setUpButton( "vjoy-button-ter", "Enter" );
 		beep8.Joystick.setUpButton( "vjoy-button-screenshot", "0" );
 
 		// Prevent touches on the document body from doing what they usually do (opening
