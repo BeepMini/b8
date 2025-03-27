@@ -15,20 +15,20 @@
 
 	const VJOY_HTML = `
 <div class="vjoy-options">
-<button id='vjoy-button-ter' class='vjoy-button'>Start</button>
-<button id='vjoy-button-screenshot' class='vjoy-button'>Snap</button>
+	<button id='vjoy-button-ter' class='vjoy-button'>Start</button>
+	<button id='vjoy-button-screenshot' class='vjoy-button'>Snap</button>
 </div>
 <div class="vjoy-controls">
-<div class="vjoy-dpad">
-<button id='vjoy-button-up' class='vjoy-button'><span>U</span></button>
-<button id='vjoy-button-right' class='vjoy-button'><span>R</span></button>
-<button id='vjoy-button-left' class='vjoy-button'><span>L</span></button>
-<button id='vjoy-button-down' class='vjoy-button'><span>D</span></button>
-</div>
-<div class="vjoy-buttons">
-<button id='vjoy-button-pri' class='vjoy-button'><span>A</span></button>
-<button id='vjoy-button-sec' class='vjoy-button'><span>B</span></button>
-</div>
+	<div class="vjoy-dpad">
+	<button id='vjoy-button-up' class='vjoy-button'><span>U</span></button>
+	<button id='vjoy-button-right' class='vjoy-button'><span>R</span></button>
+	<button id='vjoy-button-left' class='vjoy-button'><span>L</span></button>
+	<button id='vjoy-button-down' class='vjoy-button'><span>D</span></button>
+	</div>
+	<div class="vjoy-buttons">
+	<button id='vjoy-button-pri' class='vjoy-button'><span>A</span></button>
+	<button id='vjoy-button-sec' class='vjoy-button'><span>B</span></button>
+	</div>
 </div>`;
 
 
@@ -56,47 +56,47 @@
 }
 
 .vjoy-container {
-position: relative;
-width: 100%;
-padding: 8vw 6vw;
-background: deeppink;
-border-radius: 0 0 var(--b8-console-radius) var(--b8-console-radius);
+	position: relative;
+	width: 100%;
+	padding: 8vw 6vw;
+	background: deeppink;
+	border-radius: 0 0 var(--b8-console-radius) var(--b8-console-radius);
 }
 
 .vjoy-options {
-border-radius: 5rem;
-position: absolute;
-display: flex;
-gap: 2vw;
-align-items: center;
-padding: 2vw;
-border-radius: 2rem;
-background: inherit;
-top: -4vw;
-left: 50%;
-transform: translateX(-50%);
+	border-radius: 5rem;
+	position: absolute;
+	display: flex;
+	gap: 2vw;
+	align-items: center;
+	padding: 2vw;
+	border-radius: 2rem;
+	background: inherit;
+	top: -4vw;
+	left: 50%;
+	transform: translateX(-50%);
 }
 
 .vjoy-controls {
-display: flex;
-gap: 5vw;
-justify-content: space-between;
-align-items: center;
+	display: flex;
+	gap: 5vw;
+	justify-content: space-between;
+	align-items: center;
 }
 
 .vjoy-dpad {
-aspect-ratio: 1;
-max-width: var(--b8-vjoy-button-dpad-size);
-width: 100%;
-display: grid;
-grid-template-columns: 1fr 1fr;
-grid-template-rows: 1fr 1fr;
-flex-wrap: wrap;
-transform: rotate(45deg);
-border-radius: var(--b8-border-radius);
-background:black;
-gap: 1px;
-border: 2px solid black;
+	aspect-ratio: 1;
+	max-width: var(--b8-vjoy-button-dpad-size);
+	width: 100%;
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	grid-template-rows: 1fr 1fr;
+	flex-wrap: wrap;
+	transform: rotate(45deg);
+	border-radius: var(--b8-border-radius);
+	background:black;
+	gap: 1px;
+	border: 2px solid black;
 }
 
 .vjoy-dpad button {
@@ -144,12 +144,12 @@ border: 2px solid black;
 }
 
 .vjoy-buttons {
-display: flex;
-gap: 2vw;
-transform: rotate(-45deg);
-border: 0.8vw solid rgba(0,0,0,0.2);
-border-radius: calc( var(--b8-border-radius) + 1vw );
-padding: 1vw;
+	display: flex;
+	gap: 2vw;
+	transform: rotate(-45deg);
+	border: 0.8vw solid rgba(0,0,0,0.2);
+	border-radius: calc( var(--b8-border-radius) + 1vw );
+	padding: 1vw;
 }
 
 .vjoy-buttons button {
@@ -197,9 +197,11 @@ padding: 1vw;
 	text-transform: uppercase;
 }
 
-.vjoy-button:active,
+.vjoy-button:hover,
+.vjoy-button:focus,
 .vjoy-button:active {
 	background: black;
+	outline: none;
 }
 
 #vjoy-button-screenshot,
