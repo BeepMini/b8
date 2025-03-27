@@ -26,8 +26,8 @@
 <button id='vjoy-button-down' class='vjoy-button'><span>D</span></button>
 </div>
 <div class="vjoy-buttons">
-<button id='vjoy-button-pri' class='vjoy-button'>A</button>
-<button id='vjoy-button-sec' class='vjoy-button'>B</button>
+<button id='vjoy-button-pri' class='vjoy-button'><span>A</span></button>
+<button id='vjoy-button-sec' class='vjoy-button'><span>B</span></button>
 </div>
 </div>`;
 
@@ -43,6 +43,7 @@
 	--b8-vjoy-button-size: 14vw;
 	--b8-vjoy-button-dpad-size: calc(var(--b8-vjoy-button-size) * 2);
 	--b8-console-radius: 2rem;
+	--b8-border-radius: calc(var(--b8-vjoy-button-dpad-size) / 5);
 }
 
 .vjoy-container,
@@ -92,8 +93,7 @@ grid-template-columns: 1fr 1fr;
 grid-template-rows: 1fr 1fr;
 flex-wrap: wrap;
 transform: rotate(45deg);
-border-radius: calc(var(--b8-vjoy-button-dpad-size) / 5);
-overflow: hidden;
+border-radius: var(--b8-border-radius);
 background:black;
 gap: 1px;
 border: 2px solid black;
@@ -102,14 +102,54 @@ border: 2px solid black;
 .vjoy-dpad button {
 	width: 100%;
 	height: 100%;
+	position: relative;
 }
 .vjoy-dpad button span {
 	transform: rotate(-45deg);
+}
+.vjoy-dpad button:after {
+	position: absolute;
+	content: '';
+	display: block;
+	width: 100%;
+	height: 100%;
+	background: rgba(0,0,0,0);
+	transform: rotate(-45deg);
+}
+
+#vjoy-button-up {
+	border-radius: var(--b8-border-radius) 0 0 0;
+}
+#vjoy-button-down {
+	border-radius: 0 0 var(--b8-border-radius) 0;
+}
+#vjoy-button-left {
+	border-radius: 0 0 0 var(--b8-border-radius);
+}
+#vjoy-button-right {
+	border-radius: 0 var(--b8-border-radius) 0 0;
+}
+
+#vjoy-button-up:after {
+	transform: rotate(-45deg) translateY(-30%) scale(1.1);
+}
+#vjoy-button-down:after {
+	transform: rotate(-45deg) translateY(30%) scale(1.1);
+}
+#vjoy-button-left:after {
+	transform: rotate(-45deg) translateX(-30%) scale(1.1);
+}
+#vjoy-button-right:after {
+	transform: rotate(-45deg) translateX(30%) scale(1.1);
 }
 
 .vjoy-buttons {
 display: flex;
 gap: 2vw;
+transform: rotate(-45deg);
+border: 0.8vw solid rgba(0,0,0,0.2);
+border-radius: calc( var(--b8-border-radius) + 1vw );
+padding: 1vw;
 }
 
 .vjoy-buttons button {
@@ -117,34 +157,49 @@ gap: 2vw;
 	max-width: 5rem;
 	max-height: 5rem;
 	height: var(--b8-vjoy-button-size);
-	border-radius: 5rem;
+	border-radius: var(--b8-border-radius);
 	touch-action: none;
+	border: 2px solid black;
+	position: relative;
+}
+
+.vjoy-buttons button:after {
+	position: absolute;
+	content: '';
+	display: block;
+	width: 100%;
+	height: 100%;
+	background: rgba(0,0,0,0);
+	transform: scale(1.2);
+}
+
+.vjoy-buttons button span {
+	transform: rotate(45deg);
 }
 
 .vjoy-button {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	justify-content: center;
 	background: var(--b8-vjoy-button-color) !important;
 	border: none;
-	font: bold 14px monospace;
-	color: #999 !important;
+	font-family: arial, sans-serif;
+	font-size: 12px;
+	font-weight: 600;
+	color: #aaa !important;
 	user-select: none;
 	touch-callout: none;
 	-webkit-user-select: none;
 	-webkit-touch-callout: none;
 	text-shadow: 0 -2px 0 black;
 	padding: 0;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
 }
 
 .vjoy-button:active,
 .vjoy-button:active {
 	background: black;
-}
-
-#vjoy-button-pri {
-	margin-top: calc(var(--b8-vjoy-button-size) / 2);
 }
 
 #vjoy-button-screenshot,
