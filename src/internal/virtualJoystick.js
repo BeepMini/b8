@@ -58,7 +58,7 @@
 .vjoy-container {
 	position: relative;
 	width: 100%;
-	padding: 8vw 6vw;
+	padding: 8vw 4vw 8vw 6vw;
 	background: deeppink;
 	border-radius: 0 0 var(--b8-console-radius) var(--b8-console-radius);
 }
@@ -86,8 +86,8 @@
 
 .vjoy-dpad {
 	aspect-ratio: 1;
-	max-width: var(--b8-vjoy-button-dpad-size);
-	width: 100%;
+	max-width: 10rem;
+	width: var(--b8-vjoy-button-dpad-size);
 	display: grid;
 	grid-template-columns: 1fr 1fr;
 	grid-template-rows: 1fr 1fr;
@@ -212,7 +212,6 @@
 }
 `;
 
-
 	/**
 	 * Sets up the virtual joystick.
 	 *
@@ -260,25 +259,6 @@
 		// context menus, selecting stuff, etc).
 		document.body.addEventListener( "touchstart", e => e.preventDefault() );
 
-		document.addEventListener( 'pointerup', ( e ) => {
-			// Loop over any active buttons stored in repeatIntervals.
-			for ( const buttonKey in repeatIntervals ) {
-				if ( repeatIntervals.hasOwnProperty( buttonKey ) ) {
-					// Call handleButtonEvent with false to release the button.
-					beep8.Joystick.handleButtonEvent( buttonKey, false, e );
-				}
-			}
-		} );
-
-		document.addEventListener( 'pointercancel', ( e ) => {
-			for ( const buttonKey in repeatIntervals ) {
-				if ( repeatIntervals.hasOwnProperty( buttonKey ) ) {
-					beep8.Joystick.handleButtonEvent( buttonKey, false, e );
-				}
-			}
-		} );
-
-
 	}
 
 
@@ -304,29 +284,24 @@
 			return;
 		}
 
-		button.addEventListener(
-			"pointerdown",
-			( e ) => beep8.Joystick.handleButtonEvent( buttonKeyName, true, e )
-		);
+		[ "pointerdown", "pointerstart" ].forEach( eventName => {
+			button.addEventListener(
+				eventName,
+				( e ) => {
+					e.preventDefault();
+					beep8.Joystick.handleButtonEvent( buttonKeyName, true, e );
+				},
+				{ passive: false }
+			);
+		} );
 
-		button.addEventListener(
-			"pointerstart",
-			( e ) => {
-				e.preventDefault();
-				beep8.Joystick.handleButtonEvent( buttonKeyName, true, e );
-			},
-			{ passive: false }
-		);
-
-		button.addEventListener(
-			"pointerup",
-			( e ) => beep8.Joystick.handleButtonEvent( buttonKeyName, false, e )
-		);
-
-		button.addEventListener(
-			"pointerend",
-			( e ) => beep8.Joystick.handleButtonEvent( buttonKeyName, false, e )
-		);
+		// Cancel the button press if the pointer moves off the button.
+		[ "pointerout", "pointerup", "pointerleave" ].forEach( eventName => {
+			button.addEventListener(
+				eventName,
+				( e ) => beep8.Joystick.handleButtonEvent( buttonKeyName, false, e )
+			);
+		} );
 
 		button.addEventListener(
 			"pointermove",
@@ -354,8 +329,6 @@
 	 * @returns {void}
 	 */
 	beep8.Joystick.handleButtonEvent = function( buttonKeyName, down, evt ) {
-
-		console.log( 'handleButtonEvent', buttonKeyName, down, evt );
 
 		// Add key property to event.
 		evt.key = buttonKeyName;
