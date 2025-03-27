@@ -917,7 +917,7 @@
 	 */
 	beep8.Core.isMobile = function() {
 
-		return beep8.Core.isIOS() || beep8.Core.isAndroid();
+		return beep8.Core.isIOS() || beep8.Core.isAndroid() || beep8.Core.isTouchDevice();
 
 	}
 
