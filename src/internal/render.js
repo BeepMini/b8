@@ -117,7 +117,7 @@
 		}
 
 		dirty = true;
-		setTimeout( beep8.Core.render, 1 );
+		setTimeout( beep8.Renderer.render, 1 );
 
 	}
 
