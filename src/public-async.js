@@ -1,5 +1,8 @@
 ( function( beep8 ) {
 
+	// Initialize a flag to track if we're already paused.
+	beep8._asyncActive = false;
+
 	/**
 	 * ASYNC API FUNCTIONS
 	 * These functions must be called with 'await'.
@@ -8,7 +11,74 @@
 	 * const k = await beep8.Async.key();
 	 * console.log("The user pressed " + k);
 	 */
-	beep8.Async = {};
+	beep8.Async = beep8.Async || {};
+
+	/**
+	 * Create a Proxy for beep8.Async to intercept method calls.
+	 *
+	 * The Proxy's get handler wraps each function so that:
+	 * 1. If no async function is currently active:
+	 *    - It sets the _asyncActive flag.
+	 *    - It pauses the scene.
+	 * 2. It calls beep8.Core.preflight with the method's name.
+	 * 3. It runs the original method.
+	 * 4. In the finally block, if the pause was applied:
+	 *    - It resumes the scene.
+	 *    - It resets the _asyncActive flag.
+	 *
+	 * This mechanism prevents nested async calls from applying the pause/resume logic more than once.
+	 */
+	beep8.Async = new Proxy(
+		beep8.Async,
+		{
+			get( target, prop, receiver ) {
+
+				const orig = Reflect.get( target, prop, receiver );
+
+				if ( typeof orig === "function" ) {
+
+					// Return a wrapped function for any async API function
+					return async function( ...args ) {
+
+						// Only wrap if no async function is already active.
+						let doWrap = !beep8._asyncActive;
+						if ( doWrap ) {
+							// Mark that an async function has started.
+							beep8._asyncActive = true;
+							console.log( `pause beep8.Async.${prop}` );
+							// Pause the scene to wait for the async call.
+							beep8.Scene.pause();
+						}
+
+						try {
+
+							// Call preflight check with the method identifier.
+							beep8.Core.preflight( `beep8.Async.${prop}` );
+							// Execute the original async function with its arguments.
+							const result = await orig.apply( this, args );
+							return result;
+
+						} finally {
+
+							// Only resume and reset _asyncActive if it was this call that paused.
+							if ( doWrap ) {
+								beep8.Scene.resume();
+								beep8._asyncActive = false;
+							}
+
+						}
+
+					}
+
+				}
+
+				// Return non-function properties as-is.
+				return orig;
+
+			}
+		}
+
+	);
 
 
 	/**
@@ -17,8 +87,6 @@
 	 * @returns {Promise<string>} The name of the key that was pressed.
 	 */
 	beep8.Async.key = async function() {
-
-		beep8.Core.preflight( "beep8.Async.key" );
 
 		return await beep8.Input.readKeyAsync();
 
@@ -31,8 +99,6 @@
 	 * @returns {Promise<{x: number, y: number}>} The pointer position.
 	 */
 	beep8.Async.pointer = async function() {
-
-		beep8.Core.preflight( "beep8.Async.pointer" );
 
 		return await beep8.Input.readPointerAsync();
 
@@ -49,7 +115,6 @@
 	 */
 	beep8.Async.readLine = async function( initString = "", maxLen = -1, maxWidth = -1 ) {
 
-		beep8.Core.preflight( "beep8.Async.readLine" );
 
 		beep8.Utilities.checkString( "initString", initString );
 		beep8.Utilities.checkNumber( "maxLen", maxLen );
@@ -67,8 +132,6 @@
 	 * @returns {Promise<number>} The index of the selected item or -1 if canceled.
 	 */
 	beep8.Async.menu = async function( choices, options = {} ) {
-
-		beep8.Core.preflight( "beep8.Async.menu" );
 
 		beep8.Utilities.checkArray( "choices", choices );
 		beep8.Utilities.checkObject( "options", options );
@@ -91,8 +154,6 @@
 	 */
 	beep8.Async.dialog = async function( prompt, choices = [ "OK" ] ) {
 
-		beep8.Core.preflight( "beep8.Async.dialog" );
-
 		beep8.Utilities.checkString( "prompt", prompt );
 		beep8.Utilities.checkArray( "choices", choices );
 
@@ -111,8 +172,6 @@
 	 * @returns {Promise<number>} The index of the selected item.
 	 */
 	beep8.Async.dialogTypewriter = async function( prompt, choices = [ "OK" ], wrapWidth = -1, delay = 0.05 ) {
-
-		beep8.Core.preflight( "beep8.Async.dialogTypewriter" );
 
 		beep8.Utilities.checkString( "prompt", prompt );
 		beep8.Utilities.checkArray( "choices", choices );
@@ -135,8 +194,6 @@
 	 * @returns {Promise<void>} Resolves after the text is printed.
 	 */
 	beep8.Async.typewriter = async function( text, wrapWidth = -1, delay = 0.05, fontId = null, ) {
-
-		beep8.Core.preflight( "beep8.Async.typewriter" );
 
 		beep8.Utilities.checkString( "text", text );
 		beep8.Utilities.checkNumber( "wrapWidth", wrapWidth );
@@ -161,8 +218,6 @@
 	 */
 	beep8.Async.loadImage = async function( url ) {
 
-		beep8.Core.preflight( "beep8.Async.loadImage" );
-
 		return new Promise(
 			( resolve ) => {
 				const img = new Image();
@@ -181,8 +236,6 @@
 	 * @returns {Promise<HTMLAudioElement>} The loaded sound.
 	 */
 	beep8.Async.loadSound = async function( url ) {
-
-		beep8.Core.preflight( "beep8.Async.loadSound" );
 
 		return new Promise(
 			( resolve ) => {
@@ -206,8 +259,6 @@
 	 */
 	beep8.Async.loadFont = async function( fontImageFile, tileSizeMultiplier = 1 ) {
 
-		beep8.Core.preflight( "beep8.Async.loadFont" );
-
 		beep8.Utilities.checkString( "fontImageFile", fontImageFile );
 
 		const fontName = "FONT@" + beep8.Utilities.makeUrlPretty( fontImageFile );
@@ -225,8 +276,6 @@
 	 * @returns {Promise<void>} Resolves after the specified time.
 	 */
 	beep8.Async.wait = async function( seconds ) {
-
-		beep8.Core.preflight( "beep8.Async.wait" );
 
 		beep8.Utilities.checkNumber( "seconds", seconds );
 		beep8.Renderer.render();
@@ -249,6 +298,5 @@
 		}
 
 	}
-
 
 } )( beep8 || ( beep8 = {} ) );
