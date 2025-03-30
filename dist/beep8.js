@@ -94,7 +94,7 @@ const beep8 = {};
 		},
 		// The font files.
 		// The font files must be PNG files, with the characters in a grid.
-		FONT_DEFAULT: "../assets/font-default.png",
+		FONT_DEFAULT: "../assets/font-default-thin.png",
 		FONT_TILES: "../assets/font-tiles.png",
 		FONT_ACTORS: "../assets/font-actors.png",
 		// The characters in the font file.
@@ -106,8 +106,8 @@ const beep8 = {};
 		CHR_WIDTH: 12,
 		CHR_HEIGHT: 12,
 		// Screen width and height in characters.
-		SCREEN_ROWS: 30,
-		SCREEN_COLS: 24,
+		SCREEN_ROWS: 25,
+		SCREEN_COLS: 20,
 		// EXPERIMENTAL
 		// This is an experimental feature and is subject to change at any time.
 		// The number of colors to use.
@@ -1048,9 +1048,42 @@ const beep8 = {};
 
 	}
 
+
+	/**
+	 * Speaks the given text using the Web Speech API.
+	 *
+	 * @param {string} text - The text to speak.
+	 * @param {Object} [options] - Optional settings for speech synthesis.
+	 * @param {number} [options.pitch=1] - The pitch of the voice.
+	 * @param {number} [options.rate=1] - The rate of speech.
+	 * @param {number} [options.volume=1] - The volume of the speech.
+	 * @returns {void}
+	 */
+	beep8.speak = function( text, options = {} ) {
+
+		// Speech synthesis is not supported in this browser.
+		if ( !window.speechSynthesis ) return;
+
+		beep8.Utilities.checkString( "text", text );
+		beep8.Utilities.checkObject( "options", options );
+
+		const utterance = new SpeechSynthesisUtterance( text );
+
+		// Optional settings
+		utterance.pitch = options.pitch ?? 1;
+		utterance.rate = options.rate ?? 1;
+		utterance.volume = options.volume ?? 1;
+
+		speechSynthesis.speak( utterance );
+
+	};
+
 } )( beep8 || ( beep8 = {} ) );
 
 ( function( beep8 ) {
+
+	// Initialize a flag to track if we're already paused.
+	beep8._asyncActive = false;
 
 	/**
 	 * ASYNC API FUNCTIONS
@@ -1060,7 +1093,74 @@ const beep8 = {};
 	 * const k = await beep8.Async.key();
 	 * console.log("The user pressed " + k);
 	 */
-	beep8.Async = {};
+	beep8.Async = beep8.Async || {};
+
+	/**
+	 * Create a Proxy for beep8.Async to intercept method calls.
+	 *
+	 * The Proxy's get handler wraps each function so that:
+	 * 1. If no async function is currently active:
+	 *    - It sets the _asyncActive flag.
+	 *    - It pauses the scene.
+	 * 2. It calls beep8.Core.preflight with the method's name.
+	 * 3. It runs the original method.
+	 * 4. In the finally block, if the pause was applied:
+	 *    - It resumes the scene.
+	 *    - It resets the _asyncActive flag.
+	 *
+	 * This mechanism prevents nested async calls from applying the pause/resume logic more than once.
+	 */
+	beep8.Async = new Proxy(
+		beep8.Async,
+		{
+			get( target, prop, receiver ) {
+
+				const orig = Reflect.get( target, prop, receiver );
+
+				if ( typeof orig === "function" ) {
+
+					// Return a wrapped function for any async API function
+					return async function( ...args ) {
+
+						// Only wrap if no async function is already active.
+						let doWrap = !beep8._asyncActive;
+						if ( doWrap ) {
+							// Mark that an async function has started.
+							beep8._asyncActive = true;
+							// console.log( `pause beep8.Async.${prop}` );
+							// Pause the scene to wait for the async call.
+							beep8.Scene.pause();
+						}
+
+						try {
+
+							// Call preflight check with the method identifier.
+							beep8.Core.preflight( `beep8.Async.${prop}` );
+							// Execute the original async function with its arguments.
+							const result = await orig.apply( this, args );
+							return result;
+
+						} finally {
+
+							// Only resume and reset _asyncActive if it was this call that paused.
+							if ( doWrap ) {
+								beep8.Scene.resume();
+								beep8._asyncActive = false;
+							}
+
+						}
+
+					}
+
+				}
+
+				// Return non-function properties as-is.
+				return orig;
+
+			}
+		}
+
+	);
 
 
 	/**
@@ -1069,8 +1169,6 @@ const beep8 = {};
 	 * @returns {Promise<string>} The name of the key that was pressed.
 	 */
 	beep8.Async.key = async function() {
-
-		beep8.Core.preflight( "beep8.Async.key" );
 
 		return await beep8.Input.readKeyAsync();
 
@@ -1083,8 +1181,6 @@ const beep8 = {};
 	 * @returns {Promise<{x: number, y: number}>} The pointer position.
 	 */
 	beep8.Async.pointer = async function() {
-
-		beep8.Core.preflight( "beep8.Async.pointer" );
 
 		return await beep8.Input.readPointerAsync();
 
@@ -1101,7 +1197,6 @@ const beep8 = {};
 	 */
 	beep8.Async.readLine = async function( initString = "", maxLen = -1, maxWidth = -1 ) {
 
-		beep8.Core.preflight( "beep8.Async.readLine" );
 
 		beep8.Utilities.checkString( "initString", initString );
 		beep8.Utilities.checkNumber( "maxLen", maxLen );
@@ -1119,8 +1214,6 @@ const beep8 = {};
 	 * @returns {Promise<number>} The index of the selected item or -1 if canceled.
 	 */
 	beep8.Async.menu = async function( choices, options = {} ) {
-
-		beep8.Core.preflight( "beep8.Async.menu" );
 
 		beep8.Utilities.checkArray( "choices", choices );
 		beep8.Utilities.checkObject( "options", options );
@@ -1143,8 +1236,6 @@ const beep8 = {};
 	 */
 	beep8.Async.dialog = async function( prompt, choices = [ "OK" ] ) {
 
-		beep8.Core.preflight( "beep8.Async.dialog" );
-
 		beep8.Utilities.checkString( "prompt", prompt );
 		beep8.Utilities.checkArray( "choices", choices );
 
@@ -1163,8 +1254,6 @@ const beep8 = {};
 	 * @returns {Promise<number>} The index of the selected item.
 	 */
 	beep8.Async.dialogTypewriter = async function( prompt, choices = [ "OK" ], wrapWidth = -1, delay = 0.05 ) {
-
-		beep8.Core.preflight( "beep8.Async.dialogTypewriter" );
 
 		beep8.Utilities.checkString( "prompt", prompt );
 		beep8.Utilities.checkArray( "choices", choices );
@@ -1187,8 +1276,6 @@ const beep8 = {};
 	 * @returns {Promise<void>} Resolves after the text is printed.
 	 */
 	beep8.Async.typewriter = async function( text, wrapWidth = -1, delay = 0.05, fontId = null, ) {
-
-		beep8.Core.preflight( "beep8.Async.typewriter" );
 
 		beep8.Utilities.checkString( "text", text );
 		beep8.Utilities.checkNumber( "wrapWidth", wrapWidth );
@@ -1213,8 +1300,6 @@ const beep8 = {};
 	 */
 	beep8.Async.loadImage = async function( url ) {
 
-		beep8.Core.preflight( "beep8.Async.loadImage" );
-
 		return new Promise(
 			( resolve ) => {
 				const img = new Image();
@@ -1233,8 +1318,6 @@ const beep8 = {};
 	 * @returns {Promise<HTMLAudioElement>} The loaded sound.
 	 */
 	beep8.Async.loadSound = async function( url ) {
-
-		beep8.Core.preflight( "beep8.Async.loadSound" );
 
 		return new Promise(
 			( resolve ) => {
@@ -1258,8 +1341,6 @@ const beep8 = {};
 	 */
 	beep8.Async.loadFont = async function( fontImageFile, tileSizeMultiplier = 1 ) {
 
-		beep8.Core.preflight( "beep8.Async.loadFont" );
-
 		beep8.Utilities.checkString( "fontImageFile", fontImageFile );
 
 		const fontName = "FONT@" + beep8.Utilities.makeUrlPretty( fontImageFile );
@@ -1277,8 +1358,6 @@ const beep8 = {};
 	 * @returns {Promise<void>} Resolves after the specified time.
 	 */
 	beep8.Async.wait = async function( seconds ) {
-
-		beep8.Core.preflight( "beep8.Async.wait" );
 
 		beep8.Utilities.checkNumber( "seconds", seconds );
 		beep8.Renderer.render();
@@ -1301,7 +1380,6 @@ const beep8 = {};
 		}
 
 	}
-
 
 } )( beep8 || ( beep8 = {} ) );
 
@@ -2309,15 +2387,15 @@ const beep8 = {};
 			return;
 		}
 
-		// Take a screenshot when the 0 key is pressed.
-		document.addEventListener(
-			'keyup',
-			( e ) => {
-				if ( e.key === '0' ) {
-					beep8.Core.downloadScreenshot();
-				}
+		const takeScreenshot = ( e ) => {
+			if ( e.key === '0' ) {
+				beep8.Core.downloadScreenshot();
 			}
-		);
+		};
+
+		// Take a screenshot when the 0 key is pressed.
+		document.addEventListener( 'pointerup', takeScreenshot );
+		document.addEventListener( 'keyup', takeScreenshot );
 
 	}
 
@@ -2483,7 +2561,7 @@ const beep8 = {};
 	 */
 	beep8.Core.isMobile = function() {
 
-		return beep8.Core.isIOS() || beep8.Core.isAndroid();
+		return beep8.Core.isIOS() || beep8.Core.isAndroid() || beep8.Core.isTouchDevice();
 
 	}
 
@@ -2752,6 +2830,8 @@ const beep8 = {};
 	 */
 	beep8.Input.onKeyUp = function( e ) {
 
+		if ( !e.key ) return;
+
 		const key = e.key.toUpperCase();
 		const keys = beep8.Input.getKeys( key );
 
@@ -2962,7 +3042,7 @@ const beep8 = {};
 	beep8.Intro.splash = async function() {
 
 		// Load title screen image.
-		const titleScreen = beep8.Tilemap.load( `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gwEEAIMBBACDAQQAgwEEAIMXAwSDAQMEgxgYAwSDAAMEgwEEAIMYdAMEgxiGAwSDAAUEgwEEAAAPAAAPAJgggwEEAIMBBACDAQQAgwEEAIMBBACDAA8EgwEEAIMBBACDAQQAgxcDBIMCAwSDAQMEgxgYAwSDAQQAgwEEAIMBBACDAQQAgwEEAIMBBACDAAMEgwADBIMYdAMEgxkBbAUEgwEEAIMZAUYFBIMBBAAADwAADwCYIIMWBQSDEAUEgxYDBIMYKAMEgwEEAIMBBACDGHQDBIMQAwSDAQQAgwEEAIMBBACDAQQAgwEEAIMBBACDAQQAgwEEAIMWAwSDGCgDBIMYdAMEgxiGAwSDGHQDBIMYtAUEgwAFBYMBBQSDAQUEgwEFBAAPAAAPAJgggwEFBIMBBQSDGCgFA4MABQODGCgDBIMYdAMEgwEEAIMBBACDDQUEgwEEAIMBBACDGHQDBIMYhgMEgxYDBIMYKAMEgxYDBIMBAwSDAQMEgxADBIMAAwSDAQQAgwEFBIMABQWDAQUEgwEFBIMBBQQADwAADwCYIIMBBQSDAQUEgwEFBIMYKAUDgwAFA4MYKAMEgxi4BQSDAQQAgwEEAIMYhgMEgxh0AwSDGLgFBIMPAwSDCwMEgwEDBIMBAwSDGQFqBQODAQMEgwEDBIMYKAMEgwEEAIMBBQSDAAUFgw8BBYMBBQSDAQUEAA8AAA8AmCCDCQEFgwEFBIMBBQSDAQUEgwEFBIMBBQSDAQUEgwEFBIMBBQSDAQUEgwEFBIMBBQSDAQUEgwEFBIMBBQSDAQUEgwEFBIMBBQSDAQUEgwEFBIMBBQSDAQUEgw8BBYMDBQGDAQUEgwEFBAAPAAAPAJgYgwAPAYMJAQWDAA8FgwAPBYMADwWDAA8FgwAPBYMADwWDAA8FgwABBYMADwWDAA8FgwAPBYMADwWDAA8FgwAPBYMADwWDAA8FgwAPBYMADwWDAA8FgwkBBYMYWAUBgwAPAZgYgwAPAYMADwGDAA8BgxABBYMADwWDAA8FgwAPBYMADwWDAA8FgwEBBYMQAQWDAA8FgwAPBYMADwWDAA8FgwAPBYMJAQWDAA8FgwAPBYMEAQWDAA8BgwAPAYMADwGDAAUB` );
+		const titleScreen = beep8.Tilemap.load( `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gwEEAIMBBACDAQQAAA8AAA8AmB6DAA8EgwEEAIMBBACDAQQAgwEEAIMBBACDAQQAgwEEAIMBBACDAQQAgwADBIMYegMEgxiZAwSDAQQAgwEEAIMBBACDAQQAgwEEAIMBBACDAQQAgwEEAIMAAwSDAAMEgwADBAAPAAAPAJgegxgcCgSDGB0KBIMBBACDAQQAgwEEAIMBBACDAQQAgwEEAIMBBACDAQQAgwEEAIMBBACDAQQAgwEEAIMBBACDAQQAgxgpAwSDAQQAgwEEAIMBBACDAQQAgwEEAIMBBACDAQQAAA8AAA8AmB6DGC4KBIMYLwoEgwEEAIMBBACDAQQAgwEEAIMBBACDAQQAgxgpAwSDGCkDBIMBBACDAQQAgwEEAIMBBACDAQQAgxcDBIMBAwSDGBgDBIMAAwSDAQQAgxh0AwSDGIYDBIMABQSDAQQAAA8AAA8AmB6DAQQAgwEEAIMBBACDAA8EgwEEAIMBBACDAQQAgxcDBIMCAwSDAQMEgxgYAwSDAQQAgwEEAIMBBACDAQQAgwEEAIMBBACDAAMEgwADBIMYdAMEgxkBbAUEgwEEAIMZAUYFBIMBBAAADwAADwCYHoMWAwSDGCgDBIMBBACDAQQAgxh0AwSDEAMEgwEEAIMBBACDAQQAgwEEAIMBBACDAQQAgwEEAIMBBACDFgMEgxgoAwSDGHQDBIMYhgMEgxkBbAUEgwAFBIMABQWDAQUEgwEFBIMBBQQADwAADwCYHoMYKAUDgwAFA4MYKAMEgxh0AwSDAQQAgwEEAIMNBQSDAQQAgwEEAIMYdAMEgxiGAwSDFgMEgxgoAwSDFgMEgwEDBIMBAwSDEAMEgxi0BQSDAAEFgwMBBYMABQWDAQUEgwEFBIMBBQQADwAADwCYHoMBBQSDGCgFA4MABQODGCgDBIMYuAUEgwEEAIMBBACDGIYDBIMYdAMEgxi4BQSDDwMEgwsDBIMBAwSDAQMEgxkBagUDgwEDBIMYnAUDgwADBYMAAQWDAQUEgwAFBYMPAQWDAQUEgwEFBAAPAAAPAJgegwMBBYMBBQSDAQUEgwEFBIMBBQSDAQUEgwEFBIMBBQSDAQUEgwEFBIMBBQSDAQUEgwEFBIMBBQSDAQUEgwEFBIMBBQSDAQUEgw8BBYMRAQWDDwEFgwMFAYMBBQSDAQUEAA8AAA8AloMRAQWDEQEFgwMBBYMDAQWDAwEFgwMBBYMADwWDAwEFgwMBBYMADwWDAA8FgwAPBYMDAQWDAA8FgwAPBYMADwWDDwEFgwsBBYMRAQWDCwEFgxhYBQGDAA8BloMADwGDEAEFgwAPBYMADwWDAA8FgwAPBYMADwWDAQEFgxABBYMADwWDAA8FgwAPBYMADwWDAA8FgwkBBYMADwWDAA8FgwQBBYMADwGDAA8BgwAPAYMABQE=` );
 
 		// Draw title screen.
 		beep8.locate( 0, 0 );
@@ -3055,7 +3135,7 @@ const beep8 = {};
 
 		choices.forEach(
 			( choice ) => {
-				choicesCols = Math.max( choicesCols, choice.length );
+				choicesCols = Math.max( choicesCols, beep8.TextRenderer.measure( choice ).cols );
 			}
 		);
 
@@ -3794,12 +3874,12 @@ const beep8 = {};
 	 * Adds a new particle to the system.
 	 *
 	 * Each particle is an object with properties:
-	 * x, y - position,
-	 * vx, vy - velocity (pixels per second, default=0),
-	 * life - remaining life time (seconds, default=1),
-	 * size - square size (pixels, default=1),
-	 * color - fill color (a beep8 palette id, default=15).
-	 * gravity - gravity (pixels per second, default=0).
+	 * - x, y: position,
+	 * - vx, vy: velocity (pixels per second, default=0),
+	 * - life: remaining life time (seconds, default=1),
+	 * - size: square size (pixels, default=1),
+	 * - color: fill color (a beep8 palette id, default=15).
+	 * - gravity: gravity (pixels per second, default=0).
 	 *
 	 * @param {object} particle - The particle object to add.
 	 * @returns {void}
@@ -3844,11 +3924,11 @@ const beep8 = {};
 	 * The explosion is created at the x, y position with a number of particles.
 	 *
 	 * The optional properties include:
-	 * size - The size of the particles (in pixels, default=1).
-	 * color - The color of the particles (a beep8 palette id, default=fgColor).
-	 * life - The life of the particles (in seconds, default=2).
-	 * speed - The speed of the particles (in pixels per second, default=25).
-	 * gravity - The gravity of the particles (in pixels per second, default=0).
+	 * - size: The size of the particles (in pixels, default=1).
+	 * - color: The color of the particles (a beep8 palette id, default=fgColor).
+	 * - life: The life of the particles (in seconds, default=2).
+	 * - speed: The speed of the particles (in pixels per second, default=25).
+	 * - gravity: The gravity of the particles (in pixels per second, default=0).
 	 *
 	 * @param {number} x - The x position of the explosion.
 	 * @param {number} y - The y position of the explosion.
@@ -4491,7 +4571,7 @@ const beep8 = {};
 		}
 
 		dirty = true;
-		setTimeout( beep8.Core.render, 1 );
+		setTimeout( beep8.Renderer.render, 1 );
 
 	}
 
@@ -5135,7 +5215,7 @@ const beep8 = {};
 		beep8.Utilities.log( "beep8.TextRenderer init." );
 
 		// Prepare the text font.
-		beep8.TextRenderer.curFont_ = await beep8.TextRenderer.loadFontAsync( "default", beep8.CONFIG.FONT_DEFAULT );
+		beep8.TextRenderer.curFont_ = await beep8.TextRenderer.loadFontAsync( "default-thin", beep8.CONFIG.FONT_DEFAULT, 0.5, 1 );
 
 		// Prepare the tiles font.
 		beep8.TextRenderer.curTiles_ = await beep8.TextRenderer.loadFontAsync( "tiles", beep8.CONFIG.FONT_TILES );
@@ -5154,15 +5234,16 @@ const beep8 = {};
 	 *
 	 * @param {string} fontName - The name of the font.
 	 * @param {string} fontImageFile - The URL of the image file for the font.
-	 * @param {number} [tileSizeMultiplier=1] - The tile size multiplier for the font.
+	 * @param {number} [tileSizeWidthMultiplier=1] - The tile size width multiplier for the font.
+	 * @param {number} [tileSizeHeightMultiplier=1] - The tile size height multiplier for the font.
 	 * @returns {Promise<void>}
 	 */
-	beep8.TextRenderer.loadFontAsync = async function( fontName, fontImageFile, tileSizeMultiplier = 1 ) {
+	beep8.TextRenderer.loadFontAsync = async function( fontName, fontImageFile, tileSizeWidthMultiplier = 1, tileSizeHeightMultiplier = 1 ) {
 
 		beep8.Utilities.checkString( "fontName", fontName );
 		beep8.Utilities.checkString( "fontImageFile", fontImageFile );
 
-		const font = new beep8.TextRendererFont( fontName, fontImageFile, tileSizeMultiplier );
+		const font = new beep8.TextRendererFont( fontName, fontImageFile, tileSizeWidthMultiplier, tileSizeHeightMultiplier );
 		await font.initAsync();
 
 		beep8.TextRenderer.fonts_[ fontName ] = font;
@@ -5548,11 +5629,14 @@ const beep8 = {};
 	 * Measures the dimensions of the text.
 	 *
 	 * @param {string} text - The text to measure.
+	 * @param {beep8.TextRendererFont} [font=null] - The font to use for measurement.
 	 * @returns {{cols: number, rows: number}} The dimensions of the text.
 	 */
-	beep8.TextRenderer.measure = function( text ) {
+	beep8.TextRenderer.measure = function( text, font = null ) {
 
 		beep8.Utilities.checkString( "text", text );
+
+		font = font || beep8.TextRenderer.curFont_;
 
 		if ( text === "" ) {
 			return { cols: 0, rows: 0 }; // Special case
@@ -5574,6 +5658,10 @@ const beep8 = {};
 				cols = Math.max( cols, thisLineWidth );
 			}
 		}
+
+		// Adjust the size of the cols and rows based on the size of the font.
+		cols = Math.ceil( cols * font.getCharColCount() );
+		rows = Math.ceil( rows * font.getCharRowCount() );
 
 		return { cols, rows };
 
@@ -5690,7 +5778,9 @@ const beep8 = {};
 		}
 
 		// Adjust the size of the wrap width based on the size of the font.
-		wrapWidth = Math.floor( wrapWidth / font.getCharColCount() );
+		// wrapWidth = Math.floor( wrapWidth / font.getCharColCount() );
+
+		console.log( `wrapWidth: ${wrapWidth}` );
 
 		// Split the text into lines.
 		const lines = text.split( "\n" );
@@ -5960,15 +6050,17 @@ const beep8 = {};
 	 */
 	beep8.TextRendererFont = class {
 
+
 		/**
 		 * Constructs a font. NOTE: after construction, you must call await initAsync() to
 		 * initialize the font.
 		 *
 		 * @param {string} fontName - The name of the font.
 		 * @param {string} fontImageFile - The URL of the image file for the font.
-		 * @param {number} [sizeMultiplier=1] - The tile size multiplier for the font.
+		 * @param {number} [tileWidthMultiplier=1] - The tile width multiplier for the font.
+		 * @param {number} [tileHeightMultiplier=1] - The tile height multiplier for the font.
 		 */
-		constructor( fontName, fontImageFile, tileSizeMultiplier = 1 ) {
+		constructor( fontName, fontImageFile, tileWidthMultiplier = 1, tileHeightMultiplier = 1 ) {
 
 			beep8.Utilities.checkString( "fontName", fontName );
 			beep8.Utilities.checkString( "fontImageFile", fontImageFile );
@@ -5985,7 +6077,45 @@ const beep8 = {};
 			this.charHeight_ = 0;
 			this.charColCount_ = 0;
 			this.charRowCount_ = 0;
-			this.tileSizeMultiplier_ = tileSizeMultiplier;
+			this.tileWidthMultiplier_ = tileWidthMultiplier;
+			this.tileHeightMultiplier_ = tileHeightMultiplier;
+
+		}
+
+
+		/**
+		 * Sets up this font from the given character image file. It's assumed to contain the
+		 * glyphs arranged in a 16x16 grid, so we will deduce the character size by dividing the
+		 * width and height by 16.
+		 *
+		 * @returns {Promise<void>}
+		 */
+		async initAsync() {
+
+			this.origImg_ = await beep8.Utilities.loadImageAsync( this.fontImageFile_ );
+
+			const imageCharWidth = beep8.CONFIG.CHR_WIDTH * this.tileWidthMultiplier_;
+			const imageCharHeight = beep8.CONFIG.CHR_HEIGHT * this.tileHeightMultiplier_;
+
+			beep8.Utilities.assert(
+				this.origImg_.width % imageCharWidth === 0 && this.origImg_.height % imageCharHeight === 0,
+				`Font ${this.fontName_}: image ${this.fontImageFile_} has dimensions ` +
+				`${this.origImg_.width}x${this.origImg_.height}.`
+			);
+
+			this.origImg_ = await beep8.Utilities.makeColorTransparent( this.origImg_ );
+
+			this.charWidth_ = imageCharWidth;
+			this.charHeight_ = imageCharHeight;
+			this.imageWidth_ = this.origImg_.width;
+			this.imageHeight_ = this.origImg_.height;
+			this.colCount_ = this.imageWidth_ / this.charWidth_;
+			this.rowCount_ = this.imageHeight_ / this.charHeight_;
+			// How many tiles wide and tall each character is.
+			this.charColCount_ = this.tileWidthMultiplier_;
+			this.charRowCount_ = this.tileHeightMultiplier_;
+
+			await this.regenColors();
 
 		}
 
@@ -6077,48 +6207,6 @@ const beep8 = {};
 
 
 		/**
-		 * Sets up this font from the given character image file. It's assumed to contain the
-		 * glyphs arranged in a 16x16 grid, so we will deduce the character size by dividing the
-		 * width and height by 16.
-		 *
-		 * @returns {Promise<void>}
-		 */
-		async initAsync() {
-
-			beep8.Utilities.log( `Building font ${this.fontName_} from image ${this.fontImageFile_}` );
-
-			this.origImg_ = await beep8.Utilities.loadImageAsync( this.fontImageFile_ );
-
-			const imageCharWidth = beep8.CONFIG.CHR_WIDTH * this.tileSizeMultiplier_;
-			const imageCharHeight = beep8.CONFIG.CHR_HEIGHT * this.tileSizeMultiplier_;
-
-			beep8.Utilities.assert(
-				this.origImg_.width % imageCharWidth === 0 && this.origImg_.height % imageCharHeight === 0,
-				`Font ${this.fontName_}: image ${this.fontImageFile_} has dimensions ` +
-				`${this.origImg_.width}x${this.origImg_.height}.`
-			);
-
-			// Make the black in the image transparent.
-			this.origImg_ = await beep8.Utilities.makeColorTransparent( this.origImg_ );
-
-			this.charWidth_ = imageCharWidth;
-			this.charHeight_ = imageCharHeight;
-			this.imageWidth_ = this.origImg_.width;
-			this.imageHeight_ = this.origImg_.height;
-			this.colCount_ = this.imageWidth_ / this.charWidth_;
-			this.rowCount_ = this.imageHeight_ / this.charHeight_;
-			// How many tiles wide and tall each character is.
-			this.charColCount_ = this.tileSizeMultiplier_;
-			this.charRowCount_ = this.tileSizeMultiplier_;
-
-			console.log( 'load image', this );
-
-			await this.regenColors();
-
-		}
-
-
-		/**
 		 * Regenerates the color text images.
 		 *
 		 * @returns {Promise<void>}
@@ -6136,8 +6224,6 @@ const beep8 = {};
 				tempCanvas.height = this.origImg_.height;
 
 				const ctx = tempCanvas.getContext( '2d' );
-
-				beep8.Utilities.log( `Initializing font ${this.fontName_}, color ${c} = ${beep8.CONFIG.COLORS[ c ]}` );
 
 				// Clear the temp canvas.
 				ctx.clearRect( 0, 0, this.origImg_.width, this.origImg_.height );
@@ -7428,21 +7514,24 @@ const beep8 = {};
 	 */
 	beep8.Joystick = {};
 
+	let repeatIntervals = null;
 
 	const VJOY_HTML = `
-<button id='vjoy-button-ter' class='vjoy-button'>Start</button>
+<div class="vjoy-options">
+	<button id='vjoy-button-ter' class='vjoy-button'>Start</button>
+	<button id='vjoy-button-screenshot' class='vjoy-button'>Snap</button>
+</div>
 <div class="vjoy-controls">
-<div class="vjoy-dpad">
-<button id='vjoy-button-up' class='vjoy-button'>Up</button>
-<button id='vjoy-button-down' class='vjoy-button'>Down</button>
-<button id='vjoy-button-left' class='vjoy-button'>Left</button>
-<button id='vjoy-button-right' class='vjoy-button'>Right</button>
-<div id='vjoy-button-center'></div>
-</div>
-<div class="vjoy-buttons">
-<button id='vjoy-button-pri' class='vjoy-button'>A</button>
-<button id='vjoy-button-sec' class='vjoy-button'>B</button>
-</div>
+	<div class="vjoy-dpad">
+	<button id='vjoy-button-up' class='vjoy-button'><span>U</span></button>
+	<button id='vjoy-button-right' class='vjoy-button'><span>R</span></button>
+	<button id='vjoy-button-left' class='vjoy-button'><span>L</span></button>
+	<button id='vjoy-button-down' class='vjoy-button'><span>D</span></button>
+	</div>
+	<div class="vjoy-buttons">
+	<button id='vjoy-button-pri' class='vjoy-button'><span>A</span></button>
+	<button id='vjoy-button-sec' class='vjoy-button'><span>B</span></button>
+	</div>
 </div>`;
 
 
@@ -7454,7 +7543,10 @@ const beep8 = {};
 	const VJOY_CSS = `
 :root {
 	--b8-vjoy-button-color: #333;
-	--b8-vjoy-button-dpad-size: 40vw;
+	--b8-vjoy-button-size: 14vw;
+	--b8-vjoy-button-dpad-size: calc(var(--b8-vjoy-button-size) * 2);
+	--b8-console-radius: 2rem;
+	--b8-border-radius: calc(var(--b8-vjoy-button-dpad-size) / 5);
 }
 
 .vjoy-container,
@@ -7463,96 +7555,165 @@ const beep8 = {};
 	user-select: none;
 	-webkit-user-select: none;
 	-webkit-touch-callout: none;
+	touch-action: none;
 }
 
 .vjoy-container {
-width: 100%;
-padding: 0 5vw;
+	position: relative;
+	width: 100%;
+	padding: 8vw 4vw 8vw 6vw;
+	background: deeppink;
+	border-radius: 0 0 var(--b8-console-radius) var(--b8-console-radius);
+}
+
+.vjoy-options {
+	border-radius: 5rem;
+	position: absolute;
+	display: flex;
+	gap: 2vw;
+	align-items: center;
+	padding: 2vw;
+	border-radius: 2rem;
+	background: inherit;
+	top: -4vw;
+	left: 50%;
+	transform: translateX(-50%);
 }
 
 .vjoy-controls {
-display: flex;
-gap: 5vw;
-justify-content: space-between;
-align-items: center;
+	display: flex;
+	gap: 5vw;
+	justify-content: space-between;
+	align-items: center;
 }
 
 .vjoy-dpad {
-aspect-ratio: 1;
-display: grid;
-grid-template-columns: 1fr 1fr 1fr;
-grid-template-rows: 1fr 1fr 1fr;
-width: var(--vjoy-button-dpad-size);
+	aspect-ratio: 1;
+	max-width: 10rem;
+	width: var(--b8-vjoy-button-dpad-size);
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	grid-template-rows: 1fr 1fr;
+	flex-wrap: wrap;
+	transform: rotate(45deg);
+	border-radius: var(--b8-border-radius);
+	background:black;
+	gap: 1px;
+	border: 2px solid black;
+}
+
+.vjoy-dpad button {
+	width: 100%;
+	height: 100%;
+	position: relative;
+}
+.vjoy-dpad button span {
+	transform: rotate(-45deg);
+}
+.vjoy-dpad button:after {
+	position: absolute;
+	content: '';
+	display: block;
+	width: 100%;
+	height: 100%;
+	background: rgba(0,0,0,0);
+	transform: rotate(-45deg);
+}
+
+#vjoy-button-up {
+	border-radius: var(--b8-border-radius) 0 0 0;
+}
+#vjoy-button-down {
+	border-radius: 0 0 var(--b8-border-radius) 0;
+}
+#vjoy-button-left {
+	border-radius: 0 0 0 var(--b8-border-radius);
+}
+#vjoy-button-right {
+	border-radius: 0 var(--b8-border-radius) 0 0;
+}
+
+#vjoy-button-up:after {
+	transform: rotate(-45deg) translateY(-30%) scale(1.1);
+}
+#vjoy-button-down:after {
+	transform: rotate(-45deg) translateY(30%) scale(1.1);
+}
+#vjoy-button-left:after {
+	transform: rotate(-45deg) translateX(-30%) scale(1.1);
+}
+#vjoy-button-right:after {
+	transform: rotate(-45deg) translateX(30%) scale(1.1);
 }
 
 .vjoy-buttons {
-display: flex;
-gap: 5vw;
+	display: flex;
+	gap: 2vw;
+	transform: rotate(-45deg);
+	border: 0.8vw solid rgba(0,0,0,0.2);
+	border-radius: calc( var(--b8-border-radius) + 1vw );
+	padding: 1vw;
 }
 
 .vjoy-buttons button {
-	width: calc( var(--vjoy-button-dpad-size) / 3 );
-	height: calc( var(--vjoy-button-dpad-size) / 3 );
-	border-radius: 5rem;
+	width: var(--b8-vjoy-button-size);
+	max-width: 5rem;
+	max-height: 5rem;
+	height: var(--b8-vjoy-button-size);
+	border-radius: var(--b8-border-radius);
+	touch-action: none;
+	border: 2px solid black;
+	position: relative;
+}
+
+.vjoy-buttons button:after {
+	position: absolute;
+	content: '';
+	display: block;
+	width: 100%;
+	height: 100%;
+	background: rgba(0,0,0,0);
+	transform: scale(1.2);
+}
+
+.vjoy-buttons button span {
+	transform: rotate(45deg);
 }
 
 .vjoy-button {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	justify-content: center;
 	background: var(--b8-vjoy-button-color) !important;
 	border: none;
-	font: bold 14px monospace;
-	color: #999 !important;
+	font-family: arial, sans-serif;
+	font-size: 12px;
+	font-weight: 600;
+	color: #aaa !important;
 	user-select: none;
 	touch-callout: none;
 	-webkit-user-select: none;
 	-webkit-touch-callout: none;
 	text-shadow: 0 -2px 0 black;
+	padding: 0;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
 }
 
-.vjoy-button:active,
+.vjoy-button:hover,
+.vjoy-button:focus,
 .vjoy-button:active {
 	background: black;
+	outline: none;
 }
 
-#vjoy-button-up {
-	grid-area: 1 / 2;
-	border-radius: 1rem 1rem 0 0;
-}
-
-#vjoy-button-down {
-	grid-area: 3 / 2;
-	border-radius: 0 0 1rem 1rem;
-}
-
-#vjoy-button-left {
-	grid-area: 2 / 1;
-	border-radius: 1rem 0 0 1rem;
-}
-
-#vjoy-button-right {
-	grid-area: 2 / 3;
-	border-radius: 0 1rem 1rem 0;
-}
-
-#vjoy-button-center {
-	grid-column: 2;
-	grid-row: 2;
-	background: var(--b8-vjoy-button-color);
-}
-
-#vjoy-button-pri {
-	margin-top: 5vw;
-}
-
+#vjoy-button-screenshot,
 #vjoy-button-ter {
-	height: 10vw;
+	width: calc(var(--b8-vjoy-button-size) * 1.4);
+	padding: 1vw;
 	border-radius: 1rem;
 }
 `;
-
 
 	/**
 	 * Sets up the virtual joystick.
@@ -7594,7 +7755,8 @@ gap: 5vw;
 		beep8.Joystick.setUpButton( "vjoy-button-right", "ArrowRight" );
 		beep8.Joystick.setUpButton( "vjoy-button-pri", "ButtonA" );
 		beep8.Joystick.setUpButton( "vjoy-button-sec", "ButtonB" );
-		beep8.Joystick.setUpButton( "vjoy-button-ter", "Escape" );
+		beep8.Joystick.setUpButton( "vjoy-button-ter", "Enter" );
+		beep8.Joystick.setUpButton( "vjoy-button-screenshot", "0" );
 
 		// Prevent touches on the document body from doing what they usually do (opening
 		// context menus, selecting stuff, etc).
@@ -7625,24 +7787,32 @@ gap: 5vw;
 			return;
 		}
 
-		button.addEventListener(
-			"pointerdown",
-			( e ) => beep8.Joystick.handleButtonEvent( buttonKeyName, true, e )
-		);
+		[ "pointerdown", "pointerstart" ].forEach( eventName => {
+			button.addEventListener(
+				eventName,
+				( e ) => {
+					e.preventDefault();
+					beep8.Joystick.handleButtonEvent( buttonKeyName, true, e );
+				},
+				{ passive: false }
+			);
+		} );
+
+		// Cancel the button press if the pointer moves off the button.
+		[ "pointerout", "pointerup", "pointerleave" ].forEach( eventName => {
+			button.addEventListener(
+				eventName,
+				( e ) => beep8.Joystick.handleButtonEvent( buttonKeyName, false, e )
+			);
+		} );
 
 		button.addEventListener(
-			"pointerstart",
-			( e ) => beep8.Joystick.handleButtonEvent( buttonKeyName, true, e )
-		);
-
-		button.addEventListener(
-			"pointerup",
-			( e ) => beep8.Joystick.handleButtonEvent( buttonKeyName, false, e )
-		);
-
-		button.addEventListener(
-			"pointerend",
-			( e ) => beep8.Joystick.handleButtonEvent( buttonKeyName, false, e )
+			"pointermove",
+			( e ) => {
+				// Prevent default behavior for pointermove events.
+				e.preventDefault();
+			},
+			{ passive: false }
 		);
 
 		button.addEventListener(
@@ -7663,15 +7833,53 @@ gap: 5vw;
 	 */
 	beep8.Joystick.handleButtonEvent = function( buttonKeyName, down, evt ) {
 
-		console.log( 'handleButtonEvent', buttonKeyName, down, evt );
-
 		// Add key property to event.
 		evt.key = buttonKeyName;
 
+		// Initialize repeat intervals container if not already created.
+		if ( !repeatIntervals ) {
+			repeatIntervals = {};
+		}
+
 		if ( down ) {
+
+			// Call onKeyDown immediately.
 			beep8.Input.onKeyDown( evt );
+
+			// If no timer exists for this button, start one.
+			if ( !repeatIntervals[ buttonKeyName ] ) {
+				repeatIntervals[ buttonKeyName ] = {};
+
+				// Set a timeout for the initial delay.
+				repeatIntervals[ buttonKeyName ].initialTimeout = setTimeout(
+					function() {
+						// After the delay, start repeating.
+						repeatIntervals[ buttonKeyName ].interval = setInterval(
+							function() {
+								beep8.Input.onKeyDown( evt );
+							},
+							150
+						);
+					},
+					150
+				);
+			}
+
 		} else {
+
+			// Clear any timers if they exist.
+			if ( repeatIntervals[ buttonKeyName ] ) {
+				if ( repeatIntervals[ buttonKeyName ].initialTimeout ) {
+					clearTimeout( repeatIntervals[ buttonKeyName ].initialTimeout );
+				}
+				if ( repeatIntervals[ buttonKeyName ].interval ) {
+					clearInterval( repeatIntervals[ buttonKeyName ].interval );
+				}
+				delete repeatIntervals[ buttonKeyName ];
+			}
+
 			beep8.Input.onKeyUp( evt );
+
 		}
 
 		evt.preventDefault();
@@ -8102,7 +8310,7 @@ gap: 5vw;
 	let tempo = 120; // Default tempo.
 	const lookaheadTime = 0.5; // Only schedule events within the next 0.5 seconds.
 	const schedulerIntervalMs = 50; // Check every 50ms.
-	const volumeMultiplier = 0.2; // Volume multiplier.
+	const volumeMultiplier = 0.1; // Volume multiplier.
 
 	// iOS audio unlock flag.
 	let unlocked = false;
