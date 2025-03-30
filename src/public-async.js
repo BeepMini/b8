@@ -45,7 +45,7 @@
 						if ( doWrap ) {
 							// Mark that an async function has started.
 							beep8._asyncActive = true;
-							console.log( `pause beep8.Async.${prop}` );
+							// console.log( `pause beep8.Async.${prop}` );
 							// Pause the scene to wait for the async call.
 							beep8.Scene.pause();
 						}

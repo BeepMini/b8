@@ -5,15 +5,17 @@
 	 */
 	beep8.TextRendererFont = class {
 
+
 		/**
 		 * Constructs a font. NOTE: after construction, you must call await initAsync() to
 		 * initialize the font.
 		 *
 		 * @param {string} fontName - The name of the font.
 		 * @param {string} fontImageFile - The URL of the image file for the font.
-		 * @param {number} [sizeMultiplier=1] - The tile size multiplier for the font.
+		 * @param {number} [tileWidthMultiplier=1] - The tile width multiplier for the font.
+		 * @param {number} [tileHeightMultiplier=1] - The tile height multiplier for the font.
 		 */
-		constructor( fontName, fontImageFile, tileSizeMultiplier = 1 ) {
+		constructor( fontName, fontImageFile, tileWidthMultiplier = 1, tileHeightMultiplier = 1 ) {
 
 			beep8.Utilities.checkString( "fontName", fontName );
 			beep8.Utilities.checkString( "fontImageFile", fontImageFile );
@@ -30,7 +32,45 @@
 			this.charHeight_ = 0;
 			this.charColCount_ = 0;
 			this.charRowCount_ = 0;
-			this.tileSizeMultiplier_ = tileSizeMultiplier;
+			this.tileWidthMultiplier_ = tileWidthMultiplier;
+			this.tileHeightMultiplier_ = tileHeightMultiplier;
+
+		}
+
+
+		/**
+		 * Sets up this font from the given character image file. It's assumed to contain the
+		 * glyphs arranged in a 16x16 grid, so we will deduce the character size by dividing the
+		 * width and height by 16.
+		 *
+		 * @returns {Promise<void>}
+		 */
+		async initAsync() {
+
+			this.origImg_ = await beep8.Utilities.loadImageAsync( this.fontImageFile_ );
+
+			const imageCharWidth = beep8.CONFIG.CHR_WIDTH * this.tileWidthMultiplier_;
+			const imageCharHeight = beep8.CONFIG.CHR_HEIGHT * this.tileHeightMultiplier_;
+
+			beep8.Utilities.assert(
+				this.origImg_.width % imageCharWidth === 0 && this.origImg_.height % imageCharHeight === 0,
+				`Font ${this.fontName_}: image ${this.fontImageFile_} has dimensions ` +
+				`${this.origImg_.width}x${this.origImg_.height}.`
+			);
+
+			this.origImg_ = await beep8.Utilities.makeColorTransparent( this.origImg_ );
+
+			this.charWidth_ = imageCharWidth;
+			this.charHeight_ = imageCharHeight;
+			this.imageWidth_ = this.origImg_.width;
+			this.imageHeight_ = this.origImg_.height;
+			this.colCount_ = this.imageWidth_ / this.charWidth_;
+			this.rowCount_ = this.imageHeight_ / this.charHeight_;
+			// How many tiles wide and tall each character is.
+			this.charColCount_ = this.tileWidthMultiplier_;
+			this.charRowCount_ = this.tileHeightMultiplier_;
+
+			await this.regenColors();
 
 		}
 
@@ -122,48 +162,6 @@
 
 
 		/**
-		 * Sets up this font from the given character image file. It's assumed to contain the
-		 * glyphs arranged in a 16x16 grid, so we will deduce the character size by dividing the
-		 * width and height by 16.
-		 *
-		 * @returns {Promise<void>}
-		 */
-		async initAsync() {
-
-			beep8.Utilities.log( `Building font ${this.fontName_} from image ${this.fontImageFile_}` );
-
-			this.origImg_ = await beep8.Utilities.loadImageAsync( this.fontImageFile_ );
-
-			const imageCharWidth = beep8.CONFIG.CHR_WIDTH * this.tileSizeMultiplier_;
-			const imageCharHeight = beep8.CONFIG.CHR_HEIGHT * this.tileSizeMultiplier_;
-
-			beep8.Utilities.assert(
-				this.origImg_.width % imageCharWidth === 0 && this.origImg_.height % imageCharHeight === 0,
-				`Font ${this.fontName_}: image ${this.fontImageFile_} has dimensions ` +
-				`${this.origImg_.width}x${this.origImg_.height}.`
-			);
-
-			// Make the black in the image transparent.
-			this.origImg_ = await beep8.Utilities.makeColorTransparent( this.origImg_ );
-
-			this.charWidth_ = imageCharWidth;
-			this.charHeight_ = imageCharHeight;
-			this.imageWidth_ = this.origImg_.width;
-			this.imageHeight_ = this.origImg_.height;
-			this.colCount_ = this.imageWidth_ / this.charWidth_;
-			this.rowCount_ = this.imageHeight_ / this.charHeight_;
-			// How many tiles wide and tall each character is.
-			this.charColCount_ = this.tileSizeMultiplier_;
-			this.charRowCount_ = this.tileSizeMultiplier_;
-
-			console.log( 'load image', this );
-
-			await this.regenColors();
-
-		}
-
-
-		/**
 		 * Regenerates the color text images.
 		 *
 		 * @returns {Promise<void>}
@@ -181,8 +179,6 @@
 				tempCanvas.height = this.origImg_.height;
 
 				const ctx = tempCanvas.getContext( '2d' );
-
-				beep8.Utilities.log( `Initializing font ${this.fontName_}, color ${c} = ${beep8.CONFIG.COLORS[ c ]}` );
 
 				// Clear the temp canvas.
 				ctx.clearRect( 0, 0, this.origImg_.width, this.origImg_.height );

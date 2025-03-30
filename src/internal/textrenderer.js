@@ -53,7 +53,7 @@
 		beep8.Utilities.log( "beep8.TextRenderer init." );
 
 		// Prepare the text font.
-		beep8.TextRenderer.curFont_ = await beep8.TextRenderer.loadFontAsync( "default", beep8.CONFIG.FONT_DEFAULT );
+		beep8.TextRenderer.curFont_ = await beep8.TextRenderer.loadFontAsync( "default-thin", beep8.CONFIG.FONT_DEFAULT, 0.5, 1 );
 
 		// Prepare the tiles font.
 		beep8.TextRenderer.curTiles_ = await beep8.TextRenderer.loadFontAsync( "tiles", beep8.CONFIG.FONT_TILES );
@@ -72,15 +72,16 @@
 	 *
 	 * @param {string} fontName - The name of the font.
 	 * @param {string} fontImageFile - The URL of the image file for the font.
-	 * @param {number} [tileSizeMultiplier=1] - The tile size multiplier for the font.
+	 * @param {number} [tileSizeWidthMultiplier=1] - The tile size width multiplier for the font.
+	 * @param {number} [tileSizeHeightMultiplier=1] - The tile size height multiplier for the font.
 	 * @returns {Promise<void>}
 	 */
-	beep8.TextRenderer.loadFontAsync = async function( fontName, fontImageFile, tileSizeMultiplier = 1 ) {
+	beep8.TextRenderer.loadFontAsync = async function( fontName, fontImageFile, tileSizeWidthMultiplier = 1, tileSizeHeightMultiplier = 1 ) {
 
 		beep8.Utilities.checkString( "fontName", fontName );
 		beep8.Utilities.checkString( "fontImageFile", fontImageFile );
 
-		const font = new beep8.TextRendererFont( fontName, fontImageFile, tileSizeMultiplier );
+		const font = new beep8.TextRendererFont( fontName, fontImageFile, tileSizeWidthMultiplier, tileSizeHeightMultiplier );
 		await font.initAsync();
 
 		beep8.TextRenderer.fonts_[ fontName ] = font;
@@ -466,11 +467,14 @@
 	 * Measures the dimensions of the text.
 	 *
 	 * @param {string} text - The text to measure.
+	 * @param {beep8.TextRendererFont} [font=null] - The font to use for measurement.
 	 * @returns {{cols: number, rows: number}} The dimensions of the text.
 	 */
-	beep8.TextRenderer.measure = function( text ) {
+	beep8.TextRenderer.measure = function( text, font = null ) {
 
 		beep8.Utilities.checkString( "text", text );
+
+		font = font || beep8.TextRenderer.curFont_;
 
 		if ( text === "" ) {
 			return { cols: 0, rows: 0 }; // Special case
@@ -492,6 +496,10 @@
 				cols = Math.max( cols, thisLineWidth );
 			}
 		}
+
+		// Adjust the size of the cols and rows based on the size of the font.
+		cols = Math.ceil( cols * font.getCharColCount() );
+		rows = Math.ceil( rows * font.getCharRowCount() );
 
 		return { cols, rows };
 
@@ -608,7 +616,9 @@
 		}
 
 		// Adjust the size of the wrap width based on the size of the font.
-		wrapWidth = Math.floor( wrapWidth / font.getCharColCount() );
+		// wrapWidth = Math.floor( wrapWidth / font.getCharColCount() );
+
+		console.log( `wrapWidth: ${wrapWidth}` );
 
 		// Split the text into lines.
 		const lines = text.split( "\n" );

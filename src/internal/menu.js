@@ -66,7 +66,7 @@
 
 		choices.forEach(
 			( choice ) => {
-				choicesCols = Math.max( choicesCols, choice.length );
+				choicesCols = Math.max( choicesCols, beep8.TextRenderer.measure( choice ).cols );
 			}
 		);
 
