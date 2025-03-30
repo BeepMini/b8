@@ -42,8 +42,8 @@
 		CHR_WIDTH: 12,
 		CHR_HEIGHT: 12,
 		// Screen width and height in characters.
-		SCREEN_ROWS: 30,
-		SCREEN_COLS: 24,
+		SCREEN_ROWS: 25,
+		SCREEN_COLS: 20,
 		// EXPERIMENTAL
 		// This is an experimental feature and is subject to change at any time.
 		// The number of colors to use.
