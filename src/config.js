@@ -30,7 +30,7 @@
 		},
 		// The font files.
 		// The font files must be PNG files, with the characters in a grid.
-		FONT_DEFAULT: "../assets/font-default.png",
+		FONT_DEFAULT: "../assets/font-default-thin.png",
 		FONT_TILES: "../assets/font-tiles.png",
 		FONT_ACTORS: "../assets/font-actors.png",
 		// The characters in the font file.
