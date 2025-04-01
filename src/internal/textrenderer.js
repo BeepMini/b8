@@ -615,11 +615,6 @@
 			return text;
 		}
 
-		// Adjust the size of the wrap width based on the size of the font.
-		// wrapWidth = Math.floor( wrapWidth / font.getCharColCount() );
-
-		console.log( `wrapWidth: ${wrapWidth}` );
-
 		// Split the text into lines.
 		const lines = text.split( "\n" );
 
