@@ -258,10 +258,10 @@
 	 * If the text is bigger than the width, it will wrap.
 	 *
 	 * @param {string} text - The text to print.
-	 * @param {number} width - The width of the field, in characters.
+	 * @param {number} width - The width of the space to place the text in, measured in Columns. Defaults to the screen width.
 	 * @returns {void}
 	 */
-	beep8.printCentered = function( text, width, fontId = null ) {
+	beep8.printCentered = function( text, width = beep8.CONFIG.SCREEN_COLS, fontId = null ) {
 
 		beep8.Core.preflight( "beep8.printCentered" );
 
