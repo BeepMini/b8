@@ -845,7 +845,7 @@
 	 */
 	beep8.switchScene = function( name ) {
 
-		beep8.Scene.switchScene( name );
+		beep8.Scene.set( name );
 
 	}
 
