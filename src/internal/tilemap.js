@@ -332,18 +332,28 @@
 	beep8.Tilemap.getDefaultTile = function() {
 
 		return [
-			0,
-			15,
-			0,
-			0,
-			{}
-		]
+			0, // Tile
+			15, // Fg
+			0, // Bg
+			0, // Collision
+			{} // Data
+		];
 
 	};
 
 
 	/**
 	 * Get a text map and convert it to an array of arrays.
+	 *
+	 * An example text map might look like:
+	 * #######
+	 * #  1  #
+	 * # ### #
+	 * # 2 2 #
+	 * #######
+	 *
+	 * The tilemap array will include the tile character code, foreground color,
+	 * background color, collision flag, and additional data.
 	 *
 	 * @param {string} mapText The text map to convert.
 	 * @returns {Array} The converted tilemap array.
@@ -368,10 +378,18 @@
 	 * @param {Object} tilePattern The tile pattern object.
 	 * @returns {Array} The created tilemap array.
 	 */
-	beep8.Tilemap.createFromArray = function( grid, tilePattern ) {
+	beep8.Tilemap.createFromArray = function( grid, tilePattern, defaultTilePattern = null ) {
 
 		beep8.Utilities.checkArray( "grid", grid );
 		beep8.Utilities.checkObject( "tilePattern", tilePattern );
+
+		if ( defaultTilePattern !== null ) {
+			beep8.Utilities.checkObject( "defaultTilePattern", defaultTilePattern );
+		}
+
+		if ( null === defaultTilePattern ) {
+			defaultTilePattern = beep8.Tilemap.getDefaultTile();
+		}
 
 		const tilemap = [];
 
@@ -380,11 +398,11 @@
 			for ( let x = 0; x < grid[ y ].length; x++ ) {
 
 				// Set default properties.
-				tilemap[ y ][ x ] = beep8.Tilemap.getDefaultTile();
+				tilemap[ y ][ x ] = [ ...defaultTilePattern ];
 
 				// If tile pattern not defined assume tile is empty and continue.
 				if ( !tilePattern[ grid[ y ][ x ] ] ) {
-					beep8.Utilities.log( "Tile pattern not found for: " + grid[ y ][ x ] );
+					// beep8.Utilities.log( "Tile pattern not found for: " + grid[ y ][ x ] );
 					continue;
 				}
 
