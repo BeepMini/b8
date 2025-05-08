@@ -154,24 +154,6 @@
 			return;
 		}
 
-		const cw = font.getCharWidth();
-		const ch = font.getCharHeight();
-
-		// Check that the font image has a width and height that are divisible by the tilesize.
-		if ( cw % beep8.CONFIG.CHR_WIDTH !== 0 || ch % beep8.CONFIG.CHR_HEIGHT !== 0 ) {
-
-			beep8.Utilities.fatal(
-				`getFontByName(): font ${fontName} has character size ${cw}x${ch}, ` +
-				`which is not an integer multiple of beep8.CONFIG.CHR_WIDTH x beep8.CONFIG.CHR_HEIGHT = ` +
-				`${beep8.CONFIG.CHR_WIDTH}x${beep8.CONFIG.CHR_HEIGHT}, so it can't be set as the ` +
-				`current font due to the row,column system. However, you can still use it ` +
-				`directly with drawText() by passing it as a parameter to that function.`
-			);
-
-			return;
-
-		}
-
 		return font;
 
 	}
@@ -498,8 +480,8 @@
 		}
 
 		// Adjust the size of the cols and rows based on the size of the font.
-		cols = Math.ceil( cols * font.getCharColCount() );
-		rows = Math.ceil( rows * font.getCharRowCount() );
+		cols = cols * font.getCharColCount();
+		rows = rows * font.getCharRowCount();
 
 		return { cols, rows };
 
@@ -630,10 +612,12 @@
 
 			for ( const word of words ) {
 
-				const wordWidth = beep8.TextRenderer.measure( word ).cols;
+				const wordWidth = beep8.TextRenderer.measure( word + ' ' ).cols;
+
+				console.log( wrappedLine, lineWidth, wordWidth, wrapWidth );
 
 				// Is the line with the new word longer than the line width?
-				if ( lineWidth + ( wordWidth ) > wrapWidth ) {
+				if ( lineWidth + wordWidth > wrapWidth ) {
 					wrappedLines.push( wrappedLine.trim() );
 					wrappedLine = "";
 					lineWidth = 0;
@@ -641,7 +625,7 @@
 
 				// Add a space between words.
 				wrappedLine += word + " ";
-				lineWidth += wordWidth + 1;
+				lineWidth += wordWidth;
 
 			}
 
