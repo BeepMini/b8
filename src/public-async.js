@@ -255,14 +255,18 @@
 	 * Loads a font for later use in drawing text.
 	 *
 	 * @param {string} fontImageFile - The URL of the font image file.
+	 * @param {number} [tileSizeWidthMultiplier=1] - The width multiplier for the tile size.
+	 * @param {number} [tileSizeHeightMultiplier=1] - The height multiplier for the tile size.
 	 * @returns {Promise<string>} The font ID.
 	 */
-	beep8.Async.loadFont = async function( fontImageFile, tileSizeMultiplier = 1 ) {
+	beep8.Async.loadFont = async function( fontImageFile, tileSizeWidthMultiplier = 1, tileSizeHeightMultiplier = 1 ) {
 
 		beep8.Utilities.checkString( "fontImageFile", fontImageFile );
+		beep8.Utilities.checkNumber( "tileSizeWidthMultiplier", tileSizeWidthMultiplier );
+		beep8.Utilities.checkNumber( "tileSizeHeightMultiplier", tileSizeHeightMultiplier );
 
 		const fontName = "FONT@" + beep8.Utilities.makeUrlPretty( fontImageFile );
-		await beep8.TextRenderer.loadFontAsync( fontName, fontImageFile, tileSizeMultiplier );
+		await beep8.TextRenderer.loadFontAsync( fontName, fontImageFile, tileSizeWidthMultiplier, tileSizeHeightMultiplier );
 
 		return fontName;
 
