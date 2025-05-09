@@ -16,7 +16,6 @@
 	 * - options.prompt - The prompt to display above the choices.
 	 * - options.selBgColor - The background color of the selected choice. Defaults to the current foreground colour.
 	 * - options.selFgColor - The foreground color of the selected choice. Defaults to the current background colour.
-	 * - options.bgChar - The character to use for the background.
 	 * - options.borderChar - The character to use for the border.
 	 * - options.center - Whether to center the menu horizontally and vertically.
 	 * - options.centerH - Whether to center the menu horizontally.
@@ -42,7 +41,6 @@
 				prompt: "",
 				selBgColor: beep8.Core.drawState.fgColor,
 				selFgColor: beep8.Core.drawState.bgColor,
-				bgChar: 0,
 				borderChar: beep8.CONFIG.BORDER_CHAR,
 				center: false,
 				centerH: false,
@@ -66,11 +64,11 @@
 
 		choices.forEach(
 			( choice ) => {
-				choicesCols = Math.max( choicesCols, beep8.TextRenderer.measure( choice ).cols );
+				choicesCols = Math.ceil( Math.max( choicesCols, beep8.TextRenderer.measure( choice ).cols ) );
 			}
 		);
 
-		let totalCols = Math.max( promptSize.cols, choicesCols ) + 2 * options.padding + 2 * border01;
+		let totalCols = Math.ceil( Math.max( promptSize.cols, choicesCols ) ) + 2 * options.padding + 2 * border01;
 		totalCols = Math.min( totalCols, beep8.CONFIG.SCREEN_COLS );
 
 		const totalRows = prompt01 * ( promptSize.rows + 1 ) + choicesRows + 2 * options.padding + 2 * border01;
@@ -86,24 +84,18 @@
 		beep8.Core.drawState.cursorCol = startCol;
 		beep8.Core.drawState.cursorRow = startRow;
 
-		// Print the background.
-		beep8.TextRenderer.printRect( totalCols, totalRows, options.bgChar );
+		// Print the background & border.
+		beep8.TextRenderer.printBox( totalCols, totalRows, true, options.borderChar );
 
-		// Print the border.
-		if ( options.borderChar ) {
-
-			beep8.TextRenderer.printBox( totalCols, totalRows, false, options.borderChar );
-
-			// Print title at the top of the border.
-			if ( options.title ) {
-				const t = " " + options.title + " ";
-				beep8.Core.drawState.cursorCol = startCol + Math.round( ( totalCols - t.length ) / 2 );
-				beep8.TextRenderer.print( t );
-			}
-
+		// Print title at the top of the border.
+		if ( options.title ) {
+			const t = " " + options.title + " ";
+			beep8.Core.drawState.cursorCol = startCol + Math.round( ( totalCols - t.length ) / 2 );
+			beep8.TextRenderer.print( t );
 		}
 
 		if ( options.prompt ) {
+
 			beep8.Core.drawState.cursorCol = promptSize.cols <= totalCols ?
 				( startCol + border01 + options.padding ) :
 				( startCol + Math.round( ( totalCols - promptSize.cols ) / 2 ) );
@@ -114,6 +106,7 @@
 			} else {
 				beep8.TextRenderer.print( options.prompt );
 			}
+
 		}
 
 		// TODO: save the screen image before showing the menu and restore it later.
