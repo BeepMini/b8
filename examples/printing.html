@@ -18,14 +18,12 @@
 			beep8.cls();
 			beep8.print( "Loading fonts..." );
 
-			const newsFont = await beep8.Async.loadFont( "../assets/font-news.png" );
-			const boldFont = await beep8.Async.loadFont( "../assets/font-bold.png" );
-			const bigFont = await beep8.Async.loadFont( "../assets/font-big.png", 2 );
-			const retroFont = await beep8.Async.loadFont( "../assets/font-retro.png" );
+			const boldFont = await beep8.Async.loadFont( "../assets/font-default-tall-bold.png", 0.5, 1 );
+			const bigFont = await beep8.Async.loadFont( "../assets/font-default-tall.png", 0.5, 1 );
 
 			beep8.color( 15, 0 );
 			beep8.cls();
-			beep8.printBox( beep8.CONFIG.SCREEN_COLS, beep8.CONFIG.SCREEN_ROWS - 12 );
+			beep8.printBox( beep8.CONFIG.SCREEN_COLS, beep8.CONFIG.SCREEN_ROWS - 11 );
 			beep8.locate( 2, 2 );
 			beep8.color( 0, 15 );
 			beep8.print( "PRINTING/FONTS DEMO\n\n" );
@@ -37,19 +35,27 @@
 			beep8.print( "Big font.\n" );
 
 			beep8.setFont( null );  // Return to default font.
-			beep8.print( "\nStyle markup can be used:\n", beep8.CONFIG.SCREEN_COLS - 4 );
+			beep8.print( "\nStyle markup can be used:\n", beep8.CONFIG.SCREEN_COLS - 2 );
 			// {{c13}} sets the foreground color to 13 (green).
 			// {{z}} resets the color.
 			// {{c0}} sets the color to 0 (black) and {{b14}} sets the background to 14 (pink).
 			// You can combine them in the same sequence: {{c0,b14}}.
-			beep8.print( "You can have a {{c12,t" + boldFont + "}}green{{z}} word. Or say an {{c0,b14}}important{{z}} thing. Or use a {{t" + retroFont + "}}bolder, retro{{z}} font.", beep8.CONFIG.SCREEN_COLS - 4 );
+			beep8.print( "You can have a {{c12,t" + boldFont + "}}green{{z}} word. Or say an {{c0,b14}}important{{z}} thing. Or use a {{t" + bigFont + "}}bolder, retro{{z}} font.", beep8.CONFIG.SCREEN_COLS - 4 );
 
-			beep8.setFont( newsFont );
+			// Text alignments.
+			beep8.locate( 2, 15 );
+			beep8.color( 10, 0 );
+			// beep8.print( "Left aligned\n" );
+			// beep8.printCentered( "Center aligned\n", beep8.CONFIG.SCREEN_COLS - 4 );
+			// beep8.printRight( "Right aligned\n", beep8.CONFIG.SCREEN_COLS - 4 );
+			beep8.printRight( "This man can speak 28 languages and is crazy talented. He wants to speak all the languages in the world.", beep8.CONFIG.SCREEN_COLS - 4 );
+
+			// Lower Typewriter box.
 			beep8.locate( 0, 19 );
 			beep8.color( 10, 6 );
-			beep8.printBox( beep8.CONFIG.SCREEN_COLS, beep8.CONFIG.SCREEN_ROWS - 19 - 1 );
+			beep8.printBox( beep8.CONFIG.SCREEN_COLS, beep8.CONFIG.SCREEN_ROWS - 20 );
 
-			beep8.locate( 2, 21 );
+			beep8.locate( 2, 20 );
 			beep8.color( 15, 6 );
 			await beep8.Async.typewriter(
 				"What sayest thou?\n" +

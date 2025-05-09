@@ -23,9 +23,12 @@
 			beep8.print( "Loading fonts..." );
 
 			fontList.push( beep8.getFont() );
+			fontList.push( await beep8.Async.loadFont( "../assets/font-default-tall.png", 0.5, 1 ) );
+			fontList.push( await beep8.Async.loadFont( "../assets/font-default-tall-bold.png", 0.5, 1 ) );
+			fontList.push( await beep8.Async.loadFont( "../assets/font-default.png" ) );
 			fontList.push( await beep8.Async.loadFont( "../assets/font-bold.png" ) );
 			fontList.push( await beep8.Async.loadFont( "../assets/font-mini.png" ) );
-			fontList.push( await beep8.Async.loadFont( "../assets/font-big.png", 2 ) );
+			fontList.push( await beep8.Async.loadFont( "../assets/font-big.png", 2, 2 ) );
 			fontList.push( await beep8.Async.loadFont( "../assets/font-news.png" ) );
 			fontList.push( await beep8.Async.loadFont( "../assets/font-retro.png" ) );
 			fontList.push( await beep8.Async.loadFont( "../assets/font-space.png" ) );

@@ -38,22 +38,20 @@
 			beep8.color( 15, 0 );
 			beep8.cls();
 			beep8.locate( 1, 1 );
-			beep8.print( "COLORS" );
-			beep8.locate( 1, 21 );
-			beep8.print( "Use arrow keys to change.", beep8.CONFIG.SCREEN_COLS - 2 );
+			beep8.print( "COLORS (Change with Arrows)" );
 
 			for ( let i = 0; i < MAX_COLORS; i++ ) {
 				const ch = "0123456789abcdef".substring( i, i + 1 );
 				beep8.color( 15, 0 );
-				beep8.locate( i + 2, 3 );
+				beep8.locate( i + 2, 2 );
 				beep8.print( ch );
-				beep8.locate( 1, i + 4 );
+				beep8.locate( 1, i + 3 );
 				beep8.print( ch );
 			}
 
 			for ( let i = 0; i < MAX_COLORS; i++ ) {
 				for ( let j = 0; j < MAX_COLORS; j++ ) {
-					beep8.locate( i + 2, 4 + j );
+					beep8.locate( i + 2, 3 + j );
 					beep8.color( i, j );
 					// beep8.print( i === selFg && j === selBg ? "*" : "•" );
 					if ( i === selFg && j === selBg ) {
@@ -66,10 +64,11 @@
 				}
 			}
 
-			beep8.locate( 1, 24 );
+			beep8.locate( 1, 20 );
 			beep8.color( selFg, selBg );
 			beep8.printBox( beep8.CONFIG.SCREEN_COLS - 2, 5 );
-			beep8.locate( 2, 25 );
+
+			beep8.locate( 2, 21 );
 			beep8.print( `color(${selFg},${selBg})
 FG: ${( selFg + '' ).padEnd( 2, ' ' )} ${beep8.CONFIG.COLORS[ selFg ]}
 BG: ${( selBg + '' ).padEnd( 2, ' ' )} ${beep8.CONFIG.COLORS[ selBg ]}` );
