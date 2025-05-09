@@ -21,7 +21,7 @@
 			beep8.Utilities.error( "Error in beep8.Core.handleCrash: " + e + " while handling error " + error );
 		}
 
-		throw new Error( "Error: " + error );
+		throw new Error( error );
 
 	}
 
