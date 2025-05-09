@@ -198,10 +198,14 @@
 			i = processEscapeSeq_( text, i );
 			const ch = text.charCodeAt( i );
 
+			// New line character so set a new line and reset the column.
 			if ( ch === 10 ) {
+
 				col = initialCol;
 				row += rowInc;
+
 			} else {
+
 				// Get index for the character from charMap.
 				const chIndex = charMap.indexOf( ch );
 
@@ -306,11 +310,68 @@
 		// Split the text into lines.
 		text = text.split( "\n" );
 
+		// Remove last item from text if it is empty.
+		if ( text[ text.length - 1 ] === "" ) text.pop();
+
+
 		// Loop through each line of text.
 		for ( let i = 0; i < text.length; i++ ) {
 
 			const textWidth = beep8.TextRenderer.measure( text[ i ] ).cols;
 			const tempCol = Math.floor( col + ( width - textWidth ) / 2 );
+
+			beep8.Core.drawState.cursorCol = tempCol;
+			beep8.TextRenderer.print( text[ i ], font, width );
+
+			beep8.Core.drawState.cursorRow += rowInc;
+
+		}
+
+		// Reset cursor position.
+		beep8.Core.drawState.cursorCol = col;
+
+	}
+
+
+	/**
+	 * Prints text right-aligned within a given width.
+	 *
+	 * @param {string} text - The text to print.
+	 * @param {number} width - The width to right-align the text within.
+	 * @param {beep8.TextRendererFont} [font=null] - The font to use.
+	 * @returns {void}
+	 */
+	beep8.TextRenderer.printRight = function( text, width, font = null ) {
+
+		beep8.TextRenderer.printFont_ = font || beep8.TextRenderer.curFont_;
+
+		beep8.Utilities.checkString( "text", text );
+		beep8.Utilities.checkNumber( "width", width );
+
+		if ( !text ) {
+			return;
+		}
+
+		const col = beep8.Core.drawState.cursorCol;
+		const rowInc = beep8.TextRenderer.printFont_.getCharRowCount();
+
+		text = beep8.TextRenderer.wrapText( text, width );
+
+		// Split the text into lines.
+		text = text.split( "\n" );
+
+		// Remove last item from text if it is empty.
+		if ( text[ text.length - 1 ] === "" ) text.pop();
+
+		// Loop through each line of text.
+		for ( let i = 0; i < text.length; i++ ) {
+
+			let textWidth = beep8.TextRenderer.measure( text[ i ] ).cols;
+			// If textWidth is not an integer prepend a space.
+			if ( textWidth % 1 !== 0 ) {
+				text[ i ] = " " + text[ i ];
+			}
+			const tempCol = Math.floor( col + ( width - textWidth ) );
 
 			beep8.Core.drawState.cursorCol = tempCol;
 			beep8.TextRenderer.print( text[ i ], font, width );
@@ -458,7 +519,7 @@
 
 		font = font || beep8.TextRenderer.curFont_;
 
-		if ( text === "" ) {
+		if ( "" === text ) {
 			return { cols: 0, rows: 0 }; // Special case
 		}
 
@@ -534,13 +595,36 @@
 		beep8.Utilities.checkNumber( "borderChar", borderChar );
 
 		const colCount = beep8.TextRenderer.curTiles_.getColCount();
+		const borders = {
+			NW: borderChar,
+			NE: borderChar + 2,
+			SW: borderChar + colCount + colCount,
+			SE: borderChar + colCount + colCount + 2,
+			V: borderChar + colCount,
+			H: borderChar + 1,
+		};
 
-		const borderNW = borderChar;
-		const borderNE = borderChar + 2;
-		const borderSW = borderChar + colCount + colCount;
-		const borderSE = borderChar + colCount + colCount + 2;
-		const borderV = borderChar + colCount;
-		const borderH = borderChar + 1;
+		beep8.TextRenderer.drawBox( width, height, fill, borders );
+
+	}
+
+
+	/**
+	 * Draws a box with borders.
+	 *
+	 * @param {number} width - The width of the box.
+	 * @param {number} height - The height of the box.
+	 * @param {boolean} [fill=true] - Whether to fill the box.
+	 * @param {Object} [borders] - The borders to use.
+	 * @param {number} [borders.NW] - The top-left corner character.
+	 * @param {number} [borders.NE] - The top-right corner character.
+	 * @param {number} [borders.SW] - The bottom-left corner character.
+	 * @param {number} [borders.SE] - The bottom-right corner character.
+	 * @param {number} [borders.V] - The vertical border character.
+	 * @param {number} [borders.H] - The horizontal border character.
+	 * @returns {void}
+	 */
+	beep8.TextRenderer.drawBox = function( width, height, fill = true, borders = {} ) {
 
 		const startCol = beep8.Core.drawState.cursorCol;
 		const startRow = beep8.Core.drawState.cursorRow;
@@ -552,19 +636,19 @@
 
 			if ( i === 0 ) {
 				// Top border
-				beep8.TextRenderer.printChar( borderNW );
-				beep8.TextRenderer.printChar( borderH, width - 2 );
-				beep8.TextRenderer.printChar( borderNE );
+				beep8.TextRenderer.printChar( borders.NW );
+				beep8.TextRenderer.printChar( borders.H, width - 2 );
+				beep8.TextRenderer.printChar( borders.NE );
 			} else if ( i === height - 1 ) {
 				// Bottom border.
-				beep8.TextRenderer.printChar( borderSW );
-				beep8.TextRenderer.printChar( borderH, width - 2 );
-				beep8.TextRenderer.printChar( borderSE );
+				beep8.TextRenderer.printChar( borders.SW );
+				beep8.TextRenderer.printChar( borders.H, width - 2 );
+				beep8.TextRenderer.printChar( borders.SE );
 			} else {
 				// Middle.
-				beep8.TextRenderer.printChar( borderV );
+				beep8.TextRenderer.printChar( borders.V );
 				beep8.Core.drawState.cursorCol = startCol + width - 1;
-				beep8.TextRenderer.printChar( borderV );
+				beep8.TextRenderer.printChar( borders.V );
 			}
 		}
 
@@ -593,9 +677,7 @@
 		font = font || beep8.TextRenderer.curFont_;
 
 		// If 0 or less then don't wrap.
-		if ( wrapWidth <= 0 ) {
-			return text;
-		}
+		if ( wrapWidth <= 0 ) return text;
 
 		// Split the text into lines.
 		const lines = text.split( "\n" );
@@ -606,26 +688,20 @@
 		for ( const line of lines ) {
 
 			const words = line.split( " " );
-
 			let wrappedLine = "";
-			let lineWidth = 0;
 
 			for ( const word of words ) {
 
-				const wordWidth = beep8.TextRenderer.measure( word + ' ' ).cols;
-
-				console.log( wrappedLine, lineWidth, wordWidth, wrapWidth );
+				const lineWidth = beep8.TextRenderer.measure( ( wrappedLine + word ).trim() ).cols;
 
 				// Is the line with the new word longer than the line width?
-				if ( lineWidth + wordWidth > wrapWidth ) {
+				if ( lineWidth > wrapWidth ) {
 					wrappedLines.push( wrappedLine.trim() );
 					wrappedLine = "";
-					lineWidth = 0;
 				}
 
 				// Add a space between words.
 				wrappedLine += word + " ";
-				lineWidth += wordWidth;
 
 			}
 

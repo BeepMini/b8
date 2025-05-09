@@ -280,6 +280,33 @@
 
 
 	/**
+	 * Prints text aligned to the right in a space of the given width.
+	 * If the text is bigger than the width, it will wrap.
+	 *
+	 * @param {string} text - The text to print.
+	 * @param {number} width - The width of the space to place the text in, measured in Columns. Defaults to the screen width.
+	 * @param {string} [fontId=null] - The font ID to use.
+	 * @returns {void}
+	 */
+	beep8.printRight = function( text, width = beep8.CONFIG.SCREEN_COLS, fontId = null ) {
+
+		beep8.Core.preflight( "beep8.printRight" );
+
+		beep8.Utilities.checkString( "text", text );
+		beep8.Utilities.checkNumber( "width", width );
+
+		let font = fontId;
+		if ( null !== font ) {
+			beep8.Utilities.checkString( "fontId", fontId );
+			font = beep8.TextRenderer.getFontByName( fontId );
+		}
+
+		beep8.TextRenderer.printRight( text, width, font );
+
+	}
+
+
+	/**
 	 * Draws text at an arbitrary pixel position on the screen, not following
 	 * the "row and column" system.
 	 *
@@ -679,7 +706,7 @@
 
 		beep8.Core.preflight( "beep8.setFont" );
 
-		fontId = fontId || "default";
+		fontId = fontId || "default-thin";
 		beep8.Utilities.checkString( "fontId", fontId );
 
 		beep8.TextRenderer.setFont( fontId );
