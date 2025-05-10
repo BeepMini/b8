@@ -313,12 +313,11 @@
 		// Remove last item from text if it is empty.
 		if ( text[ text.length - 1 ] === "" ) text.pop();
 
-
 		// Loop through each line of text.
 		for ( let i = 0; i < text.length; i++ ) {
 
 			const textWidth = beep8.TextRenderer.measure( text[ i ] ).cols;
-			const tempCol = Math.floor( col + ( width - textWidth ) / 2 );
+			const tempCol = col + ( width - textWidth ) / 2;
 
 			beep8.Core.drawState.cursorCol = tempCol;
 			beep8.TextRenderer.print( text[ i ], font, width );
@@ -367,11 +366,7 @@
 		for ( let i = 0; i < text.length; i++ ) {
 
 			let textWidth = beep8.TextRenderer.measure( text[ i ] ).cols;
-			// If textWidth is not an integer prepend a space.
-			if ( textWidth % 1 !== 0 ) {
-				text[ i ] = " " + text[ i ];
-			}
-			const tempCol = Math.floor( col + ( width - textWidth ) );
+			const tempCol = col + width - textWidth;
 
 			beep8.Core.drawState.cursorCol = tempCol;
 			beep8.TextRenderer.print( text[ i ], font, width );
