@@ -218,13 +218,9 @@
 	 */
 	beep8.Async.loadImage = async function( url ) {
 
-		return new Promise(
-			( resolve ) => {
-				const img = new Image();
-				img.onload = () => resolve( img );
-				img.src = url;
-			}
-		);
+		beep8.Utilities.checkString( "url", url );
+
+		return await beep8.Core.loadImage( url );
 
 	}
 
