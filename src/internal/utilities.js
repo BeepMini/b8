@@ -467,6 +467,29 @@
 
 
 	/**
+	 * Converts a hex color string to an RGB object.
+	 *
+	 * @param {string} hex - The hex color string (e.g., "#ff0000").
+	 * @returns {object} An object with r, g, b properties.
+	 */
+	beep8.Utilities.hexToRgb = function( hex ) {
+
+		// Remove the "#" if present
+		hex = hex.replace( "#", "" );
+
+		// Parse the RGB values
+		const bigint = parseInt( hex, 16 );
+
+		return {
+			r: ( bigint >> 16 ) & 255, // Extract red
+			g: ( bigint >> 8 ) & 255,  // Extract green
+			b: bigint & 255          // Extract blue
+		};
+
+	}
+
+
+	/**
 	 * Calculates the intersection between two integer number intervals.
 	 *
 	 * Given 2 ranges it will see if these ranges overlap and if they do it will
