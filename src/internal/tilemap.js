@@ -146,10 +146,7 @@
 
 		beep8.Utilities.checkArray( "tilemap", tilemap );
 
-		const cborString = CBOR.encode( tilemap );
-		const encodedString = btoa( String.fromCharCode.apply( null, new Uint8Array( cborString ) ) );
-
-		return encodedString;
+		return beep8.Utilities.encodeData( tilemap );
 
 	}
 
@@ -164,22 +161,7 @@
 
 		beep8.Utilities.checkString( "data", data );
 
-		// Step 1: Decode the Base64 string back to a binary string
-		const binaryString = atob( data );
-
-		// Step 2: Convert the binary string to a Uint8Array
-		const byteArray = new Uint8Array( binaryString.length );
-		for ( let i = 0; i < binaryString.length; i++ ) {
-			byteArray[ i ] = binaryString.charCodeAt( i );
-		}
-
-		// Step 3: Convert the Uint8Array to an ArrayBuffer
-		const arrayBuffer = byteArray.buffer;
-
-		// Step 4: Use CBOR.decode to convert the byte array back to the original data structure
-		const mapData = CBOR.decode( arrayBuffer );
-
-		return mapData;
+		return beep8.Utilities.decodeData( data );
 
 	}
 

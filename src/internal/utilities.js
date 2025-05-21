@@ -773,4 +773,45 @@
 	};
 
 
+	/**
+	 * Encodes data using CBOR and Base64.
+	 *
+	 * @param {any} data - The data to encode.
+	 * @returns {string} The encoded data as a Base64 string.
+	 */
+	beep8.Utilities.encodeData = function( data ) {
+
+		const cborString = CBOR.encode( data );
+		const encodedString = btoa( String.fromCharCode.apply( null, new Uint8Array( cborString ) ) );
+		return encodedString;
+
+	};
+
+
+	/**
+	 * Decodes data from a Base64 string using CBOR.
+	 *
+	 * @param {string} data - The Base64 encoded data.
+	 * @returns {any} The decoded data.
+	 */
+	beep8.Utilities.decodeData = function( data ) {
+
+		// Step 1: Decode the Base64 string back to a binary string
+		const binaryString = atob( data );
+
+		// Step 2: Convert the binary string to a Uint8Array
+		const byteArray = new Uint8Array( binaryString.length );
+		for ( let i = 0; i < binaryString.length; i++ ) {
+			byteArray[ i ] = binaryString.charCodeAt( i );
+		}
+
+		// Step 3: Convert the Uint8Array to an ArrayBuffer
+		const arrayBuffer = byteArray.buffer;
+
+		// Step 4: Use CBOR.decode to convert the byte array back to the original data structure
+		return CBOR.decode( arrayBuffer );
+
+	};
+
+
 } )( beep8 || ( beep8 = {} ) );
