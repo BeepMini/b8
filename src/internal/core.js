@@ -11,7 +11,6 @@
 	beep8.Core.deltaTime = 0;
 	beep8.Core.crashed = false;
 	beep8.Core.crashing = false;
-	beep8.Core.state = null;
 
 	beep8.Core.drawState = {
 		fgColor: 7,
@@ -62,6 +61,8 @@
 
 		// Initialize the game clock.
 		beep8.Core.startTime = beep8.Core.getNow();
+
+		beep8.Utilities.event( 'initComplete' );
 
 	}
 
@@ -139,9 +140,6 @@
 		beep8.Core.canvas.style.height = beep8.CONFIG.SCREEN_HEIGHT + "px";
 		beep8.Core.ctx = beep8.Core.canvas.getContext( "2d" );
 		beep8.Core.ctx.imageSmoothingEnabled = false;
-
-		// Initialize subsystems
-		beep8.Core.state = new beep8.State();
 
 		// Load and initialize default fonts.
 		await beep8.TextRenderer.initAsync();
