@@ -411,13 +411,19 @@
 		let delta = ( now - lastFrameTime ) / 1000;
 		lastFrameTime = now;
 
+		// Save actual delta time.
+		beep8.Core.deltaTime = delta;
+
 		// Cap delta to avoid large time steps.
 		delta = Math.min( delta, 0.05 );
 
 		// Accumulate time.
 		timeToNextFrame += delta;
 
-		// Determine how many update steps to run.
+		// Determine how many update steps to run based upon target delta time
+		// and actual delta time.
+		// This ensures updates are run even if the frame rate is lower than
+		// intended.
 		let numUpdates = Math.floor( timeToNextFrame / targetDt );
 		const MAX_UPDATES = 10;
 		if ( numUpdates > MAX_UPDATES ) {
