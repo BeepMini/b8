@@ -1,6 +1,5 @@
 ( function( beep8 ) {
 
-
 	beep8.Utilities = {};
 
 
@@ -649,23 +648,21 @@
 		const isObject = obj => obj && typeof obj === 'object';
 
 		return objects.reduce(
-
 			( prev, obj ) => {
-
 				Object.keys( obj ).forEach(
 					( key ) => {
 
-						const pVal = prev[ key ];
-						const oVal = obj[ key ];
+						const existingValue = prev[ key ];
+						const newValue = obj[ key ];
 
-						if ( Array.isArray( pVal ) && Array.isArray( oVal ) ) {
-							prev[ key ] = pVal.concat( ...oVal );
+						if ( Array.isArray( existingValue ) && Array.isArray( newValue ) ) {
+							prev[ key ] = existingValue.concat( ...newValue );
 						}
-						else if ( isObject( pVal ) && isObject( oVal ) ) {
-							prev[ key ] = beep8.Utilities.deepMerge( pVal, oVal );
+						else if ( isObject( existingValue ) && isObject( newValue ) ) {
+							prev[ key ] = beep8.Utilities.deepMerge( existingValue, newValue );
 						}
 						else {
-							prev[ key ] = oVal;
+							prev[ key ] = newValue;
 						}
 					}
 				);
@@ -676,6 +673,43 @@
 		);
 
 	}
+
+
+	/**
+	 * Deep merge objects and returns new object. Does not modify objects.
+	 * Merges arrays by index.
+	 *
+	 * @param {...object} objects - Objects to merge
+	 * @returns {object} New object with merged key/values
+	 */
+	beep8.Utilities.deepMergeByIndex = function( ...objects ) {
+
+		const isObject = obj => obj && typeof obj === 'object';
+
+		return objects.reduce(
+			( prev, obj ) => {
+				Object.keys( obj ).forEach(
+					( key ) => {
+
+						const existingValue = prev[ key ];
+						const newValue = obj[ key ];
+
+						if ( Array.isArray( existingValue ) && Array.isArray( newValue ) ) {
+							prev[ key ] = mergeArraysByIndex( existingValue, newValue );
+						}
+						else if ( isObject( existingValue ) && isObject( newValue ) ) {
+							prev[ key ] = beep8.Utilities.deepMergeByIndex( existingValue, newValue );
+						}
+						else {
+							prev[ key ] = newValue;
+						}
+					}
+				);
+				return prev;
+			},
+			{}
+		);
+	};
 
 
 	/**
@@ -812,6 +846,25 @@
 		return CBOR.decode( arrayBuffer );
 
 	};
+
+
+	/**
+	 * Merges two arrays by index, filling in missing indices with values from
+	 * the default array.
+	 *
+	 * @param {Array} targetArr - The target array to merge into.
+	 * @param {Array} defaultArr - The default array to merge from.
+	 * @returns {Array} The merged array.
+	 */
+	function mergeArraysByIndex( Arr1, Arr2 ) {
+
+		for ( let i = 0; i < Arr2.length; i++ ) {
+			Arr1[ i ] = Arr2[ i ];
+		}
+
+		return Arr1;
+
+	}
 
 
 } )( beep8 || ( beep8 = {} ) );
