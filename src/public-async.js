@@ -294,7 +294,7 @@
 
 		while ( true ) {
 			const key = await beep8.Async.key();
-			if ( key.includes( "Enter" ) || key.includes( "ButtonA" ) ) break;
+			if ( key.includes( "Enter" ) || key.includes( "ButtonA" ) || key.includes( " " ) ) break;
 		}
 
 	}
