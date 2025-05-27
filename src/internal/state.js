@@ -89,7 +89,6 @@
 
 		beep8.State.lastSave = Date.now();
 
-
 	}
 
 
@@ -127,16 +126,19 @@
 	 */
 	beep8.State.init = function( defaults ) {
 
-		for ( const key in defaults ) {
-			if ( !( key in beep8.data ) ) {
-				beep8.data[ key ] = defaults[ key ];
-			}
+		if ( !beep8.data ) {
+			beep8.data = createProxy( {} );
 		}
 
 		// If there is a save file then load that too.
 		if ( localStorage.getItem( STORAGE_KEY ) ) {
 			beep8.State.load();
 		}
+
+		// beep8.data = beep8.Utilities.deepMergeByIndex( beep8.data, defaults );
+		beep8.data = beep8.Utilities.deepMergeByIndex( defaults, beep8.data );
+
+		beep8.Utilities.log( 'State initialized:', beep8.data );
 
 	}
 
@@ -150,7 +152,10 @@
 	 */
 	beep8.State.clear = function( key = STORAGE_KEY ) {
 
+		beep8.Utilities.log( 'Clearing state...' );
+
 		localStorage.removeItem( key );
+		beep8.data = createProxy( {} );
 
 	}
 
