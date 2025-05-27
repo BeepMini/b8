@@ -78,7 +78,24 @@
 			beep8.Utilities.fatal( `SFX ${sfx} not found.` );
 		}
 
-		zzfx( ...beep8.Sfx.library[ sfx ] );
+		beep8.Sfx.playFromArray( beep8.Sfx.library[ sfx ] );
+
+	}
+
+
+	/**
+	 * Play a sound effect from an array.
+	 *
+	 * @param {Array} sfxArray - The sound effect array to play.
+	 * @returns {void}
+	 */
+	beep8.Sfx.playFromArray = function( sfxArray = [] ) {
+
+		// Check the sfx is an array.
+		beep8.Utilities.checkArray( 'sfxArray', sfxArray );
+
+		// Play the raw sound effect.
+		zzfx( ...sfxArray );
 
 	}
 
