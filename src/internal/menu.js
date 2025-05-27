@@ -16,6 +16,7 @@
 	 * - options.prompt - The prompt to display above the choices.
 	 * - options.selBgColor - The background color of the selected choice. Defaults to the current foreground colour.
 	 * - options.selFgColor - The foreground color of the selected choice. Defaults to the current background colour.
+	 * - options.border - Whether to draw a border around the menu. Defaults to true.
 	 * - options.borderChar - The character to use for the border.
 	 * - options.center - Whether to center the menu horizontally and vertically.
 	 * - options.centerH - Whether to center the menu horizontally.
@@ -41,6 +42,7 @@
 				prompt: "",
 				selBgColor: beep8.Core.drawState.fgColor,
 				selFgColor: beep8.Core.drawState.bgColor,
+				border: true,
 				borderChar: beep8.CONFIG.BORDER_CHAR,
 				center: false,
 				centerH: false,
@@ -84,14 +86,18 @@
 		beep8.Core.drawState.cursorCol = startCol;
 		beep8.Core.drawState.cursorRow = startRow;
 
-		// Print the background & border.
-		beep8.TextRenderer.printBox( totalCols, totalRows, true, options.borderChar );
+		if ( options.border ) {
 
-		// Print title at the top of the border.
-		if ( options.title ) {
-			const t = " " + options.title + " ";
-			beep8.Core.drawState.cursorCol = startCol + Math.round( ( totalCols - t.length ) / 2 );
-			beep8.TextRenderer.print( t );
+			// Print the background & border.
+			beep8.TextRenderer.printBox( totalCols, totalRows, true, options.borderChar );
+
+			// Print title at the top of the border.
+			if ( options.title ) {
+				const t = " " + options.title + " ";
+				beep8.Core.drawState.cursorCol = startCol + Math.round( ( totalCols - t.length ) / 2 );
+				beep8.TextRenderer.print( t );
+			}
+
 		}
 
 		if ( options.prompt ) {
