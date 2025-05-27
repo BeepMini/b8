@@ -81,6 +81,11 @@
 		// Store the active scene.
 		activeScene = name;
 
+		// Clear any inputs.
+		if ( beep8.Input && typeof beep8.Input.onEndFrame === 'function' ) {
+			beep8.Input.onEndFrame();
+		}
+
 		// Get the scene object.
 		const currentScene = sceneList[ name ];
 
