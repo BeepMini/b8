@@ -91,8 +91,8 @@
 		const key = e.key;
 		const keys = beep8.Input.getKeys( key );
 
-		// Stop page from scrolling when the arrows are pressed.
-		if ( [ "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight" ].includes( key ) ) {
+		// Stop page from scrolling when the arrows/ space are pressed.
+		if ( [ "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " " ].includes( key ) ) {
 			e.preventDefault();
 		}
 
