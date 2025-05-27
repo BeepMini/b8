@@ -3,6 +3,11 @@
 	// AudioContext.
 	const audioCtx = new AudioContext();
 
+	// Master gain node for volume control.
+	const masterGain = audioCtx.createGain();
+	masterGain.gain.value = 1;  // default volume (0.0–1.0)
+	masterGain.connect( audioCtx.destination );
+
 	// Cache for generated note buffers.
 	const noteBuffers = {};
 
@@ -11,7 +16,7 @@
 	let schedules = []; // Array of event arrays per track.
 	let schedulePointers = []; // Next event index per track.
 	let playbackStartTime = 0; // When playback starts.
-	let tempo = 120; // Default tempo.
+	let tempo = 125; // Default tempo.
 	const lookaheadTime = 0.5; // Only schedule events within the next 0.5 seconds.
 	const schedulerIntervalMs = 50; // Check every 50ms.
 	const volumeMultiplier = 0.1; // Volume multiplier.
@@ -249,6 +254,11 @@
 		tempo = newTempo;
 	};
 
+	p1.setVolume = function( value ) {
+		// clamp 0.0–1.0
+		masterGain.gain.value = Math.min( 1, Math.max( 0, value ) );
+	};
+
 
 	p1.clearCache = function() {
 		noteBuffers = {};
@@ -302,9 +312,15 @@
 	const playNoteBuffer = ( buffer, context, when, stopImmediately = false ) => {
 		const source = context.createBufferSource();
 		source.buffer = buffer;
-		source.connect( context.destination );
+
+		source.connect( masterGain );
 		source.start( when );
 		playingSources.push( source );
+
+		// source.connect( context.destination );
+		// source.start( when );
+		// playingSources.push( source );
+
 		if ( stopImmediately ) {
 			source.stop();
 		}
