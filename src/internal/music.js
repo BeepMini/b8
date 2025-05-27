@@ -15,11 +15,13 @@
 	 * @returns {Array<any>} An array of results.
 	 */
 	function times( n, fn ) {
+
 		var result = [];
 		for ( var i = 0; i < n; i++ ) {
 			result.push( fn( i ) );
 		}
 		return result;
+
 	}
 
 
@@ -540,16 +542,8 @@
 	}
 
 
-	/**
-	 * Stops the current music playback.
-	 *
-	 * @returns {void}
-	 */
-	beep8.Music.stop = function() {
-
-		beep8.Music.play( "" );
-
-	}
+	// Store the currently playing song so it can be started again after pausing.
+	let currentSong = null;
 
 
 	/**
@@ -561,6 +555,77 @@
 	beep8.Music.play = function( song ) {
 
 		p1( song );
+
+		if ( song ) {
+			currentSong = song;
+		}
+
+	}
+
+
+	/**
+	 * Stops the current music playback.
+	 * If `clearCurrentSong` is true, it will also clear the current song reference.
+	 * This is disabled when the music is paused to allow resuming playback.
+	 *
+	 * @param {boolean} [clearCurrentSong=true] - Whether to clear the current song reference.
+	 * @returns {void}
+	 */
+	beep8.Music.stop = function( clearCurrentSong = true ) {
+
+		// Clear the currently stored song.
+		beep8.Utilities.checkBoolean( "clearCurrentSong", clearCurrentSong );
+		if ( clearCurrentSong ) currentSong = null;
+
+		// Stop the music playback.
+		beep8.Music.play( "" );
+
+	}
+
+
+	/**
+	 * Pauses the current music playback.
+	 *
+	 * @returns {void}
+	 */
+	beep8.Music.pause = function() {
+
+		if ( beep8.Music.isPlaying() ) {
+			beep8.Music.stop( false );
+		}
+
+	}
+
+
+	/**
+	 * Resumes the current music playback.
+	 *
+	 * If a song is currently playing, it will continue from where it left off.
+	 * If no song is playing, it will do nothing.
+	 *
+	 * @returns {void}
+	 */
+	beep8.Music.resume = function() {
+
+		// If there is a current song and it is not playing, resume playback.
+		if ( currentSong && !beep8.Music.isPlaying() ) {
+			beep8.Music.play( currentSong );
+		}
+
+	}
+
+
+	/**
+	 * Sets the volume for the music playback.
+	 *
+	 * @param {number} volume - The volume level (0 to 1).
+	 * @returns {void}
+	 */
+	beep8.Music.setVolume = function( volume ) {
+
+		beep8.Utilities.checkNumber( "volume", volume );
+
+		p1.setVolume( volume );
 
 	}
 
@@ -595,5 +660,8 @@
 		return p1.isPlaying();
 
 	}
+
+	document.addEventListener( 'beep8.pageVisibility.wake', beep8.Music.resume );
+	document.addEventListener( 'beep8.pageVisibility.sleep', beep8.Music.pause );
 
 } )( beep8 );
