@@ -819,6 +819,21 @@
 
 
 	/**
+	 * Run a screenshake effect.
+	 *
+	 * @param {number} duration - The duration of the screenshake effect in seconds.
+	 * @returns {boolean} Returns true if the screenshake effect was successfully triggered.
+	 */
+	beep8.screenShake = function( duration ) {
+
+		beep8.Utilities.checkNumber( "duration", duration );
+
+		return beep8.Renderer.shakeScreen( duration );
+
+	}
+
+
+	/**
 	 * Restores the contents of the screen using an ImageData object.
 	 *
 	 * @param {ImageData} screenData - The ImageData object with the screen's

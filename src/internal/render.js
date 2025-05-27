@@ -51,9 +51,7 @@
 	 */
 	beep8.Renderer.render = function() {
 
-		if ( beep8.Core.crashed ) {
-			return;
-		}
+		if ( beep8.Core.crashed ) return;
 
 		beep8.Core.realCtx.imageSmoothingEnabled = false;
 
@@ -63,9 +61,17 @@
 
 		// Do screenshake.
 		if ( screenshakeDuration > 0 ) {
-			x = Math.min( 10, Math.round( ( Math.random() * screenshakeDuration ) - ( screenshakeDuration / 2 ) ) );
-			y = Math.min( 10, Math.round( ( Math.random() * screenshakeDuration ) - ( screenshakeDuration / 2 ) ) );
-			screenshakeDuration -= 1;
+
+			let amount = screenshakeDuration * beep8.CONFIG.CHR_WIDTH;
+
+			x = Math.round( ( Math.random() * amount ) - ( amount / 2 ) );
+			y = Math.round( ( Math.random() * amount ) - ( amount / 2 ) );
+
+			x = beep8.Utilities.clamp( x, -6, 6 );
+			y = beep8.Utilities.clamp( y, -6, 6 );
+
+			screenshakeDuration -= beep8.Core.deltaTime;
+
 		}
 
 		beep8.Core.realCtx.clearRect(
@@ -95,12 +101,21 @@
 	/**
 	 * Triggers the screenshake effect.
 	 *
-	 * @param {number} duration - The duration of the screenshake effect in ms.
-	 * @returns {void}
+	 * @param {number} duration - The duration of the screenshake effect in seconds.
+	 * @returns {boolean} Returns true if the screenshake effect was successfully triggered.
 	 */
 	beep8.Renderer.shakeScreen = function( duration ) {
 
+		beep8.Utilities.checkNumber( "duration", duration );
+
+		if ( duration <= 0 ) {
+			beep8.Utilities.warn( "Screenshake duration must be positive. Currently: " + duration );
+			return false;
+		}
+
 		screenshakeDuration = duration;
+
+		return true;
 
 	}
 
