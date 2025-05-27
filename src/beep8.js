@@ -15,9 +15,18 @@
  * the original's elegance while enhancing its features
  * for today's developers.
  *
+ * ---
+ *
+ * Website: https://beep8.com
+ * Games: https://beepmini.com
+ * Github: https://github.com/BinaryMoon/beep8
+ * BlueSky: https://bsky.app/profile/binarymoon.bsky.social
+ *
+ * ---
+ *
  * MIT License
  *
- * Copyright (c) 2024 BinaryMoon
+ * Copyright (c) 2024 - 2025 BinaryMoon
  *
  * Permission is hereby granted, free of charge, to any
  * person obtaining a copy of this software and associated
