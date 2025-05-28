@@ -91,7 +91,7 @@
 	 * @private
 	 * @returns {void}
 	 */
-	advanceBlink_ = function() {
+	function advanceBlink_() {
 
 		blinkCycle_ = ( blinkCycle_ + 1 ) % 2;
 		beep8.Renderer.render();
