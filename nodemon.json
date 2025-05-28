@@ -3,5 +3,5 @@
 		"src"
 	],
 	"ext": "js",
-	"exec": "npm run concatenate"
+	"exec": "npm run dev:build"
 }
