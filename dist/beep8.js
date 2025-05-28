@@ -8645,3 +8645,879 @@ const beep8 = {};
 	}
 
 } )( beep8 || ( beep8 = {} ) );
+
+/*
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2014 Patrick Gansterer <paroga@paroga.com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+( function( global, undefined ) {
+	"use strict";
+	var POW_2_24 = Math.pow( 2, -24 ),
+		POW_2_32 = Math.pow( 2, 32 ),
+		POW_2_53 = Math.pow( 2, 53 );
+
+	function encode( value ) {
+		var data = new ArrayBuffer( 256 );
+		var dataView = new DataView( data );
+		var lastLength;
+		var offset = 0;
+
+		function ensureSpace( length ) {
+			var newByteLength = data.byteLength;
+			var requiredLength = offset + length;
+			while ( newByteLength < requiredLength )
+				newByteLength *= 2;
+			if ( newByteLength !== data.byteLength ) {
+				var oldDataView = dataView;
+				data = new ArrayBuffer( newByteLength );
+				dataView = new DataView( data );
+				var uint32count = ( offset + 3 ) >> 2;
+				for ( var i = 0; i < uint32count; ++i )
+					dataView.setUint32( i * 4, oldDataView.getUint32( i * 4 ) );
+			}
+
+			lastLength = length;
+			return dataView;
+		}
+		function write() {
+			offset += lastLength;
+		}
+		function writeFloat64( value ) {
+			write( ensureSpace( 8 ).setFloat64( offset, value ) );
+		}
+		function writeUint8( value ) {
+			write( ensureSpace( 1 ).setUint8( offset, value ) );
+		}
+		function writeUint8Array( value ) {
+			var dataView = ensureSpace( value.length );
+			for ( var i = 0; i < value.length; ++i )
+				dataView.setUint8( offset + i, value[ i ] );
+			write();
+		}
+		function writeUint16( value ) {
+			write( ensureSpace( 2 ).setUint16( offset, value ) );
+		}
+		function writeUint32( value ) {
+			write( ensureSpace( 4 ).setUint32( offset, value ) );
+		}
+		function writeUint64( value ) {
+			var low = value % POW_2_32;
+			var high = ( value - low ) / POW_2_32;
+			var dataView = ensureSpace( 8 );
+			dataView.setUint32( offset, high );
+			dataView.setUint32( offset + 4, low );
+			write();
+		}
+		function writeTypeAndLength( type, length ) {
+			if ( length < 24 ) {
+				writeUint8( type << 5 | length );
+			} else if ( length < 0x100 ) {
+				writeUint8( type << 5 | 24 );
+				writeUint8( length );
+			} else if ( length < 0x10000 ) {
+				writeUint8( type << 5 | 25 );
+				writeUint16( length );
+			} else if ( length < 0x100000000 ) {
+				writeUint8( type << 5 | 26 );
+				writeUint32( length );
+			} else {
+				writeUint8( type << 5 | 27 );
+				writeUint64( length );
+			}
+		}
+
+		function encodeItem( value ) {
+			var i;
+
+			if ( value === false )
+				return writeUint8( 0xf4 );
+			if ( value === true )
+				return writeUint8( 0xf5 );
+			if ( value === null )
+				return writeUint8( 0xf6 );
+			if ( value === undefined )
+				return writeUint8( 0xf7 );
+
+			switch ( typeof value ) {
+				case "number":
+					if ( Math.floor( value ) === value ) {
+						if ( 0 <= value && value <= POW_2_53 )
+							return writeTypeAndLength( 0, value );
+						if ( -POW_2_53 <= value && value < 0 )
+							return writeTypeAndLength( 1, -( value + 1 ) );
+					}
+					writeUint8( 0xfb );
+					return writeFloat64( value );
+
+				case "string":
+					var utf8data = [];
+					for ( i = 0; i < value.length; ++i ) {
+						var charCode = value.charCodeAt( i );
+						if ( charCode < 0x80 ) {
+							utf8data.push( charCode );
+						} else if ( charCode < 0x800 ) {
+							utf8data.push( 0xc0 | charCode >> 6 );
+							utf8data.push( 0x80 | charCode & 0x3f );
+						} else if ( charCode < 0xd800 ) {
+							utf8data.push( 0xe0 | charCode >> 12 );
+							utf8data.push( 0x80 | ( charCode >> 6 ) & 0x3f );
+							utf8data.push( 0x80 | charCode & 0x3f );
+						} else {
+							charCode = ( charCode & 0x3ff ) << 10;
+							charCode |= value.charCodeAt( ++i ) & 0x3ff;
+							charCode += 0x10000;
+
+							utf8data.push( 0xf0 | charCode >> 18 );
+							utf8data.push( 0x80 | ( charCode >> 12 ) & 0x3f );
+							utf8data.push( 0x80 | ( charCode >> 6 ) & 0x3f );
+							utf8data.push( 0x80 | charCode & 0x3f );
+						}
+					}
+
+					writeTypeAndLength( 3, utf8data.length );
+					return writeUint8Array( utf8data );
+
+				default:
+					var length;
+					if ( Array.isArray( value ) ) {
+						length = value.length;
+						writeTypeAndLength( 4, length );
+						for ( i = 0; i < length; ++i )
+							encodeItem( value[ i ] );
+					} else if ( value instanceof Uint8Array ) {
+						writeTypeAndLength( 2, value.length );
+						writeUint8Array( value );
+					} else {
+						var keys = Object.keys( value );
+						length = keys.length;
+						writeTypeAndLength( 5, length );
+						for ( i = 0; i < length; ++i ) {
+							var key = keys[ i ];
+							encodeItem( key );
+							encodeItem( value[ key ] );
+						}
+					}
+			}
+		}
+
+		encodeItem( value );
+
+		if ( "slice" in data )
+			return data.slice( 0, offset );
+
+		var ret = new ArrayBuffer( offset );
+		var retView = new DataView( ret );
+		for ( var i = 0; i < offset; ++i )
+			retView.setUint8( i, dataView.getUint8( i ) );
+		return ret;
+	}
+
+	function decode( data, tagger, simpleValue ) {
+		var dataView = new DataView( data );
+		var offset = 0;
+
+		if ( typeof tagger !== "function" )
+			tagger = function( value ) { return value; };
+		if ( typeof simpleValue !== "function" )
+			simpleValue = function() { return undefined; };
+
+		function read( value, length ) {
+			offset += length;
+			return value;
+		}
+		function readArrayBuffer( length ) {
+			return read( new Uint8Array( data, offset, length ), length );
+		}
+		function readFloat16() {
+			var tempArrayBuffer = new ArrayBuffer( 4 );
+			var tempDataView = new DataView( tempArrayBuffer );
+			var value = readUint16();
+
+			var sign = value & 0x8000;
+			var exponent = value & 0x7c00;
+			var fraction = value & 0x03ff;
+
+			if ( exponent === 0x7c00 )
+				exponent = 0xff << 10;
+			else if ( exponent !== 0 )
+				exponent += ( 127 - 15 ) << 10;
+			else if ( fraction !== 0 )
+				return fraction * POW_2_24;
+
+			tempDataView.setUint32( 0, sign << 16 | exponent << 13 | fraction << 13 );
+			return tempDataView.getFloat32( 0 );
+		}
+		function readFloat32() {
+			return read( dataView.getFloat32( offset ), 4 );
+		}
+		function readFloat64() {
+			return read( dataView.getFloat64( offset ), 8 );
+		}
+		function readUint8() {
+			return read( dataView.getUint8( offset ), 1 );
+		}
+		function readUint16() {
+			return read( dataView.getUint16( offset ), 2 );
+		}
+		function readUint32() {
+			return read( dataView.getUint32( offset ), 4 );
+		}
+		function readUint64() {
+			return readUint32() * POW_2_32 + readUint32();
+		}
+		function readBreak() {
+			if ( dataView.getUint8( offset ) !== 0xff )
+				return false;
+			offset += 1;
+			return true;
+		}
+		function readLength( additionalInformation ) {
+			if ( additionalInformation < 24 )
+				return additionalInformation;
+			if ( additionalInformation === 24 )
+				return readUint8();
+			if ( additionalInformation === 25 )
+				return readUint16();
+			if ( additionalInformation === 26 )
+				return readUint32();
+			if ( additionalInformation === 27 )
+				return readUint64();
+			if ( additionalInformation === 31 )
+				return -1;
+			throw "Invalid length encoding";
+		}
+		function readIndefiniteStringLength( majorType ) {
+			var initialByte = readUint8();
+			if ( initialByte === 0xff )
+				return -1;
+			var length = readLength( initialByte & 0x1f );
+			if ( length < 0 || ( initialByte >> 5 ) !== majorType )
+				throw "Invalid indefinite length element";
+			return length;
+		}
+
+		function appendUtf16data( utf16data, length ) {
+			for ( var i = 0; i < length; ++i ) {
+				var value = readUint8();
+				if ( value & 0x80 ) {
+					if ( value < 0xe0 ) {
+						value = ( value & 0x1f ) << 6
+							| ( readUint8() & 0x3f );
+						length -= 1;
+					} else if ( value < 0xf0 ) {
+						value = ( value & 0x0f ) << 12
+							| ( readUint8() & 0x3f ) << 6
+							| ( readUint8() & 0x3f );
+						length -= 2;
+					} else {
+						value = ( value & 0x0f ) << 18
+							| ( readUint8() & 0x3f ) << 12
+							| ( readUint8() & 0x3f ) << 6
+							| ( readUint8() & 0x3f );
+						length -= 3;
+					}
+				}
+
+				if ( value < 0x10000 ) {
+					utf16data.push( value );
+				} else {
+					value -= 0x10000;
+					utf16data.push( 0xd800 | ( value >> 10 ) );
+					utf16data.push( 0xdc00 | ( value & 0x3ff ) );
+				}
+			}
+		}
+
+		function decodeItem() {
+			var initialByte = readUint8();
+			var majorType = initialByte >> 5;
+			var additionalInformation = initialByte & 0x1f;
+			var i;
+			var length;
+
+			if ( majorType === 7 ) {
+				switch ( additionalInformation ) {
+					case 25:
+						return readFloat16();
+					case 26:
+						return readFloat32();
+					case 27:
+						return readFloat64();
+				}
+			}
+
+			length = readLength( additionalInformation );
+			if ( length < 0 && ( majorType < 2 || 6 < majorType ) )
+				throw "Invalid length";
+
+			switch ( majorType ) {
+				case 0:
+					return length;
+				case 1:
+					return -1 - length;
+				case 2:
+					if ( length < 0 ) {
+						var elements = [];
+						var fullArrayLength = 0;
+						while ( ( length = readIndefiniteStringLength( majorType ) ) >= 0 ) {
+							fullArrayLength += length;
+							elements.push( readArrayBuffer( length ) );
+						}
+						var fullArray = new Uint8Array( fullArrayLength );
+						var fullArrayOffset = 0;
+						for ( i = 0; i < elements.length; ++i ) {
+							fullArray.set( elements[ i ], fullArrayOffset );
+							fullArrayOffset += elements[ i ].length;
+						}
+						return fullArray;
+					}
+					return readArrayBuffer( length );
+				case 3:
+					var utf16data = [];
+					if ( length < 0 ) {
+						while ( ( length = readIndefiniteStringLength( majorType ) ) >= 0 )
+							appendUtf16data( utf16data, length );
+					} else
+						appendUtf16data( utf16data, length );
+					return String.fromCharCode.apply( null, utf16data );
+				case 4:
+					var retArray;
+					if ( length < 0 ) {
+						retArray = [];
+						while ( !readBreak() )
+							retArray.push( decodeItem() );
+					} else {
+						retArray = new Array( length );
+						for ( i = 0; i < length; ++i )
+							retArray[ i ] = decodeItem();
+					}
+					return retArray;
+				case 5:
+					var retObject = {};
+					for ( i = 0; i < length || length < 0 && !readBreak(); ++i ) {
+						var key = decodeItem();
+						retObject[ key ] = decodeItem();
+					}
+					return retObject;
+				case 6:
+					return tagger( decodeItem(), length );
+				case 7:
+					switch ( length ) {
+						case 20:
+							return false;
+						case 21:
+							return true;
+						case 22:
+							return null;
+						case 23:
+							return undefined;
+						default:
+							return simpleValue( length );
+					}
+			}
+		}
+
+		var ret = decodeItem();
+		if ( offset !== data.byteLength )
+			throw "Remaining bytes";
+		return ret;
+	}
+
+	var obj = { encode: encode, decode: decode };
+
+	if ( typeof define === "function" && define.amd )
+		define( "cbor/cbor", obj );
+	else if ( !global.CBOR )
+		global.CBOR = obj;
+
+} )( this );
+
+( function() {
+
+	// AudioContext.
+	const audioCtx = new AudioContext();
+
+	// Master gain node for volume control.
+	const masterGain = audioCtx.createGain();
+	masterGain.gain.value = 1;  // default volume (0.0–1.0)
+	masterGain.connect( audioCtx.destination );
+
+	// Cache for generated note buffers.
+	const noteBuffers = {};
+
+	// Scheduler variables.
+	let schedulerInterval = null;
+	let schedules = []; // Array of event arrays per track.
+	let schedulePointers = []; // Next event index per track.
+	let playbackStartTime = 0; // When playback starts.
+	let tempo = 125; // Default tempo.
+	const lookaheadTime = 0.5; // Only schedule events within the next 0.5 seconds.
+	const schedulerIntervalMs = 50; // Check every 50ms.
+	const volumeMultiplier = 0.1; // Volume multiplier.
+
+	// iOS audio unlock flag.
+	let unlocked = false;
+
+	// -----------------------------
+	// Instrument synthesis functions.
+	// -----------------------------
+	const sineComponent = ( x, offset ) => Math.sin( x * 6.28 + offset );
+
+	const pianoWaveform = ( x ) => {
+		return sineComponent( x, Math.pow( sineComponent( x, 0 ), 2 ) +
+			sineComponent( x, 0.25 ) * 0.75 +
+			sineComponent( x, 0.5 ) * 0.1 ) * volumeMultiplier;
+	}
+
+	const piano2WaveForm = ( x ) => {
+		return ( Math.sin( x * 6.28 ) * Math.sin( x * 3.14 ) ) * volumeMultiplier;
+	}
+	const sineWaveform = ( x ) => {
+		return Math.sin( 2 * Math.PI * x ) * volumeMultiplier;
+	}
+	const squareWaveform = ( x ) => {
+		return ( Math.sin( 2 * Math.PI * x ) >= 0 ? 1 : -1 ) * volumeMultiplier;
+	}
+	const sawtoothWaveform = ( x ) => {
+		let t = x - Math.floor( x );
+		return ( 2 * t - 1 ) * volumeMultiplier;
+	};
+	const triangleWaveform = ( x ) => {
+		let t = x - Math.floor( x );
+		return ( 2 * Math.abs( 2 * t - 1 ) - 1 ) * volumeMultiplier;
+	};
+	const drumWaveform = ( x ) => {
+		return ( ( Math.random() * 2 - 1 ) * Math.exp( -x / 10 ) ) * volumeMultiplier;
+	};
+	const softDrumWaveform = ( x ) => {
+		return ( Math.sin( x * 2 ) + 0.3 * ( Math.random() - 0.5 ) ) *
+			Math.exp( -x / 15 ) * volumeMultiplier * 2;
+	};
+
+	// Mapping of instrument ids to synthesis functions.
+	// 0: Piano, 1: Piano 2, 2: Sine, 3: Sawtooth, 4: Square, 5: Triangle, 6: Drum, 7: Soft Drum
+	const instrumentMapping = [
+		pianoWaveform,
+		piano2WaveForm,
+		sineWaveform,
+		sawtoothWaveform,
+		squareWaveform,
+		triangleWaveform,
+		drumWaveform,
+		softDrumWaveform,
+	];
+
+	// -----------------------------
+	// Main Music Player Function (p1)
+	// -----------------------------
+	/**
+	 * Use as a tag template literal:
+	 *
+	 *     p1`
+	 *     0|f  dh   d T-X   X  T    X X V|
+	 *     1|Y   Y Y Y Y Y Y Y   Y Y Y Y Y Y|
+	 *     0|V   X   T   T   c   c   T   X|
+	 *     0|c fVa a-   X T R  aQT Ta   RO- X|
+	 *     [70.30]
+	 *     `
+	 */
+	function p1( params ) {
+
+		if ( Array.isArray( params ) ) {
+			params = params[ 0 ];
+		}
+		if ( !params || params.trim() === '' ) {
+			p1.stop();
+			return;
+		}
+
+		if ( noteBuffers.length > 200 ) {
+			console.warn( "Beep8.Music: Note buffers exceeded limit, clearing old buffers." );
+			noteBuffers = {};
+		}
+
+		// Reset defaults.
+		tempo = 125;
+		let baseNoteDuration = 0.5; // seconds per note.
+		schedules = [];
+
+		// Split input into lines.
+		const rawLines = params.split( '\n' ).map( line => line.trim() );
+		let noteInterval = tempo / 1000; // seconds per note step.
+
+		// Regular expression for track lines: instrument|track data|
+		const trackLineRegex = /^([0-9])\|(.*)\|$/;
+
+		rawLines.forEach( line => {
+			if ( !line ) return;
+
+			// Tempo/note duration lines.
+			if ( ( line.startsWith( '[' ) && line.endsWith( ']' ) ) || ( /^\d+(\.\d+)?$/.test( line ) ) ) {
+				const timing = line.replace( /[\[\]]/g, '' ).split( '.' );
+				tempo = parseFloat( timing[ 0 ] ) || tempo;
+				baseNoteDuration = ( parseFloat( timing[ 1 ] ) || 50 ) / 100;
+				noteInterval = tempo / 1000;
+				return;
+			}
+
+			// Track lines.
+			if ( !trackLineRegex.test( line ) ) {
+				console.error( "Track lines must be in the format 'instrument|track data|': " + line );
+				return;
+			}
+
+			const match = line.match( trackLineRegex );
+			const instrumentId = parseInt( match[ 1 ], 10 );
+			const instrumentFn = instrumentMapping[ instrumentId ] || instrumentMapping[ 0 ];
+			const trackData = match[ 2 ].trim();
+
+			let events = [];
+			// Parse trackData character by character.
+			for ( let i = 0; i < trackData.length; i++ ) {
+				const char = trackData[ i ];
+				let dashCount = 1;
+				while ( i + dashCount < trackData.length && trackData[ i + dashCount ] === '-' ) {
+					dashCount++;
+				}
+				let eventTime = i * noteInterval;
+				if ( char === ' ' ) {
+					events.push( { startTime: eventTime, noteBuffer: null } );
+					i += dashCount - 1;
+					continue;
+				}
+				let noteValue = char.charCodeAt( 0 );
+				noteValue -= noteValue > 90 ? 71 : 65;
+				let noteDuration = dashCount * baseNoteDuration * ( tempo / 125 );
+				let noteBuffer = createNoteBuffer( noteValue, noteDuration, 44100, instrumentFn );
+				events.push( { startTime: eventTime, noteBuffer: noteBuffer } );
+				i += dashCount - 1;
+			}
+			schedules.push( events );
+		} );
+
+		// Initialize schedule pointers and calculate loop duration.
+		schedulePointers = schedules.map( () => 0 );
+		playbackStartTime = audioCtx.currentTime + 0.1;
+
+		p1.stop();
+		schedulerInterval = setInterval( schedulerFunction, schedulerIntervalMs );
+	}
+
+
+	/**
+	 * The scheduler function ensures the notes are played at the right time.
+	 *
+	 * This function is called every 50ms to check if any notes need to be played.
+	 *
+	 * The scheduler keeps track of the current time and the current note interval.
+	 * It then checks each track to see if a note needs to be played.
+	 *
+	 * @returns {void}
+	 */
+	function schedulerFunction() {
+
+		const currentTime = audioCtx.currentTime;
+		const noteInterval = tempo / 1000; // note duration in seconds
+		// Use the larger of the fixed lookahead and the current note interval.
+		const effectiveLookahead = Math.max( lookaheadTime, noteInterval );
+		schedules.forEach( ( events, trackIndex ) => {
+			let pointer = schedulePointers[ trackIndex ];
+			const trackLength = events.length;
+			if ( trackLength === 0 ) return;
+			const step = pointer % trackLength;
+			const loopCount = Math.floor( pointer / trackLength );
+			const eventTime = playbackStartTime + ( step * noteInterval ) + ( loopCount * trackLength * noteInterval );
+			if ( eventTime < currentTime + effectiveLookahead ) {
+				const event = events[ step ];
+				if ( event.noteBuffer ) {
+					playNoteBuffer( event.noteBuffer, audioCtx, eventTime );
+				}
+				schedulePointers[ trackIndex ]++;
+			}
+		} );
+		if ( !p1.loop ) {
+			const done = schedules.every( ( events, i ) => schedulePointers[ i ] >= events.length );
+			if ( done ) {
+				p1.stop();
+			}
+		}
+	}
+
+
+	/**
+	 * Stop playback by clearing the scheduler and stopping all playing sources.
+	 */
+	p1.stop = function() {
+		if ( schedulerInterval !== null ) {
+			clearInterval( schedulerInterval );
+			schedulerInterval = null;
+		}
+		playingSources.forEach( source => source.stop() );
+		playingSources = [];
+	};
+
+
+	/**
+	 * Check if music is currently playing.
+	 */
+	p1.isPlaying = function() {
+		return schedulerInterval !== null;
+	};
+
+
+	/**
+	 * Set the tempo (in BPM).
+	 */
+	p1.setTempo = function( newTempo ) {
+		if ( newTempo < 50 ) newTempo = 50;
+
+		// Calculate old and new note intervals in seconds.
+		const oldNoteInterval = tempo / 1000;
+		const newNoteInterval = newTempo / 1000;
+
+		// Determine how much time has elapsed since playback started.
+		const elapsed = audioCtx.currentTime - playbackStartTime;
+
+		// Compute the current note position (could be fractional).
+		const currentIndex = elapsed / oldNoteInterval;
+
+		// Rebase playbackStartTime so that the currentIndex now corresponds to the current time.
+		playbackStartTime = audioCtx.currentTime - currentIndex * newNoteInterval;
+
+		// Finally, update the tempo.
+		tempo = newTempo;
+	};
+
+	p1.setVolume = function( value ) {
+		// clamp 0.0–1.0
+		masterGain.gain.value = Math.min( 1, Math.max( 0, value ) );
+	};
+
+
+	p1.clearCache = function() {
+		noteBuffers = {};
+	};
+
+
+	// Loop property: set to true to repeat playback.
+	p1.loop = true;
+
+	/**
+	 * Create an audio buffer for a given note.
+	 */
+	const createNoteBuffer = ( note, durationSeconds, sampleRate, instrumentFn ) => {
+		const key = note + '-' + durationSeconds + '-' + instrumentFn.name;
+		let buffer = noteBuffers[ key ];
+		if ( note >= 0 && !buffer ) {
+			const frequencyFactor = 65.406 * Math.pow( 1.06, note ) / sampleRate;
+			const totalSamples = Math.floor( sampleRate * durationSeconds );
+			const attackSamples = 88;
+			const decaySamples = sampleRate * ( durationSeconds - 0.002 );
+			buffer = noteBuffers[ key ] = audioCtx.createBuffer( 1, totalSamples, sampleRate );
+			const channelData = buffer.getChannelData( 0 );
+			for ( let i = 0; i < totalSamples; i++ ) {
+				let amplitude;
+				if ( i < attackSamples ) {
+					amplitude = i / ( attackSamples + 0.2 );
+				} else {
+					amplitude = Math.pow(
+						1 - ( ( i - attackSamples ) / decaySamples ),
+						Math.pow( Math.log( 1e4 * frequencyFactor ) / 2, 2 )
+					);
+				}
+				channelData[ i ] = amplitude * instrumentFn( i * frequencyFactor );
+			}
+			// Unlock audio on iOS if needed.
+			if ( !unlocked ) {
+				playNoteBuffer( buffer, audioCtx, audioCtx.currentTime, true );
+				unlocked = true;
+			}
+		}
+		return buffer;
+	};
+
+	// Array to keep track of currently playing sources.
+	let playingSources = [];
+
+
+	/**
+	 * Play an audio buffer at a scheduled time.
+	 */
+	const playNoteBuffer = ( buffer, context, when, stopImmediately = false ) => {
+		const source = context.createBufferSource();
+		source.buffer = buffer;
+
+		source.connect( masterGain );
+		source.start( when );
+		playingSources.push( source );
+
+		// source.connect( context.destination );
+		// source.start( when );
+		// playingSources.push( source );
+
+		if ( stopImmediately ) {
+			source.stop();
+		}
+		source.onended = () => {
+			const index = playingSources.indexOf( source );
+			if ( index !== -1 ) {
+				playingSources.splice( index, 1 );
+			}
+		};
+	};
+
+	// Expose the p1 function globally.
+	window.p1 = p1;
+
+} )();
+
+// ZzFX - Zuper Zmall Zound Zynth - Micro Edition
+// MIT License - Copyright 2019 Frank Force
+// https://github.com/KilledByAPixel/ZzFX
+
+// This is a minified build of zzfx for use in size coding projects.
+// You can use zzfxV to set volume.
+// Feel free to minify it further for your own needs!
+
+'use strict';
+
+///////////////////////////////////////////////////////////////////////////////
+
+// ZzFXMicro - Zuper Zmall Zound Zynth - v1.3.1 by Frank Force
+
+// ==ClosureCompiler==
+// @compilation_level ADVANCED_OPTIMIZATIONS
+// @output_file_name ZzFXMicro.min.js
+// @js_externs zzfx, zzfxG, zzfxP, zzfxV, zzfxX
+// @language_out ECMASCRIPT_2019
+// ==/ClosureCompiler==
+
+const zzfx = ( ...z ) => zzfxP( zzfxG( ...z ) ); // generate and play sound
+const zzfxV = .3;    // volume
+const zzfxR = 44100; // sample rate
+const zzfxX = new AudioContext; // audio context
+const zzfxP = ( ...samples ) =>  // play samples
+{
+	// create buffer and source
+	let buffer = zzfxX.createBuffer( samples.length, samples[ 0 ].length, zzfxR ),
+		source = zzfxX.createBufferSource();
+
+	// copy samples to buffer and play
+	samples.map( ( d, i ) => buffer.getChannelData( i ).set( d ) );
+	source.buffer = buffer;
+	source.connect( zzfxX.destination );
+	source.start();
+	return source;
+}
+const zzfxG = // generate samples
+	(
+		// parameters
+		volume = 1, randomness = .05, frequency = 220, attack = 0, sustain = 0,
+		release = .1, shape = 0, shapeCurve = 1, slide = 0, deltaSlide = 0,
+		pitchJump = 0, pitchJumpTime = 0, repeatTime = 0, noise = 0, modulation = 0,
+		bitCrush = 0, delay = 0, sustainVolume = 1, decay = 0, tremolo = 0, filter = 0
+	) => {
+		// init parameters
+		let PI2 = Math.PI * 2, sign = v => v < 0 ? -1 : 1,
+			startSlide = slide *= 500 * PI2 / zzfxR / zzfxR,
+			startFrequency = frequency *=
+				( 1 + randomness * 2 * Math.random() - randomness ) * PI2 / zzfxR,
+			b = [], t = 0, tm = 0, i = 0, j = 1, r = 0, c = 0, s = 0, f, length,
+
+			// biquad LP/HP filter
+			quality = 2, w = PI2 * Math.abs( filter ) * 2 / zzfxR,
+			cos = Math.cos( w ), alpha = Math.sin( w ) / 2 / quality,
+			a0 = 1 + alpha, a1 = -2 * cos / a0, a2 = ( 1 - alpha ) / a0,
+			b0 = ( 1 + sign( filter ) * cos ) / 2 / a0,
+			b1 = -( sign( filter ) + cos ) / a0, b2 = b0,
+			x2 = 0, x1 = 0, y2 = 0, y1 = 0;
+
+		// scale by sample rate
+		attack = attack * zzfxR + 9; // minimum attack to prevent pop
+		decay *= zzfxR;
+		sustain *= zzfxR;
+		release *= zzfxR;
+		delay *= zzfxR;
+		deltaSlide *= 500 * PI2 / zzfxR ** 3;
+		modulation *= PI2 / zzfxR;
+		pitchJump *= PI2 / zzfxR;
+		pitchJumpTime *= zzfxR;
+		repeatTime = repeatTime * zzfxR | 0;
+		volume *= zzfxV;
+
+		// generate waveform
+		for ( length = attack + decay + sustain + release + delay | 0;
+			i < length; b[ i++ ] = s * volume )               // sample
+		{
+			if ( !( ++c % ( bitCrush * 100 | 0 ) ) )                   // bit crush
+			{
+				s = shape ? shape > 1 ? shape > 2 ? shape > 3 ?      // wave shape
+					Math.sin( t ** 3 ) :                       // 4 noise
+					Math.max( Math.min( Math.tan( t ), 1 ), -1 ) :  // 3 tan
+					1 - ( 2 * t / PI2 % 2 + 2 ) % 2 :                     // 2 saw
+					1 - 4 * Math.abs( Math.round( t / PI2 ) - t / PI2 ) : // 1 triangle
+					Math.sin( t );                           // 0 sin
+
+				s = ( repeatTime ?
+					1 - tremolo + tremolo * Math.sin( PI2 * i / repeatTime ) // tremolo
+					: 1 ) *
+					sign( s ) * ( Math.abs( s ) ** shapeCurve ) *      // curve
+					( i < attack ? i / attack :                 // attack
+						i < attack + decay ?                     // decay
+							1 - ( ( i - attack ) / decay ) * ( 1 - sustainVolume ) : // decay falloff
+							i < attack + decay + sustain ?          // sustain
+								sustainVolume :                          // sustain volume
+								i < length - delay ?                     // release
+									( length - i - delay ) / release *           // release falloff
+									sustainVolume :                          // release volume
+									0 );                                      // post release
+
+				s = delay ? s / 2 + ( delay > i ? 0 :           // delay
+					( i < length - delay ? 1 : ( length - i ) / delay ) * // release delay
+					b[ i - delay | 0 ] / 2 / volume ) : s;              // sample delay
+
+				if ( filter )                                   // apply filter
+					s = y1 = b2 * x2 + b1 * ( x2 = x1 ) + b0 * ( x1 = s ) - a2 * y2 - a1 * ( y2 = y1 );
+			}
+
+			f = ( frequency += slide += deltaSlide ) *// frequency
+				Math.cos( modulation * tm++ );          // modulation
+			t += f + f * noise * Math.sin( i ** 5 );        // noise
+
+			if ( j && ++j > pitchJumpTime )           // pitch jump
+			{
+				frequency += pitchJump;             // apply pitch jump
+				startFrequency += pitchJump;        // also apply to start
+				j = 0;                              // stop pitch jump time
+			}
+
+			if ( repeatTime && !( ++r % repeatTime ) )  // repeat
+			{
+				frequency = startFrequency;         // reset frequency
+				slide = startSlide;                 // reset slide
+				j = j || 1;                         // reset pitch jump time
+			}
+		}
+
+		return b;
+	}
