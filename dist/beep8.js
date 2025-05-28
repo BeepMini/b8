@@ -15,9 +15,18 @@
  * the original's elegance while enhancing its features
  * for today's developers.
  *
+ * ---
+ *
+ * Website: https://beep8.com
+ * Games: https://beepmini.com
+ * Github: https://github.com/BinaryMoon/beep8
+ * BlueSky: https://bsky.app/profile/binarymoon.bsky.social
+ *
+ * ---
+ *
  * MIT License
  *
- * Copyright (c) 2024 BinaryMoon
+ * Copyright (c) 2024 - 2025 BinaryMoon
  *
  * Permission is hereby granted, free of charge, to any
  * person obtaining a copy of this software and associated
@@ -445,10 +454,10 @@ const beep8 = {};
 	 * If the text is bigger than the width, it will wrap.
 	 *
 	 * @param {string} text - The text to print.
-	 * @param {number} width - The width of the field, in characters.
+	 * @param {number} width - The width of the space to place the text in, measured in Columns. Defaults to the screen width.
 	 * @returns {void}
 	 */
-	beep8.printCentered = function( text, width, fontId = null ) {
+	beep8.printCentered = function( text, width = beep8.CONFIG.SCREEN_COLS, fontId = null ) {
 
 		beep8.Core.preflight( "beep8.printCentered" );
 
@@ -462,6 +471,33 @@ const beep8 = {};
 		}
 
 		beep8.TextRenderer.printCentered( text, width, font );
+
+	}
+
+
+	/**
+	 * Prints text aligned to the right in a space of the given width.
+	 * If the text is bigger than the width, it will wrap.
+	 *
+	 * @param {string} text - The text to print.
+	 * @param {number} width - The width of the space to place the text in, measured in Columns. Defaults to the screen width.
+	 * @param {string} [fontId=null] - The font ID to use.
+	 * @returns {void}
+	 */
+	beep8.printRight = function( text, width = beep8.CONFIG.SCREEN_COLS, fontId = null ) {
+
+		beep8.Core.preflight( "beep8.printRight" );
+
+		beep8.Utilities.checkString( "text", text );
+		beep8.Utilities.checkNumber( "width", width );
+
+		let font = fontId;
+		if ( null !== font ) {
+			beep8.Utilities.checkString( "fontId", fontId );
+			font = beep8.TextRenderer.getFontByName( fontId );
+		}
+
+		beep8.TextRenderer.printRight( text, width, font );
 
 	}
 
@@ -866,7 +902,7 @@ const beep8 = {};
 
 		beep8.Core.preflight( "beep8.setFont" );
 
-		fontId = fontId || "default";
+		fontId = fontId || "default-thin";
 		beep8.Utilities.checkString( "fontId", fontId );
 
 		beep8.TextRenderer.setFont( fontId );
@@ -979,6 +1015,21 @@ const beep8 = {};
 
 
 	/**
+	 * Run a screenshake effect.
+	 *
+	 * @param {number} duration - The duration of the screenshake effect in seconds.
+	 * @returns {boolean} Returns true if the screenshake effect was successfully triggered.
+	 */
+	beep8.screenShake = function( duration ) {
+
+		beep8.Utilities.checkNumber( "duration", duration );
+
+		return beep8.Renderer.shakeScreen( duration );
+
+	}
+
+
+	/**
 	 * Restores the contents of the screen using an ImageData object.
 	 *
 	 * @param {ImageData} screenData - The ImageData object with the screen's
@@ -1032,7 +1083,7 @@ const beep8 = {};
 	 */
 	beep8.switchScene = function( name ) {
 
-		beep8.Scene.switchScene( name );
+		beep8.Scene.set( name );
 
 	}
 
@@ -1275,7 +1326,7 @@ const beep8 = {};
 	 * @param {number} [delay=0.05] - The delay between characters in seconds.
 	 * @returns {Promise<void>} Resolves after the text is printed.
 	 */
-	beep8.Async.typewriter = async function( text, wrapWidth = -1, delay = 0.05, fontId = null, ) {
+	beep8.Async.typewriter = async function( text, wrapWidth = -1, delay = 0.035, fontId = null, ) {
 
 		beep8.Utilities.checkString( "text", text );
 		beep8.Utilities.checkNumber( "wrapWidth", wrapWidth );
@@ -1300,13 +1351,9 @@ const beep8 = {};
 	 */
 	beep8.Async.loadImage = async function( url ) {
 
-		return new Promise(
-			( resolve ) => {
-				const img = new Image();
-				img.onload = () => resolve( img );
-				img.src = url;
-			}
-		);
+		beep8.Utilities.checkString( "url", url );
+
+		return await beep8.Core.loadImage( url );
 
 	}
 
@@ -1337,14 +1384,18 @@ const beep8 = {};
 	 * Loads a font for later use in drawing text.
 	 *
 	 * @param {string} fontImageFile - The URL of the font image file.
+	 * @param {number} [tileSizeWidthMultiplier=1] - The width multiplier for the tile size.
+	 * @param {number} [tileSizeHeightMultiplier=1] - The height multiplier for the tile size.
 	 * @returns {Promise<string>} The font ID.
 	 */
-	beep8.Async.loadFont = async function( fontImageFile, tileSizeMultiplier = 1 ) {
+	beep8.Async.loadFont = async function( fontImageFile, tileSizeWidthMultiplier = 1, tileSizeHeightMultiplier = 1 ) {
 
 		beep8.Utilities.checkString( "fontImageFile", fontImageFile );
+		beep8.Utilities.checkNumber( "tileSizeWidthMultiplier", tileSizeWidthMultiplier );
+		beep8.Utilities.checkNumber( "tileSizeHeightMultiplier", tileSizeHeightMultiplier );
 
 		const fontName = "FONT@" + beep8.Utilities.makeUrlPretty( fontImageFile );
-		await beep8.TextRenderer.loadFontAsync( fontName, fontImageFile, tileSizeMultiplier );
+		await beep8.TextRenderer.loadFontAsync( fontName, fontImageFile, tileSizeWidthMultiplier, tileSizeHeightMultiplier );
 
 		return fontName;
 
@@ -1376,7 +1427,7 @@ const beep8 = {};
 
 		while ( true ) {
 			const key = await beep8.Async.key();
-			if ( key.includes( "Enter" ) || key.includes( "ButtonA" ) ) break;
+			if ( key.includes( "Enter" ) || key.includes( "ButtonA" ) || key.includes( " " ) ) break;
 		}
 
 	}
@@ -1655,7 +1706,6 @@ const beep8 = {};
 	beep8.Core.deltaTime = 0;
 	beep8.Core.crashed = false;
 	beep8.Core.crashing = false;
-	beep8.Core.state = null;
 
 	beep8.Core.drawState = {
 		fgColor: 7,
@@ -1707,6 +1757,8 @@ const beep8 = {};
 		// Initialize the game clock.
 		beep8.Core.startTime = beep8.Core.getNow();
 
+		beep8.Utilities.event( 'initComplete' );
+
 	}
 
 
@@ -1720,7 +1772,6 @@ const beep8 = {};
 		return initDone;
 
 	}
-
 
 
 	/**
@@ -1784,9 +1835,6 @@ const beep8 = {};
 		beep8.Core.canvas.style.height = beep8.CONFIG.SCREEN_HEIGHT + "px";
 		beep8.Core.ctx = beep8.Core.canvas.getContext( "2d" );
 		beep8.Core.ctx.imageSmoothingEnabled = false;
-
-		// Initialize subsystems
-		beep8.Core.state = new beep8.State();
 
 		// Load and initialize default fonts.
 		await beep8.TextRenderer.initAsync();
@@ -2058,13 +2106,19 @@ const beep8 = {};
 		let delta = ( now - lastFrameTime ) / 1000;
 		lastFrameTime = now;
 
+		// Save actual delta time.
+		beep8.Core.deltaTime = delta;
+
 		// Cap delta to avoid large time steps.
 		delta = Math.min( delta, 0.05 );
 
 		// Accumulate time.
 		timeToNextFrame += delta;
 
-		// Determine how many update steps to run.
+		// Determine how many update steps to run based upon target delta time
+		// and actual delta time.
+		// This ensures updates are run even if the frame rate is lower than
+		// intended.
 		let numUpdates = Math.floor( timeToNextFrame / targetDt );
 		const MAX_UPDATES = 10;
 		if ( numUpdates > MAX_UPDATES ) {
@@ -2304,6 +2358,80 @@ const beep8 = {};
 
 
 	/**
+	 * Loads an image from the given URL.
+	 *
+	 * This function loads an image and converts its colors to the closest
+	 * colors in the beep8 color palette.
+	 *
+	 * Remember to keep images as small as possible. The larger the image the
+	 * longer it will take to process.
+	 *
+	 * @param {string} url - The URL of the image to load.
+	 * @returns {Promise<HTMLImageElement>} The loaded image.
+	 */
+	beep8.Core.loadImage = async function( url ) {
+
+		console.log( 'load image', url );
+
+		return new Promise(
+			( resolve ) => {
+
+				const img = new Image();
+				img.crossOrigin = "Anonymous"; // Allow cross-origin images if needed
+
+				img.onload = () => {
+
+					// Create a canvas to manipulate the image
+					const canvas = document.createElement( "canvas" );
+					const ctx = canvas.getContext( "2d" );
+
+					canvas.width = img.width;
+					canvas.height = img.height;
+					ctx.drawImage( img, 0, 0 );
+
+					// Get image data
+					const imageData = ctx.getImageData( 0, 0, canvas.width, canvas.height );
+					const data = imageData.data;
+
+					// Use the precomputed lookup table
+					const lookupTable = generateColorLookupTable( beep8.CONFIG.COLORS );
+
+					for ( let i = 0; i < data.length; i += 4 ) {
+
+						const r = data[ i ];
+						const g = data[ i + 1 ];
+						const b = data[ i + 2 ];
+
+						// Find the closest color using the lookup table
+						const closestColor = findClosestColorUsingLookup( r, g, b, lookupTable );
+
+						// Convert the closest hex color to RGB
+						const { r: pr, g: pg, b: pb } = closestColor;
+
+						// Replace the pixel color with the closest palette color
+						data[ i ] = pr;
+						data[ i + 1 ] = pg;
+						data[ i + 2 ] = pb;
+
+					}
+
+					// Put the modified image data back on the canvas
+					ctx.putImageData( imageData, 0, 0 );
+
+					// Resolve with the modified image
+					const modifiedImg = new Image();
+					modifiedImg.onload = () => resolve( modifiedImg );
+					modifiedImg.src = canvas.toDataURL();
+
+				};
+				img.src = url;
+			}
+		);
+
+	}
+
+
+	/**
 	 * Draws a rectangle of the specified width and height.
 	 *
 	 * This ignores the cursor position.
@@ -2325,8 +2453,6 @@ const beep8 = {};
 		const oldStrokeStyle = beep8.Core.ctx.strokeStyle;
 		const oldLineWidth = beep8.Core.ctx.lineWidth;
 
-		const halfLineWidth = lineWidth / 2;
-
 		beep8.Core.ctx.strokeStyle = beep8.Core.getColorHex( beep8.Core.drawState.fgColor );
 		beep8.Core.ctx.lineWidth = lineWidth;
 
@@ -2334,12 +2460,6 @@ const beep8 = {};
 		beep8.Core.ctx.strokeRect(
 			Math.round( x ), Math.round( y ),
 			Math.round( width ), Math.round( height )
-		);
-
-		console.log(
-			lineWidth,
-			Math.round( x ) + halfLineWidth, Math.round( y ) + halfLineWidth,
-			Math.round( width ) - lineWidth, Math.round( height ) - lineWidth
 		);
 
 		// Restore properties.
@@ -2590,6 +2710,98 @@ const beep8 = {};
 	}
 
 
+	/**
+	 * Finds the closest color in the palette to the given RGB values.
+	 *
+	 * @param {number} r - The red component (0-255).
+	 * @param {number} g - The green component (0-255).
+	 * @param {number} b - The blue component (0-255).
+	 * @param {string[]} palette - The color palette (array of hex strings).
+	 * @returns {string} The closest color in hex format.
+	 */
+	function findClosestColorUsingLookup( r, g, b, lookupTable, bucketSize = 4 ) {
+
+		// Round RGB values to the nearest bucket
+		const roundedR = Math.floor( r / bucketSize ) * bucketSize;
+		const roundedG = Math.floor( g / bucketSize ) * bucketSize;
+		const roundedB = Math.floor( b / bucketSize ) * bucketSize;
+
+		const key = `${roundedR},${roundedG},${roundedB}`;
+		return lookupTable[ key ];
+
+	}
+
+
+	// Cache the color lookup table to avoid recomputing it.
+	// Only generated when an image is loaded externally.
+	// Font images are not loaded this way.
+	const colorLookupTable = {};
+
+
+	/**
+	 * Generates a color lookup table for the given palette.
+	 *
+	 * @param {string[]} palette - The color palette (array of hex strings).
+	 * @param {number} [bucketSize=4] - The size of the color buckets.
+	 * @returns {object} The color lookup table.
+	 */
+	function generateColorLookupTable( palette, bucketSize = 4 ) {
+
+		if ( Object.keys( colorLookupTable ).length !== 0 ) {
+			return colorLookupTable;
+		}
+
+		// Convert hex palette to rgb palette.
+		const rgbPalette = palette.map( color => beep8.Utilities.hexToRgb( color ) );
+
+		for ( let r = 0; r < 256; r += bucketSize ) {
+			for ( let g = 0; g < 256; g += bucketSize ) {
+				for ( let b = 0; b < 256; b += bucketSize ) {
+					const key = `${r},${g},${b}`;
+					colorLookupTable[ key ] = findClosestColor( r, g, b, rgbPalette );
+				}
+			}
+		}
+
+		return colorLookupTable;
+
+	}
+
+
+	/**
+	 * Finds the closest color in the palette to the given RGB values.
+	 *
+	 * @param {number} r - The red component (0-255).
+	 * @param {number} g - The green component (0-255).
+	 * @param {number} b - The blue component (0-255).
+	 * @param {object[]} palette - The color palette (array of RGB objects).
+	 * @returns {object} The closest color in RGB format.
+	 */
+	function findClosestColor( r, g, b, palette ) {
+
+		let closestColor = null;
+		let closestDistance = Infinity;
+
+		for ( const color of palette ) {
+
+			const distance = (
+				Math.pow( color.r - r, 2 ) +
+				Math.pow( color.g - g, 2 ) +
+				Math.pow( color.b - b, 2 )
+			);
+
+			if ( distance < closestDistance ) {
+				closestDistance = distance;
+				closestColor = color;
+			}
+
+		}
+
+		return closestColor;
+
+	}
+
+
 } )( beep8 || ( beep8 = {} ) );
 
 ( function( beep8 ) {
@@ -2685,7 +2897,7 @@ const beep8 = {};
 	 * @private
 	 * @returns {void}
 	 */
-	advanceBlink_ = function() {
+	function advanceBlink_() {
 
 		blinkCycle_ = ( blinkCycle_ + 1 ) % 2;
 		beep8.Renderer.render();
@@ -2788,8 +3000,8 @@ const beep8 = {};
 		const key = e.key;
 		const keys = beep8.Input.getKeys( key );
 
-		// Stop page from scrolling when the arrows are pressed.
-		if ( [ "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight" ].includes( key ) ) {
+		// Stop page from scrolling when the arrows/ space are pressed.
+		if ( [ "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " " ].includes( key ) ) {
 			e.preventDefault();
 		}
 
@@ -3085,7 +3297,7 @@ const beep8 = {};
 	 * - options.prompt - The prompt to display above the choices.
 	 * - options.selBgColor - The background color of the selected choice. Defaults to the current foreground colour.
 	 * - options.selFgColor - The foreground color of the selected choice. Defaults to the current background colour.
-	 * - options.bgChar - The character to use for the background.
+	 * - options.border - Whether to draw a border around the menu. Defaults to true.
 	 * - options.borderChar - The character to use for the border.
 	 * - options.center - Whether to center the menu horizontally and vertically.
 	 * - options.centerH - Whether to center the menu horizontally.
@@ -3111,7 +3323,7 @@ const beep8 = {};
 				prompt: "",
 				selBgColor: beep8.Core.drawState.fgColor,
 				selFgColor: beep8.Core.drawState.bgColor,
-				bgChar: 0,
+				border: true,
 				borderChar: beep8.CONFIG.BORDER_CHAR,
 				center: false,
 				centerH: false,
@@ -3135,11 +3347,11 @@ const beep8 = {};
 
 		choices.forEach(
 			( choice ) => {
-				choicesCols = Math.max( choicesCols, beep8.TextRenderer.measure( choice ).cols );
+				choicesCols = Math.ceil( Math.max( choicesCols, beep8.TextRenderer.measure( choice ).cols ) );
 			}
 		);
 
-		let totalCols = Math.max( promptSize.cols, choicesCols ) + 2 * options.padding + 2 * border01;
+		let totalCols = Math.ceil( Math.max( promptSize.cols, choicesCols ) ) + 2 * options.padding + 2 * border01;
 		totalCols = Math.min( totalCols, beep8.CONFIG.SCREEN_COLS );
 
 		const totalRows = prompt01 * ( promptSize.rows + 1 ) + choicesRows + 2 * options.padding + 2 * border01;
@@ -3155,13 +3367,10 @@ const beep8 = {};
 		beep8.Core.drawState.cursorCol = startCol;
 		beep8.Core.drawState.cursorRow = startRow;
 
-		// Print the background.
-		beep8.TextRenderer.printRect( totalCols, totalRows, options.bgChar );
+		if ( options.border ) {
 
-		// Print the border.
-		if ( options.borderChar ) {
-
-			beep8.TextRenderer.printBox( totalCols, totalRows, false, options.borderChar );
+			// Print the background & border.
+			beep8.TextRenderer.printBox( totalCols, totalRows, true, options.borderChar );
 
 			// Print title at the top of the border.
 			if ( options.title ) {
@@ -3173,6 +3382,7 @@ const beep8 = {};
 		}
 
 		if ( options.prompt ) {
+
 			beep8.Core.drawState.cursorCol = promptSize.cols <= totalCols ?
 				( startCol + border01 + options.padding ) :
 				( startCol + Math.round( ( totalCols - promptSize.cols ) / 2 ) );
@@ -3183,6 +3393,7 @@ const beep8 = {};
 			} else {
 				beep8.TextRenderer.print( options.prompt );
 			}
+
 		}
 
 		// TODO: save the screen image before showing the menu and restore it later.
@@ -3277,11 +3488,13 @@ const beep8 = {};
 	 * @returns {Array<any>} An array of results.
 	 */
 	function times( n, fn ) {
+
 		var result = [];
 		for ( var i = 0; i < n; i++ ) {
 			result.push( fn( i ) );
 		}
 		return result;
+
 	}
 
 
@@ -3802,16 +4015,8 @@ const beep8 = {};
 	}
 
 
-	/**
-	 * Stops the current music playback.
-	 *
-	 * @returns {void}
-	 */
-	beep8.Music.stop = function() {
-
-		beep8.Music.play( "" );
-
-	}
+	// Store the currently playing song so it can be started again after pausing.
+	let currentSong = null;
 
 
 	/**
@@ -3823,6 +4028,77 @@ const beep8 = {};
 	beep8.Music.play = function( song ) {
 
 		p1( song );
+
+		if ( song ) {
+			currentSong = song;
+		}
+
+	}
+
+
+	/**
+	 * Stops the current music playback.
+	 * If `clearCurrentSong` is true, it will also clear the current song reference.
+	 * This is disabled when the music is paused to allow resuming playback.
+	 *
+	 * @param {boolean} [clearCurrentSong=true] - Whether to clear the current song reference.
+	 * @returns {void}
+	 */
+	beep8.Music.stop = function( clearCurrentSong = true ) {
+
+		// Clear the currently stored song.
+		beep8.Utilities.checkBoolean( "clearCurrentSong", clearCurrentSong );
+		if ( clearCurrentSong ) currentSong = null;
+
+		// Stop the music playback.
+		beep8.Music.play( "" );
+
+	}
+
+
+	/**
+	 * Pauses the current music playback.
+	 *
+	 * @returns {void}
+	 */
+	beep8.Music.pause = function() {
+
+		if ( beep8.Music.isPlaying() ) {
+			beep8.Music.stop( false );
+		}
+
+	}
+
+
+	/**
+	 * Resumes the current music playback.
+	 *
+	 * If a song is currently playing, it will continue from where it left off.
+	 * If no song is playing, it will do nothing.
+	 *
+	 * @returns {void}
+	 */
+	beep8.Music.resume = function() {
+
+		// If there is a current song and it is not playing, resume playback.
+		if ( currentSong && !beep8.Music.isPlaying() ) {
+			beep8.Music.play( currentSong );
+		}
+
+	}
+
+
+	/**
+	 * Sets the volume for the music playback.
+	 *
+	 * @param {number} volume - The volume level (0 to 1).
+	 * @returns {void}
+	 */
+	beep8.Music.setVolume = function( volume ) {
+
+		beep8.Utilities.checkNumber( "volume", volume );
+
+		p1.setVolume( volume );
 
 	}
 
@@ -3858,7 +4134,75 @@ const beep8 = {};
 
 	}
 
+	document.addEventListener( 'beep8.pageVisibility.wake', beep8.Music.resume );
+	document.addEventListener( 'beep8.pageVisibility.sleep', beep8.Music.pause );
+
 } )( beep8 );
+( function( beep8 ) {
+
+	let timeHidden = 0;
+	let isHidden = false;
+
+
+	/**
+	 * Called when the document is hidden (blurred).
+	 *
+	 * @returns {void}
+	 */
+	function sleep() {
+
+		if ( isHidden ) return;
+
+		isHidden = true;
+
+		// Document is hidden (blurred) so start the timer.
+		timeHidden = Date.now();
+
+		// Log the event and notify listeners.
+		beep8.Utilities.event( 'pageVisibility.sleep' );
+
+	};
+
+
+	/**
+	 * Called when the document is shown (focused).
+	 *
+	 * @returns {void}
+	 */
+	function wake() {
+
+		if ( !isHidden ) return;
+		isHidden = false;
+
+		if ( timeHidden === 0 ) return;
+
+		// Document is shown again so the timer is stopped and totalled.
+		const timeAsleep = Date.now() - timeHidden;
+		beep8.Utilities.log( 'Time asleep:', ( timeAsleep / 1000 ).toFixed( 3 ) );
+		beep8.Utilities.event( 'pageVisibility.wake', { time: timeAsleep } );
+		timeHidden = 0;
+
+	}
+
+
+	// Set an event when the document loses focus (change tab/ window).
+	document.addEventListener(
+		'visibilitychange',
+		function() {
+
+			if ( document.hidden ) {
+				sleep();
+			} else {
+				wake();
+			}
+
+		}
+	);
+
+	window.addEventListener( 'blur', () => sleep() );
+	window.addEventListener( 'focus', () => wake() );
+
+} )( beep8 || ( beep8 = {} ) );
 ( function( beep8 ) {
 
 	/**
@@ -4505,9 +4849,7 @@ const beep8 = {};
 	 */
 	beep8.Renderer.render = function() {
 
-		if ( beep8.Core.crashed ) {
-			return;
-		}
+		if ( beep8.Core.crashed ) return;
 
 		beep8.Core.realCtx.imageSmoothingEnabled = false;
 
@@ -4517,9 +4859,17 @@ const beep8 = {};
 
 		// Do screenshake.
 		if ( screenshakeDuration > 0 ) {
-			x = Math.min( 10, Math.round( ( Math.random() * screenshakeDuration ) - ( screenshakeDuration / 2 ) ) );
-			y = Math.min( 10, Math.round( ( Math.random() * screenshakeDuration ) - ( screenshakeDuration / 2 ) ) );
-			screenshakeDuration -= 1;
+
+			let amount = screenshakeDuration * beep8.CONFIG.CHR_WIDTH;
+
+			x = Math.round( ( Math.random() * amount ) - ( amount / 2 ) );
+			y = Math.round( ( Math.random() * amount ) - ( amount / 2 ) );
+
+			x = beep8.Utilities.clamp( x, -6, 6 );
+			y = beep8.Utilities.clamp( y, -6, 6 );
+
+			screenshakeDuration -= beep8.Core.deltaTime;
+
 		}
 
 		beep8.Core.realCtx.clearRect(
@@ -4549,12 +4899,21 @@ const beep8 = {};
 	/**
 	 * Triggers the screenshake effect.
 	 *
-	 * @param {number} duration - The duration of the screenshake effect in ms.
-	 * @returns {void}
+	 * @param {number} duration - The duration of the screenshake effect in seconds.
+	 * @returns {boolean} Returns true if the screenshake effect was successfully triggered.
 	 */
 	beep8.Renderer.shakeScreen = function( duration ) {
 
+		beep8.Utilities.checkNumber( "duration", duration );
+
+		if ( duration <= 0 ) {
+			beep8.Utilities.warn( "Screenshake duration must be positive. Currently: " + duration );
+			return false;
+		}
+
 		screenshakeDuration = duration;
+
+		return true;
 
 	}
 
@@ -4864,6 +5223,11 @@ const beep8 = {};
 		// Store the active scene.
 		activeScene = name;
 
+		// Clear any inputs.
+		if ( beep8.Input && typeof beep8.Input.onEndFrame === 'function' ) {
+			beep8.Input.onEndFrame();
+		}
+
 		// Get the scene object.
 		const currentScene = sceneList[ name ];
 
@@ -5025,7 +5389,24 @@ const beep8 = {};
 			beep8.Utilities.fatal( `SFX ${sfx} not found.` );
 		}
 
-		zzfx( ...beep8.Sfx.library[ sfx ] );
+		beep8.Sfx.playFromArray( beep8.Sfx.library[ sfx ] );
+
+	}
+
+
+	/**
+	 * Play a sound effect from an array.
+	 *
+	 * @param {Array} sfxArray - The sound effect array to play.
+	 * @returns {void}
+	 */
+	beep8.Sfx.playFromArray = function( sfxArray = [] ) {
+
+		// Check the sfx is an array.
+		beep8.Utilities.checkArray( 'sfxArray', sfxArray );
+
+		// Play the raw sound effect.
+		zzfx( ...sfxArray );
 
 	}
 
@@ -5064,99 +5445,171 @@ const beep8 = {};
 
 ( function( beep8 ) {
 
-	// Define the State object inside beep8.
-	beep8.State = {};
+	beep8.State = beep8.State || {};
+
+
+	// This is the key used to store the state in localStorage.
+	let STORAGE_KEY = '';
+
+	document.addEventListener( 'beep8.initComplete',
+		function() {
+
+			// Set the storage key based on the beep8 configuration name.
+			STORAGE_KEY = `beep8.${beep8.Utilities.makeUrlPretty( beep8.CONFIG.NAME )}.state`;
+
+		},
+		{ once: true }
+	);
 
 
 	/**
-	 * State management class that wraps a given object in a Proxy
-	 * to enable reactivity and trigger a render function when the state changes.
+	 * Recursively wraps an object in a Proxy to make it reactive.
+	 *
+	 * @param {Object} target - The object to wrap.
+	 * @returns {Proxy} - The reactive proxy.
 	 */
-	beep8.State = class {
+	function createProxy( target ) {
 
-		/**
-		 * Constructor for the State class.
-		 *
-		 * @param {Object} initialState - The initial state object.
-		 * @param {Function|null} renderFn - Optional render function to be called when the state changes.
-		 */
-		constructor( initialState = {}, renderFn = null ) {
+		return new Proxy(
+			target,
+			{
 
-			this.listeners = {};  // Not used in this version but reserved for future custom listeners.
-			this.renderFn = renderFn;  // Store the render function.
+				/**
+				 * Get trap for the Proxy.
+				 * Intercepts property access on the state object.
+				 *
+				 * @param {Object} obj - The original object being proxied.
+				 * @param {string} prop - The property being accessed.
+				 * @returns {*} - The value of the accessed property.
+				 */
+				get( obj, prop ) {
 
-			// Return the proxy wrapping the initial state.
-			return this.createProxy( initialState );
-
-		}
-
-
-		/**
-		 * Recursively creates proxies for nested objects to ensure reactivity.
-		 *
-		 * @param {Object} target - The object to wrap in a proxy.
-		 * @returns {Proxy} - A Proxy that intercepts 'get' and 'set' operations.
-		 */
-		createProxy( target ) {
-
-			return new Proxy(
-				target,
-				{
-
-					/**
-					 * Get trap for the Proxy.
-					 * Intercepts property access on the state object.
-					 *
-					 * @param {Object} obj - The original object being proxied.
-					 * @param {string} prop - The property being accessed.
-					 * @returns {*} - The value of the accessed property.
-					 */
-					get: ( obj, prop ) => {
-
-						// If the property is an object, recursively wrap it in a proxy to handle nested state changes.
-						if ( typeof obj[ prop ] === 'object' && obj[ prop ] !== null ) {
-							return this.createProxy( obj[ prop ] );
-						}
-
-						// Return the value of the property.
-						return obj[ prop ];
-
-					},
-
-
-					/**
-					 * Set trap for the Proxy.
-					 * Intercepts property updates on the state object.
-					 *
-					 * @param {Object} obj - The original object being proxied.
-					 * @param {string} prop - The property being updated.
-					 * @param {*} value - The new value to assign to the property.
-					 * @returns {boolean} - Returns true to indicate the operation was successful.
-					 */
-					set: ( obj, prop, value ) => {
-
-						// Update the property with the new value.
-						obj[ prop ] = value;
-
-						// Fire a custom event 'stateChange' when the state is modified.
-						// It passes the changed property and its new value.
-						beep8.Utilities.event( 'stateChange', { prop, value } );
-
-						// If a render function was provided, call it after the state changes.
-						if ( this.renderFn ) {
-							this.renderFn();
-						}
-
-						// Indicate that the set operation was successful.
-						return true;
-
+					const value = obj[ prop ];
+					if ( typeof value === 'object' && value !== null ) {
+						return createProxy( value );
 					}
-				}
-			);
+					return value;
 
+				},
+
+
+				/**
+				 * Set trap for the Proxy.
+				 * Intercepts property updates on the state object.
+				 *
+				 * @param {Object} obj - The original object being proxied.
+				 * @param {string} prop - The property being updated.
+				 * @param {*} value - The new value to assign to the property.
+				 * @returns {boolean} - Returns true to indicate the operation was successful.
+				 */
+				set( obj, prop, value ) {
+
+					obj[ prop ] = value;
+					beep8.Utilities.event( 'stateChange', { prop, value } );
+					return true;
+
+				}
+
+			}
+		);
+
+	}
+
+
+	/**
+	 * Saves the current state to localStorage using CBOR and base64.
+	 *
+	 * @param {string} [key='beep8.state'] - Optional localStorage key.
+	 */
+	beep8.State.save = function( key = STORAGE_KEY ) {
+
+		const encoded = beep8.Utilities.encodeData(
+			{
+				time: Date.now(),
+				data: beep8.data
+			}
+		);
+
+		localStorage.setItem( key, encoded );
+
+		beep8.State.lastSave = Date.now();
+
+	}
+
+
+	/**
+	 * Loads state from localStorage, replacing State.data.
+	 *
+	 * @param {string} [key='beep8.state'] - Optional localStorage key.
+	 */
+	beep8.State.load = function( key = STORAGE_KEY ) {
+
+		const b64 = localStorage.getItem( key );
+
+		if ( !b64 ) {
+			beep8.Utilities.log( 'No state found for the given key.' );
+			return;
 		}
 
-	};
+		const rawState = beep8.Utilities.decodeData( b64 );
+		if ( rawState.data ) {
+			beep8.data = createProxy( rawState.data );
+		}
+
+		if ( rawState.time ) {
+			beep8.State.lastSave = rawState.time;
+		}
+
+	}
+
+
+	/**
+	 * Sets default values for missing keys in the state.
+	 * Does not overwrite existing values.
+	 *
+	 * @param {Object} defaults - An object containing default key/value pairs.
+	 */
+	beep8.State.init = function( defaults ) {
+
+		if ( !beep8.data ) {
+			beep8.data = createProxy( {} );
+		}
+
+		// If there is a save file then load that too.
+		if ( localStorage.getItem( STORAGE_KEY ) ) {
+			beep8.State.load();
+		}
+
+		// beep8.data = beep8.Utilities.deepMergeByIndex( beep8.data, defaults );
+		beep8.data = beep8.Utilities.deepMergeByIndex( defaults, beep8.data );
+
+		beep8.Utilities.log( 'State initialized:', beep8.data );
+
+	}
+
+
+	/**
+	 * Resets the state to its initial values.
+	 * This is useful for starting a new game or resetting the application.
+	 *
+	 * @param {string} [key='beep8.state'] - Optional localStorage key.
+	 * @returns {void}
+	 */
+	beep8.State.clear = function( key = STORAGE_KEY ) {
+
+		beep8.Utilities.log( 'Clearing state...' );
+
+		localStorage.removeItem( key );
+		beep8.data = createProxy( {} );
+
+	}
+
+
+	/**
+	 * The beep8.State data object.
+	 */
+	beep8.data = createProxy( {} );
+
 
 } )( beep8 || ( beep8 = {} ) );
 
@@ -5316,24 +5769,6 @@ const beep8 = {};
 			return;
 		}
 
-		const cw = font.getCharWidth();
-		const ch = font.getCharHeight();
-
-		// Check that the font image has a width and height that are divisible by the tilesize.
-		if ( cw % beep8.CONFIG.CHR_WIDTH !== 0 || ch % beep8.CONFIG.CHR_HEIGHT !== 0 ) {
-
-			beep8.Utilities.fatal(
-				`getFontByName(): font ${fontName} has character size ${cw}x${ch}, ` +
-				`which is not an integer multiple of beep8.CONFIG.CHR_WIDTH x beep8.CONFIG.CHR_HEIGHT = ` +
-				`${beep8.CONFIG.CHR_WIDTH}x${beep8.CONFIG.CHR_HEIGHT}, so it can't be set as the ` +
-				`current font due to the row,column system. However, you can still use it ` +
-				`directly with drawText() by passing it as a parameter to that function.`
-			);
-
-			return;
-
-		}
-
 		return font;
 
 	}
@@ -5378,10 +5813,14 @@ const beep8 = {};
 			i = processEscapeSeq_( text, i );
 			const ch = text.charCodeAt( i );
 
+			// New line character so set a new line and reset the column.
 			if ( ch === 10 ) {
+
 				col = initialCol;
 				row += rowInc;
+
 			} else {
+
 				// Get index for the character from charMap.
 				const chIndex = charMap.indexOf( ch );
 
@@ -5486,11 +5925,63 @@ const beep8 = {};
 		// Split the text into lines.
 		text = text.split( "\n" );
 
+		// Remove last item from text if it is empty.
+		if ( text[ text.length - 1 ] === "" ) text.pop();
+
 		// Loop through each line of text.
 		for ( let i = 0; i < text.length; i++ ) {
 
 			const textWidth = beep8.TextRenderer.measure( text[ i ] ).cols;
-			const tempCol = Math.floor( col + ( width - textWidth ) / 2 );
+			const tempCol = col + ( width - textWidth ) / 2;
+
+			beep8.Core.drawState.cursorCol = tempCol;
+			beep8.TextRenderer.print( text[ i ], font, width );
+
+			beep8.Core.drawState.cursorRow += rowInc;
+
+		}
+
+		// Reset cursor position.
+		beep8.Core.drawState.cursorCol = col;
+
+	}
+
+
+	/**
+	 * Prints text right-aligned within a given width.
+	 *
+	 * @param {string} text - The text to print.
+	 * @param {number} width - The width to right-align the text within.
+	 * @param {beep8.TextRendererFont} [font=null] - The font to use.
+	 * @returns {void}
+	 */
+	beep8.TextRenderer.printRight = function( text, width, font = null ) {
+
+		beep8.TextRenderer.printFont_ = font || beep8.TextRenderer.curFont_;
+
+		beep8.Utilities.checkString( "text", text );
+		beep8.Utilities.checkNumber( "width", width );
+
+		if ( !text ) {
+			return;
+		}
+
+		const col = beep8.Core.drawState.cursorCol;
+		const rowInc = beep8.TextRenderer.printFont_.getCharRowCount();
+
+		text = beep8.TextRenderer.wrapText( text, width );
+
+		// Split the text into lines.
+		text = text.split( "\n" );
+
+		// Remove last item from text if it is empty.
+		if ( text[ text.length - 1 ] === "" ) text.pop();
+
+		// Loop through each line of text.
+		for ( let i = 0; i < text.length; i++ ) {
+
+			let textWidth = beep8.TextRenderer.measure( text[ i ] ).cols;
+			const tempCol = col + width - textWidth;
 
 			beep8.Core.drawState.cursorCol = tempCol;
 			beep8.TextRenderer.print( text[ i ], font, width );
@@ -5638,7 +6129,7 @@ const beep8 = {};
 
 		font = font || beep8.TextRenderer.curFont_;
 
-		if ( text === "" ) {
+		if ( "" === text ) {
 			return { cols: 0, rows: 0 }; // Special case
 		}
 
@@ -5660,8 +6151,8 @@ const beep8 = {};
 		}
 
 		// Adjust the size of the cols and rows based on the size of the font.
-		cols = Math.ceil( cols * font.getCharColCount() );
-		rows = Math.ceil( rows * font.getCharRowCount() );
+		cols = cols * font.getCharColCount();
+		rows = rows * font.getCharRowCount();
 
 		return { cols, rows };
 
@@ -5714,13 +6205,36 @@ const beep8 = {};
 		beep8.Utilities.checkNumber( "borderChar", borderChar );
 
 		const colCount = beep8.TextRenderer.curTiles_.getColCount();
+		const borders = {
+			NW: borderChar,
+			NE: borderChar + 2,
+			SW: borderChar + colCount + colCount,
+			SE: borderChar + colCount + colCount + 2,
+			V: borderChar + colCount,
+			H: borderChar + 1,
+		};
 
-		const borderNW = borderChar;
-		const borderNE = borderChar + 2;
-		const borderSW = borderChar + colCount + colCount;
-		const borderSE = borderChar + colCount + colCount + 2;
-		const borderV = borderChar + colCount;
-		const borderH = borderChar + 1;
+		beep8.TextRenderer.drawBox( width, height, fill, borders );
+
+	}
+
+
+	/**
+	 * Draws a box with borders.
+	 *
+	 * @param {number} width - The width of the box.
+	 * @param {number} height - The height of the box.
+	 * @param {boolean} [fill=true] - Whether to fill the box.
+	 * @param {Object} [borders] - The borders to use.
+	 * @param {number} [borders.NW] - The top-left corner character.
+	 * @param {number} [borders.NE] - The top-right corner character.
+	 * @param {number} [borders.SW] - The bottom-left corner character.
+	 * @param {number} [borders.SE] - The bottom-right corner character.
+	 * @param {number} [borders.V] - The vertical border character.
+	 * @param {number} [borders.H] - The horizontal border character.
+	 * @returns {void}
+	 */
+	beep8.TextRenderer.drawBox = function( width, height, fill = true, borders = {} ) {
 
 		const startCol = beep8.Core.drawState.cursorCol;
 		const startRow = beep8.Core.drawState.cursorRow;
@@ -5732,19 +6246,19 @@ const beep8 = {};
 
 			if ( i === 0 ) {
 				// Top border
-				beep8.TextRenderer.printChar( borderNW );
-				beep8.TextRenderer.printChar( borderH, width - 2 );
-				beep8.TextRenderer.printChar( borderNE );
+				beep8.TextRenderer.printChar( borders.NW );
+				beep8.TextRenderer.printChar( borders.H, width - 2 );
+				beep8.TextRenderer.printChar( borders.NE );
 			} else if ( i === height - 1 ) {
 				// Bottom border.
-				beep8.TextRenderer.printChar( borderSW );
-				beep8.TextRenderer.printChar( borderH, width - 2 );
-				beep8.TextRenderer.printChar( borderSE );
+				beep8.TextRenderer.printChar( borders.SW );
+				beep8.TextRenderer.printChar( borders.H, width - 2 );
+				beep8.TextRenderer.printChar( borders.SE );
 			} else {
 				// Middle.
-				beep8.TextRenderer.printChar( borderV );
+				beep8.TextRenderer.printChar( borders.V );
 				beep8.Core.drawState.cursorCol = startCol + width - 1;
-				beep8.TextRenderer.printChar( borderV );
+				beep8.TextRenderer.printChar( borders.V );
 			}
 		}
 
@@ -5773,14 +6287,7 @@ const beep8 = {};
 		font = font || beep8.TextRenderer.curFont_;
 
 		// If 0 or less then don't wrap.
-		if ( wrapWidth <= 0 ) {
-			return text;
-		}
-
-		// Adjust the size of the wrap width based on the size of the font.
-		// wrapWidth = Math.floor( wrapWidth / font.getCharColCount() );
-
-		console.log( `wrapWidth: ${wrapWidth}` );
+		if ( wrapWidth <= 0 ) return text;
 
 		// Split the text into lines.
 		const lines = text.split( "\n" );
@@ -5791,24 +6298,20 @@ const beep8 = {};
 		for ( const line of lines ) {
 
 			const words = line.split( " " );
-
 			let wrappedLine = "";
-			let lineWidth = 0;
 
 			for ( const word of words ) {
 
-				const wordWidth = beep8.TextRenderer.measure( word ).cols;
+				const lineWidth = beep8.TextRenderer.measure( ( wrappedLine + word ).trim() ).cols;
 
 				// Is the line with the new word longer than the line width?
-				if ( lineWidth + ( wordWidth ) > wrapWidth ) {
+				if ( lineWidth > wrapWidth ) {
 					wrappedLines.push( wrappedLine.trim() );
 					wrappedLine = "";
-					lineWidth = 0;
 				}
 
 				// Add a space between words.
 				wrappedLine += word + " ";
-				lineWidth += wordWidth + 1;
 
 			}
 
@@ -6042,7 +6545,6 @@ const beep8 = {};
 	}
 
 } )( beep8 || ( beep8 = {} ) );
-
 ( function( beep8 ) {
 
 	/**
@@ -6404,10 +6906,7 @@ const beep8 = {};
 
 		beep8.Utilities.checkArray( "tilemap", tilemap );
 
-		const cborString = CBOR.encode( tilemap );
-		const encodedString = btoa( String.fromCharCode.apply( null, new Uint8Array( cborString ) ) );
-
-		return encodedString;
+		return beep8.Utilities.encodeData( tilemap );
 
 	}
 
@@ -6422,22 +6921,7 @@ const beep8 = {};
 
 		beep8.Utilities.checkString( "data", data );
 
-		// Step 1: Decode the Base64 string back to a binary string
-		const binaryString = atob( data );
-
-		// Step 2: Convert the binary string to a Uint8Array
-		const byteArray = new Uint8Array( binaryString.length );
-		for ( let i = 0; i < binaryString.length; i++ ) {
-			byteArray[ i ] = binaryString.charCodeAt( i );
-		}
-
-		// Step 3: Convert the Uint8Array to an ArrayBuffer
-		const arrayBuffer = byteArray.buffer;
-
-		// Step 4: Use CBOR.decode to convert the byte array back to the original data structure
-		const mapData = CBOR.decode( arrayBuffer );
-
-		return mapData;
+		return beep8.Utilities.decodeData( data );
 
 	}
 
@@ -6590,18 +7074,28 @@ const beep8 = {};
 	beep8.Tilemap.getDefaultTile = function() {
 
 		return [
-			0,
-			15,
-			0,
-			0,
-			{}
-		]
+			0, // Tile
+			15, // Fg
+			0, // Bg
+			0, // Collision
+			{} // Data
+		];
 
 	};
 
 
 	/**
 	 * Get a text map and convert it to an array of arrays.
+	 *
+	 * An example text map might look like:
+	 * #######
+	 * #  1  #
+	 * # ### #
+	 * # 2 2 #
+	 * #######
+	 *
+	 * The tilemap array will include the tile character code, foreground color,
+	 * background color, collision flag, and additional data.
 	 *
 	 * @param {string} mapText The text map to convert.
 	 * @returns {Array} The converted tilemap array.
@@ -6626,10 +7120,18 @@ const beep8 = {};
 	 * @param {Object} tilePattern The tile pattern object.
 	 * @returns {Array} The created tilemap array.
 	 */
-	beep8.Tilemap.createFromArray = function( grid, tilePattern ) {
+	beep8.Tilemap.createFromArray = function( grid, tilePattern, defaultTilePattern = null ) {
 
 		beep8.Utilities.checkArray( "grid", grid );
 		beep8.Utilities.checkObject( "tilePattern", tilePattern );
+
+		if ( defaultTilePattern !== null ) {
+			beep8.Utilities.checkObject( "defaultTilePattern", defaultTilePattern );
+		}
+
+		if ( null === defaultTilePattern ) {
+			defaultTilePattern = beep8.Tilemap.getDefaultTile();
+		}
 
 		const tilemap = [];
 
@@ -6638,11 +7140,11 @@ const beep8 = {};
 			for ( let x = 0; x < grid[ y ].length; x++ ) {
 
 				// Set default properties.
-				tilemap[ y ][ x ] = beep8.Tilemap.getDefaultTile();
+				tilemap[ y ][ x ] = [ ...defaultTilePattern ];
 
 				// If tile pattern not defined assume tile is empty and continue.
 				if ( !tilePattern[ grid[ y ][ x ] ] ) {
-					beep8.Utilities.log( "Tile pattern not found for: " + grid[ y ][ x ] );
+					// beep8.Utilities.log( "Tile pattern not found for: " + grid[ y ][ x ] );
 					continue;
 				}
 
@@ -6749,6 +7251,144 @@ const beep8 = {};
 
 ( function( beep8 ) {
 
+	/**
+	 * A timer helper. Call create() to get a new timer object.
+	 *
+	 * Timer objects expose the following methods:
+	 *   start, stop, pause, resume, reset, addTime, removeTime, update, setFormat, getFormattedTime
+	 *
+	 * The default format is MM:SS. Other options include: 'SS' and 'HH:MM:SS'.
+	 *
+	 * @param {number} initialTime - The starting time in seconds.
+	 * @param {boolean} autoStart - Whether the timer should start immediately.
+	 * @returns {object} A new timer object.
+	 */
+	beep8.Timer = {
+		create: function( initialTime = 60, autoStart = false ) {
+
+			return {
+				initialTime: initialTime,     // Starting time in seconds.
+				currentTime: initialTime,     // Current countdown time.
+				isRunning: autoStart,         // Timer is active if true.
+				isPaused: false,              // Timer pause flag.
+				format: 'MM:SS',              // Default display format.
+
+				/**
+				 * Starts the timer.
+				 */
+				start: function() {
+					this.isRunning = true;
+					this.isPaused = false;
+				},
+
+				/**
+				 * Stops the timer and resets it to initial time.
+				 */
+				stop: function() {
+					this.isRunning = false;
+					this.currentTime = this.initialTime;
+					this.isPaused = false;
+				},
+
+				/**
+				 * Pauses the timer (if running).
+				 */
+				pause: function() {
+					if ( this.isRunning ) {
+						this.isPaused = true;
+					}
+				},
+
+				/**
+				 * Resumes the timer if it is paused.
+				 */
+				resume: function() {
+					if ( this.isRunning && this.isPaused ) {
+						this.isPaused = false;
+					}
+				},
+
+				/**
+				 * Resets the timer.
+				 */
+				reset: function() {
+					this.currentTime = this.initialTime;
+					this.isRunning = false;
+					this.isPaused = false;
+				},
+
+				/**
+				 * Adds time (in seconds) to the current timer.
+				 *
+				 * @param {number} seconds - Number of seconds to add.
+				 */
+				addTime: function( seconds ) {
+					this.currentTime += seconds;
+				},
+
+				/**
+				 * Removes time (in seconds) from the current timer.
+				 *
+				 * @param {number} seconds - Number of seconds to remove.
+				 */
+				removeTime: function( seconds ) {
+					this.currentTime = Math.max( 0, this.currentTime - seconds );
+				},
+
+				/**
+				 * Updates the timer based on the delta time (in seconds).
+				 *
+				 * @param {number} dt - Delta time in seconds.
+				 */
+				update: function( dt ) {
+					if ( this.isRunning && !this.isPaused ) {
+						this.currentTime -= dt;
+						if ( this.currentTime <= 0 ) {
+							this.currentTime = 0;
+							this.isRunning = false;
+						}
+					}
+				},
+
+				/**
+				 * Sets the time format.
+				 *
+				 * @param {string} format - The desired format ('MM:SS', 'SS', or 'HH:MM:SS').
+				 */
+				setFormat: function( format ) {
+					this.format = format;
+				},
+
+				/**
+				 * Returns the current time formatted as a string.
+				 *
+				 * @returns {string} The formatted time.
+				 */
+				getFormattedTime: function() {
+					const totalSecs = Math.floor( this.currentTime );
+					if ( this.format === 'SS' ) {
+						return this.currentTime.toFixed( 1 ) + 's';
+					} else if ( this.format === 'HH:MM:SS' ) {
+						const hours = Math.floor( totalSecs / 3600 );
+						const minutes = Math.floor( ( totalSecs % 3600 ) / 60 );
+						const seconds = totalSecs % 60;
+						return hours.toString().padStart( 2, '0' ) + ':' +
+							minutes.toString().padStart( 2, '0' ) + ':' +
+							seconds.toString().padStart( 2, '0' );
+					} else {
+						// Default is MM:SS.
+						const minutes = Math.floor( totalSecs / 60 );
+						const seconds = totalSecs % 60;
+						return minutes.toString().padStart( 2, '0' ) + ':' +
+							seconds.toString().padStart( 2, '0' );
+					}
+				}
+			};
+		}
+	};
+
+} )( beep8 || ( beep8 = {} ) );
+( function( beep8 ) {
 
 	beep8.Utilities = {};
 
@@ -6770,7 +7410,7 @@ const beep8 = {};
 			beep8.Utilities.error( "Error in beep8.Core.handleCrash: " + e + " while handling error " + error );
 		}
 
-		throw new Error( "Error: " + error );
+		throw new Error( error );
 
 	}
 
@@ -7216,6 +7856,29 @@ const beep8 = {};
 
 
 	/**
+	 * Converts a hex color string to an RGB object.
+	 *
+	 * @param {string} hex - The hex color string (e.g., "#ff0000").
+	 * @returns {object} An object with r, g, b properties.
+	 */
+	beep8.Utilities.hexToRgb = function( hex ) {
+
+		// Remove the "#" if present
+		hex = hex.replace( "#", "" );
+
+		// Parse the RGB values
+		const bigint = parseInt( hex, 16 );
+
+		return {
+			r: ( bigint >> 16 ) & 255, // Extract red
+			g: ( bigint >> 8 ) & 255,  // Extract green
+			b: bigint & 255          // Extract blue
+		};
+
+	}
+
+
+	/**
 	 * Calculates the intersection between two integer number intervals.
 	 *
 	 * Given 2 ranges it will see if these ranges overlap and if they do it will
@@ -7375,23 +8038,21 @@ const beep8 = {};
 		const isObject = obj => obj && typeof obj === 'object';
 
 		return objects.reduce(
-
 			( prev, obj ) => {
-
 				Object.keys( obj ).forEach(
 					( key ) => {
 
-						const pVal = prev[ key ];
-						const oVal = obj[ key ];
+						const existingValue = prev[ key ];
+						const newValue = obj[ key ];
 
-						if ( Array.isArray( pVal ) && Array.isArray( oVal ) ) {
-							prev[ key ] = pVal.concat( ...oVal );
+						if ( Array.isArray( existingValue ) && Array.isArray( newValue ) ) {
+							prev[ key ] = existingValue.concat( ...newValue );
 						}
-						else if ( isObject( pVal ) && isObject( oVal ) ) {
-							prev[ key ] = beep8.Utilities.deepMerge( pVal, oVal );
+						else if ( isObject( existingValue ) && isObject( newValue ) ) {
+							prev[ key ] = beep8.Utilities.deepMerge( existingValue, newValue );
 						}
 						else {
-							prev[ key ] = oVal;
+							prev[ key ] = newValue;
 						}
 					}
 				);
@@ -7402,6 +8063,43 @@ const beep8 = {};
 		);
 
 	}
+
+
+	/**
+	 * Deep merge objects and returns new object. Does not modify objects.
+	 * Merges arrays by index.
+	 *
+	 * @param {...object} objects - Objects to merge
+	 * @returns {object} New object with merged key/values
+	 */
+	beep8.Utilities.deepMergeByIndex = function( ...objects ) {
+
+		const isObject = obj => obj && typeof obj === 'object';
+
+		return objects.reduce(
+			( prev, obj ) => {
+				Object.keys( obj ).forEach(
+					( key ) => {
+
+						const existingValue = prev[ key ];
+						const newValue = obj[ key ];
+
+						if ( Array.isArray( existingValue ) && Array.isArray( newValue ) ) {
+							prev[ key ] = mergeArraysByIndex( existingValue, newValue );
+						}
+						else if ( isObject( existingValue ) && isObject( newValue ) ) {
+							prev[ key ] = beep8.Utilities.deepMergeByIndex( existingValue, newValue );
+						}
+						else {
+							prev[ key ] = newValue;
+						}
+					}
+				);
+				return prev;
+			},
+			{}
+		);
+	};
 
 
 	/**
@@ -7497,6 +8195,66 @@ const beep8 = {};
 		document.body.removeChild( element );
 
 	};
+
+
+	/**
+	 * Encodes data using CBOR and Base64.
+	 *
+	 * @param {any} data - The data to encode.
+	 * @returns {string} The encoded data as a Base64 string.
+	 */
+	beep8.Utilities.encodeData = function( data ) {
+
+		const cborString = CBOR.encode( data );
+		const encodedString = btoa( String.fromCharCode.apply( null, new Uint8Array( cborString ) ) );
+		return encodedString;
+
+	};
+
+
+	/**
+	 * Decodes data from a Base64 string using CBOR.
+	 *
+	 * @param {string} data - The Base64 encoded data.
+	 * @returns {any} The decoded data.
+	 */
+	beep8.Utilities.decodeData = function( data ) {
+
+		// Step 1: Decode the Base64 string back to a binary string
+		const binaryString = atob( data );
+
+		// Step 2: Convert the binary string to a Uint8Array
+		const byteArray = new Uint8Array( binaryString.length );
+		for ( let i = 0; i < binaryString.length; i++ ) {
+			byteArray[ i ] = binaryString.charCodeAt( i );
+		}
+
+		// Step 3: Convert the Uint8Array to an ArrayBuffer
+		const arrayBuffer = byteArray.buffer;
+
+		// Step 4: Use CBOR.decode to convert the byte array back to the original data structure
+		return CBOR.decode( arrayBuffer );
+
+	};
+
+
+	/**
+	 * Merges two arrays by index, filling in missing indices with values from
+	 * the default array.
+	 *
+	 * @param {Array} targetArr - The target array to merge into.
+	 * @param {Array} defaultArr - The default array to merge from.
+	 * @returns {Array} The merged array.
+	 */
+	function mergeArraysByIndex( Arr1, Arr2 ) {
+
+		for ( let i = 0; i < Arr2.length; i++ ) {
+			Arr1[ i ] = Arr2[ i ];
+		}
+
+		return Arr1;
+
+	}
 
 
 } )( beep8 || ( beep8 = {} ) );
@@ -7887,863 +8645,3 @@ const beep8 = {};
 	}
 
 } )( beep8 || ( beep8 = {} ) );
-
-/*
- * The MIT License (MIT)
- *
- * Copyright (c) 2014 Patrick Gansterer <paroga@paroga.com>
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
-( function( global, undefined ) {
-	"use strict";
-	var POW_2_24 = Math.pow( 2, -24 ),
-		POW_2_32 = Math.pow( 2, 32 ),
-		POW_2_53 = Math.pow( 2, 53 );
-
-	function encode( value ) {
-		var data = new ArrayBuffer( 256 );
-		var dataView = new DataView( data );
-		var lastLength;
-		var offset = 0;
-
-		function ensureSpace( length ) {
-			var newByteLength = data.byteLength;
-			var requiredLength = offset + length;
-			while ( newByteLength < requiredLength )
-				newByteLength *= 2;
-			if ( newByteLength !== data.byteLength ) {
-				var oldDataView = dataView;
-				data = new ArrayBuffer( newByteLength );
-				dataView = new DataView( data );
-				var uint32count = ( offset + 3 ) >> 2;
-				for ( var i = 0; i < uint32count; ++i )
-					dataView.setUint32( i * 4, oldDataView.getUint32( i * 4 ) );
-			}
-
-			lastLength = length;
-			return dataView;
-		}
-		function write() {
-			offset += lastLength;
-		}
-		function writeFloat64( value ) {
-			write( ensureSpace( 8 ).setFloat64( offset, value ) );
-		}
-		function writeUint8( value ) {
-			write( ensureSpace( 1 ).setUint8( offset, value ) );
-		}
-		function writeUint8Array( value ) {
-			var dataView = ensureSpace( value.length );
-			for ( var i = 0; i < value.length; ++i )
-				dataView.setUint8( offset + i, value[ i ] );
-			write();
-		}
-		function writeUint16( value ) {
-			write( ensureSpace( 2 ).setUint16( offset, value ) );
-		}
-		function writeUint32( value ) {
-			write( ensureSpace( 4 ).setUint32( offset, value ) );
-		}
-		function writeUint64( value ) {
-			var low = value % POW_2_32;
-			var high = ( value - low ) / POW_2_32;
-			var dataView = ensureSpace( 8 );
-			dataView.setUint32( offset, high );
-			dataView.setUint32( offset + 4, low );
-			write();
-		}
-		function writeTypeAndLength( type, length ) {
-			if ( length < 24 ) {
-				writeUint8( type << 5 | length );
-			} else if ( length < 0x100 ) {
-				writeUint8( type << 5 | 24 );
-				writeUint8( length );
-			} else if ( length < 0x10000 ) {
-				writeUint8( type << 5 | 25 );
-				writeUint16( length );
-			} else if ( length < 0x100000000 ) {
-				writeUint8( type << 5 | 26 );
-				writeUint32( length );
-			} else {
-				writeUint8( type << 5 | 27 );
-				writeUint64( length );
-			}
-		}
-
-		function encodeItem( value ) {
-			var i;
-
-			if ( value === false )
-				return writeUint8( 0xf4 );
-			if ( value === true )
-				return writeUint8( 0xf5 );
-			if ( value === null )
-				return writeUint8( 0xf6 );
-			if ( value === undefined )
-				return writeUint8( 0xf7 );
-
-			switch ( typeof value ) {
-				case "number":
-					if ( Math.floor( value ) === value ) {
-						if ( 0 <= value && value <= POW_2_53 )
-							return writeTypeAndLength( 0, value );
-						if ( -POW_2_53 <= value && value < 0 )
-							return writeTypeAndLength( 1, -( value + 1 ) );
-					}
-					writeUint8( 0xfb );
-					return writeFloat64( value );
-
-				case "string":
-					var utf8data = [];
-					for ( i = 0; i < value.length; ++i ) {
-						var charCode = value.charCodeAt( i );
-						if ( charCode < 0x80 ) {
-							utf8data.push( charCode );
-						} else if ( charCode < 0x800 ) {
-							utf8data.push( 0xc0 | charCode >> 6 );
-							utf8data.push( 0x80 | charCode & 0x3f );
-						} else if ( charCode < 0xd800 ) {
-							utf8data.push( 0xe0 | charCode >> 12 );
-							utf8data.push( 0x80 | ( charCode >> 6 ) & 0x3f );
-							utf8data.push( 0x80 | charCode & 0x3f );
-						} else {
-							charCode = ( charCode & 0x3ff ) << 10;
-							charCode |= value.charCodeAt( ++i ) & 0x3ff;
-							charCode += 0x10000;
-
-							utf8data.push( 0xf0 | charCode >> 18 );
-							utf8data.push( 0x80 | ( charCode >> 12 ) & 0x3f );
-							utf8data.push( 0x80 | ( charCode >> 6 ) & 0x3f );
-							utf8data.push( 0x80 | charCode & 0x3f );
-						}
-					}
-
-					writeTypeAndLength( 3, utf8data.length );
-					return writeUint8Array( utf8data );
-
-				default:
-					var length;
-					if ( Array.isArray( value ) ) {
-						length = value.length;
-						writeTypeAndLength( 4, length );
-						for ( i = 0; i < length; ++i )
-							encodeItem( value[ i ] );
-					} else if ( value instanceof Uint8Array ) {
-						writeTypeAndLength( 2, value.length );
-						writeUint8Array( value );
-					} else {
-						var keys = Object.keys( value );
-						length = keys.length;
-						writeTypeAndLength( 5, length );
-						for ( i = 0; i < length; ++i ) {
-							var key = keys[ i ];
-							encodeItem( key );
-							encodeItem( value[ key ] );
-						}
-					}
-			}
-		}
-
-		encodeItem( value );
-
-		if ( "slice" in data )
-			return data.slice( 0, offset );
-
-		var ret = new ArrayBuffer( offset );
-		var retView = new DataView( ret );
-		for ( var i = 0; i < offset; ++i )
-			retView.setUint8( i, dataView.getUint8( i ) );
-		return ret;
-	}
-
-	function decode( data, tagger, simpleValue ) {
-		var dataView = new DataView( data );
-		var offset = 0;
-
-		if ( typeof tagger !== "function" )
-			tagger = function( value ) { return value; };
-		if ( typeof simpleValue !== "function" )
-			simpleValue = function() { return undefined; };
-
-		function read( value, length ) {
-			offset += length;
-			return value;
-		}
-		function readArrayBuffer( length ) {
-			return read( new Uint8Array( data, offset, length ), length );
-		}
-		function readFloat16() {
-			var tempArrayBuffer = new ArrayBuffer( 4 );
-			var tempDataView = new DataView( tempArrayBuffer );
-			var value = readUint16();
-
-			var sign = value & 0x8000;
-			var exponent = value & 0x7c00;
-			var fraction = value & 0x03ff;
-
-			if ( exponent === 0x7c00 )
-				exponent = 0xff << 10;
-			else if ( exponent !== 0 )
-				exponent += ( 127 - 15 ) << 10;
-			else if ( fraction !== 0 )
-				return fraction * POW_2_24;
-
-			tempDataView.setUint32( 0, sign << 16 | exponent << 13 | fraction << 13 );
-			return tempDataView.getFloat32( 0 );
-		}
-		function readFloat32() {
-			return read( dataView.getFloat32( offset ), 4 );
-		}
-		function readFloat64() {
-			return read( dataView.getFloat64( offset ), 8 );
-		}
-		function readUint8() {
-			return read( dataView.getUint8( offset ), 1 );
-		}
-		function readUint16() {
-			return read( dataView.getUint16( offset ), 2 );
-		}
-		function readUint32() {
-			return read( dataView.getUint32( offset ), 4 );
-		}
-		function readUint64() {
-			return readUint32() * POW_2_32 + readUint32();
-		}
-		function readBreak() {
-			if ( dataView.getUint8( offset ) !== 0xff )
-				return false;
-			offset += 1;
-			return true;
-		}
-		function readLength( additionalInformation ) {
-			if ( additionalInformation < 24 )
-				return additionalInformation;
-			if ( additionalInformation === 24 )
-				return readUint8();
-			if ( additionalInformation === 25 )
-				return readUint16();
-			if ( additionalInformation === 26 )
-				return readUint32();
-			if ( additionalInformation === 27 )
-				return readUint64();
-			if ( additionalInformation === 31 )
-				return -1;
-			throw "Invalid length encoding";
-		}
-		function readIndefiniteStringLength( majorType ) {
-			var initialByte = readUint8();
-			if ( initialByte === 0xff )
-				return -1;
-			var length = readLength( initialByte & 0x1f );
-			if ( length < 0 || ( initialByte >> 5 ) !== majorType )
-				throw "Invalid indefinite length element";
-			return length;
-		}
-
-		function appendUtf16data( utf16data, length ) {
-			for ( var i = 0; i < length; ++i ) {
-				var value = readUint8();
-				if ( value & 0x80 ) {
-					if ( value < 0xe0 ) {
-						value = ( value & 0x1f ) << 6
-							| ( readUint8() & 0x3f );
-						length -= 1;
-					} else if ( value < 0xf0 ) {
-						value = ( value & 0x0f ) << 12
-							| ( readUint8() & 0x3f ) << 6
-							| ( readUint8() & 0x3f );
-						length -= 2;
-					} else {
-						value = ( value & 0x0f ) << 18
-							| ( readUint8() & 0x3f ) << 12
-							| ( readUint8() & 0x3f ) << 6
-							| ( readUint8() & 0x3f );
-						length -= 3;
-					}
-				}
-
-				if ( value < 0x10000 ) {
-					utf16data.push( value );
-				} else {
-					value -= 0x10000;
-					utf16data.push( 0xd800 | ( value >> 10 ) );
-					utf16data.push( 0xdc00 | ( value & 0x3ff ) );
-				}
-			}
-		}
-
-		function decodeItem() {
-			var initialByte = readUint8();
-			var majorType = initialByte >> 5;
-			var additionalInformation = initialByte & 0x1f;
-			var i;
-			var length;
-
-			if ( majorType === 7 ) {
-				switch ( additionalInformation ) {
-					case 25:
-						return readFloat16();
-					case 26:
-						return readFloat32();
-					case 27:
-						return readFloat64();
-				}
-			}
-
-			length = readLength( additionalInformation );
-			if ( length < 0 && ( majorType < 2 || 6 < majorType ) )
-				throw "Invalid length";
-
-			switch ( majorType ) {
-				case 0:
-					return length;
-				case 1:
-					return -1 - length;
-				case 2:
-					if ( length < 0 ) {
-						var elements = [];
-						var fullArrayLength = 0;
-						while ( ( length = readIndefiniteStringLength( majorType ) ) >= 0 ) {
-							fullArrayLength += length;
-							elements.push( readArrayBuffer( length ) );
-						}
-						var fullArray = new Uint8Array( fullArrayLength );
-						var fullArrayOffset = 0;
-						for ( i = 0; i < elements.length; ++i ) {
-							fullArray.set( elements[ i ], fullArrayOffset );
-							fullArrayOffset += elements[ i ].length;
-						}
-						return fullArray;
-					}
-					return readArrayBuffer( length );
-				case 3:
-					var utf16data = [];
-					if ( length < 0 ) {
-						while ( ( length = readIndefiniteStringLength( majorType ) ) >= 0 )
-							appendUtf16data( utf16data, length );
-					} else
-						appendUtf16data( utf16data, length );
-					return String.fromCharCode.apply( null, utf16data );
-				case 4:
-					var retArray;
-					if ( length < 0 ) {
-						retArray = [];
-						while ( !readBreak() )
-							retArray.push( decodeItem() );
-					} else {
-						retArray = new Array( length );
-						for ( i = 0; i < length; ++i )
-							retArray[ i ] = decodeItem();
-					}
-					return retArray;
-				case 5:
-					var retObject = {};
-					for ( i = 0; i < length || length < 0 && !readBreak(); ++i ) {
-						var key = decodeItem();
-						retObject[ key ] = decodeItem();
-					}
-					return retObject;
-				case 6:
-					return tagger( decodeItem(), length );
-				case 7:
-					switch ( length ) {
-						case 20:
-							return false;
-						case 21:
-							return true;
-						case 22:
-							return null;
-						case 23:
-							return undefined;
-						default:
-							return simpleValue( length );
-					}
-			}
-		}
-
-		var ret = decodeItem();
-		if ( offset !== data.byteLength )
-			throw "Remaining bytes";
-		return ret;
-	}
-
-	var obj = { encode: encode, decode: decode };
-
-	if ( typeof define === "function" && define.amd )
-		define( "cbor/cbor", obj );
-	else if ( !global.CBOR )
-		global.CBOR = obj;
-
-} )( this );
-
-( function() {
-
-	// AudioContext.
-	const audioCtx = new AudioContext();
-
-	// Cache for generated note buffers.
-	const noteBuffers = {};
-
-	// Scheduler variables.
-	let schedulerInterval = null;
-	let schedules = []; // Array of event arrays per track.
-	let schedulePointers = []; // Next event index per track.
-	let playbackStartTime = 0; // When playback starts.
-	let tempo = 120; // Default tempo.
-	const lookaheadTime = 0.5; // Only schedule events within the next 0.5 seconds.
-	const schedulerIntervalMs = 50; // Check every 50ms.
-	const volumeMultiplier = 0.1; // Volume multiplier.
-
-	// iOS audio unlock flag.
-	let unlocked = false;
-
-	// -----------------------------
-	// Instrument synthesis functions.
-	// -----------------------------
-	const sineComponent = ( x, offset ) => Math.sin( x * 6.28 + offset );
-
-	const pianoWaveform = ( x ) => {
-		return sineComponent( x, Math.pow( sineComponent( x, 0 ), 2 ) +
-			sineComponent( x, 0.25 ) * 0.75 +
-			sineComponent( x, 0.5 ) * 0.1 ) * volumeMultiplier;
-	}
-
-	const piano2WaveForm = ( x ) => {
-		return ( Math.sin( x * 6.28 ) * Math.sin( x * 3.14 ) ) * volumeMultiplier;
-	}
-	const sineWaveform = ( x ) => {
-		return Math.sin( 2 * Math.PI * x ) * volumeMultiplier;
-	}
-	const squareWaveform = ( x ) => {
-		return ( Math.sin( 2 * Math.PI * x ) >= 0 ? 1 : -1 ) * volumeMultiplier;
-	}
-	const sawtoothWaveform = ( x ) => {
-		let t = x - Math.floor( x );
-		return ( 2 * t - 1 ) * volumeMultiplier;
-	};
-	const triangleWaveform = ( x ) => {
-		let t = x - Math.floor( x );
-		return ( 2 * Math.abs( 2 * t - 1 ) - 1 ) * volumeMultiplier;
-	};
-	const drumWaveform = ( x ) => {
-		return ( ( Math.random() * 2 - 1 ) * Math.exp( -x / 10 ) ) * volumeMultiplier;
-	};
-	const softDrumWaveform = ( x ) => {
-		return ( Math.sin( x * 2 ) + 0.3 * ( Math.random() - 0.5 ) ) *
-			Math.exp( -x / 15 ) * volumeMultiplier * 2;
-	};
-
-	// Mapping of instrument ids to synthesis functions.
-	// 0: Piano, 1: Piano 2, 2: Sine, 3: Sawtooth, 4: Square, 5: Triangle, 6: Drum, 7: Soft Drum
-	const instrumentMapping = [
-		pianoWaveform,
-		piano2WaveForm,
-		sineWaveform,
-		sawtoothWaveform,
-		squareWaveform,
-		triangleWaveform,
-		drumWaveform,
-		softDrumWaveform,
-	];
-
-	// -----------------------------
-	// Main Music Player Function (p1)
-	// -----------------------------
-	/**
-	 * Use as a tag template literal:
-	 *
-	 *     p1`
-	 *     0|f  dh   d T-X   X  T    X X V|
-	 *     1|Y   Y Y Y Y Y Y Y   Y Y Y Y Y Y|
-	 *     0|V   X   T   T   c   c   T   X|
-	 *     0|c fVa a-   X T R  aQT Ta   RO- X|
-	 *     [70.30]
-	 *     `
-	 */
-	function p1( params ) {
-
-		if ( Array.isArray( params ) ) {
-			params = params[ 0 ];
-		}
-		if ( !params || params.trim() === '' ) {
-			p1.stop();
-			return;
-		}
-
-		if ( noteBuffers.length > 200 ) {
-			console.warn( "Beep8.Music: Note buffers exceeded limit, clearing old buffers." );
-			noteBuffers = {};
-		}
-
-		// Reset defaults.
-		tempo = 125;
-		let baseNoteDuration = 0.5; // seconds per note.
-		schedules = [];
-
-		// Split input into lines.
-		const rawLines = params.split( '\n' ).map( line => line.trim() );
-		let noteInterval = tempo / 1000; // seconds per note step.
-
-		// Regular expression for track lines: instrument|track data|
-		const trackLineRegex = /^([0-9])\|(.*)\|$/;
-
-		rawLines.forEach( line => {
-			if ( !line ) return;
-
-			// Tempo/note duration lines.
-			if ( ( line.startsWith( '[' ) && line.endsWith( ']' ) ) || ( /^\d+(\.\d+)?$/.test( line ) ) ) {
-				const timing = line.replace( /[\[\]]/g, '' ).split( '.' );
-				tempo = parseFloat( timing[ 0 ] ) || tempo;
-				baseNoteDuration = ( parseFloat( timing[ 1 ] ) || 50 ) / 100;
-				noteInterval = tempo / 1000;
-				return;
-			}
-
-			// Track lines.
-			if ( !trackLineRegex.test( line ) ) {
-				console.error( "Track lines must be in the format 'instrument|track data|': " + line );
-				return;
-			}
-
-			const match = line.match( trackLineRegex );
-			const instrumentId = parseInt( match[ 1 ], 10 );
-			const instrumentFn = instrumentMapping[ instrumentId ] || instrumentMapping[ 0 ];
-			const trackData = match[ 2 ].trim();
-
-			let events = [];
-			// Parse trackData character by character.
-			for ( let i = 0; i < trackData.length; i++ ) {
-				const char = trackData[ i ];
-				let dashCount = 1;
-				while ( i + dashCount < trackData.length && trackData[ i + dashCount ] === '-' ) {
-					dashCount++;
-				}
-				let eventTime = i * noteInterval;
-				if ( char === ' ' ) {
-					events.push( { startTime: eventTime, noteBuffer: null } );
-					i += dashCount - 1;
-					continue;
-				}
-				let noteValue = char.charCodeAt( 0 );
-				noteValue -= noteValue > 90 ? 71 : 65;
-				let noteDuration = dashCount * baseNoteDuration * ( tempo / 125 );
-				let noteBuffer = createNoteBuffer( noteValue, noteDuration, 44100, instrumentFn );
-				events.push( { startTime: eventTime, noteBuffer: noteBuffer } );
-				i += dashCount - 1;
-			}
-			schedules.push( events );
-		} );
-
-		// Initialize schedule pointers and calculate loop duration.
-		schedulePointers = schedules.map( () => 0 );
-		playbackStartTime = audioCtx.currentTime + 0.1;
-
-		p1.stop();
-		schedulerInterval = setInterval( schedulerFunction, schedulerIntervalMs );
-	}
-
-
-	/**
-	 * The scheduler function ensures the notes are played at the right time.
-	 *
-	 * This function is called every 50ms to check if any notes need to be played.
-	 *
-	 * The scheduler keeps track of the current time and the current note interval.
-	 * It then checks each track to see if a note needs to be played.
-	 *
-	 * @returns {void}
-	 */
-	function schedulerFunction() {
-
-		const currentTime = audioCtx.currentTime;
-		const noteInterval = tempo / 1000; // note duration in seconds
-		// Use the larger of the fixed lookahead and the current note interval.
-		const effectiveLookahead = Math.max( lookaheadTime, noteInterval );
-		schedules.forEach( ( events, trackIndex ) => {
-			let pointer = schedulePointers[ trackIndex ];
-			const trackLength = events.length;
-			if ( trackLength === 0 ) return;
-			const step = pointer % trackLength;
-			const loopCount = Math.floor( pointer / trackLength );
-			const eventTime = playbackStartTime + ( step * noteInterval ) + ( loopCount * trackLength * noteInterval );
-			if ( eventTime < currentTime + effectiveLookahead ) {
-				const event = events[ step ];
-				if ( event.noteBuffer ) {
-					playNoteBuffer( event.noteBuffer, audioCtx, eventTime );
-				}
-				schedulePointers[ trackIndex ]++;
-			}
-		} );
-		if ( !p1.loop ) {
-			const done = schedules.every( ( events, i ) => schedulePointers[ i ] >= events.length );
-			if ( done ) {
-				p1.stop();
-			}
-		}
-	}
-
-
-	/**
-	 * Stop playback by clearing the scheduler and stopping all playing sources.
-	 */
-	p1.stop = function() {
-		if ( schedulerInterval !== null ) {
-			clearInterval( schedulerInterval );
-			schedulerInterval = null;
-		}
-		playingSources.forEach( source => source.stop() );
-		playingSources = [];
-	};
-
-
-	/**
-	 * Check if music is currently playing.
-	 */
-	p1.isPlaying = function() {
-		return schedulerInterval !== null;
-	};
-
-
-	/**
-	 * Set the tempo (in BPM).
-	 */
-	p1.setTempo = function( newTempo ) {
-		if ( newTempo < 50 ) newTempo = 50;
-
-		// Calculate old and new note intervals in seconds.
-		const oldNoteInterval = tempo / 1000;
-		const newNoteInterval = newTempo / 1000;
-
-		// Determine how much time has elapsed since playback started.
-		const elapsed = audioCtx.currentTime - playbackStartTime;
-
-		// Compute the current note position (could be fractional).
-		const currentIndex = elapsed / oldNoteInterval;
-
-		// Rebase playbackStartTime so that the currentIndex now corresponds to the current time.
-		playbackStartTime = audioCtx.currentTime - currentIndex * newNoteInterval;
-
-		// Finally, update the tempo.
-		tempo = newTempo;
-	};
-
-
-	p1.clearCache = function() {
-		noteBuffers = {};
-	};
-
-
-	// Loop property: set to true to repeat playback.
-	p1.loop = true;
-
-	/**
-	 * Create an audio buffer for a given note.
-	 */
-	const createNoteBuffer = ( note, durationSeconds, sampleRate, instrumentFn ) => {
-		const key = note + '-' + durationSeconds + '-' + instrumentFn.name;
-		let buffer = noteBuffers[ key ];
-		if ( note >= 0 && !buffer ) {
-			const frequencyFactor = 65.406 * Math.pow( 1.06, note ) / sampleRate;
-			const totalSamples = Math.floor( sampleRate * durationSeconds );
-			const attackSamples = 88;
-			const decaySamples = sampleRate * ( durationSeconds - 0.002 );
-			buffer = noteBuffers[ key ] = audioCtx.createBuffer( 1, totalSamples, sampleRate );
-			const channelData = buffer.getChannelData( 0 );
-			for ( let i = 0; i < totalSamples; i++ ) {
-				let amplitude;
-				if ( i < attackSamples ) {
-					amplitude = i / ( attackSamples + 0.2 );
-				} else {
-					amplitude = Math.pow(
-						1 - ( ( i - attackSamples ) / decaySamples ),
-						Math.pow( Math.log( 1e4 * frequencyFactor ) / 2, 2 )
-					);
-				}
-				channelData[ i ] = amplitude * instrumentFn( i * frequencyFactor );
-			}
-			// Unlock audio on iOS if needed.
-			if ( !unlocked ) {
-				playNoteBuffer( buffer, audioCtx, audioCtx.currentTime, true );
-				unlocked = true;
-			}
-		}
-		return buffer;
-	};
-
-	// Array to keep track of currently playing sources.
-	let playingSources = [];
-
-
-	/**
-	 * Play an audio buffer at a scheduled time.
-	 */
-	const playNoteBuffer = ( buffer, context, when, stopImmediately = false ) => {
-		const source = context.createBufferSource();
-		source.buffer = buffer;
-		source.connect( context.destination );
-		source.start( when );
-		playingSources.push( source );
-		if ( stopImmediately ) {
-			source.stop();
-		}
-		source.onended = () => {
-			const index = playingSources.indexOf( source );
-			if ( index !== -1 ) {
-				playingSources.splice( index, 1 );
-			}
-		};
-	};
-
-	// Expose the p1 function globally.
-	window.p1 = p1;
-
-} )();
-
-// ZzFX - Zuper Zmall Zound Zynth - Micro Edition
-// MIT License - Copyright 2019 Frank Force
-// https://github.com/KilledByAPixel/ZzFX
-
-// This is a minified build of zzfx for use in size coding projects.
-// You can use zzfxV to set volume.
-// Feel free to minify it further for your own needs!
-
-'use strict';
-
-///////////////////////////////////////////////////////////////////////////////
-
-// ZzFXMicro - Zuper Zmall Zound Zynth - v1.3.1 by Frank Force
-
-// ==ClosureCompiler==
-// @compilation_level ADVANCED_OPTIMIZATIONS
-// @output_file_name ZzFXMicro.min.js
-// @js_externs zzfx, zzfxG, zzfxP, zzfxV, zzfxX
-// @language_out ECMASCRIPT_2019
-// ==/ClosureCompiler==
-
-const zzfx = ( ...z ) => zzfxP( zzfxG( ...z ) ); // generate and play sound
-const zzfxV = .3;    // volume
-const zzfxR = 44100; // sample rate
-const zzfxX = new AudioContext; // audio context
-const zzfxP = ( ...samples ) =>  // play samples
-{
-	// create buffer and source
-	let buffer = zzfxX.createBuffer( samples.length, samples[ 0 ].length, zzfxR ),
-		source = zzfxX.createBufferSource();
-
-	// copy samples to buffer and play
-	samples.map( ( d, i ) => buffer.getChannelData( i ).set( d ) );
-	source.buffer = buffer;
-	source.connect( zzfxX.destination );
-	source.start();
-	return source;
-}
-const zzfxG = // generate samples
-	(
-		// parameters
-		volume = 1, randomness = .05, frequency = 220, attack = 0, sustain = 0,
-		release = .1, shape = 0, shapeCurve = 1, slide = 0, deltaSlide = 0,
-		pitchJump = 0, pitchJumpTime = 0, repeatTime = 0, noise = 0, modulation = 0,
-		bitCrush = 0, delay = 0, sustainVolume = 1, decay = 0, tremolo = 0, filter = 0
-	) => {
-		// init parameters
-		let PI2 = Math.PI * 2, sign = v => v < 0 ? -1 : 1,
-			startSlide = slide *= 500 * PI2 / zzfxR / zzfxR,
-			startFrequency = frequency *=
-				( 1 + randomness * 2 * Math.random() - randomness ) * PI2 / zzfxR,
-			b = [], t = 0, tm = 0, i = 0, j = 1, r = 0, c = 0, s = 0, f, length,
-
-			// biquad LP/HP filter
-			quality = 2, w = PI2 * Math.abs( filter ) * 2 / zzfxR,
-			cos = Math.cos( w ), alpha = Math.sin( w ) / 2 / quality,
-			a0 = 1 + alpha, a1 = -2 * cos / a0, a2 = ( 1 - alpha ) / a0,
-			b0 = ( 1 + sign( filter ) * cos ) / 2 / a0,
-			b1 = -( sign( filter ) + cos ) / a0, b2 = b0,
-			x2 = 0, x1 = 0, y2 = 0, y1 = 0;
-
-		// scale by sample rate
-		attack = attack * zzfxR + 9; // minimum attack to prevent pop
-		decay *= zzfxR;
-		sustain *= zzfxR;
-		release *= zzfxR;
-		delay *= zzfxR;
-		deltaSlide *= 500 * PI2 / zzfxR ** 3;
-		modulation *= PI2 / zzfxR;
-		pitchJump *= PI2 / zzfxR;
-		pitchJumpTime *= zzfxR;
-		repeatTime = repeatTime * zzfxR | 0;
-		volume *= zzfxV;
-
-		// generate waveform
-		for ( length = attack + decay + sustain + release + delay | 0;
-			i < length; b[ i++ ] = s * volume )               // sample
-		{
-			if ( !( ++c % ( bitCrush * 100 | 0 ) ) )                   // bit crush
-			{
-				s = shape ? shape > 1 ? shape > 2 ? shape > 3 ?      // wave shape
-					Math.sin( t ** 3 ) :                       // 4 noise
-					Math.max( Math.min( Math.tan( t ), 1 ), -1 ) :  // 3 tan
-					1 - ( 2 * t / PI2 % 2 + 2 ) % 2 :                     // 2 saw
-					1 - 4 * Math.abs( Math.round( t / PI2 ) - t / PI2 ) : // 1 triangle
-					Math.sin( t );                           // 0 sin
-
-				s = ( repeatTime ?
-					1 - tremolo + tremolo * Math.sin( PI2 * i / repeatTime ) // tremolo
-					: 1 ) *
-					sign( s ) * ( Math.abs( s ) ** shapeCurve ) *      // curve
-					( i < attack ? i / attack :                 // attack
-						i < attack + decay ?                     // decay
-							1 - ( ( i - attack ) / decay ) * ( 1 - sustainVolume ) : // decay falloff
-							i < attack + decay + sustain ?          // sustain
-								sustainVolume :                          // sustain volume
-								i < length - delay ?                     // release
-									( length - i - delay ) / release *           // release falloff
-									sustainVolume :                          // release volume
-									0 );                                      // post release
-
-				s = delay ? s / 2 + ( delay > i ? 0 :           // delay
-					( i < length - delay ? 1 : ( length - i ) / delay ) * // release delay
-					b[ i - delay | 0 ] / 2 / volume ) : s;              // sample delay
-
-				if ( filter )                                   // apply filter
-					s = y1 = b2 * x2 + b1 * ( x2 = x1 ) + b0 * ( x1 = s ) - a2 * y2 - a1 * ( y2 = y1 );
-			}
-
-			f = ( frequency += slide += deltaSlide ) *// frequency
-				Math.cos( modulation * tm++ );          // modulation
-			t += f + f * noise * Math.sin( i ** 5 );        // noise
-
-			if ( j && ++j > pitchJumpTime )           // pitch jump
-			{
-				frequency += pitchJump;             // apply pitch jump
-				startFrequency += pitchJump;        // also apply to start
-				j = 0;                              // stop pitch jump time
-			}
-
-			if ( repeatTime && !( ++r % repeatTime ) )  // repeat
-			{
-				frequency = startFrequency;         // reset frequency
-				slide = startSlide;                 // reset slide
-				j = j || 1;                         // reset pitch jump time
-			}
-		}
-
-		return b;
-	}
