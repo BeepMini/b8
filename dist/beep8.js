@@ -3424,7 +3424,7 @@ const beep8 = {};
 				selIndex = ( selIndex + 1 ) % choices.length;
 				if ( choices.length > 1 ) beep8.Sfx.play( beep8.CONFIG.SFX.MENU_DOWN );
 
-			} else if ( k.includes( "Enter" ) || k.includes( "ButtonA" ) ) {
+			} else if ( k.includes( "Enter" ) || k.includes( "ButtonA" ) || k.includes( " " ) ) {
 
 				// Select menu item.
 				beep8.Sfx.play( beep8.CONFIG.SFX.MENU_SELECT );
@@ -5395,7 +5395,11 @@ const beep8 = {};
 
 
 	/**
-	 * Play a sound effect from an array.
+	 * Play a sound effect from a ZzFX array.
+	 *
+	 * This array can be generated with ZzFX. It should be just the array beginning and ending with square brackets.
+	 *
+	 * @see https://killedbyapixel.github.io/ZzFX/
 	 *
 	 * @param {Array} sfxArray - The sound effect array to play.
 	 * @returns {void}
