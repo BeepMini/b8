@@ -143,7 +143,7 @@
 				selIndex = ( selIndex + 1 ) % choices.length;
 				if ( choices.length > 1 ) beep8.Sfx.play( beep8.CONFIG.SFX.MENU_DOWN );
 
-			} else if ( k.includes( "Enter" ) || k.includes( "ButtonA" ) ) {
+			} else if ( k.includes( "Enter" ) || k.includes( "ButtonA" ) || k.includes( " " ) ) {
 
 				// Select menu item.
 				beep8.Sfx.play( beep8.CONFIG.SFX.MENU_SELECT );
