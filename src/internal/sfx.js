@@ -84,7 +84,11 @@
 
 
 	/**
-	 * Play a sound effect from an array.
+	 * Play a sound effect from a ZzFX array.
+	 *
+	 * This array can be generated with ZzFX. It should be just the array beginning and ending with square brackets.
+	 *
+	 * @see https://killedbyapixel.github.io/ZzFX/
 	 *
 	 * @param {Array} sfxArray - The sound effect array to play.
 	 * @returns {void}
