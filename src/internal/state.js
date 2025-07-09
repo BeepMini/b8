@@ -6,7 +6,8 @@
 	// This is the key used to store the state in localStorage.
 	let STORAGE_KEY = '';
 
-	document.addEventListener( 'beep8.initComplete',
+	document.addEventListener(
+		'beep8.initComplete',
 		function() {
 
 			// Set the storage key based on the beep8 configuration name.
