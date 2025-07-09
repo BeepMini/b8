@@ -138,7 +138,7 @@
 		beep8.Core.canvas.height = beep8.CONFIG.SCREEN_HEIGHT;
 		beep8.Core.canvas.style.width = beep8.CONFIG.SCREEN_WIDTH + "px";
 		beep8.Core.canvas.style.height = beep8.CONFIG.SCREEN_HEIGHT + "px";
-		beep8.Core.ctx = beep8.Core.canvas.getContext( "2d" );
+		beep8.Core.ctx = beep8.Core.canvas.getContext( "2d", { willReadFrequently: true } );
 		beep8.Core.ctx.imageSmoothingEnabled = false;
 
 		// Load and initialize default fonts.
@@ -923,7 +923,7 @@
 	 */
 	beep8.Core.updateLayout2d = function() {
 
-		beep8.Core.realCtx = beep8.Core.realCanvas.getContext( "2d" );
+		beep8.Core.realCtx = beep8.Core.realCanvas.getContext( "2d", { willReadFrequently: true } );
 		beep8.Core.realCtx.imageSmoothingEnabled = false;
 
 		beep8.CONFIG.SCREEN_EL_WIDTH = beep8.CONFIG.SCREEN_WIDTH;
