@@ -1833,7 +1833,7 @@ const beep8 = {};
 		beep8.Core.canvas.height = beep8.CONFIG.SCREEN_HEIGHT;
 		beep8.Core.canvas.style.width = beep8.CONFIG.SCREEN_WIDTH + "px";
 		beep8.Core.canvas.style.height = beep8.CONFIG.SCREEN_HEIGHT + "px";
-		beep8.Core.ctx = beep8.Core.canvas.getContext( "2d" );
+		beep8.Core.ctx = beep8.Core.canvas.getContext( "2d", { willReadFrequently: true } );
 		beep8.Core.ctx.imageSmoothingEnabled = false;
 
 		// Load and initialize default fonts.
@@ -2618,7 +2618,7 @@ const beep8 = {};
 	 */
 	beep8.Core.updateLayout2d = function() {
 
-		beep8.Core.realCtx = beep8.Core.realCanvas.getContext( "2d" );
+		beep8.Core.realCtx = beep8.Core.realCanvas.getContext( "2d", { willReadFrequently: true } );
 		beep8.Core.realCtx.imageSmoothingEnabled = false;
 
 		beep8.CONFIG.SCREEN_EL_WIDTH = beep8.CONFIG.SCREEN_WIDTH;
@@ -5455,7 +5455,8 @@ const beep8 = {};
 	// This is the key used to store the state in localStorage.
 	let STORAGE_KEY = '';
 
-	document.addEventListener( 'beep8.initComplete',
+	document.addEventListener(
+		'beep8.initComplete',
 		function() {
 
 			// Set the storage key based on the beep8 configuration name.
@@ -6016,6 +6017,17 @@ const beep8 = {};
 
 		beep8.Utilities.checkNumber( "ch", ch );
 		beep8.Utilities.checkNumber( "n", n );
+
+		// Check cursorCol and cursorRow are within bounds.
+		if (
+			beep8.Core.drawState.cursorCol < 0 ||
+			beep8.Core.drawState.cursorRow < 0 ||
+			beep8.Core.drawState.cursorCol >= beep8.CONFIG.SCREEN_COLS ||
+			beep8.Core.drawState.cursorRow >= beep8.CONFIG.SCREEN_ROWS
+		) {
+			// No need for an error. Just end silently.
+			return;
+		}
 
 		while ( n-- > 0 ) {
 
@@ -6934,11 +6946,13 @@ const beep8 = {};
 	 * Draw a tilemap array to the screen.
 	 *
 	 * @param {Array} tilemap The tilemap array to draw.
+	 * @param {number} [tileX=0] The x-coordinate of the tile to start drawing from.
+	 * @param {number} [tileY=0] The y-coordinate of the tile to start drawing from.
 	 * @param {number} [width=null] The width of the tilemap to draw.
 	 * @param {number} [height=null] The height of the tilemap to draw.
 	 * @returns {void}
 	 */
-	beep8.Tilemap.draw = function( tilemap, width = null, height = null ) {
+	beep8.Tilemap.draw = function( tilemap, tileX = 0, tileY = 0, width = null, height = null ) {
 
 		beep8.Utilities.checkArray( "tilemap", tilemap );
 
@@ -6950,18 +6964,23 @@ const beep8 = {};
 			height = tilemap.length;
 		}
 
-		beep8.Utilities.checkNumber( "width", width );
-		beep8.Utilities.checkNumber( "height", height );
+		beep8.Utilities.checkInt( "width", width );
+		beep8.Utilities.checkInt( "height", height );
 
 		const startRow = beep8.Core.drawState.cursorRow;
 		const startCol = beep8.Core.drawState.cursorCol;
 
-		for ( let y = 0; y < height; y++ ) {
-			beep8.locate(
-				0 + startCol,
-				y + startRow
-			);
-			for ( let x = 0; x < width; x++ ) {
+		for ( let y = tileY; y < tileY + height; y++ ) {
+
+			// Position the cursor at the start of the row.
+			const lx = 0 + startCol;
+			const ly = y - tileY + startRow;
+			beep8.locate( lx, ly );
+
+			for ( let x = tileX; x < tileX + width; x++ ) {
+
+				if ( !tilemap[ y ] || tilemap[ y ][ x ] == null ) continue;
+
 				const tile = tilemap[ y ][ x ];
 				if ( tile && tile.length >= 3 ) {
 
@@ -6969,6 +6988,7 @@ const beep8 = {};
 						tile[ beep8.Tilemap.MAP_FG ],
 						tile[ beep8.Tilemap.MAP_BG ]
 					);
+
 					beep8.printChar( tile[ beep8.Tilemap.MAP_CHAR ] );
 
 				}
@@ -7108,8 +7128,10 @@ const beep8 = {};
 
 		beep8.Utilities.checkString( "text", mapText );
 
-		const lines = mapText.trim().split( '\n' );
-		const map = lines.map( row => row.trim().split( '' ) );
+		// Don't trim the text as we want to preserve the whitespace.
+		// These may be empty tiles.
+		const lines = mapText.split( '\n' );
+		const map = lines.map( row => row.split( '' ) );
 
 		return map;
 
