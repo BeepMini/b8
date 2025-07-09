@@ -170,11 +170,13 @@
 	 * Draw a tilemap array to the screen.
 	 *
 	 * @param {Array} tilemap The tilemap array to draw.
+	 * @param {number} [tileX=0] The x-coordinate of the tile to start drawing from.
+	 * @param {number} [tileY=0] The y-coordinate of the tile to start drawing from.
 	 * @param {number} [width=null] The width of the tilemap to draw.
 	 * @param {number} [height=null] The height of the tilemap to draw.
 	 * @returns {void}
 	 */
-	beep8.Tilemap.draw = function( tilemap, width = null, height = null ) {
+	beep8.Tilemap.draw = function( tilemap, tileX = 0, tileY = 0, width = null, height = null ) {
 
 		beep8.Utilities.checkArray( "tilemap", tilemap );
 
@@ -186,18 +188,23 @@
 			height = tilemap.length;
 		}
 
-		beep8.Utilities.checkNumber( "width", width );
-		beep8.Utilities.checkNumber( "height", height );
+		beep8.Utilities.checkInt( "width", width );
+		beep8.Utilities.checkInt( "height", height );
 
 		const startRow = beep8.Core.drawState.cursorRow;
 		const startCol = beep8.Core.drawState.cursorCol;
 
-		for ( let y = 0; y < height; y++ ) {
-			beep8.locate(
-				0 + startCol,
-				y + startRow
-			);
-			for ( let x = 0; x < width; x++ ) {
+		for ( let y = tileY; y < tileY + height; y++ ) {
+
+			// Position the cursor at the start of the row.
+			const lx = 0 + startCol;
+			const ly = y - tileY + startRow;
+			beep8.locate( lx, ly );
+
+			for ( let x = tileX; x < tileX + width; x++ ) {
+
+				if ( !tilemap[ y ] || tilemap[ y ][ x ] == null ) continue;
+
 				const tile = tilemap[ y ][ x ];
 				if ( tile && tile.length >= 3 ) {
 
@@ -205,6 +212,7 @@
 						tile[ beep8.Tilemap.MAP_FG ],
 						tile[ beep8.Tilemap.MAP_BG ]
 					);
+
 					beep8.printChar( tile[ beep8.Tilemap.MAP_CHAR ] );
 
 				}
@@ -344,8 +352,10 @@
 
 		beep8.Utilities.checkString( "text", mapText );
 
-		const lines = mapText.trim().split( '\n' );
-		const map = lines.map( row => row.trim().split( '' ) );
+		// Don't trim the text as we want to preserve the whitespace.
+		// These may be empty tiles.
+		const lines = mapText.split( '\n' );
+		const map = lines.map( row => row.split( '' ) );
 
 		return map;
 
