@@ -398,6 +398,17 @@
 		beep8.Utilities.checkNumber( "ch", ch );
 		beep8.Utilities.checkNumber( "n", n );
 
+		// Check cursorCol and cursorRow are within bounds.
+		if (
+			beep8.Core.drawState.cursorCol < 0 ||
+			beep8.Core.drawState.cursorRow < 0 ||
+			beep8.Core.drawState.cursorCol >= beep8.CONFIG.SCREEN_COLS ||
+			beep8.Core.drawState.cursorRow >= beep8.CONFIG.SCREEN_ROWS
+		) {
+			// No need for an error. Just end silently.
+			return;
+		}
+
 		while ( n-- > 0 ) {
 
 			put_(
