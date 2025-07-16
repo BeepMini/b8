@@ -150,14 +150,15 @@
 	 *
 	 * @param {string} prompt - The text to show.
 	 * @param {string[]} [choices=["OK"]] - The choices to present to the user.
+	 * @param {Object} [options={}] - Additional options for the dialog. Uses beep8.Menu.display options.
 	 * @returns {Promise<number>} The index of the selected item.
 	 */
-	beep8.Async.dialog = async function( prompt, choices = [ "OK" ] ) {
+	beep8.Async.dialog = async function( prompt, choices = [ "OK" ], options = {} ) {
 
 		beep8.Utilities.checkString( "prompt", prompt );
 		beep8.Utilities.checkArray( "choices", choices );
 
-		return beep8.Async.menu( choices, { prompt, center: true } );
+		return beep8.Async.menu( choices, { prompt, center: true, ...options } );
 
 	}
 
@@ -169,9 +170,10 @@
 	 * @param {string[]} [choices=["OK"]] - The choices to present to the user.
 	 * @param {number} [wrapWidth=-1] - The width at which to wrap the text.
 	 * @param {number} [delay=0.05] - The delay between characters in seconds.
+	 * @param {Object} [options={}] - Additional options for the dialog. Uses beep8.Menu.display options.
 	 * @returns {Promise<number>} The index of the selected item.
 	 */
-	beep8.Async.dialogTypewriter = async function( prompt, choices = [ "OK" ], wrapWidth = -1, delay = 0.05 ) {
+	beep8.Async.dialogTypewriter = async function( prompt, choices = [ "OK" ], wrapWidth = -1, delay = 0.05, options = {} ) {
 
 		beep8.Utilities.checkString( "prompt", prompt );
 		beep8.Utilities.checkArray( "choices", choices );
@@ -181,7 +183,7 @@
 			prompt = beep8.TextRenderer.wrapText( prompt, wrapWidth );
 		}
 
-		return await beep8.Async.menu( choices, { prompt, typewriter: true } );
+		return await beep8.Async.menu( choices, { prompt, typewriter: true, center: true, ...options } );
 
 	}
 
