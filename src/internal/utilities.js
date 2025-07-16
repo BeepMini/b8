@@ -199,6 +199,10 @@
 	 */
 	beep8.Utilities.checkFunction = function( varName, varValue ) {
 
+		if ( varValue === null ) {
+			beep8.Utilities.fatal( `${varName} should be a function, but was null` );
+		}
+
 		return beep8.Utilities.checkType( varName, varValue, "function" );
 
 	}
