@@ -237,12 +237,6 @@
 			layout[ y ] = [];
 			for ( let x = 0; x < width; x++ ) {
 
-				// char: 0,				// Default to space character
-				// fg: data.colors.FG,		// Default foreground color (adjust as needed)
-				// bg: data.colors.BG,		// Default background color (adjust as needed)
-				// coll: 0,				// Default to no collision
-				// data: {}				// Empty object for additional data
-
 				layout[ y ][ x ] = beep8.Tilemap.getDefaultTile();
 
 			}
@@ -274,9 +268,11 @@
 
 		for ( let y = 0; y < height; y++ ) {
 			for ( let x = 0; x < width; x++ ) {
+
 				const newX = ( x + dx + width ) % width;
 				const newY = ( y + dy + height ) % height;
 				newTilemap[ newY ][ newX ] = [ ...tilemap[ y ][ x ] ];
+
 			}
 		}
 
@@ -304,7 +300,9 @@
 		for ( let y = 0; y < height; y++ ) {
 			for ( let x = 0; x < width; x++ ) {
 				if ( tilemap[ y ] && tilemap[ y ][ x ] ) {
+
 					newTilemap[ y ][ x ] = [ ...tilemap[ y ][ x ] ];
+
 				}
 			}
 		}
@@ -355,7 +353,12 @@
 		// Don't trim the text as we want to preserve the whitespace.
 		// These may be empty tiles.
 		const lines = mapText.split( '\n' );
-		const map = lines.map( row => row.split( '' ) );
+
+		// Remove any lines that are just whitespace.
+		const filteredLines = lines.filter( line => line.trim() !== '' );
+		if ( filteredLines.length === 0 ) beep8.Utilities.fatal( "No valid lines found in the map text." );
+
+		const map = filteredLines.map( row => row.split( '' ) );
 
 		return map;
 
