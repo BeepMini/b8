@@ -12,7 +12,18 @@
 		'idle': {
 			frames: [ 0 ],
 			fps: 1,
-			loop: true
+		},
+		'idle-right': {
+			frames: [ 1 ],
+			fps: 1,
+		},
+		'idle-left': {
+			frames: [ -1 ],
+			fps: 1,
+		},
+		'idle-up': {
+			frames: [ 4 ],
+			fps: 1,
 		},
 		'move-right': {
 			frames: [ 1, 2 ],
@@ -25,7 +36,7 @@
 			loop: true
 		},
 		'move-up': {
-			frames: [ 4, -4 ],
+			frames: [ 5, -5 ],
 			fps: 4,
 			loop: true
 		},
