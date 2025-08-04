@@ -174,6 +174,22 @@
 
 
 	/**
+	 * Set a component on an entity, overwriting any existing data.
+	 * This is a convenience method for add().
+	 *
+	 * @param {number} id Entity ID
+	 * @param {string} name Component name
+	 * @param {Object} data Component data (stored by reference)
+	 * @returns {void}
+	 */
+	beep8.ECS.set = function( id, name, data ) {
+
+		beep8.ECS.add( id, name, data );
+
+	}
+
+
+	/**
 	 * Set the location of an entity.
 	 *
 	 * @param {number} id Entity ID
