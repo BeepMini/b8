@@ -362,6 +362,29 @@
 
 
 	/**
+	 * Count entities by type.
+	 *
+	 * @param {string} typeName
+	 * @returns {number}
+	 */
+	beep8.ECS.countByType = function( typeName ) {
+
+		// get all entities with a Type component
+		const typeMap = this.get( 'Type' );
+		if ( !typeMap ) return 0;
+
+		let count = 0;
+
+		for ( const comp of typeMap.values() ) {
+			if ( comp.name === typeName ) count++;
+		}
+
+		return count;
+
+	}
+
+
+	/**
 	 * Reset the ECS (clears all entities & components).
 	 *
 	 * @returns {void}
@@ -375,5 +398,6 @@
 
 	}
 
-
 } )( beep8 || ( beep8 = {} ) );
+
+
