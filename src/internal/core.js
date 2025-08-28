@@ -201,7 +201,7 @@
 
 			} else {
 
-				console.error( "beep8: beep8.CONFIG.CANVAS_SETTINGS.CONTAINER must be either an ID of an HTMLElement." );
+				beep8.Utilities.error( "beep8: beep8.CONFIG.CANVAS_SETTINGS.CONTAINER must be either an ID of an HTMLElement." );
 				container = document.body;
 
 			}
@@ -546,20 +546,19 @@
 	 *
 	 * @param {number} col - The column.
 	 * @param {number} row - The row.
+	 * @param {boolean} [round=true] - Whether to round the column and row values.
 	 * @returns {void}
 	 */
-	beep8.Core.setCursorLocation = function( col, row ) {
+	beep8.Core.setCursorLocation = function( col, row, round = true ) {
 
+		// Columns.
 		beep8.Utilities.checkNumber( "col", col );
+		beep8.Core.drawState.cursorCol = round ? Math.round( col ) : col;
 
+		// Rows.
 		if ( row !== undefined ) {
 			beep8.Utilities.checkNumber( "row", row );
-		}
-
-		beep8.Core.drawState.cursorCol = Math.round( col );
-
-		if ( row !== undefined ) {
-			beep8.Core.drawState.cursorRow = Math.round( row );
+			beep8.Core.drawState.cursorRow = round ? Math.round( row ) : row;
 		}
 
 	}
@@ -678,7 +677,7 @@
 	 */
 	beep8.Core.loadImage = async function( url ) {
 
-		console.log( 'load image', url );
+		beep8.Utilities.log( 'load image', url );
 
 		return new Promise(
 			( resolve ) => {

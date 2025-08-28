@@ -268,8 +268,15 @@
 						curRow--;
 					}
 
+					// If the current string has at least one character it removes the last character.
+					// If the string is empty it leaves it unchanged.
 					curStrings[ curPos ] = curStrings[ curPos ].length > 0 ? curStrings[ curPos ].substring( 0, curStrings[ curPos ].length - 1 ) : curStrings[ curPos ];
-					beep8.Core.setCursorLocation( curCol + curStrings[ curPos ].length, curRow );
+					// Position the flashing cursor and then print a space to remove the last character.
+					beep8.Core.setCursorLocation(
+						curCol + beep8.TextRenderer.measure( curStrings[ curPos ] ).cols,
+						curRow,
+						false
+					);
 					beep8.TextRenderer.print( " " );
 
 					beep8.Sfx.play( beep8.CONFIG.SFX.TYPING );
@@ -290,11 +297,18 @@
 					if ( curStrings.join( "" ).length < maxLen || maxLen === -1 ) {
 						curStrings[ curPos ] += key;
 
+						// Word wrap.
+						// Check if maxWidth is set and the current string has reached/exceeded it
 						if ( maxWidth !== -1 && curStrings[ curPos ].length >= maxWidth ) {
+							// Print the last character of the current string (to visually fill the slot)
 							beep8.TextRenderer.print( curStrings[ curPos ].charAt( curStrings[ curPos ].length - 1 ) );
+							// Reset the column to the starting column for the next line
 							curCol = startCol;
+							// Move to the next string position (start a new line)
 							curPos++;
+							// Initialize the new line as an empty string
 							curStrings[ curPos ] = "";
+							// Move the row down for the new line
 							curRow++;
 						}
 					}
@@ -306,6 +320,5 @@
 			}
 		}
 	}
-
 
 } )( beep8 || ( beep8 = {} ) );
