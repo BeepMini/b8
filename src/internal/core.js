@@ -260,8 +260,6 @@
 	 * It sets up the pendingAsync object, which is used to track the state of the
 	 * asynchronous operation.
 	 *
-	 * This function should be called at the beginning of an asynchronous method.
-	 *
 	 * @param {string} asyncMethodName - The name of the asynchronous method.
 	 * @param {Function} resolve - The function to call when the operation is successful.
 	 * @param {Function} reject - The function to call when the operation fails.
@@ -295,7 +293,11 @@
 	 * @param {string} asyncMethodName - The name of the asynchronous method.
 	 * @returns {boolean} True if there is a pending asynchronous operation.
 	 */
-	beep8.Core.hasPendingAsync = function( asyncMethodName ) {
+	beep8.Core.hasPendingAsync = function( asyncMethodName = null ) {
+
+		if ( null === asyncMethodName ) {
+			return !!pendingAsync;
+		}
 
 		return pendingAsync && pendingAsync.name === asyncMethodName;
 

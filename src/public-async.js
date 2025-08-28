@@ -115,7 +115,6 @@
 	 */
 	beep8.Async.readLine = async function( initString = "", maxLen = -1, maxWidth = -1 ) {
 
-
 		beep8.Utilities.checkString( "initString", initString );
 		beep8.Utilities.checkNumber( "maxLen", maxLen );
 
