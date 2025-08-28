@@ -23,10 +23,10 @@
 		// Sound effects settings
 		SFX: {
 			// Key presses whilst using an input dialog.
-			TYPING: 'click',
-			MENU_UP: 'blip',
-			MENU_DOWN: 'blip2',
-			MENU_SELECT: 'blip3',
+			TYPING: 'ui/click/003',
+			MENU_UP: 'tone/beep/002',
+			MENU_DOWN: 'tone/beep/001',
+			MENU_SELECT: 'tone/beep/003',
 		},
 		// The font files.
 		// The font files must be PNG files, with the characters in a grid.
