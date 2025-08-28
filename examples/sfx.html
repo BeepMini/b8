@@ -38,27 +38,280 @@
 
 <body>
 	<style>
-		.interface {
+		.interface summary {
+			font-size: 1.2rem;
+		}
+
+		.interface>div>details>div {
+			margin-left: 1rem;
+		}
+
+		#sfx-search {
+			width: 100%;
+			padding: .5rem 1rem;
+			margin-bottom: 1rem;
+		}
+
+		details>summary {
+			padding: .25rem 0;
+			font-weight: 600;
+		}
+
+		/* add to previous styles */
+		.sfx-item {
+			display: flex;
+			flex-direction: column;
+			gap: .25rem;
+		}
+
+		.copy-btn {
+			font-size: 0.6rem;
+			padding: 0.25rem;
+		}
+
+		.toast {
+			position: fixed;
+			inset: auto 1rem 1rem auto;
+			background: #111;
+			color: #fff;
+			padding: .5rem 1rem;
+			border-radius: .2rem;
+			opacity: 0;
+			transform: translateY(6px);
+			transition: opacity .15s ease, transform .15s ease;
+			pointer-events: none;
+			font-size: .9rem;
+		}
+
+		.toast.show {
+			opacity: 1;
+			transform: translateY(0);
+		}
+
+		.sfx-list {
 			display: flex;
 			flex-wrap: wrap;
-			gap: 10px;
+			gap: .4rem;
+			padding: .5rem 0;
+		}
+
+		.hidden {
+			display: none !important;
 		}
 	</style>
+	<input id="sfx-search" type="search" placeholder="Search sounds or paths…" aria-label="Search sounds">
+	<div class="interface" id="sfx-browser"></div>
+	<div class="toast" id="sfx-toast" role="status" aria-live="polite"></div>
+
 	<p><a href="https://killedbyapixel.github.io/ZzFX/">ZZFX Synth</a></p>
-	<div class="interface"></div>
 </body>
 
 <script>
 
-	const buttons = beep8.Sfx.get();
-	// Loop through buttons and add them to the .interface div.
-	buttons.forEach( ( button, index ) => {
-		const buttonElement = document.createElement( 'button' );
-		buttonElement.innerText = button;
-		buttonElement.addEventListener( 'click', () => {
-			beep8.Sfx.play( button );
-		} );
-		document.querySelector( '.interface' ).appendChild( buttonElement );
-	} );
+	/* helper: copy text + toast */
+	const copyText = async ( text ) => {
+		try {
+			if ( navigator.clipboard && navigator.clipboard.writeText ) {
+				await navigator.clipboard.writeText( text );
+			} else {
+				const ta = document.createElement( 'textarea' );
+				ta.value = text;
+				ta.setAttribute( 'readonly', '' );
+				ta.style.position = 'fixed';
+				ta.style.opacity = '0';
+				document.body.appendChild( ta );
+				ta.select();
+				document.execCommand( 'copy' );
+				ta.remove();
+			}
+			showToast( `Copied: ${text}` );
+		} catch {
+			showToast( 'Copy failed' );
+		}
+	};
 
+	const showToast = ( msg ) => {
+		const el = document.getElementById( 'sfx-toast' );
+		el.textContent = msg;
+		el.classList.add( 'show' );
+		clearTimeout( showToast._t );
+		showToast._t = setTimeout( () => el.classList.remove( 'show' ), 1200 );
+	};
+
+	/*	Build a tree from paths like:
+			"ui/click", "ui/confirm", "monsters/dragon/roar"
+			Tree nodes: { children: Map, items: [] }
+		*/
+	const buildTree = ( paths ) => {
+		const root = { children: new Map(), items: [] };
+
+		paths.forEach( ( p ) => {
+			const parts = p.split( '/' ).filter( Boolean );
+			let node = root;
+
+			parts.forEach( ( part, i ) => {
+				const isLeaf = i === parts.length - 1;
+
+				if ( isLeaf ) {
+					node.items.push( p ); // store full path as item
+				} else {
+					if ( !node.children.has( part ) ) {
+						node.children.set( part, { children: new Map(), items: [] } );
+					}
+					node = node.children.get( part );
+				}
+			} );
+		} );
+
+		return root;
+	};
+
+	/* update: render buttons with a neighbour copy button */
+	const renderTree = ( node, label = '', pathPrefix = '' ) => {
+		const container = document.createElement( 'div' );
+
+		for ( const [ folder, child ] of node.children ) {
+			const details = document.createElement( 'details' );
+			const summary = document.createElement( 'summary' );
+			summary.textContent = folder;
+			details.appendChild( summary );
+			const childEl = renderTree( child, folder, pathPrefix ? pathPrefix + '/' + folder : folder );
+			details.appendChild( childEl );
+			container.appendChild( details );
+		}
+
+		if ( node.items.length ) {
+			const list = document.createElement( 'div' );
+			list.className = 'sfx-list';
+
+			node.items
+				.slice()
+				.sort( ( a, b ) => a.localeCompare( b ) )
+				.forEach( ( fullPath ) => {
+					const wrap = document.createElement( 'div' );
+					wrap.className = 'sfx-item';
+
+					const btn = document.createElement( 'button' );
+					btn.type = 'button';
+					btn.className = 'sfx-btn';
+					btn.textContent = fullPath.split( '/' ).pop();
+					btn.title = fullPath;
+					btn.dataset.path = fullPath;
+
+					const copy = document.createElement( 'button' );
+					copy.type = 'button';
+					copy.className = 'copy-btn';
+					copy.textContent = 'Copy';
+					copy.ariaLabel = `Copy path ${fullPath}`;
+					copy.dataset.copyPath = fullPath;
+
+					wrap.appendChild( btn );
+					wrap.appendChild( copy );
+					list.appendChild( wrap );
+				} );
+
+			container.appendChild( list );
+		}
+
+		return container;
+	};
+
+	/*	Filter UI by a query.
+		Hides non-matching buttons and collapses groups with no visible matches.
+		Expands groups that contain matches.
+	*/
+	const filterBrowser = ( rootEl, query ) => {
+		const q = query.trim().toLowerCase();
+
+		// 1) Filter items instead of just buttons
+		const items = rootEl.querySelectorAll( '.sfx-item' );
+		let anyMatch = false;
+
+		items.forEach( ( wrap ) => {
+			const btn = wrap.querySelector( '.sfx-btn' );
+			const fullPath = btn.dataset.path.toLowerCase();
+			const name = btn.textContent.toLowerCase();
+			const match = !q || fullPath.includes( q ) || name.includes( q );
+
+			wrap.classList.toggle( 'hidden', !match );
+			if ( match ) anyMatch = true;
+		} );
+
+		// 2) For each <details>, show it if it contains any visible .sfx-item
+		const folders = rootEl.querySelectorAll( 'details' );
+		folders.forEach( ( d ) => {
+			const hasVisible = d.querySelector( '.sfx-item:not(.hidden)' ) !== null;
+			d.classList.toggle( 'hidden', !hasVisible );
+
+			// auto-open matches
+			if ( q && hasVisible ) {
+				d.open = true;
+			} else if ( !q ) {
+				d.open = false;
+			}
+		} );
+
+		// 3) Empty message
+		let empty = rootEl.querySelector( '[data-empty]' );
+		if ( !anyMatch && q ) {
+			if ( !empty ) {
+				empty = document.createElement( 'p' );
+				empty.dataset.empty = '1';
+				empty.textContent = 'No sounds match your search.';
+				rootEl.appendChild( empty );
+			}
+		} else {
+			if ( empty ) empty.remove();
+		}
+	};
+
+	/* update: interaction adds copy handling + keyboard copy */
+	const setupInteraction = ( rootEl ) => {
+		rootEl.addEventListener( 'click', ( e ) => {
+			const copy = e.target.closest( '.copy-btn' );
+			if ( copy ) {
+				copyText( copy.dataset.copyPath );
+				return;
+			}
+			const btn = e.target.closest( '.sfx-btn' );
+			if ( btn ) {
+				beep8.Sfx.play( btn.dataset.path );
+			}
+		} );
+
+		// Ctrl+C / Cmd+C copies focused sound path
+		rootEl.addEventListener( 'keydown', ( e ) => {
+			if ( ( e.ctrlKey || e.metaKey ) && e.key.toLowerCase() === 'c' ) {
+				const active = document.activeElement;
+				if ( active && active.classList.contains( 'sfx-btn' ) ) {
+					e.preventDefault();
+					copyText( active.dataset.path );
+				}
+			}
+		} );
+	};
+
+	/*	Main bootstrap */
+	( () => {
+		const container = document.getElementById( 'sfx-browser' );
+		const search = document.getElementById( 'sfx-search' );
+
+		// Get all SFX paths
+		const paths = beep8.Sfx.get(); // assumes array of strings like "ui/click"
+
+		// Build and render
+		const tree = buildTree( paths );
+		const ui = renderTree( tree );
+		container.innerHTML = '';
+		container.appendChild( ui );
+
+		setupInteraction( container );
+
+		// Live search with tiny debounce
+		let t = null;
+		search.addEventListener( 'input', () => {
+			clearTimeout( t );
+			t = setTimeout( () => filterBrowser( container, search.value ), 120 );
+		} );
+	} )();
 </script>
