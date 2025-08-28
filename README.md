@@ -8,6 +8,10 @@ The files in dist are the only files you need to run beep8. You will also need t
 
 To develop locally you can run `npm install` and then `npm run dev`. This will run a watch script that will rebuild the dist/beep8.js file. To build everything run `npm run build`.
 
+## Documentation
+
+There is a complete documentation website on [https://beep8.com/docs/](https://beep8.com/docs/). This covers the code along with examples and some tools that work well with beep8.
+
 ## Inspired by QX82
 
 beep8 is a fork of the [QX82](https://github.com/btco/qx82) engine by btco. For more information, check out the [QX82 site](https://btco.github.io/qx82).
