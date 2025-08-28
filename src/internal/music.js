@@ -507,8 +507,6 @@
 
 		beep8.Music.currentSongProperties = opts;
 
-		console.log( opts );
-
 		beep8.Random.setSeed( opts.seed );
 		var chordProgressionNotes = generateChordProgression( opts.noteCount );
 		var parts = times(

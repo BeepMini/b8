@@ -922,7 +922,7 @@
 				break;
 
 			default:
-				console.warn( "Unknown beep8 print escape command: " + command );
+				beep8.Utilities.warn( "Unknown beep8 print escape command: " + command );
 		}
 
 	}
