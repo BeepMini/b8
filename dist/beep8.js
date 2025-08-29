@@ -96,10 +96,10 @@ const beep8 = {};
 		// Sound effects settings
 		SFX: {
 			// Key presses whilst using an input dialog.
-			TYPING: 'click',
-			MENU_UP: 'blip',
-			MENU_DOWN: 'blip2',
-			MENU_SELECT: 'blip3',
+			TYPING: 'ui/click/003',
+			MENU_UP: 'tone/beep/002',
+			MENU_DOWN: 'tone/beep/001',
+			MENU_SELECT: 'tone/beep/003',
 		},
 		// The font files.
 		// The font files must be PNG files, with the characters in a grid.
@@ -169,16 +169,8 @@ const beep8 = {};
 		TOUCH_VJOY: true,
 		// Cursor config:
 		CURSOR: {
-			// Cursor width, as a fraction of the character width (0 to 1)
-			WIDTH_F: 0.8,
-			// Cursor height, as a fraction of the character height (0 to 1)
-			HEIGHT_F: 0.8,
-			// Blink interval in millis.
+			// Blink interval in milliseconds.
 			BLINK_INTERVAL: 400,
-			// Cursor offset (as fraction of, respectively, char width and height). Tweak these if
-			// you want to adjust the positioning of the cursor.
-			OFFSET_V: 0.1,
-			OFFSET_H: 0,
 		},
 		// If set, then special escape sequences can be used when printing (to set colors, etc).
 		// These are the sequences that starts and end an escape sequence. See the documentation for
@@ -1248,7 +1240,6 @@ const beep8 = {};
 	 */
 	beep8.Async.readLine = async function( initString = "", maxLen = -1, maxWidth = -1 ) {
 
-
 		beep8.Utilities.checkString( "initString", initString );
 		beep8.Utilities.checkNumber( "maxLen", maxLen );
 
@@ -1283,14 +1274,15 @@ const beep8 = {};
 	 *
 	 * @param {string} prompt - The text to show.
 	 * @param {string[]} [choices=["OK"]] - The choices to present to the user.
+	 * @param {Object} [options={}] - Additional options for the dialog. Uses beep8.Menu.display options.
 	 * @returns {Promise<number>} The index of the selected item.
 	 */
-	beep8.Async.dialog = async function( prompt, choices = [ "OK" ] ) {
+	beep8.Async.dialog = async function( prompt, choices = [ "OK" ], options = {} ) {
 
 		beep8.Utilities.checkString( "prompt", prompt );
 		beep8.Utilities.checkArray( "choices", choices );
 
-		return beep8.Async.menu( choices, { prompt, center: true } );
+		return beep8.Async.menu( choices, { prompt, center: true, ...options } );
 
 	}
 
@@ -1302,9 +1294,10 @@ const beep8 = {};
 	 * @param {string[]} [choices=["OK"]] - The choices to present to the user.
 	 * @param {number} [wrapWidth=-1] - The width at which to wrap the text.
 	 * @param {number} [delay=0.05] - The delay between characters in seconds.
+	 * @param {Object} [options={}] - Additional options for the dialog. Uses beep8.Menu.display options.
 	 * @returns {Promise<number>} The index of the selected item.
 	 */
-	beep8.Async.dialogTypewriter = async function( prompt, choices = [ "OK" ], wrapWidth = -1, delay = 0.05 ) {
+	beep8.Async.dialogTypewriter = async function( prompt, choices = [ "OK" ], wrapWidth = -1, delay = 0.05, options = {} ) {
 
 		beep8.Utilities.checkString( "prompt", prompt );
 		beep8.Utilities.checkArray( "choices", choices );
@@ -1314,7 +1307,7 @@ const beep8 = {};
 			prompt = beep8.TextRenderer.wrapText( prompt, wrapWidth );
 		}
 
-		return await beep8.Async.menu( choices, { prompt, typewriter: true } );
+		return await beep8.Async.menu( choices, { prompt, typewriter: true, center: true, ...options } );
 
 	}
 
@@ -1448,7 +1441,18 @@ const beep8 = {};
 		'idle': {
 			frames: [ 0 ],
 			fps: 1,
-			loop: true
+		},
+		'idle-right': {
+			frames: [ 1 ],
+			fps: 1,
+		},
+		'idle-left': {
+			frames: [ -1 ],
+			fps: 1,
+		},
+		'idle-up': {
+			frames: [ 4 ],
+			fps: 1,
 		},
 		'move-right': {
 			frames: [ 1, 2 ],
@@ -1461,7 +1465,7 @@ const beep8 = {};
 			loop: true
 		},
 		'move-up': {
-			frames: [ 4, -4 ],
+			frames: [ 5, -5 ],
 			fps: 4,
 			loop: true
 		},
@@ -1896,7 +1900,7 @@ const beep8 = {};
 
 			} else {
 
-				console.error( "beep8: beep8.CONFIG.CANVAS_SETTINGS.CONTAINER must be either an ID of an HTMLElement." );
+				beep8.Utilities.error( "beep8: beep8.CONFIG.CANVAS_SETTINGS.CONTAINER must be either an ID of an HTMLElement." );
 				container = document.body;
 
 			}
@@ -1955,8 +1959,6 @@ const beep8 = {};
 	 * It sets up the pendingAsync object, which is used to track the state of the
 	 * asynchronous operation.
 	 *
-	 * This function should be called at the beginning of an asynchronous method.
-	 *
 	 * @param {string} asyncMethodName - The name of the asynchronous method.
 	 * @param {Function} resolve - The function to call when the operation is successful.
 	 * @param {Function} reject - The function to call when the operation fails.
@@ -1990,7 +1992,11 @@ const beep8 = {};
 	 * @param {string} asyncMethodName - The name of the asynchronous method.
 	 * @returns {boolean} True if there is a pending asynchronous operation.
 	 */
-	beep8.Core.hasPendingAsync = function( asyncMethodName ) {
+	beep8.Core.hasPendingAsync = function( asyncMethodName = null ) {
+
+		if ( null === asyncMethodName ) {
+			return !!pendingAsync;
+		}
 
 		return pendingAsync && pendingAsync.name === asyncMethodName;
 
@@ -2239,20 +2245,19 @@ const beep8 = {};
 	 *
 	 * @param {number} col - The column.
 	 * @param {number} row - The row.
+	 * @param {boolean} [round=true] - Whether to round the column and row values.
 	 * @returns {void}
 	 */
-	beep8.Core.setCursorLocation = function( col, row ) {
+	beep8.Core.setCursorLocation = function( col, row, round = true ) {
 
+		// Columns.
 		beep8.Utilities.checkNumber( "col", col );
+		beep8.Core.drawState.cursorCol = round ? Math.round( col ) : col;
 
+		// Rows.
 		if ( row !== undefined ) {
 			beep8.Utilities.checkNumber( "row", row );
-		}
-
-		beep8.Core.drawState.cursorCol = Math.round( col );
-
-		if ( row !== undefined ) {
-			beep8.Core.drawState.cursorRow = Math.round( row );
+			beep8.Core.drawState.cursorRow = round ? Math.round( row ) : row;
 		}
 
 	}
@@ -2371,7 +2376,7 @@ const beep8 = {};
 	 */
 	beep8.Core.loadImage = async function( url ) {
 
-		console.log( 'load image', url );
+		beep8.Utilities.log( 'load image', url );
 
 		return new Promise(
 			( resolve ) => {
@@ -2850,42 +2855,32 @@ const beep8 = {};
 
 
 	/**
-	 * Draws the cursor.
+	 * Draws the flashing cursor.
+	 * This is called automatically in the beep8 render function so does not
+	 * need to be called manually.
 	 *
 	 * @param {CanvasRenderingContext2D} targetCtx - The context to draw the cursor on
-	 * @param {number} canvasWidth - The width of the canvas
-	 * @param {number} canvasHeight - The height of the canvas
 	 * @returns {void}
 	 */
-	beep8.CursorRenderer.draw = function( targetCtx, canvasWidth, canvasHeight ) {
+	beep8.CursorRenderer.draw = function( targetCtx ) {
 
 		beep8.Utilities.checkInstanceOf( "targetCtx", targetCtx, CanvasRenderingContext2D );
-		beep8.Utilities.checkNumber( "canvasWidth", canvasWidth );
-		beep8.Utilities.checkNumber( "canvasHeight", canvasHeight );
 
 		// If the cursor is not visible or it is not time to blink, do nothing.
 		if ( !beep8.Core.drawState.cursorVisible || blinkCycle_ <= 0 ) return;
 
-		const ratio = canvasWidth / beep8.Core.canvas.width;
+		const font = beep8.TextRenderer.getFont();
 
 		// Calculate the real position of the cursor.
-		const realX = Math.round(
-			( beep8.Core.drawState.cursorCol + 0.5 - beep8.CONFIG.CURSOR.WIDTH_F / 2 + beep8.CONFIG.CURSOR.OFFSET_H ) *
-			beep8.CONFIG.CHR_WIDTH * ratio
-		);
-
-		const realY = Math.round(
-			( beep8.Core.drawState.cursorRow + 1 - beep8.CONFIG.CURSOR.HEIGHT_F - beep8.CONFIG.CURSOR.OFFSET_V ) *
-			beep8.CONFIG.CHR_HEIGHT * ratio
-		);
+		const realX = beep8.Core.drawState.cursorCol * beep8.CONFIG.CHR_WIDTH;
+		const realY = beep8.Core.drawState.cursorRow * beep8.CONFIG.CHR_HEIGHT;
 
 		// Draw the cursor.
 		targetCtx.fillStyle = beep8.Core.getColorHex( beep8.Core.drawState.fgColor );
 
 		targetCtx.fillRect(
-			realX, realY,
-			Math.round( beep8.CONFIG.CURSOR.WIDTH_F * beep8.CONFIG.CHR_WIDTH * ratio ),
-			Math.round( beep8.CONFIG.CURSOR.HEIGHT_F * beep8.CONFIG.CHR_HEIGHT * ratio )
+			realX + 1, realY + 1,
+			font.charWidth_ - 2, font.charHeight_ - 2
 		);
 
 	}
@@ -2901,6 +2896,557 @@ const beep8 = {};
 
 		blinkCycle_ = ( blinkCycle_ + 1 ) % 2;
 		beep8.Renderer.render();
+
+	}
+
+
+} )( beep8 || ( beep8 = {} ) );
+
+
+( function( beep8 ) {
+	'use strict';
+
+	/**
+	 * Lightweight Entity-Component store for Beep8.
+	 * ---------------------------------------------
+	 * • Entity: A reference to a collection of data for an object in game. It is a numeric ID. Automatically assigned when using the create() method.
+	 * • Component: A property for an entity. The data can be any plain object. Each entity has a key string used as a property name. Loc is reserved for location.
+	 * • System: Code that executes commands on entities. There are different systems for different processes.
+	 *
+	 * All data is stored by reference; mutating the returned
+	 * component objects is intentional and fast.
+	 */
+	beep8.ECS = {};
+
+	// auto-incrementing entity IDs
+	let nextId = 0;
+
+	// Map<name, Map<id, data>>
+	let components = new Map();
+
+	// Grid for positional queries.
+	// To keep this up to date you must use setLoc() to move entities.
+	let grid = [];
+
+	// Map<name, function> for systems
+	let systems = new Map();
+
+
+
+	/**
+	 * Create a new unique entity ID.
+	 *
+	 * @returns {number}
+	 */
+	function makeEntity() {
+
+		return nextId++;
+
+	}
+
+
+	/**
+	 * Ensure a component bucket exists and return it.
+	 *
+	 * @param {string} name
+	 * @returns {Map<number, Object>}
+	 * @private
+	 */
+	function bucket( name ) {
+
+		// If component store doesn't exist, create it.
+		if ( !components.has( name ) ) components.set( name, new Map() );
+		// Return the store.
+		return components.get( name );
+
+	}
+
+
+	/**
+	 * Get all entities at a specific grid location.
+	 *
+	 * @param {number} x
+	 * @param {number} y
+	 * @returns {number[]} Array of entity IDs at that location
+	 */
+	beep8.ECS.entitiesAt = function( x, y ) {
+
+		return grid[ y ]?.[ x ] ?? [];
+
+	}
+
+
+	/* ------------------------------------------------------------------
+	   System pipeline helpers
+	   ------------------------------------------------------------------*/
+
+	/**
+	 * Register a system that runs every frame.
+	 *
+	 * @param {Function} fn   System function (dt)=>void
+	 * @param {string}   name Unique system name
+	 * @param {number}  [order=0] Lower numbers run first
+	 */
+	beep8.ECS.addSystem = function( name, fn, order = 0 ) {
+
+		beep8.Utilities.checkFunction( 'fn', fn );
+		beep8.Utilities.checkString( 'name', name );
+		beep8.Utilities.checkInt( 'order', order );
+
+		if ( systems.has( name ) ) beep8.Utilities.warn( `ECS: overwriting existing system "${name}"` );
+
+		systems.set( name, { fn, order } );
+
+	};
+
+
+	/**
+	 * Add a system a single time. Don't overwite existing systems or add multiple copies.
+	 *
+	 * @param {Function} fn   System function (dt)=>void
+	 * @param {string}   name Unique system name
+	 * @param {number}  [order=0] Lower numbers run first
+	 */
+	beep8.ECS.addSystemOnce = function( fn, name, order = 0 ) {
+
+		beep8.Utilities.checkFunction( 'fn', fn );
+		beep8.Utilities.checkString( 'name', name );
+		beep8.Utilities.checkInt( 'order', order );
+
+		if ( systems.has( name ) ) return;
+
+		beep8.ECS.addSystem( fn, name, order );
+
+	};
+
+
+	/**
+	 * Remove a previously-registered system.
+	 *
+	 * @param {string} name
+	 */
+	beep8.ECS.removeSystem = function( name ) {
+
+		systems.delete( name );
+
+	};
+
+
+	/**
+	 * Run every system in order.
+	 * Optionally pass a filter:  (name)=>boolean
+	 *
+	 * @param {number} dt Delta-time in seconds
+	 * @param {(name:string)=>boolean=} filter Skip systems that return false
+	 */
+	beep8.ECS.run = function( dt, filter = () => true ) {
+
+		[ ...systems.entries() ]
+			// Sort by order/ priority.
+			.sort( ( a, b ) => a[ 1 ].order - b[ 1 ].order )   // order ASC
+			// Execute each system in priority order.
+			.forEach(
+				( [ name, { fn } ] ) => {
+					if ( filter( name ) ) fn( dt );
+				}
+			);
+
+	};
+
+
+	/**
+	 * Attach or overwrite a component on an entity.
+	 *
+	 * @param {number} id Entity ID
+	 * @param {string} name Component name
+	 * @param {Object} [data={}] Component data (stored by reference)
+	 * @returns {void}
+	 */
+	beep8.ECS.add = function( id, name = null, data = {} ) {
+
+		beep8.Utilities.checkInt( 'id', id );
+		beep8.Utilities.checkString( 'name', name );
+		beep8.Utilities.checkObject( 'data', data );
+
+		// Add the new component to the store.
+		bucket( name ).set( id, data );
+
+		// If the component is Loc (location), update the position grid.
+		if ( 'Loc' === name ) beep8.ECS.setLoc( id, data.x, data.y );
+
+	}
+
+
+	/**
+	 * Set a component on an entity, overwriting any existing data.
+	 * This is a convenience method for add().
+	 *
+	 * @param {number} id Entity ID
+	 * @param {string} name Component name
+	 * @param {Object} data Component data (stored by reference)
+	 * @returns {void}
+	 */
+	beep8.ECS.set = function( id, name, data ) {
+
+		beep8.ECS.add( id, name, data );
+
+	}
+
+
+	/**
+	 * Set the location of an entity.
+	 *
+	 * @param {number} id Entity ID
+	 * @param {number} x X coordinate
+	 * @param {number} y Y coordinate
+	 * @returns {void}
+	 */
+	beep8.ECS.setLoc = function( id, x, y ) {
+
+		beep8.Utilities.checkInt( 'id', id );
+		beep8.Utilities.checkInt( 'x', x );
+		beep8.Utilities.checkInt( 'y', y );
+
+		// Get the current location component.
+		const loc = this.getComponent( id, 'Loc' );
+
+		// Remove from old position.
+		const oldRow = grid[ loc.y ];
+		if ( oldRow ) {
+			const cell = oldRow[ loc.x ];
+			if ( cell ) {
+				const i = cell.indexOf( id );
+				if ( i !== -1 ) cell.splice( i, 1 );
+			}
+		}
+
+		// Update component position.
+		loc.x = x;
+		loc.y = y;
+
+		// Save new grid location.
+		if ( !grid[ y ] ) grid[ y ] = [];
+		if ( !grid[ y ][ x ] ) grid[ y ][ x ] = [];
+		grid[ y ][ x ].push( id );
+
+	}
+
+
+	/**
+	 * Get the component map for a given component name.
+	 *
+	 * @param {string} name
+	 * @returns {Map<number,Object>} Map<entityId,data>
+	 */
+	beep8.ECS.get = function( name ) {
+
+		beep8.Utilities.checkString( 'name', name );
+
+		return components.get( name ) ?? new Map();
+
+	}
+
+
+	/**
+	 * Return *all* components for a given entity.
+	 *
+	 * @param {number} id
+	 * @returns {Map<string, Object>} Map of name → data
+	 */
+	beep8.ECS.getEntity = function( id ) {
+
+		beep8.Utilities.checkInt( 'id', id );
+
+		const out = new Map();
+		for ( const [ name, map ] of components ) {
+			if ( map.has( id ) ) out.set( name, map.get( id ) );
+		}
+		return out;
+
+	}
+
+
+	/**
+	 * Get one specific component for an entity.
+	 *
+	 * @param {number} id
+	 * @param {string} name
+	 * @returns {Object|undefined}
+	 */
+	beep8.ECS.getComponent = function( id, name ) {
+
+		return components.get( name )?.get( id );
+
+	}
+
+
+	/**
+	 * Check if an entity owns a component.
+	 *
+	 * @param {number} id
+	 * @param {string} name
+	 * @returns {boolean}
+	 */
+	beep8.ECS.hasComponent = function( id, name ) {
+
+		return components.get( name )?.has( id ) ?? false;
+
+	}
+
+
+	/**
+	 * Remove a single component from an entity.
+	 *
+	 * @param {number} id
+	 * @param {string} name
+	 * @returns {void}
+	 */
+	beep8.ECS.removeComponent = function( id, name ) {
+
+		components.get( name )?.delete( id );
+
+	}
+
+
+	/**
+	 * Remove an entity entirely (all its components).
+	 *
+	 * @param {number} id
+	 * @returns {void}
+	 */
+	beep8.ECS.removeEntity = function( id ) {
+
+		const loc = this.getComponent( id, 'Loc' );
+
+		if ( loc ) {
+			const cell = grid[ loc.y ]?.[ loc.x ];
+			if ( cell ) cell.splice( cell.indexOf( id ), 1 );
+		}
+
+		for ( const store of components.values() ) store.delete( id );
+
+	}
+
+
+	/**
+	 * Create an entity from a bundle of components.
+	 *
+	 * @param {Object.<string, Object>} bundle Keys = component names
+	 * @returns {number} The new entity ID
+	 */
+	beep8.ECS.create = function( bundle ) {
+
+		const id = makeEntity();
+		for ( const [ name, data ] of Object.entries( bundle ) ) {
+			beep8.ECS.add( id, name, data );
+		}
+		return id;
+
+	}
+
+
+	/**
+	 * Query for entities that own *all* given components.
+	 *
+	 * @param {...string} names
+	 * @returns {number[]} Array of entity IDs
+	 */
+	beep8.ECS.query = function( ...names ) {
+
+		if ( names.length === 0 ) return [];
+		const base = components.get( names[ 0 ] );
+
+		if ( !base ) return [];
+
+		return [ ...base.keys() ].filter( id =>
+			names.every( n => components.get( n )?.has( id ) )
+		);
+
+	}
+
+
+	/**
+	 * Count entities by type.
+	 *
+	 * @param {string} typeName
+	 * @returns {number}
+	 */
+	beep8.ECS.countByType = function( typeName ) {
+
+		// get all entities with a Type component
+		const typeMap = this.get( 'Type' );
+		if ( !typeMap ) return 0;
+
+		let count = 0;
+
+		for ( const comp of typeMap.values() ) {
+			if ( comp.name === typeName ) count++;
+		}
+
+		return count;
+
+	}
+
+
+	/**
+	 * Reset the ECS (clears all entities & components).
+	 *
+	 * @returns {void}
+	 */
+	beep8.ECS.reset = function() {
+
+		components = new Map();
+		systems = new Map();
+		grid = [];
+		nextId = 0;
+
+	}
+
+} )( beep8 || ( beep8 = {} ) );
+
+
+
+( function( beep8 ) {
+
+	beep8.Hooks = {};
+
+	/**
+	 * Internal hook management for actions and filters.
+	 * This is used to manage the hooks for actions and filters in the beep8 framework.
+	 * It allows you to add, execute, and remove hooks for various game events.
+	 */
+	const actions = {};
+	const filters = {};
+
+
+	/**
+	 * Adds a hook to the specified store with the given name, callback, and priority.
+	 * This function is used internally to manage hooks for actions and filters.
+	 *
+	 * @param {Object} store - The store to add the hook to (actions or filters).
+	 * @param {string} hookName - The name of the hook.
+	 * @param {Function} callback - The function to call when the hook is triggered.
+	 * @param {number} [priority=10] - The priority of the hook.
+	 * @returns {void}
+	 */
+	function _add( store, hookName, callback, priority = 10 ) {
+
+		if ( !store[ hookName ] ) store[ hookName ] = [];
+		store[ hookName ].push( { callback, priority } );
+		store[ hookName ].sort( ( a, b ) => a.priority - b.priority );
+
+	}
+
+
+	/**
+	 * Registers an action hook.
+	 * This allows you to add a callback that will be executed when the action is triggered.
+	 * You can use this to modify game behavior or add custom functionality.
+	 *
+	 * @param {string} hookName - The name of the action hook.
+	 * @param {Function} callback - The function to call when the action is triggered.
+	 * @param {number} [priority=10] - The priority of the action hook.
+	 * @returns {void}
+	 */
+	beep8.Hooks.addAction = function( hookName, callback, priority = 10 ) {
+
+		_add( actions, hookName, callback, priority );
+
+	}
+
+
+	/**
+	 * Executes all registered actions for the given hook name.
+	 * This will call each action's callback with the provided arguments.
+	 *
+	 * @example
+	 * beep8.Hooks.doAction( 'onPlayerMove', playerId, newX, newY, dx, dy );
+	 *
+	 * @param {string} hookName - The name of the action hook to execute.
+	 * @param {...*} args - The arguments to pass to the action callbacks.
+	 * @returns {void}
+	 *
+	 */
+	beep8.Hooks.doAction = function( hookName, ...args ) {
+
+		if ( !actions[ hookName ] ) return;
+		for ( const { callback } of actions[ hookName ] ) {
+			callback( ...args );
+		}
+
+	}
+
+
+	/**
+	 * Registers a filter hook.
+	 * This allows you to add a callback that will modify a value before it is returned.
+	 * You can use this to change game data or apply transformations.
+	 *
+	 * @param {string} hookName - The name of the filter hook.
+	 * @param {Function} callback - The function to call when the filter is applied.
+	 * @param {number} [priority=10] - The priority of the filter hook.
+	 * @returns {void}
+	 */
+	beep8.Hooks.addFilter = function( hookName, callback, priority = 10 ) {
+
+		_add( filters, hookName, callback, priority );
+
+	}
+
+
+	/**
+	 * Applies all registered filters for the given hook name to a value.
+	 * This will call each filter's callback with the value and any additional arguments,
+	 * returning the modified value.
+	 *
+	 * @example
+	 * const modifiedValue = beep8.Hooks.applyFilters( 'modifyPlayerSpeed', playerSpeed, playerId );
+	 *
+	 * @param {string} hookName - The name of the filter hook to apply.
+	 * @param {*} value - The initial value to filter.
+	 * @param {...*} args - Additional arguments to pass to the filter callbacks.
+	 * @return {*} The modified value after all filters have been applied.
+	 */
+	beep8.Hooks.applyFilters = function( hookName, value, ...args ) {
+
+		if ( !filters[ hookName ] ) return value;
+
+		let result = value;
+		for ( const { callback } of filters[ hookName ] ) {
+			result = callback( result, ...args );
+		}
+
+		return result;
+
+	}
+
+
+	/**
+	 * Removes a specific action hook by its name and callback.
+	 * This is useful for cleaning up hooks that are no longer needed.
+	 *
+	 * @param {string} hookName - The name of the action hook to remove.
+	 * @param {Function} callback - The callback function to remove.
+	 * @returns {void}
+	 */
+	beep8.Hooks.removeAction = function( hookName, callback ) {
+
+		actions[ hookName ] = ( actions[ hookName ] || [] ).filter( h => h.callback !== callback );
+
+	}
+
+
+	/**
+	 * Removes a specific filter hook by its name and callback.
+	 * This is useful for cleaning up filters that are no longer needed.
+	 *
+	 * @param {string} hookName - The name of the filter hook to remove.
+	 * @param {Function} callback - The callback function to remove.
+	 * @returns {void}
+	 */
+	beep8.Hooks.removeFilter = function( hookName, callback ) {
+
+		filters[ hookName ] = ( filters[ hookName ] || [] ).filter( h => h.callback !== callback );
 
 	}
 
@@ -3177,8 +3723,15 @@ const beep8 = {};
 						curRow--;
 					}
 
+					// If the current string has at least one character it removes the last character.
+					// If the string is empty it leaves it unchanged.
 					curStrings[ curPos ] = curStrings[ curPos ].length > 0 ? curStrings[ curPos ].substring( 0, curStrings[ curPos ].length - 1 ) : curStrings[ curPos ];
-					beep8.Core.setCursorLocation( curCol + curStrings[ curPos ].length, curRow );
+					// Position the flashing cursor and then print a space to remove the last character.
+					beep8.Core.setCursorLocation(
+						curCol + beep8.TextRenderer.measure( curStrings[ curPos ] ).cols,
+						curRow,
+						false
+					);
 					beep8.TextRenderer.print( " " );
 
 					beep8.Sfx.play( beep8.CONFIG.SFX.TYPING );
@@ -3199,11 +3752,18 @@ const beep8 = {};
 					if ( curStrings.join( "" ).length < maxLen || maxLen === -1 ) {
 						curStrings[ curPos ] += key;
 
+						// Word wrap.
+						// Check if maxWidth is set and the current string has reached/exceeded it
 						if ( maxWidth !== -1 && curStrings[ curPos ].length >= maxWidth ) {
+							// Print the last character of the current string (to visually fill the slot)
 							beep8.TextRenderer.print( curStrings[ curPos ].charAt( curStrings[ curPos ].length - 1 ) );
+							// Reset the column to the starting column for the next line
 							curCol = startCol;
+							// Move to the next string position (start a new line)
 							curPos++;
+							// Initialize the new line as an empty string
 							curStrings[ curPos ] = "";
+							// Move the row down for the new line
 							curRow++;
 						}
 					}
@@ -3215,7 +3775,6 @@ const beep8 = {};
 			}
 		}
 	}
-
 
 } )( beep8 || ( beep8 = {} ) );
 
@@ -3979,8 +4538,6 @@ const beep8 = {};
 		const opts = Object.assign( {}, defaultOptions, options );
 
 		beep8.Music.currentSongProperties = opts;
-
-		console.log( opts );
 
 		beep8.Random.setSeed( opts.seed );
 		var chordProgressionNotes = generateChordProgression( opts.noteCount );
@@ -4885,11 +5442,7 @@ const beep8 = {};
 
 		dirty = false;
 
-		beep8.CursorRenderer.draw(
-			beep8.Core.realCtx,
-			beep8.Core.realCanvas.width,
-			beep8.Core.realCanvas.height
-		);
+		beep8.CursorRenderer.draw( beep8.Core.realCtx );
 
 		beep8.Renderer.applyCrtFilter();
 
@@ -5322,50 +5875,199 @@ const beep8 = {};
 	 * @type {Object}
 	 */
 	beep8.Sfx.library = {
-		coin: [ 1.2, 0, 1675, , .06, .24, 1, 1.82, , , 837, .06 ],
-		coin2: [ 1.2, 0, 523.2511, .01, .06, .3, 1, 1.82, , , 837, .06 ],
-		blip: [ 5, 0, 150, .02, .03, .02, , 2.8, , , , , , , , , , .7, .02 ],
-		blip2: [ 3, 0, 200, .02, .03, .02, , 2.8, , , , , , , , , , .7, .02 ],
-		blip3: [ 3, 0, 250, .02, .03, .02, , 2.8, , , , , , , , , , .7, .02 ],
 
-		hit: [ , 0, 925, .04, .3, .6, 1, .3, , 6.27, -184, .09, .17 ],
-		sparkle: [ 1.2, 0, 539, 0, .04, .29, 1, 1.92, , , 567, .02, .02, , , , .04 ],
-		sparkle2: [ 1.2, 0, 80, .3, .4, .7, 2, .1, -0.73, 3.42, -430, .09, .17, , , , .19 ],
-		life: [ 1.5, 0, 537, .02, .02, .22, 1, 1.59, -6.98, 4.97 ],
-		life2: [ 1.4, 0, 20, .04, , .6, , 1.31, , , -990, .06, .17, , , .04, .07 ],
-		break: [ 1.2, 0, 528, .01, , .48, , .6, -11.6, , , , .32, 4.2 ],
-		lazer1: [ 1.5, 0, 515, .05, .07, .09, 1, 2.8, , , 302, .06, .1, , 3.5, .1, .08, .75, .04 ],
-		alien: [ , 0, 662, .82, .11, .33, 1, 0, , -0.2, , , , 1.2, , .26, .01 ],
-		beep: [ 2, 0, 270, , .1, , 1, 1.5, , , , , , , , .1, .01 ],
-		beep2: [ 2, 0, 150, , .1, , 1, 1.5, , , , , , , , .1, .01 ],
-		beep3: [ 2, 0, 200, , .1, , 1, 1.5, , , , , , , , .1, .01 ],
-		ding: [ 1, 0, 685, .01, .03, .17, 1, 1.4, , , , , , , , , , .63, .01, , 420 ],
-		drum: [ 1.5, 0, 129, .01, , .15, , , , , , , , 5 ],
-		explode: [ 1.5, 0, 333, .01, 0, .9, 4, 1.9, , , , , , .5, , .6 ],
-		explode2: [ 1.1, 0, 418, 0, .02, .2, 4, 1.15, -8.5, , , , , .7, , .1 ],
-		explode3: [ 1.2, 0, 82, .02, , .2, 4, 4, , , , , , .8, , .2, , .8, .09 ],
-		squeak1: [ 1.2, 0, 1975, .08, .56, .02, , , -0.4, , -322, .56, .41, , , , .25 ],
-		squeak2: [ , 0, 75, .03, .08, .17, 1, 1.88, 7.83, , , , , .4 ],
-		squeak3: [ 1.2, 0, 1306, .8, .08, .02, 1, , , , , , .48, , -0.1, .11, .25 ],
-		squeak4: [ 1.2, 0, 1e3, .02, , .01, 2, , 18, , 475, .01, .01 ],
-		bell: [ 2, 0, 999, , , , , 1.5, , .3, -99, .1, 1.63, , , .11, .22 ],
-		satellite: [ , 0, 847, .02, .3, .9, 1, 1.67, , , -294, .04, .13, , , , .1 ],
-		phone: [ , 0, 1600, .13, .52, .61, 1, 1.1, , , , , , .1, , .14 ],
-		pop: [ 4, 0, 224, .02, .02, .08, 1, 1.7, -13.9, , , , , , 6.7 ],
-		rocket: [ 1.5, 0, 941, .8, , .8, 4, .74, -222, , , , , .8, , 1 ],
-		rocket2: [ 1.2, 0, 172, .8, , .8, 1, .76, 7.7, 3.73, -482, .08, .15, , .14 ],
-		squirt: [ , 0, 448, .01, .1, .3, 3, .39, -0.5, , , , , , .2, .1, .08 ],
-		swing: [ 1.5, 0, 150, .05, , .05, , 1.3, , , , , , 3 ],
-		wave: [ , 0, 40, .5, , 1.5, , 11, , , , , , 199 ],
-		warp: [ 3, 0, 713, .16, .09, .24, , .6, -29, -16, , , .09, .5, , , .23, .75, .15, .48 ],
-		radioactive: [ , 0, 130, .02, .9, .39, 2, .8, , , , , .13, .2, , .1, , .93, .06, .28 ],
-		siren: [ 1.3, 0, 960, , 1, .01, , .8, -0.01, , -190, .5, , .05, , , 1 ],
-		car_horn: [ 1.8, 0, 250, .02, .02, .2, 2, 2, , , , , .02, , , .02, .01, , , .1 ],
-		engine2: [ 1.2, 0, 25, .05, .3, .5, 3, 9, -0.01, , , , , , 13, .1, .2 ],
-		thunder: [ 1.2, 0, 471, , .09, .47, 4, 1.06, -6.7, , , , , .9, 61, .1, , .82, .09, .13 ],
-		sparkle3: [ , 0, 63, , 1, , 1, 1.5, , , , , , , , 3.69, .08 ],
-		sweep: [ 1.2, 0, 9220, .01, , , , 5, , , , , , 9 ],
-		click: [ 1.5, 0, 900, , .01, 0, 1, , -10, , -31, .02, , , , , , 1.2, , .16, -1448 ],
+		'fx/action/drag': [ , 0, 293.6648, .1, , , 4, 6, 32, , , , , 1, 1.4, .1, , .7, .1 ],
+
+		'fx/break/001': [ 2.1, , 339, .02, .07, .09, 4, .2, -7, , , , .05, 1, , .1, .16, .45, .02, .03 ],
+		'fx/break/002': [ 1.5, , 157, .16, , 0, , .35, -24, 28, , , , .1, , .6, , .19, .01 ],
+		'fx/break/003': [ 2, , 180, 0.05, 0.03, 0.04, , 2.42, 0.6, , , , , , , , 0.15, 0.39, 0.04 ],
+
+		'fx/fight/dodge': [ 1.2, .3, 150, .05, , .05, , , -1, , , , , 4, , , , , .02 ],
+		'fx/fight/hit': [ 5, , 185, , , , 3, 1.6, -7, , , , , , , .2, .19, .1, , .38, 985 ],
+
+		'fx/robot/001': [ 1.13, , 172, .04, .18, .09, , .06, - 38, -2.6, -99, , , , 35, , .08 ],
+		'fx/robot/002': [ 1.42, , 61, .01, .02, 0, 1, .21, , , 816, .01, .05, , -40, , .05, .71, .11 ],
+		'fx/robot/003': [ .9, , 164, .04, .03, .14, , .8, 46, 66, , , , , , , , .71, .08, , 217 ],
+		'fx/robot/004': [ , .02, 1638, , .05, .17, 1, , , , 490, .09, , , , .1, .05, .5, .03 ],
+
+		'fx/sci-fi/radioactive': [ 1, 0, 130, .02, .9, .39, 2, .8, , , , , .13, .2, , .1, , .93, .06, .28 ],
+		'fx/sci-fi/robot': [ 1, 0, 847, .02, .3, .9, 1, 1.67, , , -294, .04, .13, , , , .1 ],
+		'fx/sci-fi/teleport': [ 1, , 85, .08, .1, .01, 1, 4, , -11, 1, .07, , .1, 101, , .05, .68, .4, .12, 1 ],
+		'fx/sci-fi/warp': [ 3, 0, 713, .16, .09, .24, , .6, -29, -16, , , .09, .5, , , .23, .75, .15, .48 ],
+		'fx/sci-fi/beam': [ 1, 0, 662, .82, .11, .33, 1, 0, , -0.2, , , , 1.2, , .26, .01 ],
+		'fx/sci-fi/hover': [ 2, 0, 262.63, 0.1, 0.12, 0.3, 0, 2.4, -0.1, 0, 0, 0, 0.24, 0, 0, 0.1, 0.05, 0.98, 0.07, 0.17, 0 ],
+
+		'fx/thud/001': [ 1.5, , 90, , .01, .03, 4, , , , , , , 9, 50, .2, , .2, .01 ],
+		'fx/thud/002': [ 1, , 129, .01, , .15, , , , , , , , 5 ],
+
+		'fx/machine/buzz': [ 1, 0, 130.8128, .1, .1, .34, 3, 1.88, , , , , , , , .1, , .5, .04 ],
+		'fx/machine/hum': [ 1, 0, 63, , 1, , 1, 1.5, , , , , , , , 3.69, .08 ],
+		'fx/machine/humm': [ 1, , 110, .03, .25, .15, 2, 1.32, , , , , .07, , -0.1, , .11, .77 ],
+		'fx/machine/warp': [ 2, , 128, , .12, .26, , 4.7, , -1, -62, .06, .07, , 52, , , .66, .08 ],
+
+		'fx/noise/001': [ 1.27, , 390, 0.01, 0.04, 0.02, 4, 0.71, 4.8, , , , , , , , 0.01, 0.6, 0.06 ],
+		'fx/noise/002': [ 0.4, , 60, , 0.01, 0, 4, 0.55, 62, 89, -88, 0.06, , , 173, 0.6, , , 0.05 ],
+		'fx/noise/003': [ 0.2, , 523.2511, .1, 3, 3, 4, 0, , , 2250, , .04, , 10, .01, , .82, 1, , 30 ],
+
+		'fx/random/tone': [ 2, .8, 999, , , , 1, 2, , , , , 1, , , .1, .2 ],
+
+		'fx/swoosh/001': [ 1, , 1500, 0.02, , 0.02, 4, 0.68, 5, , , , 0.01, 0.7, 136, , , , , 0.11 ],
+		'fx/swoosh/002': [ 1.2, , 585, , .02, .16, 4, .25, , , , , , , , , , .55, .03 ],
+		'fx/swoosh/003': [ .2, , 836, .11, , 0, 4, .91, 13, , , , .09, .1, -39, , , .06, .07 ],
+		'fx/swoosh/004': [ 1.2, , 9220, .01, , , , 5, , , , , , 9 ],
+		'fx/swoosh/005': [ 1.5, 0, 150, .05, , .05, , 1.3, , , , , , 3 ],
+		'fx/swoosh/006': [ 2, , 12, , , 0.008, , 1.2, 23, -7, , , 0.05, 0.4, , , 0.15, 0.82, 0.03, 0.28, ],
+
+		'fx/vehicle/engine': [ 1.2, 0, 25, .05, .3, .5, 3, 9, -0.01, , , , , , 13, .1, .2 ],
+		'fx/vehicle/carhorn': [ 1.8, 0, 250, .02, .02, .2, 2, 2, , , , , .02, , , .02, .01, , , .1 ],
+		'fx/vehicle/horn': [ 2, , 688, .02, .01, .007, 1, 2.6, , , , , .01, , 85, , .01, .85, .03, .11, -818 ],
+		'fx/vehicle/truckhorn': [ 1.5, , 1376, .02, .01, .007, 1, 2.6, , , , , .01, , 85, , .01, .85, .8, .11, -818 ],
+		'fx/vehicle/siren': [ 1.3, 0, 960, , 1, .01, , .8, -0.01, , -190, .5, , .05, , , 1 ],
+		'fx/vehicle/submarine': [ 1.2, 0, 1975, .08, .56, .02, , , -0.4, , -322, .56, .41, , , , .25 ],
+		'fx/vehicle/rocket': [ 1.5, 0, 941, .8, , .8, 4, .74, -222, , , , , .8, , 1 ],
+
+		'game/coin/001': [ 1.2, 0, 1675, , .06, .24, 1, 1.82, , , 837, .06 ],
+		'game/coin/002': [ 1.2, 0, 523.2511, .01, .06, .3, 1, 1.82, , , 837, .06 ],
+		'game/coin/003': [ 0.6, 0, 1874, , 0.01, 0.25, 2, 0.76, , , 622, 0.1 ],
+		'game/coin/004': [ 1, 0, 277, .03, .04, .06, 1, 1.8, 1, , 140, .06, .04, , , .1, , .99, .03 ],
+
+		'game/collect/001': [ 1.1, 0, 450, , .01, .13, , 2.7, , -9.5, 500, .08, , , , , , .89 ],
+		'game/collect/002': [ 1.05, , 10, .08, .07, .24, 2, 1.03, , , -374, .04, .09, , , , , .72, .15, .18 ],
+
+		'game/die/001': [ 1.5, 0, 537, .02, .02, .22, 1, 1.59, -6.98, 4.97 ],
+		'game/die/002': [ 1, , 321, .01, .06, .06, 1, 3.8, , -49, , , , .3, , , , .79, .09 ],
+		'game/die/003': [ 1, 0, 344, .01, .02, .28, 1, 1.4, , , 50, , , , .3, .2, .15, .6, .06 ],
+		'game/die/004': [ 0.5, 0, 43, 0.01, , 1, 2, , , , , , , , , 0.02, 0.01 ],
+
+		'game/jump/001': [ 1, .1, 75, .03, .08, .17, 1, 1.88, 7.83, , , , , .4 ],
+		'game/jump/002': [ 1.2, , 311, .03, .05, .05, , 2.2, , 9, , , .02, , 2.7, , , .97, .05, , 101 ],
+		'game/jump/003': [ 1.5, , 65, .04, .1, .13, 1, 1.5, , -31, , , , .3, , , , .99, .03 ],
+		'game/jump/004': [ , 0, 500, , .01, .13, , .2, 1.7, , -400 ],
+		'game/jump/005': [ 1, , 341, , .14, .23, 1, 1.01, .9, , -132, .03, , .1, , .1, , .52, .22 ],
+		'game/jump/006': [ 0.7, , 1496, .09, .09, .01, 3, .14, , , -870, , , , 3.2, .2, , .31, .02 ],
+
+		'game/powerup/001': [ , , 188, .03, .09, .12, 1, 2.4, , 95, , , , , , , , .63, .08 ],
+		'game/powerup/002': [ 0.8, 0, 413, .03, .05, .05, , 1.8, , 19, 177, .05, , , , , , .83, .02 ],
+		'game/powerup/003': [ 0.5, , 643, , 0.1, 0.12, 1, 0.1, , 99, , , , , , , , 0.6, 0.02, , -732 ],
+		'game/powerup/004': [ 1.18, , 143, .05, .08, .06, , .09, 25, 4.1, , , , , , , .01, .52, .09 ],
+		'game/powerup/005': [ 1, , 18, 0.01, 0.01, 0.21, 1, 0.49, 9.9, , , , , , , , 0.04, 0.95, 0.02 ],
+		'game/powerup/006': [ 0.5, , 426, .01, , .05, , 2.54, 49, , 9, .1, , , , , , .46, .15 ],
+		'game/powerup/007': [ 1, , 158, .09, .18, .03, , 2.53, 11, -58, 63, .02, .01, .5, , , , .16 ],
+		'game/powerup/008': [ 1.2, 0, 539, 0, .04, .29, 1, 1.92, , , 567, .02, .02, , , , .04 ],
+
+		'instrument/bass/001': [ 2, 0, 65, .01, .08, .2, , 2.6, , , , , , .1, , , , .61, .02, , -1686 ],
+		'instrument/bass/002': [ 2, 0, 73, .01, .08, .2, , 2.6, , , , , , .1, , , , .61, .02, , -1686 ],
+		'instrument/bass/003': [ 2, 0, 82, .01, .08, .2, , 2.6, , , , , , .1, , , , .61, .02, , -1686 ],
+		'instrument/bass/004': [ 2, 0, 87, .01, .08, .2, , 2.6, , , , , , .1, , , , .61, .02, , -1686 ],
+		'instrument/bass/005': [ 2, 0, 97, .01, .08, .2, , 2.6, , , , , , .1, , , , .61, .02, , -1686 ],
+		'instrument/bass/006': [ 2, 0, 110, .01, .08, .2, , 2.6, , , , , , .1, , , , .61, .02, , -1686 ],
+		'instrument/bass/007': [ 2, 0, 123, .01, .08, .2, , 2.6, , , , , , .1, , , , .61, .02, , -1686 ],
+		'instrument/bass/008': [ 2, 0, 130, .01, .08, .2, , 2.6, , , , , , .1, , , , .61, .02, , -1686 ],
+
+		'instrument/drum/001': [ 1.5, 0, 86, , , , , 0.7, , , , 0.5, , 6.7, 1, 0.05 ],
+		'instrument/drum/002': [ 0.7, 0, 270, , , 0.12, 3, 1.65, -2, , , , , 4.5, , 0.02 ],
+
+		'tone/beep/001': [ 2, 0, 130, , .1, , 1, 1.5, , , , , , , , .1, .01 ],
+		'tone/beep/002': [ 2, 0, 146, , .1, , 1, 1.5, , , , , , , , .1, .01 ],
+		'tone/beep/003': [ 2, 0, 164, , .1, , 1, 1.5, , , , , , , , .1, .01 ],
+		'tone/beep/004': [ 2, 0, 174, , .1, , 1, 1.5, , , , , , , , .1, .01 ],
+		'tone/beep/005': [ 2, 0, 195, , .1, , 1, 1.5, , , , , , , , .1, .01 ],
+		'tone/beep/006': [ 2, 0, 220, , .1, , 1, 1.5, , , , , , , , .1, .01 ],
+		'tone/beep/007': [ 2, 0, 246, , .1, , 1, 1.5, , , , , , , , .1, .01 ],
+		'tone/beep/008': [ 2, 0, 261, , .1, , 1, 1.5, , , , , , , , .1, .01 ],
+
+		'tone/bell/001': [ 2, 0, 999, , , , , 1.5, , .3, -99, .1, 1.63, , , .11, .22 ],
+		'tone/bell/002': [ , 0, 1600, .13, .52, .61, 1, 1.1, , , , , , .1, , .14 ],
+		'tone/bell/random': [ 2, .1, 999, , , , , 1.5, , .3, -99, .1, 1.63, , , .11, .22 ],
+
+		'tone/blip/001': [ 5, 0, 130, .02, .03, .02, , 2.8, , , , , , , , , , .7, .02 ],
+		'tone/blip/002': [ 3, 0, 146, .02, .03, .02, , 2.8, , , , , , , , , , .7, .02 ],
+		'tone/blip/003': [ 3, 0, 164, .02, .03, .02, , 2.8, , , , , , , , , , .7, .02 ],
+		'tone/blip/004': [ 3, 0, 174, .02, .03, .02, , 2.8, , , , , , , , , , .7, .02 ],
+		'tone/blip/005': [ 3, 0, 195, .02, .03, .02, , 2.8, , , , , , , , , , .7, .02 ],
+		'tone/blip/006': [ 3, 0, 220, .02, .03, .02, , 2.8, , , , , , , , , , .7, .02 ],
+		'tone/blip/007': [ 3, 0, 246, .02, .03, .02, , 2.8, , , , , , , , , , .7, .02 ],
+		'tone/blip/008': [ 3, 0, 261, .02, .03, .02, , 2.8, , , , , , , , , , .7, .02 ],
+
+		'tone/bloop/001': [ 1, , 110, .02, , .09, 1, .61, , , 556, .12, , , , .3, , , .02 ],
+		'tone/bloop/002': [ 1, 0, 521.25, , .02, .03, 2, 0, , .1, 700, .01, , , 1, .1 ],
+		'tone/bloop/003': [ 1.12, , 73, , 0.02, 0.11, 2, 1.18, , -0.1, , , , , , 0.3, , 0.55, 0.05, 0.23 ],
+		'tone/bloop/004': [ 0.5, , 1368, .09, , 0, , 1.11, -76, 9.1, -490, , , , , , , .56 ],
+		'tone/bloop/005': [ 2.03, , 413, , , 0.24, 2, 0.12, , , , , 0.11, , 317, 0.1, 0.13, , , 0.01 ],
+		'tone/bloop/006': [ , 0, , .01, .02, .09, , .6, 17, -3, , , .1, , , , , .76, .08 ],
+		'tone/bloop/007': [ 0.3, , 10, 0.06, , 0, 2, 2.3, , , 621, , , , , , , , 0.21, 0.26 ],
+		'tone/bloop/008': [ 1.5, 0.05, 24, 0.01, 0.02, 0.01, 1, 3.9, -33, 0, 0, 0, 0, 0, 355, 0, 0, 0.65, 0, 0, 0 ],
+		'tone/bloop/009': [ 2, 0.05, 226, 0, 0.08, 0.13, 0, 3.1, 0, 0, 0, 0, 0, 0, 0, 0.1, 0.02, 0.76, 0.04, 0, 105 ],
+		'tone/bloop/010': [ 4, 0, 224, .02, .02, .08, 1, 1.7, -13.9, , , , , , 6.7 ],
+		'tone/bloop/011': [ 1, , 283, .02, , .11, , .38, , , , , .07, , , .1, .08, .63, .02 ],
+		'tone/bloop/012': [ 1, 0, 288, 0.05, 0.01, , , 2, - 10, , , , , , , , , 0.5, 0.1 ],
+		'tone/bloop/013': [ 2, 0, 700, 0.01, , 0, , , , , , , , , , , , 0.1, 0.01 ],
+		'tone/bloop/014': [ 2.21, , 107, 0.02, 0.04, 0.07, , 2.22, 2, 0.9, , , , 0.4, , 0.5, 0.15, 0.42, 0.04 ],
+		'tone/bloop/015': [ 0.6, 0, 2200, , , 0.04, 3, 2, , , 800, 0.02, , 4.8, , 0.01, 0.1 ],
+
+		'tone/jingle/001': [ 1.4, , 183, .07, .13, .34, , 3.3, , , 35, .06, .07, , , , .13, .95, .27, .11 ],
+		'tone/jingle/002': [ .8, , 208, .02, .21, .13, 3, .2, , , 40, .06, .1, , , , , .91, .2, .27 ],
+		'tone/jingle/003': [ .9, , 56, .15, .46, .08, , 1.6, -2, , -137, .01, .06, , , , .09, .77, .37, .13 ],
+		'tone/jingle/004': [ .6, , 269, .03, .17, .41, , .2, , 1, 239, .08, .04, , , , , .72, .19, .43, -720 ],
+		'tone/jingle/005': [ 1.3, 0, 130.81, 0.32, 0.35, 0.5, 3, 5.2, 0, 1, 50, 0, 0.14, 0, 0, 0, 0, 0.37, 0.04, 0.24, 0 ],
+		'tone/jingle/006': [ 1, , 525, .18, .28, .17, 1, 1.24, 8.3, -9.7, -151, .03, .06, , , , , .93, .02, .14 ],
+		'tone/jingle/007': [ .6, , 934, .12, .38, .93, 1, .27, , .4, -434, .08, .2, .1, , .1, .17, .55, 1, .46 ],
+		'tone/jingle/008': [ 1.4, 0, 20, .04, , .6, , 1.31, , , -990, .06, .17, , , .04, .07 ],
+		'tone/jingle/009': [ 1.2, 0, 80, .3, .4, .7, 2, .1, -0.73, 3.42, -430, .09, .17, , , , .19 ],
+		'tone/jingle/010': [ 0.5, , 392, .06, .22, .5, 1, 1.85, -0.1, -0.9, 61, .05, .07, , , .1, , .96, .12 ],
+		'tone/jingle/011': [ 0.5, , 146, .04, .23, .46, , .56, , -3.7, 658, .02, .15, .1, , , , .82, .13, .2 ],
+		'tone/jingle/012': [ 1, , 284, .08, .2, .25, 1, 3, , , 50, .09, .06, , , , , .6, .28, .03, -1391 ],
+		'tone/jingle/013': [ 1.5, , 430, .02, .12, .5, , .89, , -3.6, -133, .07, .13, , , .1, , .83, .23, .26 ],
+		'tone/jingle/014': [ 0.4, , 22, .08, .22, .02, 1, .52, -4.2, -9.8, , , .14, , -18, .2, , , .05 ],
+		'tone/jingle/015': [ , , 193, .04, .27, .42, 1, 1.71, 2.8, 4.9, , , .1, .2, , .1, , .55, .27, .47 ],
+		'tone/jingle/016': [ 1.1, , 250, .07, .24, .26, , 2, , 164, 211, .07, .08, , , .1, , .75, .12, .09, 115 ],
+		'tone/jingle/017': [ , , 103, .04, .11, .43, 1, .77, , , 57, .19, .05, , , .1, , .68, .24 ],
+
+		'ui/click/001': [ 1.5, 0, 900, , .01, 0, 1, , -10, , -31, .02, , , , , , 1.2, , .16, -1448 ],
+		'ui/click/002': [ 2.5, , 783, , .03, .02, 1, 2, , , 940, .03, , , , , .2, .6, , .06 ],
+		'ui/click/003': [ 1.5, .01, 300, , , .02, 3, .22, , , -9, .2, , , , , , .5 ],
+		'ui/click/004': [ 1, 0, 685, .01, .03, .17, 1, 1.4, , , , , , , , , , .63, .01, , 420 ],
+		'ui/click/005': [ 6, , 205, , .02, 0, , 1.03, , , , , , , , , .12, .32 ],
+
+		'weapon/explode/001': [ 1.5, 0, 333, .01, 0, .9, 4, 1.9, , , , , , .5, , .6 ],
+		'weapon/explode/002': [ 1.1, 0, 418, 0, .02, .2, 4, 1.15, -8.5, , , , , .7, , .1 ],
+		'weapon/explode/003': [ 1.2, 0, 82, .02, , .2, 4, 4, , , , , , .8, , .2, , .8, .09 ],
+		'weapon/explode/004': [ 2, .2, 72, .01, .01, .2, 4, , , , , , , 1, , .5, .1, .5, .02 ],
+		'weapon/explode/005': [ 2, , 1e3, .02, , .2, 1, 3, .1, , , , , 1, -30, .5, , .5 ],
+		'weapon/explode/006': [ 1, , 485, .02, .2, .2, 4, .11, -3, .1, , , .05, 1.1, , .4, , .57, .5 ],
+		'weapon/explode/007': [ 0.8, , 372, 0.02, 0.02, 0.5, 4, 2.29, 0.2, , , , , 0.6, , 0.6, , 0.7, 0.04, 0.19 ],
+		'weapon/explode/008': [ 1.05, , 591, .03, .13, .51, 4, 3.02, .6, .1, , , .04, 1.6, , 1, , .46, .13 ],
+		'weapon/explode/009': [ 1.99, , 770, 0.03, 0.19, 0.35, , 0.26, , , , , , 2, -50, 0.1, 0.27, 0.48, 0.06 ],
+		'weapon/explode/010': [ 1.5, , 98, .08, .18, .02, 2, 2.47, 36, .5, , , .04, .1, , .9, .44, , .04 ],
+		'weapon/explode/011': [ 1, , 400, , .03, .21, 3, .85, .5, , , , , 1.8, , .5, , .97, .05 ],
+		'weapon/explode/012': [ 1, , 485, .02, .07, .03, 4, .11, -3, .1, , , .05, 1.1, , .4, , .57, .09 ],
+		'weapon/explode/013': [ , , 30, .09, .12, .35, 4, 3, 4, , , , , 1.3, , .6, , .36, .21 ],
+
+		'weapon/lazer/001': [ 1.5, 0, 515, .05, .07, .09, 1, 2.8, , , 302, .06, .1, , 3.5, .1, .08, .75, .04 ],
+		'weapon/lazer/002': [ , 0, 925, .04, .3, .6, 1, .3, , 6.27, -184, .09, .17 ],
+		'weapon/lazer/003': [ 1, , 375, .01, .06, , 2, 2.3, 18, -10, , , , , 18, , , .56, .14 ],
+		'weapon/lazer/004': [ 0.5, , 2e3, , 0.05, 0, , 1.11, -17, , 197, 0.01, , 0.2, , , , , 0.16 ],
+		'weapon/lazer/005': [ .9, , 752, .03, .01, .02, , 1.4, , , -10, .01, , , 3.4, , , .68, .03, , 106 ],
+		'weapon/lazer/006': [ 1.9, , 221, .01, .05, .06, 1, 3.9, -2, , 116, .05, , , , , , .65, .02, , 452 ],
+		'weapon/lazer/007': [ 1, , 659, .01, .04, , 1, .4, , -75, 179, .06, , , .2, , , .57 ],
+
+		'world/footstep/001': [ 1.1, 0.05, 157, 0.03, 0.04, 0.04, 4, 4.9, 78, -13, 0, 0, 0.07, 0, 0, 0, 0, 0.91, 0.02, 0.33, 0 ],
+		'world/footstep/002': [ .1, 1, 300, .05, .1, .05, 4, .2, -100, , -50, .07, , .5, , .4, , , , .05 ],
+		'world/footstep/003': [ 3, , 5, , .06, .01, 2, 2.25, -19, -79, 409, .01, , , 6.6, , .2, .57, , .8 ],
+
+		'world/nature/frog': [ 0.5, , 160, .03, .03, .02, , 1.52, -23, 93, 662, .02, , , , .1, , , .07, .01 ],
+		'world/nature/dolphin': [ 0.5, 0, 448, .01, .1, .3, 3, .39, -0.5, , , , , , .2, .1, .08 ],
+		'world/nature/whale': [ 1.2, 0, 1306, .8, .08, .02, 1, , , , , , .48, , -0.1, .11, .25 ],
+		'world/nature/mouse': [ 1.2, 0, 1e3, .02, , .01, 2, , 18, , 475, .01, .01 ],
+		'world/nature/small-dog': [ 1, , 759, .01, , .01, 1, .97, 15, , , , , , 3.1, , , .76, .04 ],
+		'world/nature/tweet': [ 0.7, , 1305, , , .03, 1, .75, , 23, 694, .01, , , 3.9, , , , .01 ],
+
+		'world/water/splash': [ 2, , 94, .07, .1, .33, 4, .6, 1, , , , , .1, 1, .1, .1, .45, .15 ],
+		'world/water/wave': [ 1, 0, 40, .5, , 1.5, , 11, , , , , , 199 ],
+		'world/water/pop': [ 1, 0, 103, , 0.02, 0.06, , 1.24, - 18, 4.4, , , , 0.7, , 0.1, , 0.95, 0.03 ],
+
+		'world/weather/thunder': [ 1.2, 0, 471, , .09, .47, 4, 1.06, -6.7, , , , , .9, 61, .1, , .82, .09, .13 ],
+
 	};
 
 
@@ -5411,7 +6113,6 @@ const beep8 = {};
 
 		// Play the raw sound effect.
 		zzfx( ...sfxArray );
-
 	}
 
 
@@ -6542,7 +7243,7 @@ const beep8 = {};
 				break;
 
 			default:
-				console.warn( "Unknown beep8 print escape command: " + command );
+				beep8.Utilities.warn( "Unknown beep8 print escape command: " + command );
 		}
 
 	}
@@ -7013,12 +7714,6 @@ const beep8 = {};
 			layout[ y ] = [];
 			for ( let x = 0; x < width; x++ ) {
 
-				// char: 0,				// Default to space character
-				// fg: data.colors.FG,		// Default foreground color (adjust as needed)
-				// bg: data.colors.BG,		// Default background color (adjust as needed)
-				// coll: 0,				// Default to no collision
-				// data: {}				// Empty object for additional data
-
 				layout[ y ][ x ] = beep8.Tilemap.getDefaultTile();
 
 			}
@@ -7050,9 +7745,11 @@ const beep8 = {};
 
 		for ( let y = 0; y < height; y++ ) {
 			for ( let x = 0; x < width; x++ ) {
+
 				const newX = ( x + dx + width ) % width;
 				const newY = ( y + dy + height ) % height;
 				newTilemap[ newY ][ newX ] = [ ...tilemap[ y ][ x ] ];
+
 			}
 		}
 
@@ -7080,7 +7777,9 @@ const beep8 = {};
 		for ( let y = 0; y < height; y++ ) {
 			for ( let x = 0; x < width; x++ ) {
 				if ( tilemap[ y ] && tilemap[ y ][ x ] ) {
+
 					newTilemap[ y ][ x ] = [ ...tilemap[ y ][ x ] ];
+
 				}
 			}
 		}
@@ -7131,7 +7830,12 @@ const beep8 = {};
 		// Don't trim the text as we want to preserve the whitespace.
 		// These may be empty tiles.
 		const lines = mapText.split( '\n' );
-		const map = lines.map( row => row.split( '' ) );
+
+		// Remove any lines that are just whitespace.
+		const filteredLines = lines.filter( line => line.trim() !== '' );
+		if ( filteredLines.length === 0 ) beep8.Utilities.fatal( "No valid lines found in the map text." );
+
+		const map = filteredLines.map( row => row.split( '' ) );
 
 		return map;
 
@@ -7614,6 +8318,10 @@ const beep8 = {};
 	 * @returns {Function} The 'varValue' parameter.
 	 */
 	beep8.Utilities.checkFunction = function( varName, varValue ) {
+
+		if ( varValue === null ) {
+			beep8.Utilities.fatal( `${varName} should be a function, but was null` );
+		}
 
 		return beep8.Utilities.checkType( varName, varValue, "function" );
 
