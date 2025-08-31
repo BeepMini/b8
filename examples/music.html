@@ -48,7 +48,7 @@
 		const playButton = document.getElementById( 'play-music' );
 
 		if ( beep8.Music.isPlaying( songName ) ) {
-			beep8.Music.stop( songName );
+			beep8.Music.stop();
 			playButton.textContent = playText;
 			return;
 		}
