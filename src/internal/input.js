@@ -272,11 +272,7 @@
 					// If the string is empty it leaves it unchanged.
 					curStrings[ curPos ] = curStrings[ curPos ].length > 0 ? curStrings[ curPos ].substring( 0, curStrings[ curPos ].length - 1 ) : curStrings[ curPos ];
 					// Position the flashing cursor and then print a space to remove the last character.
-					beep8.Core.setCursorLocation(
-						curCol + beep8.TextRenderer.measure( curStrings[ curPos ] ).cols,
-						curRow,
-						false
-					);
+					beep8.Core.setCursorLocation( curCol + beep8.TextRenderer.measure( curStrings[ curPos ] ).cols, curRow );
 					beep8.TextRenderer.print( " " );
 
 					beep8.Sfx.play( beep8.CONFIG.SFX.TYPING );

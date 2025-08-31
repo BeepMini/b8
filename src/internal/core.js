@@ -544,21 +544,22 @@
 	 *
 	 * Characters can be text or images, drawn using the loaded fonts.
 	 *
+	 * Rounds the position to the nearest 0.5.
+	 *
 	 * @param {number} col - The column.
 	 * @param {number} row - The row.
-	 * @param {boolean} [round=true] - Whether to round the column and row values.
 	 * @returns {void}
 	 */
-	beep8.Core.setCursorLocation = function( col, row, round = true ) {
+	beep8.Core.setCursorLocation = function( col, row ) {
 
 		// Columns.
 		beep8.Utilities.checkNumber( "col", col );
-		beep8.Core.drawState.cursorCol = round ? Math.round( col ) : col;
+		beep8.Core.drawState.cursorCol = Math.round( col * 2 ) / 2;
 
 		// Rows.
 		if ( row !== undefined ) {
 			beep8.Utilities.checkNumber( "row", row );
-			beep8.Core.drawState.cursorRow = round ? Math.round( row ) : row;
+			beep8.Core.drawState.cursorRow = Math.round( row * 2 ) / 2;
 		}
 
 	}
