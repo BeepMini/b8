@@ -13,27 +13,27 @@
 	<script>
 
 		const MAZE = [
-			"                        ".split( '' ),
-			" ###################### ".split( '' ),
-			" #.....#...........#..# ".split( '' ),
-			" #.....##+######...#..# ".split( '' ),
-			" #.....#.......#...+..# ".split( '' ),
-			" ##+######..###....#..# ".split( '' ),
-			" #.....+....######+#### ".split( '' ),
-			" #.....######......#..# ".split( '' ),
-			" #######...#.....###..# ".split( '' ),
-			" #.#...#...#.....+....# ".split( '' ),
-			" #.###+#...##....#....# ".split( '' ),
-			" #..+.......+....#....# ".split( '' ),
-			" ######+##+##########.# ".split( '' ),
-			" #.......#..#..+..#.#.# ".split( '' ),
-			" #.......#..#..#..#.#.# ".split( '' ),
-			" ##+##+###..#..#..#.### ".split( '' ),
-			" #..#..######+##..#...+ ".split( '' ),
-			" #..#..+...#...##+#...# ".split( '' ),
-			" #..########...#..#...# ".split( '' ),
-			" #..+......+...#..+...# ".split( '' ),
-			" ###################### ".split( '' ),
+			"                     ".split( '' ),
+			" ################### ".split( '' ),
+			" #.....#........#..# ".split( '' ),
+			" #.....##+####..#..# ".split( '' ),
+			" #.....#.....#..+..# ".split( '' ),
+			" ##+####..####..#..# ".split( '' ),
+			" #.....+...####+#### ".split( '' ),
+			" #.....#####....#..# ".split( '' ),
+			" #######...#..###..# ".split( '' ),
+			" #.#...#...#..+....# ".split( '' ),
+			" #.###+#...#..#....# ".split( '' ),
+			" #..+......+..#....# ".split( '' ),
+			" ####+##+#######+#.# ".split( '' ),
+			" #....#..#..+..#.#.# ".split( '' ),
+			" #....#..#..#..#.#.# ".split( '' ),
+			" ##+###+##..#..##### ".split( '' ),
+			" #..#...###+##..#..+ ".split( '' ),
+			" #..#....#...##+#..# ".split( '' ),
+			" #..######...#..#..# ".split( '' ),
+			" #..+....+...#..+..# ".split( '' ),
+			" ################### ".split( '' ),
 		];
 		const MAZE_HEIGHT = MAZE.length;
 		const MAZE_WIDTH = MAZE[ 0 ].length;
@@ -55,7 +55,7 @@
 				drawMap();
 				drawPlayer();
 				// Did the player exit the maze? If so, win the game.
-				if ( px >= beep8.CONFIG.SCREEN_COLS - 2 ) { await youWon(); continue; }
+				if ( px >= beep8.CONFIG.SCREEN_COLS - 1 ) { await youWon(); continue; }
 				// Move the player based on what key they press.
 				await movePlayer();
 			}
@@ -103,11 +103,11 @@
 			switch ( MAZE[ candY ][ candX ] ) {
 				case ".": // Regular floor: we can move there.
 					px = candX; py = candY;
-					beep8.Sfx.play( 'pop' );
+					beep8.Sfx.play( 'tone/beep/003' );
 					break;
 				case "+": // Door: we can open it. It becomes a regular floor tile.
 					MAZE[ candY ][ candX ] = ".";
-					beep8.Sfx.play( 'life' );
+					beep8.Sfx.play( 'tone/beep/001' );
 					break;
 				default: // Everything else is a wall and we can't move there.
 					break;
@@ -115,7 +115,7 @@
 		}
 
 		async function youWon() {
-			beep8.Sfx.play( 'fanfare' );
+			beep8.Sfx.play( 'tone/jingle/001' );
 			await beep8.Async.dialog( "Congratulations!" );
 			// As a reward, you get to play again.
 			px = 2; py = 2;

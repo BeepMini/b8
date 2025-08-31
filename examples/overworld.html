@@ -23,7 +23,7 @@
 				"    ||||^^   ~~||^^ ".split( '' ),
 				" ^   ,||||^|  ~~||^ ".split( '' ),
 				" ^^^|   ,   , ==  ^ ".split( '' ),
-				" ^|| ,    |^^~~ ,,^ ".split( '' ),
+				" ^|| ,    |^^,~~,,^ ".split( '' ),
 				"  ^^^^|   ^^^~~  ,^ ".split( '' ),
 				"  ^^^^     ^^~~  ~  ".split( '' ),
 				"    ^  ,     ~~  ~~ ".split( '' ),
@@ -88,7 +88,7 @@
 		];
 
 		let curMap = "OVERWORLD";  // Initial map name
-		let px = 9, py = 9;    // Initial player position.
+		let px = 7, py = 9;    // Initial player position.
 		let facingLeft = 1;    // If true, player is looking to the left.
 
 		async function main() {
@@ -126,7 +126,7 @@
 
 					if ( [ '0', '1', '2', '3' ].includes( map[ y ][ x ] ) ) {
 						beep8.color( 15, 0 );
-						beep8.print( ' ' ); // Increment x position so there are no gaps.
+						beep8.Core.nextCursorLocation(); // Increment x position so there are no gaps.
 
 						// Save current cursor position
 						const cursorCol = beep8.Core.drawState.cursorCol;
