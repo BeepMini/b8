@@ -2243,21 +2243,22 @@ const beep8 = {};
 	 *
 	 * Characters can be text or images, drawn using the loaded fonts.
 	 *
+	 * Rounds the position to the nearest 0.5.
+	 *
 	 * @param {number} col - The column.
 	 * @param {number} row - The row.
-	 * @param {boolean} [round=true] - Whether to round the column and row values.
 	 * @returns {void}
 	 */
-	beep8.Core.setCursorLocation = function( col, row, round = true ) {
+	beep8.Core.setCursorLocation = function( col, row ) {
 
 		// Columns.
 		beep8.Utilities.checkNumber( "col", col );
-		beep8.Core.drawState.cursorCol = round ? Math.round( col ) : col;
+		beep8.Core.drawState.cursorCol = Math.round( col * 2 ) / 2;
 
 		// Rows.
 		if ( row !== undefined ) {
 			beep8.Utilities.checkNumber( "row", row );
-			beep8.Core.drawState.cursorRow = round ? Math.round( row ) : row;
+			beep8.Core.drawState.cursorRow = Math.round( row * 2 ) / 2;
 		}
 
 	}
@@ -3727,11 +3728,7 @@ const beep8 = {};
 					// If the string is empty it leaves it unchanged.
 					curStrings[ curPos ] = curStrings[ curPos ].length > 0 ? curStrings[ curPos ].substring( 0, curStrings[ curPos ].length - 1 ) : curStrings[ curPos ];
 					// Position the flashing cursor and then print a space to remove the last character.
-					beep8.Core.setCursorLocation(
-						curCol + beep8.TextRenderer.measure( curStrings[ curPos ] ).cols,
-						curRow,
-						false
-					);
+					beep8.Core.setCursorLocation( curCol + beep8.TextRenderer.measure( curStrings[ curPos ] ).cols, curRow );
 					beep8.TextRenderer.print( " " );
 
 					beep8.Sfx.play( beep8.CONFIG.SFX.TYPING );
@@ -7979,145 +7976,6 @@ const beep8 = {};
 
 } )( beep8 || ( beep8 = {} ) );
 
-( function( beep8 ) {
-
-	/**
-	 * A timer helper. Call create() to get a new timer object.
-	 *
-	 * Timer objects expose the following methods:
-	 *   start, stop, pause, resume, reset, addTime, removeTime, update, setFormat, getFormattedTime
-	 *
-	 * The default format is MM:SS. Other options include: 'SS' and 'HH:MM:SS'.
-	 *
-	 * @param {number} initialTime - The starting time in seconds.
-	 * @param {boolean} autoStart - Whether the timer should start immediately.
-	 * @returns {object} A new timer object.
-	 */
-	beep8.Timer = {
-		create: function( initialTime = 60, autoStart = false ) {
-
-			return {
-				initialTime: initialTime,     // Starting time in seconds.
-				currentTime: initialTime,     // Current countdown time.
-				isRunning: autoStart,         // Timer is active if true.
-				isPaused: false,              // Timer pause flag.
-				format: 'MM:SS',              // Default display format.
-
-				/**
-				 * Starts the timer.
-				 */
-				start: function() {
-					this.isRunning = true;
-					this.isPaused = false;
-				},
-
-				/**
-				 * Stops the timer and resets it to initial time.
-				 */
-				stop: function() {
-					this.isRunning = false;
-					this.currentTime = this.initialTime;
-					this.isPaused = false;
-				},
-
-				/**
-				 * Pauses the timer (if running).
-				 */
-				pause: function() {
-					if ( this.isRunning ) {
-						this.isPaused = true;
-					}
-				},
-
-				/**
-				 * Resumes the timer if it is paused.
-				 */
-				resume: function() {
-					if ( this.isRunning && this.isPaused ) {
-						this.isPaused = false;
-					}
-				},
-
-				/**
-				 * Resets the timer.
-				 */
-				reset: function() {
-					this.currentTime = this.initialTime;
-					this.isRunning = false;
-					this.isPaused = false;
-				},
-
-				/**
-				 * Adds time (in seconds) to the current timer.
-				 *
-				 * @param {number} seconds - Number of seconds to add.
-				 */
-				addTime: function( seconds ) {
-					this.currentTime += seconds;
-				},
-
-				/**
-				 * Removes time (in seconds) from the current timer.
-				 *
-				 * @param {number} seconds - Number of seconds to remove.
-				 */
-				removeTime: function( seconds ) {
-					this.currentTime = Math.max( 0, this.currentTime - seconds );
-				},
-
-				/**
-				 * Updates the timer based on the delta time (in seconds).
-				 *
-				 * @param {number} dt - Delta time in seconds.
-				 */
-				update: function( dt ) {
-					if ( this.isRunning && !this.isPaused ) {
-						this.currentTime -= dt;
-						if ( this.currentTime <= 0 ) {
-							this.currentTime = 0;
-							this.isRunning = false;
-						}
-					}
-				},
-
-				/**
-				 * Sets the time format.
-				 *
-				 * @param {string} format - The desired format ('MM:SS', 'SS', or 'HH:MM:SS').
-				 */
-				setFormat: function( format ) {
-					this.format = format;
-				},
-
-				/**
-				 * Returns the current time formatted as a string.
-				 *
-				 * @returns {string} The formatted time.
-				 */
-				getFormattedTime: function() {
-					const totalSecs = Math.floor( this.currentTime );
-					if ( this.format === 'SS' ) {
-						return this.currentTime.toFixed( 1 ) + 's';
-					} else if ( this.format === 'HH:MM:SS' ) {
-						const hours = Math.floor( totalSecs / 3600 );
-						const minutes = Math.floor( ( totalSecs % 3600 ) / 60 );
-						const seconds = totalSecs % 60;
-						return hours.toString().padStart( 2, '0' ) + ':' +
-							minutes.toString().padStart( 2, '0' ) + ':' +
-							seconds.toString().padStart( 2, '0' );
-					} else {
-						// Default is MM:SS.
-						const minutes = Math.floor( totalSecs / 60 );
-						const seconds = totalSecs % 60;
-						return minutes.toString().padStart( 2, '0' ) + ':' +
-							seconds.toString().padStart( 2, '0' );
-					}
-				}
-			};
-		}
-	};
-
-} )( beep8 || ( beep8 = {} ) );
 ( function( beep8 ) {
 
 	beep8.Utilities = {};
