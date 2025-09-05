@@ -7840,6 +7840,35 @@ const beep8 = {};
 
 
 	/**
+	 * Check the validity of the encoded tilemap data.
+	 *
+	 * The checks are simple, but reduces liklihood of invalid data being used.
+	 *
+	 * @param {string} mapText The encoded tilemap data.
+	 * @returns {boolean} True if the tilemap is valid, false otherwise.
+	 */
+	beep8.Tilemap.validateTilemap = function( mapText ) {
+
+		beep8.Utilities.checkString( "text", mapText );
+
+		const map = beep8.Tilemap.load( mapText );
+
+		// Check map is an array of arrays.
+		if ( !Array.isArray( map ) || !Array.isArray( map[ 0 ] ) ) {
+			return false;
+		}
+
+		// Check 0, 0 is a valid tile (is an array and length is greater than 3).
+		if ( !Array.isArray( map[ 0 ][ 0 ] ) || map[ 0 ][ 0 ].length <= 3 ) {
+			return false;
+		}
+
+		return true;
+
+	}
+
+
+	/**
 	 * Create a tilemap from an array of arrays.
 	 * The tilePattern is an object that maps tile characters to tile properties.
 	 *
