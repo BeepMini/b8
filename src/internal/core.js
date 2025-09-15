@@ -53,6 +53,8 @@
 			...options,
 		};
 
+		beep8.Hooks.doAction( 'beforeInit' );
+
 		// Setup screenshot taking.
 		beep8.Core.initScreenshot();
 
@@ -61,6 +63,9 @@
 
 		// Initialize the game clock.
 		beep8.Core.startTime = beep8.Core.getNow();
+
+		beep8.Hooks.doAction( 'afterInit' );
+
 
 		beep8.Utilities.event( 'initComplete' );
 
