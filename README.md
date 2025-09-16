@@ -1,4 +1,4 @@
-# Beep8
+# Beep8 Retro Game Engine
 
 [Beep8](https://beep8.com/) is a tiny JavaScript game engine for creating retro-style games in the browser.
 It’s inspired by 8-bit computers of the 1980s, but built with modern web tech.
@@ -37,7 +37,7 @@ Download the files in `dist` and `assets` - these are all you need to run Beep8
 </script>
 ```
 
-To develop locally:
+To develop Beep8 locally:
 
 ```bash
 npm install
