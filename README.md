@@ -1,17 +1,70 @@
-# beep8
+# Beep8
 
-[BEEP8](https://beep8.com/) is a tiny Javascript engine that lets you create games and experiences inspired by the look and feel of a retro 80s computer. It's not an emulator or a fantasy console: it's just a Javascript library. It's free and open source.
+[Beep8](https://beep8.com/) is a tiny JavaScript game engine for creating retro-style games in the browser.
+It’s inspired by 8-bit computers of the 1980s, but built with modern web tech.
+
+Beep8 is not an emulator or a locked-down fantasy console. It’s a lightweight JavaScript library that gives you the tools of a retro engine while keeping the freedom of the open web.
+
+✅ Open source
+✅ Runs in any browser
+✅ Simple API
+✅ No external plugins or assets required
+
+---
+
+## Features
+
+* **Built-in music** – generate chiptune tracks directly in the browser.
+* **Sound effects** – 100+ zzfx sounds included, plus the ability to design your own.
+* **Tilemaps** – define maps in JSON or ASCII formats, or use the [map editor](https://beep8.com/tools/beep8-map-editor/).
+* **Fonts & graphics** – retro textmode fonts and tiles included, or create your own with the [textmode art editor](https://beep8.com/tools/beep8-textmode-editor/).
+* **Input handling** – unified keyboard + touch controls.
+* **Utilities** – inventory, menus, passcodes, ECS, particles, and more.
+
+See the [full feature list](https://beep8.com/) and try the [examples](https://beep8.com/examples/).
+
+---
 
 ## Getting Started
 
-The files in dist are the only files you need to run beep8. You will also need the assets directory.
+Download the files in `dist` and `assets` - these are all you need to run Beep8.
 
-To develop locally you can run `npm install` and then `npm run dev`. This will run a watch script that will rebuild the dist/beep8.js file. To build everything run `npm run build`.
+```html
+<script src="dist/beep8.js"></script>
+<script>
+	beep8.init();
+	// your game code here
+</script>
+```
+
+To develop locally:
+
+```bash
+npm install
+npm run dev   # builds dist/beep8.js and watches for changes
+npm run build # builds everything for release
+```
+
+---
 
 ## Documentation
 
-There is a complete documentation website on [https://beep8.com/docs/](https://beep8.com/docs/). This covers the code along with examples and some tools that work well with beep8.
+Full documentation, examples, and tools are available at:
+👉 [Comprehensive Docs](https://beep8.com/docs/)
+👉 [Code Examples](https://beep8.com/examples/)
+👉 [Textmode Art Editor](https://beep8.com/tools/beep8-textmode-editor/)
+👉 [Map Maker](https://beep8.com/tools/beep8-map-editor/)
+👉 [Example Games](https://beepmini.com/games/)
+
+---
 
 ## Inspired by QX82
 
-beep8 is a fork of the [QX82](https://github.com/btco/qx82) engine by btco. For more information, check out the [QX82 site](https://btco.github.io/qx82).
+Beep8 is a fork of the [QX82](https://github.com/btco/qx82) engine by btco.
+For more background, check out the [QX82 site](https://btco.github.io/qx82).
+
+---
+
+## License
+
+Beep8 is free and open source, released under the [MIT License](LICENSE).
