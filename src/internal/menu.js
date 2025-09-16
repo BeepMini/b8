@@ -23,7 +23,6 @@
 	 * - options.centerV - Whether to center the menu vertically.
 	 * - options.padding - The padding around the prompt and choices.
 	 * - options.selIndex - The index of the initially selected choice.
-	 * - options.cancelable - Whether the menu can be canceled with the Escape key.
 	 * - options.typewriter - display the prompt as a typewriter effect.
 	 *
 	 * @param {string[]} choices - The choices to display.
@@ -49,7 +48,6 @@
 				centerV: false,
 				padding: 1,
 				selIndex: 0,
-				cancelable: false,
 				typewriter: false
 			},
 			options
@@ -143,16 +141,16 @@
 				selIndex = ( selIndex + 1 ) % choices.length;
 				if ( choices.length > 1 ) beep8.Sfx.play( beep8.CONFIG.SFX.MENU_DOWN );
 
-			} else if ( k.includes( "Enter" ) || k.includes( "ButtonA" ) || k.includes( " " ) ) {
+			} else if (
+				k.includes( "Enter" ) ||
+				k.includes( "ButtonA" ) ||
+				k.includes( "ButtonB" ) ||
+				k.includes( " " )
+			) {
 
 				// Select menu item.
 				beep8.Sfx.play( beep8.CONFIG.SFX.MENU_SELECT );
 				return selIndex;
-
-			} else if ( ( k.includes( "Escape" ) || k.includes( "ButtonB" ) ) && options.cancelable ) {
-
-				// Close menu.
-				return -1;
 
 			}
 
