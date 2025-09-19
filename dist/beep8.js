@@ -67,6 +67,21 @@
  * } );
  */
 
+/**
+ * Things to note:
+ *
+ * By default tiles are 12×12 pixels
+ * Coordinates: pixels from top-left
+ * Text grid: col,row use 12×12 tiles
+ * Time: dt in seconds
+ * Colours: palette indices 0–15
+ * Fonts: fontId is the name from TextRenderer.loadFontAsync
+ * Public code uses beep8.* or beep8.Async.*
+ * beep8.* functions check their arguments
+ * x and y are pixels, col and row are tiles
+ * Actors have animations, tiles do not
+ */
+
 const beep8 = {};
 
 
@@ -315,16 +330,18 @@ const beep8 = {};
 	/**
 	 * Clears the screen using the specified or current background color.
 	 *
-	 * @param {number} [bgColor=undefined] - Optional background color index.
+	 * @param {number} [bg=undefined] - Optional background color index.
 	 * If provided, uses this index to get the color from the config. If not
 	 * provided, uses the current background color (drawState.bgColor).
 	 * @returns {void}
 	 */
-	beep8.cls = function( bgColor = undefined ) {
+	beep8.cls = function( bg = undefined ) {
 
 		beep8.Core.preflight( "beep8.Core.cls" );
 
-		beep8.Core.cls( bgColor );
+		if ( bg !== undefined ) beep8.Utilities.checkNumber( "bg", bg );
+
+		beep8.Core.cls( bg );
 
 	}
 
@@ -784,8 +801,10 @@ const beep8 = {};
 	 * Draws a sprite on the screen.
 	 *
 	 * @param {number|string} ch - The character code of the sprite.
+	 * @param {string} animation - The animation to play.
 	 * @param {number} x - The X position at which to draw.
 	 * @param {number} y - The Y position at which to draw.
+	 * @param {number|null} startTime - The start time of the animation in milliseconds.
 	 * @returns {boolean} True if the sprite was drawn, otherwise false.
 	 */
 	beep8.sprActor = function( ch, animation, x, y, startTime = null ) {
@@ -796,6 +815,7 @@ const beep8 = {};
 		beep8.Utilities.checkString( "animation", animation );
 		beep8.Utilities.checkNumber( "x", x );
 		beep8.Utilities.checkNumber( "y", y );
+		if ( startTime !== null ) beep8.Utilities.checkNumber( "startTime", startTime );
 
 		return beep8.Actors.spr( ch, animation, x, y, startTime );
 
@@ -2001,6 +2021,8 @@ const beep8 = {};
 			...options,
 		};
 
+		beep8.Hooks.doAction( 'beforeInit' );
+
 		// Setup screenshot taking.
 		beep8.Core.initScreenshot();
 
@@ -2009,6 +2031,9 @@ const beep8 = {};
 
 		// Initialize the game clock.
 		beep8.Core.startTime = beep8.Core.getNow();
+
+		beep8.Hooks.doAction( 'afterInit' );
+
 
 		beep8.Utilities.event( 'initComplete' );
 
@@ -3215,20 +3240,16 @@ const beep8 = {};
 	/**
 	 * Get all entities at a specific grid location.
 	 *
-	 * @param {number} x
-	 * @param {number} y
+	 * @param {number} col
+	 * @param {number} row
 	 * @returns {number[]} Array of entity IDs at that location
 	 */
-	beep8.ECS.entitiesAt = function( x, y ) {
+	beep8.ECS.entitiesAt = function( col, row ) {
 
-		return grid[ y ]?.[ x ] ?? [];
+		return grid[ row ]?.[ col ] ?? [];
 
 	}
 
-
-	/* ------------------------------------------------------------------
-	   System pipeline helpers
-	   ------------------------------------------------------------------*/
 
 	/**
 	 * Register a system that runs every frame.
@@ -3322,7 +3343,7 @@ const beep8 = {};
 		bucket( name ).set( id, data );
 
 		// If the component is Loc (location), update the position grid.
-		if ( 'Loc' === name ) beep8.ECS.setLoc( id, data.x, data.y );
+		if ( 'Loc' === name ) beep8.ECS.setLoc( id, data.col, data.row );
 
 	}
 
@@ -3347,23 +3368,23 @@ const beep8 = {};
 	 * Set the location of an entity.
 	 *
 	 * @param {number} id Entity ID
-	 * @param {number} x X coordinate
-	 * @param {number} y Y coordinate
+	 * @param {number} col X tile coordinate
+	 * @param {number} row Y tile coordinate
 	 * @returns {void}
 	 */
-	beep8.ECS.setLoc = function( id, x, y ) {
+	beep8.ECS.setLoc = function( id, col, row ) {
 
 		beep8.Utilities.checkInt( 'id', id );
-		beep8.Utilities.checkInt( 'x', x );
-		beep8.Utilities.checkInt( 'y', y );
+		beep8.Utilities.checkInt( 'col', col );
+		beep8.Utilities.checkInt( 'row', row );
 
 		// Get the current location component.
 		const loc = this.getComponent( id, 'Loc' );
 
 		// Remove from old position.
-		const oldRow = grid[ loc.y ];
+		const oldRow = grid[ loc.row ];
 		if ( oldRow ) {
-			const cell = oldRow[ loc.x ];
+			const cell = oldRow[ loc.col ];
 			if ( cell ) {
 				const i = cell.indexOf( id );
 				if ( i !== -1 ) cell.splice( i, 1 );
@@ -3371,13 +3392,13 @@ const beep8 = {};
 		}
 
 		// Update component position.
-		loc.x = x;
-		loc.y = y;
+		loc.col = col;
+		loc.row = row;
 
 		// Save new grid location.
-		if ( !grid[ y ] ) grid[ y ] = [];
-		if ( !grid[ y ][ x ] ) grid[ y ][ x ] = [];
-		grid[ y ][ x ].push( id );
+		if ( !grid[ row ] ) grid[ row ] = [];
+		if ( !grid[ row ][ col ] ) grid[ row ][ col ] = [];
+		grid[ row ][ col ].push( id );
 
 	}
 
@@ -3469,7 +3490,7 @@ const beep8 = {};
 		const loc = this.getComponent( id, 'Loc' );
 
 		if ( loc ) {
-			const cell = grid[ loc.y ]?.[ loc.x ];
+			const cell = grid[ loc.row ]?.[ loc.col ];
 			if ( cell ) cell.splice( cell.indexOf( id ), 1 );
 		}
 
@@ -4086,6 +4107,185 @@ const beep8 = {};
 
 ( function( beep8 ) {
 
+	beep8.Inventory = {};
+
+
+	document.addEventListener(
+		'beep8.initComplete',
+		() => {
+
+			beep8.Inventory.reset();
+
+		},
+		{ once: true }
+	);
+
+
+	/**
+	 * Reset the inventory to empty.
+	 *
+	 * This clears all item counts and flags.
+	 *
+	 * @returns {void}
+	 */
+	beep8.Inventory.reset = function() {
+
+		beep8.data.inventory = {
+			counts: {},
+			flags: {}
+		};
+
+	};
+
+
+	/**
+	 * Get the count of a specific item in the inventory.
+	 *
+	 * @param {string} id The item ID to check.
+	 * @returns {number} The count of the item (default: 0 if not found).
+	 */
+	beep8.Inventory.getCount = function( id ) {
+
+		return beep8.data.inventory.counts[ id ] ?? 0;
+
+	}
+
+
+	/**
+	 * Add a certain amount of an item to the inventory.
+	 *
+	 * If a max is provided, the item count will not exceed that max.
+	 *
+	 * @param {string} id The item ID to add.
+	 * @param {number} [amount=1] The amount to add (default: 1).
+	 * @param {number} [max=Infinity] The maximum amount allowed (default: Infinity).
+	 */
+	beep8.Inventory.add = function( id, amount = 1, max = Infinity ) {
+
+		const current = beep8.Inventory.getCount( id );
+		beep8.data.inventory.counts[ id ] = Math.min( current + amount, max );
+
+	}
+
+
+	/**
+	 * Remove a certain amount of an item from the inventory.
+	 *
+	 * If the item count goes below zero, it is set to zero.
+	 *
+	 * @param {string} id The item ID to remove.
+	 * @param {number} [amount=1] The amount to remove (default: 1).
+	 */
+	beep8.Inventory.remove = function( id, amount = 1 ) {
+
+		const current = beep8.Inventory.getCount( id );
+		beep8.data.inventory.counts[ id ] = Math.max( current - amount, 0 );
+
+	}
+
+
+	/**
+	 * Check if the inventory has at least a certain amount of an item.
+	 *
+	 * @param {string} id The item ID to check.
+	 * @param {number} [amount=1] The minimum amount required (default: 1).
+	 * @returns {boolean} True if the inventory has at least the specified amount, false otherwise.
+	 */
+	beep8.Inventory.has = function( id, amount = 1 ) {
+
+		return beep8.Inventory.getCount( id ) >= amount;
+
+	}
+
+
+	/**
+	 * Set a flag in the inventory.
+	 *
+	 * For things like "door opened", "cutscene played"
+	 *
+	 * @param {string} flag The flag name to set.
+	 * @param {boolean} [value=true] The value to set the flag to (default: true).
+	 */
+	beep8.Inventory.setFlag = function( flag, value = true ) {
+
+		beep8.data.inventory.flags[ flag ] = value;
+
+	}
+
+
+	/**
+	 * Get a flag from the inventory.
+	 *
+	 * Returns true/false if the flag is set.
+	 *
+	 * @param {string} flag The flag name to get.
+	 * @returns {boolean} The value of the flag (default: false).
+	 */
+	beep8.Inventory.getFlag = function( flag ) {
+
+		beep8.Utilities.checkString( 'flag', flag );
+
+		return !!beep8.data.inventory.flags[ flag ];
+
+	}
+
+
+	/**
+	 * Filters inventory items based on a prefix or a regular expression.
+	 *
+	 * This function returns an array of objects, each containing the `id` and `count`
+	 * of items that match the given prefix or regular expression.
+	 *
+	 * Examples:
+	 * - To get all keys by prefix:
+	 *   const keys = beep8.Inventory.filter("key-");
+	 *
+	 * - To use a regex for finer control:
+	 *   const special = beep8.Inventory.filter(/^potion-|^scroll-/);
+	 *
+	 * @param {string|RegExp} match Item ID prefix or regex to match.
+	 * @returns {Array<{id:string,count:number}>} Matching items with counts.
+	 */
+	beep8.Inventory.filter = function( match ) {
+
+		// Array to store matching items
+		const out = [];
+		// Reference to the inventory counts
+		const counts = beep8.data.inventory.counts;
+		// Check if `match` is a regular expression
+		const isRegex = match instanceof RegExp;
+		// Ensure the `match` parameter is a valid string or RegExp
+		if ( !isRegex ) beep8.Utilities.checkString( 'match', match );
+
+
+		// Iterate over all item IDs in the inventory
+		for ( const id in counts ) {
+
+			if ( !Object.hasOwn( counts, id ) ) continue;
+			const count = counts[ id ];
+
+			// Skip items with a count of 0 or less
+			if ( count <= 0 ) continue;
+
+			// Check if the item ID matches the given prefix or regex
+			if (
+				( isRegex && match.test( id ) ) || // If `match` is a regex, test the ID
+				( !isRegex && id.includes( match ) ) // If `match` is a string, check if the ID includes it
+			) {
+				out.push( { id, count } );
+			}
+		}
+
+		return out;
+
+	}
+
+
+
+} )( beep8 || ( beep8 = {} ) );
+
+( function( beep8 ) {
+
 	beep8.Menu = {};
 
 
@@ -4109,7 +4309,6 @@ const beep8 = {};
 	 * - options.centerV - Whether to center the menu vertically.
 	 * - options.padding - The padding around the prompt and choices.
 	 * - options.selIndex - The index of the initially selected choice.
-	 * - options.cancelable - Whether the menu can be canceled with the Escape key.
 	 * - options.typewriter - display the prompt as a typewriter effect.
 	 *
 	 * @param {string[]} choices - The choices to display.
@@ -4135,7 +4334,6 @@ const beep8 = {};
 				centerV: false,
 				padding: 1,
 				selIndex: 0,
-				cancelable: false,
 				typewriter: false
 			},
 			options
@@ -4229,16 +4427,16 @@ const beep8 = {};
 				selIndex = ( selIndex + 1 ) % choices.length;
 				if ( choices.length > 1 ) beep8.Sfx.play( beep8.CONFIG.SFX.MENU_DOWN );
 
-			} else if ( k.includes( "Enter" ) || k.includes( "ButtonA" ) || k.includes( " " ) ) {
+			} else if (
+				k.includes( "Enter" ) ||
+				k.includes( "ButtonA" ) ||
+				k.includes( "ButtonB" ) ||
+				k.includes( " " )
+			) {
 
 				// Select menu item.
 				beep8.Sfx.play( beep8.CONFIG.SFX.MENU_SELECT );
 				return selIndex;
-
-			} else if ( ( k.includes( "Escape" ) || k.includes( "ButtonB" ) ) && options.cancelable ) {
-
-				// Close menu.
-				return -1;
 
 			}
 
