@@ -127,16 +127,18 @@
 	/**
 	 * Clears the screen using the specified or current background color.
 	 *
-	 * @param {number} [bgColor=undefined] - Optional background color index.
+	 * @param {number} [bg=undefined] - Optional background color index.
 	 * If provided, uses this index to get the color from the config. If not
 	 * provided, uses the current background color (drawState.bgColor).
 	 * @returns {void}
 	 */
-	beep8.cls = function( bgColor = undefined ) {
+	beep8.cls = function( bg = undefined ) {
 
 		beep8.Core.preflight( "beep8.Core.cls" );
 
-		beep8.Core.cls( bgColor );
+		if ( bg !== undefined ) beep8.Utilities.checkNumber( "bg", bg );
+
+		beep8.Core.cls( bg );
 
 	}
 
@@ -596,8 +598,10 @@
 	 * Draws a sprite on the screen.
 	 *
 	 * @param {number|string} ch - The character code of the sprite.
+	 * @param {string} animation - The animation to play.
 	 * @param {number} x - The X position at which to draw.
 	 * @param {number} y - The Y position at which to draw.
+	 * @param {number|null} startTime - The start time of the animation in milliseconds.
 	 * @returns {boolean} True if the sprite was drawn, otherwise false.
 	 */
 	beep8.sprActor = function( ch, animation, x, y, startTime = null ) {
@@ -608,6 +612,7 @@
 		beep8.Utilities.checkString( "animation", animation );
 		beep8.Utilities.checkNumber( "x", x );
 		beep8.Utilities.checkNumber( "y", y );
+		if ( startTime !== null ) beep8.Utilities.checkNumber( "startTime", startTime );
 
 		return beep8.Actors.spr( ch, animation, x, y, startTime );
 

@@ -61,20 +61,16 @@
 	/**
 	 * Get all entities at a specific grid location.
 	 *
-	 * @param {number} x
-	 * @param {number} y
+	 * @param {number} col
+	 * @param {number} row
 	 * @returns {number[]} Array of entity IDs at that location
 	 */
-	beep8.ECS.entitiesAt = function( x, y ) {
+	beep8.ECS.entitiesAt = function( col, row ) {
 
-		return grid[ y ]?.[ x ] ?? [];
+		return grid[ row ]?.[ col ] ?? [];
 
 	}
 
-
-	/* ------------------------------------------------------------------
-	   System pipeline helpers
-	   ------------------------------------------------------------------*/
 
 	/**
 	 * Register a system that runs every frame.
@@ -168,7 +164,7 @@
 		bucket( name ).set( id, data );
 
 		// If the component is Loc (location), update the position grid.
-		if ( 'Loc' === name ) beep8.ECS.setLoc( id, data.x, data.y );
+		if ( 'Loc' === name ) beep8.ECS.setLoc( id, data.col, data.row );
 
 	}
 
@@ -193,23 +189,23 @@
 	 * Set the location of an entity.
 	 *
 	 * @param {number} id Entity ID
-	 * @param {number} x X coordinate
-	 * @param {number} y Y coordinate
+	 * @param {number} col X tile coordinate
+	 * @param {number} row Y tile coordinate
 	 * @returns {void}
 	 */
-	beep8.ECS.setLoc = function( id, x, y ) {
+	beep8.ECS.setLoc = function( id, col, row ) {
 
 		beep8.Utilities.checkInt( 'id', id );
-		beep8.Utilities.checkInt( 'x', x );
-		beep8.Utilities.checkInt( 'y', y );
+		beep8.Utilities.checkInt( 'col', col );
+		beep8.Utilities.checkInt( 'row', row );
 
 		// Get the current location component.
 		const loc = this.getComponent( id, 'Loc' );
 
 		// Remove from old position.
-		const oldRow = grid[ loc.y ];
+		const oldRow = grid[ loc.row ];
 		if ( oldRow ) {
-			const cell = oldRow[ loc.x ];
+			const cell = oldRow[ loc.col ];
 			if ( cell ) {
 				const i = cell.indexOf( id );
 				if ( i !== -1 ) cell.splice( i, 1 );
@@ -217,13 +213,13 @@
 		}
 
 		// Update component position.
-		loc.x = x;
-		loc.y = y;
+		loc.col = col;
+		loc.row = row;
 
 		// Save new grid location.
-		if ( !grid[ y ] ) grid[ y ] = [];
-		if ( !grid[ y ][ x ] ) grid[ y ][ x ] = [];
-		grid[ y ][ x ].push( id );
+		if ( !grid[ row ] ) grid[ row ] = [];
+		if ( !grid[ row ][ col ] ) grid[ row ][ col ] = [];
+		grid[ row ][ col ].push( id );
 
 	}
 
@@ -315,7 +311,7 @@
 		const loc = this.getComponent( id, 'Loc' );
 
 		if ( loc ) {
-			const cell = grid[ loc.y ]?.[ loc.x ];
+			const cell = grid[ loc.row ]?.[ loc.col ];
 			if ( cell ) cell.splice( cell.indexOf( id ), 1 );
 		}
 

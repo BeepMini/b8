@@ -67,6 +67,21 @@
  * } );
  */
 
+/**
+ * Things to note:
+ *
+ * By default tiles are 12×12 pixels
+ * Coordinates: pixels from top-left
+ * Text grid: col,row use 12×12 tiles
+ * Time: dt in seconds
+ * Colours: palette indices 0–15
+ * Fonts: fontId is the name from TextRenderer.loadFontAsync
+ * Public code uses beep8.* or beep8.Async.*
+ * beep8.* functions check their arguments
+ * x and y are pixels, col and row are tiles
+ * Actors have animations, tiles do not
+ */
+
 const beep8 = {};
 
 
