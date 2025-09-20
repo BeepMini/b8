@@ -12,71 +12,76 @@
 
 	<script>
 
+		let mapArray = null;
+		let map = null;
+
+		const NPC_IDS = [ "0", "1", "2", "3" ];
+
 		const MAPS = {
 			"OVERWORLD": [
-				"                    ".split( '' ),
-				" ~~~~~ ^^^  ~~  ^^  ".split( '' ),
-				" ~~~|, ^^   ~~ ^^|| ".split( '' ),
-				" ~||   ^^   ~,^^||  ".split( '' ),
-				" ||  ^^,    ~~  ||  ".split( '' ),
-				" |, ||, ^^  ~~ ,    ".split( '' ),
-				"    ||||^^   ~~||^^ ".split( '' ),
-				" ^   ,||||^|  ~~||^ ".split( '' ),
-				" ^^^|   ,   , ==  ^ ".split( '' ),
-				" ^|| ,    |^^,~~,,^ ".split( '' ),
-				"  ^^^^|   ^^^~~  ,^ ".split( '' ),
-				"  ^^^^     ^^~~  ~  ".split( '' ),
-				"    ^  ,     ~~  ~~ ".split( '' ),
-				"         ,  ~~  |~~ ".split( '' ),
-				"   ,    ,  ~~  ,|~~ ".split( '' ),
-				"    |      ~~  ,,   ".split( '' ),
-				" | ,|||T|^~~~ ,, ^^ ".split( '' ),
-				" |||  ^^^~~~   ^^^^ ".split( '' ),
-				" ^^^||  ~~~   ^^^^^ ".split( '' ),
-				"                    ".split( '' ),
+				"                    ",
+				" ~~~~~ ^^^  ~~  ^^  ",
+				" ~~~|, ^^   ~~ ^^|| ",
+				" ~||   ^^   ~,^^||  ",
+				" ||  ^^,    ~~  ||  ",
+				" |, ||, ^^  ~~ ,    ",
+				"    ||||^^   ~~||^^ ",
+				" ^   ,||||^|  ~~||^ ",
+				" ^^^|   ,   , ==  ^ ",
+				" ^|| ,    |^^,~~,,^ ",
+				"  ^^^^|   ^^^~~  ,^ ",
+				"  ^^^^     ^^~~  ~  ",
+				"    ^  ,     ~~  ~~ ",
+				"         ,  ~~  |~~ ",
+				"   ,    ,  ~~  ,|~~ ",
+				"    |      ~~  ,,   ",
+				" | ,|||T|^~~~ ,, ^^ ",
+				" |||  ^^^~~~   ^^^^ ",
+				" ^^^||  ~~~   ^^^^^ ",
+				"                    ",
 			],
 			"TOWN": [
-				"                    ".split( '' ),
-				"          OO        ".split( '' ),
-				" #########..####### ".split( '' ),
-				" #  ,   ..   #  ] # ".split( '' ),
-				" # ######  . #  ] # ".split( '' ),
-				" # # ]  # .  +  ]2# ".split( '' ),
-				" # # ]  # .  ###### ".split( '' ),
-				" # #0]  + ., #  ] # ".split( '' ),
-				" # # ]  # .. +  ]1# ".split( '' ),
-				" # ###### .. #  ] # ".split( '' ),
-				" #.. ..   ...###### ".split( '' ),
-				" #.,.  .. . .. ,  # ".split( '' ),
-				" ####    .    2   # ".split( '' ),
-				" #  +    ......   # ".split( '' ),
-				" #0 # ,..~~..., ..# ".split( '' ),
-				" #### 1  ~~..     # ".split( '' ),
-				" #   0   .. ,  1 |# ".split( '' ),
-				" #||  2  ||| , |||# ".split( '' ),
-				" #||| ,,  ||,|||||# ".split( '' ),
-				" ################## ".split( '' ),
+				"                    ",
+				"          OO        ",
+				" #########..####### ",
+				" #  ,   ..   #  ] # ",
+				" # ######  . #  ] # ",
+				" # # ]  # .  +  ]2# ",
+				" # # ]  # .  ###### ",
+				" # #0]  + ., #  ] # ",
+				" # # ]  # .. +  ]1# ",
+				" # ###### .. #  ] # ",
+				" #.. ..   ...###### ",
+				" #.,.  .. . .. ,  # ",
+				" ####    .    2   # ",
+				" #  +    ......   # ",
+				" #0 # ,..~~..., ..# ",
+				" #### 1  ~~..     # ",
+				" #   0   .. ,  1 |# ",
+				" #||  2  ||| , |||# ",
+				" #||| ,,  ||,|||||# ",
+				" ################## ",
 			],
 		};
 
 		const TILES = {
-			"~": { color: 3, bg: 5, char: 188, solid: true },	// water.
-			"|": { color: 12, char: 185, solid: true },			// tree.
-			"^": { color: 2, char: 187, solid: true },			// mountain.
-			"=": { color: 1, char: 248, solid: false },			// bridge.
-			",": { color: 13, char: 289, solid: false },		// grass.
-			" ": { color: 1, char: 0, solid: false },			// empty.
-			"T": { color: 15, char: 362, solid: false },		// town.
-			"O": { color: 0, char: 0x20, solid: false },		//
-			"#": { color: 7, char: 334, solid: true },			// wall.
-			".": { color: 1, char: 346, solid: false },			// stone path.
-			"+": { color: 6, char: 234, solid: false },			// doorway.
-			"]": { color: 10, char: 74, solid: true },			// force field.
+			"~": { fg: 3, bg: 5, t: 188, coll: true },	// water.
+			"|": { fg: 12, t: 185, coll: true },			// tree.
+			"^": { fg: 2, t: 187, coll: true },			// mountain.
+			"=": { fg: 1, t: 248, coll: false },			// bridge.
+			",": { fg: 13, t: 289, coll: false },		// grass.
+			" ": { fg: 1, t: 0, coll: false },			// empty.
+			"T": { fg: 15, t: 362, coll: false },		// town.
+			"O": { fg: 0, t: 0, coll: false },		//
+			"#": { fg: 7, t: 334, coll: true },			// wall.
+			".": { fg: 1, t: 346, coll: false },			// stone path.
+			"+": { fg: 6, t: 234, coll: false },			// doorway.
+			"]": { fg: 10, t: 74, coll: true },			// force field.
 
-			// Villagers.
-			"0": { color: 15, char: 0xd0, solid: true, talk: true },
-			"1": { color: 15, char: 0xd3, solid: true, talk: true },
-			"2": { color: 15, char: 0xd5, solid: true, talk: true },
+			// // Villagers.
+			"0": { fg: 15, t: 0xd0, coll: true, talk: true },
+			"1": { fg: 15, t: 0xd3, coll: true, talk: true },
+			"2": { fg: 15, t: 0xd5, coll: true, talk: true },
 		}
 
 		const MAP_WIDTH = MAPS.OVERWORLD[ 0 ].length;
@@ -115,41 +120,31 @@
 
 		}
 
-		function drawMap() {
-			const map = MAPS[ curMap ];
-			beep8.color( 7, 0 );
-			beep8.cls();
-			for ( let y = 0; y < MAP_HEIGHT; y++ ) {
-				beep8.locate( 0, y );
-				for ( let x = 0; x < MAP_WIDTH; x++ ) {
-					const tile = TILES[ map[ y ][ x ] ];
+		function drawNPCs() {
 
-					if ( [ '0', '1', '2', '3' ].includes( map[ y ][ x ] ) ) {
+			for ( let y = 0; y < mapArray.length; y++ ) {
+				for ( let x = 0; x < mapArray[ y ].length; x++ ) {
+					if ( NPC_IDS.includes( mapArray[ y ][ x ] ) ) {
 						beep8.color( 15, 0 );
-						beep8.Core.nextCursorLocation(); // Increment x position so there are no gaps.
-
-						// Save current cursor position
-						const cursorCol = beep8.Core.drawState.cursorCol;
-						const cursorRow = beep8.Core.drawState.cursorRow;
-
-						// Position the actor
-						beep8.locate( cursorCol - 1, cursorRow );
-						beep8.drawActor( parseInt( map[ y ][ x ] ), 'idle' ); // draw character.
-
-						// Restore cursor position
-						beep8.locate( cursorCol, cursorRow );
-						continue;
-					}
-
-					if ( tile ) {
-						beep8.color(
-							tile.color,
-							tile.bg | undefined
-						);
-						beep8.printChar( tile ? tile.char : 0x3f );
+						beep8.locate( x, y + 1 );
+						beep8.drawActor( parseInt( mapArray[ y ][ x ] ), "idle" );
 					}
 				}
 			}
+
+		}
+
+		function drawMap() {
+
+			// Map.
+			beep8.cls();
+			beep8.locate( 0, 1 );
+			beep8.Tilemap.draw( map, 0, 0 );
+
+			// Draw NPCs.
+			drawNPCs();
+
+			// UI.
 			beep8.locate( 1, 22 );
 			beep8.color( 8, 0 );
 			beep8.print(
@@ -173,9 +168,9 @@
 			if ( candY <= 0 || candY >= MAP_HEIGHT - 1 ) return;
 
 			// What tile is the player trying to enter?
-			const tile = MAPS[ curMap ][ candY ][ candX ];
+			const tile = mapArray[ candY - 1 ][ candX ];
 			if ( TILES[ tile ].talk ) await randomGreeting();
-			if ( TILES[ tile ].solid ) return; // Can't walk over a solid tile.
+			if ( TILES[ tile ].coll ) return; // Can't walk over a solid tile.
 
 			px = candX, py = candY;
 
@@ -185,15 +180,32 @@
 
 		}
 
-		function goToMap( mapName, x, y ) { curMap = mapName, px = x, py = y; }
-
-		async function randomGreeting() {
-
-			await beep8.Async.dialog( "VILLAGER:\n" + GREETINGS[ Math.floor( Math.random() * GREETINGS.length ) ] );
-
+		function loadMap( mapName ) {
+			mapArray = beep8.Tilemap.convertFromText( MAPS[ mapName ].join( "\n" ) );
+			return beep8.Tilemap.createFromArray( mapArray, TILES );
 		}
 
-		window.addEventListener( "load", () => beep8.init( main ) );
+		function goToMap( mapName, x, y ) {
+			map = loadMap( mapName );
+			curMap = mapName;
+			px = x;
+			py = y;
+		}
+
+		async function randomGreeting() {
+			const greeting = GREETINGS[ Math.floor( Math.random() * GREETINGS.length ) ];
+			await beep8.Async.dialog( `VILLAGER:\n${greeting}` );
+		}
+
+		window.addEventListener(
+			"load",
+			() => beep8.init(
+				() => {
+					goToMap( "OVERWORLD", 7, 9 );
+					main();
+				}
+			)
+		);
 	</script>
 </head>
 
