@@ -68,22 +68,22 @@
 		// = more memory.
 		// You can redefine the colors at runtime with beep8.redefineColors([]).
 		COLORS: [
-			"#0A0C1F", // Very dark blue - almost black. The darkest colour.
-			"#263264", // Dark blue
-			"#A0ABB6", // Mid grey
-			"#B2EFEB", // Light blue
-			"#3FB0F1", // Mid blue
-			"#3548A3", // Blue
-			"#420241", // Dark red/ purple
-			"#6A3E49", // Brown
-			"#C22D44", // Red
-			"#E08355", // Orange
-			"#FFC763", // Yellow
-			"#A7D171", // Light green
-			"#30AB62", // Green
-			"#1E7F82", // Dark Green
-			"#FF76D7", // Pink
-			"#F4F4F4", // Off white
+			"#0A0C1F", // 0. Very dark blue - almost black. The darkest colour.
+			"#263264", // 1. Dark blue
+			"#A0ABB6", // 2. Mid grey
+			"#B2EFEB", // 3. Light blue
+			"#3FB0F1", // 4. Mid blue
+			"#3548A3", // 5. Blue
+			"#420241", // 6. Dark red/ purple
+			"#6A3E49", // 7. Brown
+			"#C22D44", // 8. Red
+			"#E08355", // 9. Orange
+			"#FFC763", // 10. Yellow
+			"#A7D171", // 11. Light green
+			"#30AB62", // 12. Green
+			"#1E7F82", // 13. Dark Green
+			"#FF76D7", // 14. Pink
+			"#F4F4F4", // 15. White
 		],
 		// The passkey for the game.
 		// This is used when generating passcodes for levels.
