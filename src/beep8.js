@@ -70,16 +70,21 @@
 /**
  * Things to note:
  *
- * By default tiles are 12×12 pixels
- * Coordinates: pixels from top-left
- * Text grid: col,row use 12×12 tiles
- * Time: dt in seconds
- * Colours: palette indices 0–15
- * Fonts: fontId is the name from TextRenderer.loadFontAsync
- * Public code uses beep8.* or beep8.Async.*
- * beep8.* functions check their arguments
- * x and y are pixels, col and row are tiles
- * Actors have animations, tiles do not
+ * By default tiles are 12×12 pixels.
+ * Coordinates (x, y) are pixels from the top-left.
+ * Text grid uses (col, row) in 12×12 tile units.
+ * All text widths (maxWidth, widthCols, heightRows) are in columns/rows, not pixels.
+ * Time: dt and durations are in seconds. Core.getNow() returns seconds.
+ * Fonts: fontName is the name passed to TextRenderer.loadFontAsync.
+ * Public API is beep8.* and beep8.Async.*; arguments are validated.
+ * Actors have animations; tiles do not.
+ * ECS locations and queries use tile coordinates (col, row).
+ * setTile origin: locate(col,row) offsets draw*, and print* by tile origin.
+ * Actor ids go from 1 to 20. Animations include idle, move-left, move-right, move-up, move-down.
+ * Useful tile ids 0 = blank, 1 = solid, 330 = wall, 206 = water, 268 = fire, 182 = tree, 352 = crate.
+ * Handy color ids: 0 = black, 5=blue, 8=red, 10=yellow, 12=green, 15 = white.
+ * A and B buttons are mapped to ButtonA and ButtonB keys (eg keydown('ButtonA')).
+ * Prefer the ECS over global variables where possible/ sensible.
  */
 
 const beep8 = {};
