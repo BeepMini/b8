@@ -176,7 +176,7 @@
 	 * @param {number} [height=null] The height of the tilemap to draw.
 	 * @returns {void}
 	 */
-	beep8.Tilemap.draw = function( tilemap, tileX = 0, tileY = 0, width = null, height = null ) {
+	beep8.Tilemap.draw = function( tilemap, tileXOffset = 0, tileYOffset = 0, width = null, height = null ) {
 
 		beep8.Utilities.checkArray( "tilemap", tilemap );
 
@@ -194,14 +194,14 @@
 		const startRow = beep8.Core.drawState.cursorRow;
 		const startCol = beep8.Core.drawState.cursorCol;
 
-		for ( let y = tileY; y < tileY + height; y++ ) {
+		for ( let y = tileYOffset; y < tileYOffset + height; y++ ) {
 
 			// Position the cursor at the start of the row.
 			const lx = 0 + startCol;
-			const ly = y - tileY + startRow;
+			const ly = y - tileYOffset + startRow;
 			beep8.locate( lx, ly );
 
-			for ( let x = tileX; x < tileX + width; x++ ) {
+			for ( let x = tileXOffset; x < tileXOffset + width; x++ ) {
 
 				if ( !tilemap[ y ] || tilemap[ y ][ x ] == null ) continue;
 
@@ -484,10 +484,10 @@
 	 * @param {string} name The name of the wall tile to select. Picked from the default lists of wall patterns.
 	 * @returns {number} The selected wall tile id.
 	 */
-	beep8.Tilemap.wallTile = function( x, y, grid, name = null ) {
+	beep8.Tilemap.wallTile = function( col, row, grid, name = null ) {
 
-		beep8.Utilities.checkNumber( "x", x );
-		beep8.Utilities.checkNumber( "y", y );
+		beep8.Utilities.checkNumber( "col", col );
+		beep8.Utilities.checkNumber( "row", row );
 		beep8.Utilities.checkArray( "grid", grid );
 		beep8.Utilities.checkString( "name", name );
 
@@ -502,7 +502,7 @@
 			beep8.Utilities.fatal( "Wall tile type not found: " + tileType );
 		}
 
-		const mask = computeBitmask( grid, x, y );
+		const mask = computeBitmask( grid, col, row );
 		return wallTiles[ tileType ][ mask ];
 
 	};
@@ -510,19 +510,19 @@
 
 	// A helper function to compute a 4-bit bitmask for a wall tile.
 	// Bit values: 1 = North, 2 = East, 4 = South, 8 = West.
-	function computeBitmask( grid, x, y ) {
+	function computeBitmask( grid, col, row ) {
 
 		let bitmask = 0;
-		const tileId = grid[ y ][ x ];
+		const tileId = grid[ row ][ col ];
 
 		// Check North
-		if ( y > 0 && grid[ y - 1 ][ x ] === tileId ) bitmask += 1;
+		if ( row > 0 && grid[ row - 1 ][ col ] === tileId ) bitmask += 1;
 		// Check East
-		if ( x < grid[ y ].length - 1 && grid[ y ][ x + 1 ] === tileId ) bitmask += 2;
+		if ( col < grid[ row ].length - 1 && grid[ row ][ col + 1 ] === tileId ) bitmask += 2;
 		// Check South
-		if ( y < grid.length - 1 && grid[ y + 1 ][ x ] === tileId ) bitmask += 4;
+		if ( row < grid.length - 1 && grid[ row + 1 ][ col ] === tileId ) bitmask += 4;
 		// Check West
-		if ( x > 0 && grid[ y ][ x - 1 ] === tileId ) bitmask += 8;
+		if ( col > 0 && grid[ row ][ col - 1 ] === tileId ) bitmask += 8;
 
 		return bitmask;
 
