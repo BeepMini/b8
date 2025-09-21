@@ -164,20 +164,20 @@
 	 *
 	 * @param {string} text - The text to print.
 	 * @param {beep8.TextRendererFont} [font=null] - The font to use for printing.
-	 * @param {number} [wrapWidth=-1] - The width to wrap text at.
+	 * @param {number} [maxWidth=-1] - The maximum width to wrap text at.
 	 * @returns {void}
 	 */
-	beep8.TextRenderer.print = function( text, font = null, wrapWidth = -1 ) {
+	beep8.TextRenderer.print = function( text, font = null, maxWidth = -1 ) {
 
 		beep8.TextRenderer.printFont_ = font || beep8.TextRenderer.curFont_;
 
 		// Property validation.
 		beep8.Utilities.checkString( "text", text );
-		beep8.Utilities.checkNumber( "wrapWidth", wrapWidth );
+		beep8.Utilities.checkNumber( "maxWidth", maxWidth );
 		if ( font !== null ) beep8.Utilities.checkObject( "font", font );
 
 		// Wrap text to specified width.
-		text = beep8.TextRenderer.wrapText( text, wrapWidth, font );
+		text = beep8.TextRenderer.wrapText( text, maxWidth, font );
 
 		// Store the start location.
 		let col = beep8.Core.drawState.cursorCol;
@@ -240,21 +240,21 @@
 	 * Prints text character by character, as in a typewriter.
 	 *
 	 * @param {string} text - The text to print.
-	 * @param {number} [wrapWidth=-1] - The width to wrap text at.
+	 * @param {number} [maxWidth=-1] - The width to wrap text at.
 	 * @param {number} [delay=0.05] - The delay between characters in seconds.
 	 * @param {beep8.TextRendererFont} [font=null] - The font to use.
 	 * @returns {Promise<void>} Resolves after the text is printed.
 	 */
-	beep8.TextRenderer.printTypewriter = async function( text, wrapWidth = -1, delay = 0.05, font = null ) {
+	beep8.TextRenderer.printTypewriter = async function( text, maxWidth = -1, delay = 0.05, font = null ) {
 
 		beep8.Utilities.checkString( "text", text );
-		beep8.Utilities.checkNumber( "wrapWidth", wrapWidth );
+		beep8.Utilities.checkNumber( "maxWidth", maxWidth );
 		beep8.Utilities.checkNumber( "delay", delay );
 
 		const startCol = beep8.col();
 		const startRow = beep8.row();
 
-		text = beep8.TextRenderer.wrapText( text, wrapWidth );
+		text = beep8.TextRenderer.wrapText( text, maxWidth );
 
 		for ( let i = 0; i <= text.length; i++ ) {
 
@@ -674,16 +674,16 @@
 	 * Wraps text to a given width.
 	 *
 	 * @param {string} text - The text to wrap.
-	 * @param {number} wrapWidth - The width to wrap the text to.
+	 * @param {number} maxWidth - The width to wrap the text to.
 	 * @param {beep8.TextRendererFont} fontName - The font to use.
 	 * @returns {string} The wrapped text.
 	 */
-	beep8.TextRenderer.wrapText = function( text, wrapWidth, font = null ) {
+	beep8.TextRenderer.wrapText = function( text, maxWidth, font = null ) {
 
 		font = font || beep8.TextRenderer.curFont_;
 
 		// If 0 or less then don't wrap.
-		if ( wrapWidth <= 0 ) return text;
+		if ( maxWidth <= 0 ) return text;
 
 		// Split the text into lines.
 		const lines = text.split( "\n" );
@@ -701,7 +701,7 @@
 				const lineWidth = beep8.TextRenderer.measure( ( wrappedLine + word ).trim() ).cols;
 
 				// Is the line with the new word longer than the line width?
-				if ( lineWidth > wrapWidth ) {
+				if ( lineWidth > maxWidth ) {
 					wrappedLines.push( wrappedLine.trim() );
 					wrappedLine = "";
 				}

@@ -233,23 +233,23 @@
 	 * See example-printing.html for an example.
 	 *
 	 * @param {string} text - The text to print.
-	 * @param {number} [wrapWidth=-1] - The width to wrap text at. -1 for no wrapping.
+	 * @param {number} [maxWidth=-1] - The maximum width to wrap text at. -1 for no wrapping.
 	 * @returns {void}
 	 */
-	beep8.print = function( text, wrapWidth = -1, fontId = null ) {
+	beep8.print = function( text, maxWidth = -1, fontName = null ) {
 
 		beep8.Core.preflight( "beep8.text" );
 
 		beep8.Utilities.checkString( "text", text );
-		beep8.Utilities.checkNumber( "wrapWidth", wrapWidth );
+		beep8.Utilities.checkNumber( "maxWidth", maxWidth );
 
-		let font = fontId;
+		let font = fontName;
 		if ( null !== font ) {
-			beep8.Utilities.checkString( "fontId", fontId );
-			font = beep8.TextRenderer.getFontByName( fontId );
+			beep8.Utilities.checkString( "fontName", fontName );
+			font = beep8.TextRenderer.getFontByName( fontName );
 		}
 
-		beep8.TextRenderer.print( text, font, wrapWidth );
+		beep8.TextRenderer.print( text, font, maxWidth );
 
 	}
 
@@ -263,17 +263,17 @@
 	 * @param {number} width - The width of the space to place the text in, measured in Columns. Defaults to the screen width.
 	 * @returns {void}
 	 */
-	beep8.printCentered = function( text, width = beep8.CONFIG.SCREEN_COLS, fontId = null ) {
+	beep8.printCentered = function( text, width = beep8.CONFIG.SCREEN_COLS, fontName = null ) {
 
 		beep8.Core.preflight( "beep8.printCentered" );
 
 		beep8.Utilities.checkString( "text", text );
 		beep8.Utilities.checkNumber( "width", width );
 
-		let font = fontId;
+		let font = fontName;
 		if ( null !== font ) {
-			beep8.Utilities.checkString( "fontId", fontId );
-			font = beep8.TextRenderer.getFontByName( fontId );
+			beep8.Utilities.checkString( "fontName", fontName );
+			font = beep8.TextRenderer.getFontByName( fontName );
 		}
 
 		beep8.TextRenderer.printCentered( text, width, font );
@@ -287,20 +287,20 @@
 	 *
 	 * @param {string} text - The text to print.
 	 * @param {number} width - The width of the space to place the text in, measured in Columns. Defaults to the screen width.
-	 * @param {string} [fontId=null] - The font ID to use.
+	 * @param {string} [fontName=null] - The font ID to use.
 	 * @returns {void}
 	 */
-	beep8.printRight = function( text, width = beep8.CONFIG.SCREEN_COLS, fontId = null ) {
+	beep8.printRight = function( text, width = beep8.CONFIG.SCREEN_COLS, fontName = null ) {
 
 		beep8.Core.preflight( "beep8.printRight" );
 
 		beep8.Utilities.checkString( "text", text );
 		beep8.Utilities.checkNumber( "width", width );
 
-		let font = fontId;
+		let font = fontName;
 		if ( null !== font ) {
-			beep8.Utilities.checkString( "fontId", fontId );
-			font = beep8.TextRenderer.getFontByName( fontId );
+			beep8.Utilities.checkString( "fontName", fontName );
+			font = beep8.TextRenderer.getFontByName( fontName );
 		}
 
 		beep8.TextRenderer.printRight( text, width, font );
@@ -315,21 +315,21 @@
 	 * @param {number} x - The X coordinate of the top-left of the text.
 	 * @param {number} y - The Y coordinate of the top-left of the text.
 	 * @param {string} text - The text to print.
-	 * @param {string} [fontId=null] - The font ID to use.
+	 * @param {string} [fontName=null] - The font ID to use.
 	 * @returns {void}
 	 */
-	beep8.drawText = function( x, y, text, fontId = null ) {
+	beep8.drawText = function( x, y, text, fontName = null ) {
 
 		beep8.Core.preflight( "beep8.drawText" );
 		beep8.Utilities.checkNumber( "x", x );
 		beep8.Utilities.checkNumber( "y", y );
 		beep8.Utilities.checkString( "text", text );
 
-		if ( fontId ) {
-			beep8.Utilities.checkString( "fontId", fontId );
+		if ( fontName ) {
+			beep8.Utilities.checkString( "fontName", fontName );
 		}
 
-		beep8.TextRenderer.drawText( x, y, text, fontId );
+		beep8.TextRenderer.drawText( x, y, text, fontName );
 
 	}
 
@@ -357,10 +357,10 @@
 	 * @param {number|string} charCode - The character to print, as an integer
 	 * (ASCII code) or a one-character string.
 	 * @param {number} [numTimes=1] - How many times to print the character.
-	 * @param {string} fontId - The font id for the font to draw with.
+	 * @param {string} fontName - The font id for the font to draw with.
 	 * @returns {void}
 	 */
-	beep8.printChar = function( charCode, numTimes = 1, fontId = null ) {
+	beep8.printChar = function( charCode, numTimes = 1, fontName = null ) {
 
 		beep8.Core.preflight( "beep8.printChar" );
 
@@ -377,10 +377,10 @@
 			return;
 		}
 
-		let font = fontId;
+		let font = fontName;
 		if ( null !== font ) {
-			beep8.Utilities.checkString( "fontId", fontId );
-			font = beep8.TextRenderer.getFontByName( fontId );
+			beep8.Utilities.checkString( "fontName", fontName );
+			font = beep8.TextRenderer.getFontByName( fontName );
 		}
 
 		beep8.TextRenderer.printChar( charCode, numTimes, font );
@@ -703,18 +703,18 @@
 	/**
 	 * Sets the current font for text-based operations.
 	 *
-	 * @param {string} [fontId="default"] - The font ID to set. Pass null or
+	 * @param {string} [fontName="default"] - The font ID to set. Pass null or
 	 * omit to reset to default font.
 	 * @returns {void}
 	 */
-	beep8.setFont = function( fontId ) {
+	beep8.setFont = function( fontName ) {
 
 		beep8.Core.preflight( "beep8.setFont" );
 
-		fontId = fontId || "default-thin";
-		beep8.Utilities.checkString( "fontId", fontId );
+		fontName = fontName || "default-thin";
+		beep8.Utilities.checkString( "fontName", fontName );
 
-		beep8.TextRenderer.setFont( fontId );
+		beep8.TextRenderer.setFont( fontName );
 
 	}
 
@@ -751,18 +751,18 @@
 	/**
 	 * Sets the current tile font for text-based operations.
 	 *
-	 * @param {string} [fontId="tiles"] - The font ID to set. Pass null or
+	 * @param {string} [fontName="tiles"] - The font ID to set. Pass null or
 	 * omit to reset to default font.
 	 * @returns {void}
 	 */
-	beep8.setTileFont = function( fontId ) {
+	beep8.setTileFont = function( fontName ) {
 
 		beep8.Core.preflight( "beep8.setTileFont" );
 
-		fontId = fontId || "tiles";
-		beep8.Utilities.checkString( "fontId", fontId );
+		fontName = fontName || "tiles";
+		beep8.Utilities.checkString( "fontName", fontName );
 
-		beep8.TextRenderer.setTileFont( fontId );
+		beep8.TextRenderer.setTileFont( fontName );
 
 	}
 
@@ -857,15 +857,15 @@
 	 * given width.
 	 *
 	 * @param {string} text - The text to wrap.
-	 * @param {number} width - The width to wrap text at.
+	 * @param {number} maxWidth - The maximum width to wrap text at.
 	 * @returns {string} The wrapped text.
 	 */
-	beep8.wrapText = function( text, width ) {
+	beep8.wrapText = function( text, maxWidth ) {
 
 		beep8.Utilities.checkString( "text", text );
-		beep8.Utilities.checkNumber( "width", width );
+		beep8.Utilities.checkNumber( "maxWidth", maxWidth );
 
-		return beep8.TextRenderer.wrapText( text, width );
+		return beep8.TextRenderer.wrapText( text, maxWidth );
 
 	}
 

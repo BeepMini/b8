@@ -194,16 +194,16 @@
 	 * @param {number} [delay=0.05] - The delay between characters in seconds.
 	 * @returns {Promise<void>} Resolves after the text is printed.
 	 */
-	beep8.Async.typewriter = async function( text, wrapWidth = -1, delay = 0.035, fontId = null, ) {
+	beep8.Async.typewriter = async function( text, wrapWidth = -1, delay = 0.035, fontName = null, ) {
 
 		beep8.Utilities.checkString( "text", text );
 		beep8.Utilities.checkNumber( "wrapWidth", wrapWidth );
 		beep8.Utilities.checkNumber( "delay", delay );
 
-		let font = fontId;
+		let font = fontName;
 		if ( null !== font ) {
-			beep8.Utilities.checkString( "fontId", fontId );
-			font = beep8.TextRenderer.getFontByName( fontId );
+			beep8.Utilities.checkString( "fontName", fontName );
+			font = beep8.TextRenderer.getFontByName( fontName );
 		}
 
 		await beep8.TextRenderer.printTypewriter( text, wrapWidth, delay, font );
