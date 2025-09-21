@@ -97,19 +97,19 @@
 	/**
 	 * Triggers the screenshake effect.
 	 *
-	 * @param {number} duration - The duration of the screenshake effect in seconds.
+	 * @param {number} durationSeconds - The duration of the screenshake effect in seconds.
 	 * @returns {boolean} Returns true if the screenshake effect was successfully triggered.
 	 */
-	beep8.Renderer.shakeScreen = function( duration ) {
+	beep8.Renderer.shakeScreen = function( durationSeconds = 0.25 ) {
 
-		beep8.Utilities.checkNumber( "duration", duration );
+		beep8.Utilities.checkNumber( "duration", durationSeconds );
 
-		if ( duration <= 0 ) {
-			beep8.Utilities.warn( "Screenshake duration must be positive. Currently: " + duration );
+		if ( durationSeconds <= 0 ) {
+			beep8.Utilities.warn( `Screenshake duration must be positive. Currently: ${durationSeconds}` );
 			return false;
 		}
 
-		screenshakeDuration = duration;
+		screenshakeDuration = durationSeconds;
 
 		return true;
 
