@@ -637,6 +637,24 @@
 
 
 	/**
+	 * Checks if the given key was JUST pressed on this frame.
+	 *
+	 * @param {string} keyName - The name of the key.
+	 * @returns {boolean} True if the key was just pressed, otherwise false.
+	 */
+	beep8.keyp = function( keyName ) {
+
+		beep8.Core.preflight( "beep8.keyp" );
+
+		beep8.Utilities.checkString( "keyName", keyName );
+
+		return beep8.Input.keyJustPressed( keyName );
+
+	}
+
+
+
+	/**
 	 * Play a song.
 	 *
 	 * @param {string} song - The name of the song to play.
@@ -662,23 +680,6 @@
 		beep8.Utilities.checkString( "sfx", sfx );
 
 		beep8.Sfx.play( sfx );
-
-	}
-
-
-	/**
-	 * Checks if the given key was JUST pressed on this frame.
-	 *
-	 * @param {string} keyName - The name of the key.
-	 * @returns {boolean} True if the key was just pressed, otherwise false.
-	 */
-	beep8.keyp = function( keyName ) {
-
-		beep8.Core.preflight( "beep8.keyp" );
-
-		beep8.Utilities.checkString( "keyName", keyName );
-
-		return beep8.Input.keyJustPressed( keyName );
 
 	}
 
