@@ -4,7 +4,8 @@
 
 
 	/**
-	 * The animations for the default actors.
+	 * The default animations for the actors.
+	 * This can be extended or replaced by your own animations.
 	 *
 	 * @type {Object}
 	 */
@@ -243,4 +244,4 @@
 
 	}
 
-} )( beep8 || ( beep8 = {} ) );
+} )( beep8 );

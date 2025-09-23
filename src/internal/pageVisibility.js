@@ -62,4 +62,4 @@
 	window.addEventListener( 'blur', () => sleep() );
 	window.addEventListener( 'focus', () => wake() );
 
-} )( beep8 || ( beep8 = {} ) );
+} )( beep8 );

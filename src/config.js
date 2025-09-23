@@ -111,4 +111,4 @@
 		BORDER_CHAR: 54,
 	};
 
-} )( beep8 || ( beep8 = {} ) );
+} )( beep8 );

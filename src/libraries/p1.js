@@ -9,7 +9,7 @@
 	masterGain.connect( audioCtx.destination );
 
 	// Cache for generated note buffers.
-	const noteBuffers = {};
+	let noteBuffers = {};
 
 	// Scheduler variables.
 	let schedulerInterval = null;

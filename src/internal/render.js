@@ -336,4 +336,4 @@
 	initCrt();
 
 
-} )( beep8 || ( beep8 = {} ) );
+} )( beep8 );

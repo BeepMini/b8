@@ -2,13 +2,13 @@
 
 	beep8.Intro = {};
 
+
 	/**
-	 * Play a sound effect.
+	 * Display a loading screen.
 	 *
-	 * @param {string} sfx The sound effect to play.
-	 * @throws {Error} If the sfx is not found.
+	 * @returns {Promise<void>} A promise that resolves when the loading screen is displayed.
 	 */
-	beep8.Intro.loading = async function( sfx ) {
+	beep8.Intro.loading = async function() {
 
 		// Colour count.
 		const prefix = "8> ";
@@ -56,4 +56,4 @@
 	}
 
 
-} )( beep8 || ( beep8 = {} ) );
+} )( beep8 );

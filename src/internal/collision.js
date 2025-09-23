@@ -19,4 +19,4 @@
 	beep8.COLLISION.NES = beep8.COLLISION.N + beep8.COLLISION.E + beep8.COLLISION.S;
 	beep8.COLLISION.ALL = beep8.COLLISION.N + beep8.COLLISION.E + beep8.COLLISION.S + beep8.COLLISION.W;
 
-} )( beep8 || ( beep8 = {} ) );
+} )( beep8 );

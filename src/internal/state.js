@@ -167,4 +167,4 @@
 	beep8.data = createProxy( {} );
 
 
-} )( beep8 || ( beep8 = {} ) );
+} )( beep8 );

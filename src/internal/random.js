@@ -221,5 +221,5 @@
 
 	beep8.Random.setSeed();
 
-} )( beep8 || ( beep8 = {} ) );
+} )( beep8 );
 
