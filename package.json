@@ -4,6 +4,8 @@
 	"version": "1.0.0",
 	"main": "dist/beep8.min.js",
 	"browser": "dist/beep8.min.js",
+	"license": "MIT",
+	"type": "module",
 	"exports": {
 		".": {
 			"require": "./dist/beep8.min.js",
@@ -16,24 +18,12 @@
 		"LICENSE"
 	],
 	"scripts": {
-		"build:core": "concat-cli -o dist/beep8.core.js -f src/beep8.js src/config.js src/public.js src/public-async.js src/internal/*.js",
-		"build:transpile": "babel dist/beep8.core.js --out-file dist/beep8.transpiled.js --presets=@babel/preset-env",
-		"build:lib": "concat-cli -o dist/beep8.final.js -f dist/beep8.transpiled.js src/libraries/*.js",
-		"build:minify": "uglifyjs dist/beep8.final.js -o dist/beep8.min.js --compress --mangle",
-		"build:clean": "rm dist/beep8.core.js dist/beep8.transpiled.js dist/beep8.final.js",
-		"build": "npm run build:core && npm run build:transpile && npm run build:lib && npm run build:minify && npm run build:clean",
-		"dev:build": "concat-cli -o dist/beep8.js -f src/beep8.js src/config.js src/public.js src/public-async.js src/internal/*.js src/libraries/*.js",
-		"dev": "nodemon"
+		"build": "node build.mjs",
+		"dev": "node build.mjs watch"
 	},
-	"license": "MIT",
 	"devDependencies": {
-		"@babel/cli": "^7.24.8",
-		"@babel/core": "^7.24.8",
-		"@babel/preset-env": "^7.24.8",
-		"babelify": "^10.0.0",
-		"browserify": "^17.0.0",
-		"concat-cli": "^4.0.0",
-		"nodemon": "^3.1.4",
-		"uglify-js": "^3.18.0"
+		"chokidar": "^4.0.3",
+		"esbuild": "^0.25.10",
+		"glob": "^11.0.3"
 	}
 }
