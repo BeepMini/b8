@@ -1,19 +1,28 @@
 const mapper = {
 
+	// All loaded maps.
 	maps: [],
 
+	// Currently active map.
 	currentMap: null,
 
+	// Map of entity types to their handlers.
 	types: {},
 	systems: {},
 	actions: {},
 	settings: {},
 	bg: {},
 
+	// The player entity ID.
 	player: null,
 
 
-
+	/**
+	 * Initialize and start the game with the provided map data.
+	 *
+	 * @param {Object} mapData - The map data object containing map layout, tiles, objects, and settings.
+	 * @returns {void}
+	 */
 	play: function( mapData ) {
 
 		beep8.Utilities.checkObject( 'mapData', mapData );
@@ -27,7 +36,14 @@ const mapper = {
 	},
 
 
-
+	/**
+	 * Load a map into the game.
+	 *
+	 * @param {Object} mapData - The map data object containing map layout, tiles, objects, and settings.
+	 * @param {string} mapName - The name to assign to the loaded map.
+	 * @param {boolean} setCurrentMap - Whether to set this map as the current active map.
+	 * @returns {void}
+	 */
 	load: function( mapData, mapName = 'world', setCurrentMap = true ) {
 
 		beep8.Utilities.checkObject( 'mapData', mapData );
@@ -119,7 +135,12 @@ const mapper = {
 	},
 
 
-
+	/**
+	 * Update the game state.
+	 *
+	 * @param {number} dt - The delta time since the last update call.
+	 * @returns {void}
+	 */
 	update: function( dt ) {
 
 		beep8.ECS.run( dt );
@@ -127,6 +148,12 @@ const mapper = {
 	},
 
 
+	/**
+	 * Draw an actor at its location with optional offsets.
+	 *
+	 * @param {Object} actor - The actor entity with properties: id, col, row, fg, bg, animation.
+	 * @returns {void}
+	 */
 	drawActor: function( actor ) {
 
 		if ( !mapper.currentMap ) {
@@ -147,6 +174,13 @@ const mapper = {
 	},
 
 
+	/**
+	 * Render all entities on the screen with optional offsets.
+	 *
+	 * @param {number} offsetX - Horizontal offset for rendering.
+	 * @param {number} offsetY - Vertical offset for rendering.
+	 * @returns {void}
+	 */
 	render: function( offsetX = 0, offsetY = 0 ) {
 
 		// Handy caches so look-ups are O(1) inside the loop
@@ -184,6 +218,11 @@ const mapper = {
 	},
 
 
+	/**
+	 * Draw the visible portion of the current map to the screen.
+	 *
+	 * @returns {void}
+	 */
 	drawScreen: function() {
 
 		if ( !mapper.currentMap ) {
@@ -206,6 +245,12 @@ const mapper = {
 	},
 
 
+	/**
+	 * Set the current active map by name.
+	 *
+	 * @param {string} mapName - The name of the map to set as current.
+	 * @returns {void}
+	 */
 	setCurrentMap: function( mapName ) {
 
 		let currentMap = mapper.maps.find( map => map.name === mapName );
@@ -219,6 +264,14 @@ const mapper = {
 	},
 
 
+	/**
+	 * Set a tile at the specified coordinates in the current map.
+	 *
+	 * @param {number} x - The x-coordinate (column) of the tile to set.
+	 * @param {number} y - The y-coordinate (row) of the tile to set.
+	 * @param {string} tile - The tile character to set at the specified coordinates.
+	 * @returns {void}
+	 */
 	setTile: function( x, y, tile ) {
 
 		if ( !mapper.currentMap ) {
@@ -241,6 +294,12 @@ const mapper = {
 	},
 
 
+	/**
+	 * Get the action verb for a given entity ID.
+	 *
+	 * @param {number} id - The entity ID to get the verb for.
+	 * @returns {string} The action verb associated with the entity, or an empty string if none exists.
+	 */
 	getVerbForEntity: ( id ) => {
 
 		const a = beep8.ECS.getComponent( id, 'Action' );
@@ -248,6 +307,13 @@ const mapper = {
 
 	},
 
+
+	/**
+	 * Get the action verb for the entity directly in front of the player.
+	 *
+	 * @param {number} playerId - The player entity ID.
+	 * @returns {string} The action verb of the entity ahead, or an empty string if none exists.
+	 */
 	promptAhead: ( playerId ) => {
 
 		const ids = mapper.entitiesAhead( playerId );
@@ -260,7 +326,12 @@ const mapper = {
 	},
 
 
-	// Tile in front of the player
+	/**
+	 * Get the tile coordinates directly in front of the player.
+	 *
+	 * @param {number} playerId - The player entity ID.
+	 * @returns {Object} An object with x and y properties representing the tile coordinates ahead of the player.
+	 */
 	ahead: ( playerId ) => {
 
 		const loc = beep8.ECS.getComponent( playerId, 'Loc' );
@@ -272,7 +343,12 @@ const mapper = {
 	},
 
 
-	// Entities on that tile
+	/**
+	 * Get all entities located directly in front of the player.
+	 *
+	 * @param {number} playerId - The player entity ID.
+	 * @returns {Array} An array of entity IDs located ahead of the player.
+	 */
 	entitiesAhead: ( playerId ) => {
 
 		const { x, y } = mapper.ahead( playerId );
@@ -281,6 +357,17 @@ const mapper = {
 	},
 
 
+	/**
+	 * Handle collision when the player attempts to move to a new tile.
+	 *
+	 * @param {number} x - The current x-coordinate (column) of the player.
+	 * @param {number} y - The current y-coordinate (row) of the player.
+	 * @param {number} newCol - The target x-coordinate (column) the player is moving to.
+	 * @param {number} newRow - The target y-coordinate (row) the player is moving to.
+	 * @param {number} dx - The change in x (column) direction.
+	 * @param {number} dy - The change in y (row) direction.
+	 * @return {boolean} True if the movement is blocked by a collision, false otherwise.
+	 */
 	doCollision: function( x, y, newCol, newRow, dx, dy ) {
 
 		// ECS collision.
@@ -307,6 +394,12 @@ const mapper = {
 	},
 
 
+	/**
+	 * Perform the action associated with the entity directly in front of the player.
+	 *
+	 * @param {number} playerId - The player entity ID.
+	 * @returns {void}
+	 */
 	doAction: ( playerId ) => {
 
 		const action = mapper.promptAhead( playerId );

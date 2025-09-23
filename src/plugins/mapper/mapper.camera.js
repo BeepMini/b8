@@ -1,5 +1,12 @@
 mapper.camera = {
 
+	/**
+	 * Get the top-left tile coordinates of the screen the player is currently on.
+	 *
+	 * @param {number} pCol - The player's column position.
+	 * @param {number} pRow - The player's row position.
+	 * @returns {Object} An object with col, row, w, and h properties representing the screen's top-left tile and dimensions.
+	 */
 	getScreenPosition: function( pCol, pRow ) {
 
 		if ( !mapper.currentMap ) {
@@ -21,6 +28,13 @@ mapper.camera = {
 	},
 
 
+	/**
+	 * Get the on-screen tile coordinates for a given map tile.
+	 *
+	 * @param {number} col - The map tile's column position.
+	 * @param {number} row - The map tile's row position.
+	 * @returns {Object} An object with col and row properties representing the tile's on-screen position.
+	 */
 	getTilePosition: function( col, row ) {
 
 		const loc = beep8.ECS.getComponent( mapper.player, 'Loc' );
@@ -41,6 +55,5 @@ mapper.camera = {
 		};
 
 	},
-
 
 };
