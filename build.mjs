@@ -49,7 +49,7 @@ async function buildJS( input = '', sourcefile = '', isProd = false ) {
 			outfile: outfile,
 			platform: 'browser',
 			bundle: false,
-			target: 'esnext',
+			target: 'es2020',
 			minify: isProd,
 			sourcemap: !isProd,
 		}
