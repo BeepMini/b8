@@ -81,12 +81,12 @@
  * ECS locations and queries use tile coordinates (col, row).
  * setTile origin: locate(col,row) offsets draw*, and print* by tile origin.
  * Actor ids go from 1 to 20. Animations include idle, move-left, move-right, move-up, move-down.
- * Useful tile ids 0 = blank, 1 = solid, 330 = wall, 206 = water, 268 = fire, 182 = tree, 352 = crate.
+ * Useful tile ids 0 = blank, 1 = solid, 330 = wall, 206 = water, 268 = fire, 182 = tree, 352 = crate, 256 = gem.
  * Handy color ids: 0 = black, 5=blue, 8=red, 10=yellow, 12=green, 15 = white.
  * A and B buttons are mapped to ButtonA and ButtonB keys (eg keydown('ButtonA')).
  * Prefer the ECS over global variables where possible/ sensible.
+ * ECS ids are ints returned from beep8.ECS.create.
  */
 
 const beep8 = {};
-
 
