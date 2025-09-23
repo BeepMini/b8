@@ -2,7 +2,7 @@
 import { build } from 'esbuild';
 import { globSync } from 'glob';
 import { readFile } from 'node:fs/promises';
-import { dirname } from 'node:path';
+import { dirname, join, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import chokidar from 'chokidar';
 
@@ -71,6 +71,30 @@ const buildBeep8 = async () => {
 	await buildJS( input, 'beep8.min.js', true );
 
 
+	// Process plugins
+	const pluginDirs = globSync( 'src/plugins/*', { onlyDirectories: true } );
+	for ( const pluginDir of pluginDirs ) {
+
+		const pluginName = basename( pluginDir );
+		let pluginFiles = globSync( `src/plugins/${pluginName}/**/*.js`, { nodir: true } );
+
+		// Sort files: root files first, then subdirectory files
+		pluginFiles = pluginFiles.sort( ( a, b ) => {
+			const aIsRoot = !a.replace( pluginDir, '' ).includes( '/' );
+			const bIsRoot = !b.replace( pluginDir, '' ).includes( '/' );
+			if ( aIsRoot && !bIsRoot ) return -1; // Root files come first
+			if ( !aIsRoot && bIsRoot ) return 1;  // Subdirectory files come later
+			return a.localeCompare( b ); // Alphabetical order
+		} );
+
+		const pluginInput = await readConcat( pluginFiles );
+
+		// Build the plugin for development
+		await buildJS( pluginInput, `plugin.${pluginName}.js` );
+		// Build the plugin for production
+		await buildJS( pluginInput, `plugin.${pluginName}.min.js`, true );
+
+	}
 
 };
 
