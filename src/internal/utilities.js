@@ -446,30 +446,6 @@
 
 
 	/**
-	 * Calculates a 2D distance between points (x0, y0) and (x1, y1).
-	 *
-	 * @param {number} x0 - The x-coordinate of the first point.
-	 * @param {number} y0 - The y-coordinate of the first point.
-	 * @param {number} x1 - The x-coordinate of the second point.
-	 * @param {number} y1 - The y-coordinate of the second point.
-	 * @returns {number} The distance between the two points.
-	 */
-	beep8.Utilities.dist2d = function( x0, y0, x1, y1 ) {
-
-		beep8.Utilities.checkNumber( "x0", x0 );
-		beep8.Utilities.checkNumber( "y0", y0 );
-		beep8.Utilities.checkNumber( "x1", x1 );
-		beep8.Utilities.checkNumber( "y1", y1 );
-
-		const dx = x0 - x1;
-		const dy = y0 - y1;
-
-		return Math.sqrt( dx * dx + dy * dy );
-
-	}
-
-
-	/**
 	 * Converts a hex color string to an RGB object.
 	 *
 	 * @param {string} hex - The hex color string (e.g., "#ff0000").

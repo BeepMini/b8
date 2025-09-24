@@ -1,0 +1,85 @@
+( function( beep8 ) {
+
+	beep8.Math = {};
+
+
+	/**
+	 * Calculates a 2D distance between points (x0, y0) and (x1, y1).
+	 *
+	 * @param {number} x0 - The x-coordinate of the first point.
+	 * @param {number} y0 - The y-coordinate of the first point.
+	 * @param {number} x1 - The x-coordinate of the second point.
+	 * @param {number} y1 - The y-coordinate of the second point.
+	 * @returns {number} The distance between the two points.
+	 */
+	beep8.Math.dist2D = function( x0, y0, x1, y1 ) {
+
+		beep8.Utilities.checkNumber( "x0", x0 );
+		beep8.Utilities.checkNumber( "y0", y0 );
+		beep8.Utilities.checkNumber( "x1", x1 );
+		beep8.Utilities.checkNumber( "y1", y1 );
+
+		const dx = x0 - x1;
+		const dy = y0 - y1;
+
+		return Math.sqrt( dx * dx + dy * dy );
+
+	}
+
+
+	/**
+	 * Linearly interpolates between two values.
+	 *
+	 * @param {number} a - The start value.
+	 * @param {number} b - The end value.
+	 * @param {number} t - The interpolation factor (0.0 to 1.0).
+	 * @returns {number} The interpolated value.
+	 */
+	beep8.Math.lerp = function( a, b, t ) {
+
+		return a + ( b - a ) * t;
+
+	}
+
+
+	/**
+	 * A smoothing function for interpolation.
+	 *
+	 * This is Perlin's classic fade function 6t^5 - 15t^4 + 10t^3.
+	 * It eases coordinate values so that they will ease towards integral values.
+	 * This ends up smoothing the final output.
+	 *
+	 * @param {number} t - The interpolation factor (0.0 to 1.0).
+	 * @returns {number} The smoothed interpolation factor.
+	 */
+	beep8.Math.fade = function( t ) {
+
+		return t * t * t * ( t * ( t * 6 - 15 ) + 10 );
+
+	}
+
+
+	/**
+	 * A simpler smoothing function for interpolation.
+	 *
+	 * This is the smoothstep function 3t^2 - 2t^3.
+	 * It eases coordinate values so that they will ease towards integral values.
+	 * This ends up smoothing the final output.
+	 *
+	 * @param {number} t - The interpolation factor (0.0 to 1.0).
+	 * @returns {number} The smoothed interpolation factor.
+	 */
+	beep8.Math.smoothstep = function( t ) {
+
+		return t * t * ( 3 - 2 * t );
+
+	}
+
+
+	// Ken Perlin's quintic fade (smoother than smoothstep)
+	function fade( t ) {
+		return t * t * t * ( t * ( t * 6 - 15 ) + 10 );
+	}
+
+
+} )( beep8 );
