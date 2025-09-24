@@ -135,6 +135,9 @@
 	}
 
 
+	const weightedArrayCache = new Map();
+
+
 	/**
 	 * Returns a randomly picked element of the given array, with a weighted probability.
 	 *
@@ -146,11 +149,20 @@
 
 		beep8.Utilities.checkArray( "array", array );
 
-		const weightedArray = beep8.Random.weightedArray( array, decayFactor );
+		// Create a unique cache key based on the array and decayFactor
+		const cacheKey = JSON.stringify( array ) + `|${decayFactor}`;
+
+		// Check if the weighted array is already cached
+		let weightedArray = weightedArrayCache.get( cacheKey );
+
+		if ( !weightedArray ) {
+			weightedArray = beep8.Random.weightedArray( array, decayFactor );
+			weightedArrayCache.set( cacheKey, weightedArray );
+		}
 
 		return beep8.Random.pick( weightedArray );
 
-	}
+	};
 
 
 	/**
@@ -215,6 +227,66 @@
 		}
 
 		return weightedArray;
+
+	}
+
+
+	/**
+	 * Returns a consistent pseudo-random number between 0 and 1 for the given 2D coordinates and seed.
+	 * Uses a simple hash function to generate the number.
+	 *
+	 * @param {number} x - The x coordinate.
+	 * @param {number} y - The y coordinate.
+	 * @param {number} seed - The seed value.
+	 * @returns {number} A pseudo-random number between 0 and 1.
+	 */
+	beep8.Random.coord2D = function( x, y, seed ) {
+
+		let h = 2166136261 ^ seed;
+		h = Math.imul( h ^ x, 16777619 );
+		h = Math.imul( h ^ y, 16777619 );
+		h ^= h >>> 13; h = Math.imul( h, 0x85ebca6b );
+		h ^= h >>> 16;
+		return ( h >>> 0 ) / 4294967296;
+
+	}
+
+
+	/**
+	 * Returns a smooth noise value between 0 and 1 for the given 2D coordinates and seed.
+	 * Uses bilinear interpolation between the corner values.
+	 *
+	 * @param {number} x - The x coordinate.
+	 * @param {number} y - The y coordinate.
+	 * @param {number} seed - The seed value.
+	 * @param {number} freq - The frequency of the noise.
+	 * @returns {number} A smooth noise value between 0 and 1.
+	 */
+	beep8.Random.smooth2D = function( x, y, seed = 0, freq = 1 ) {
+
+		// scale space to control feature size
+		x *= freq;
+		y *= freq;
+
+		const ix = Math.floor( x );
+		const iy = Math.floor( y );
+		const fx = x - ix;
+		const fy = y - iy;
+
+		// corner values from your coord-based RNG
+		const v00 = beep8.Random.coord2D( ix, iy, seed );
+		const v10 = beep8.Random.coord2D( ix + 1, iy, seed );
+		const v01 = beep8.Random.coord2D( ix, iy + 1, seed );
+		const v11 = beep8.Random.coord2D( ix + 1, iy + 1, seed );
+
+		// fade curves for smooth interpolation
+		const u = beep8.Math.fade( fx );
+		const v = beep8.Math.fade( fy );
+
+		// bilinear interpolation
+		const i1 = beep8.Math.lerp( v00, v10, u );
+		const i2 = beep8.Math.lerp( v01, v11, u );
+		return beep8.Math.lerp( i1, i2, v );
 
 	}
 
