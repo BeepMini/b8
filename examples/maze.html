@@ -70,7 +70,7 @@
 					const cell = MAZE[ y ][ x ];
 
 					// Choose the draw color based on the distance to the player.
-					const distToPlayer = beep8.Utilities.dist2d( px, py, x, y );
+					const distToPlayer = beep8.Math.dist2D( px, py, x, y );
 					let tile_color = 0;
 					if ( distToPlayer < 8 ) { tile_color = 1; }
 					if ( distToPlayer < 5 ) { tile_color = 5; }

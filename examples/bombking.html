@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>beep8 • Bomber-ish (Tilemap-correct v1)</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<script src="../dist/beep8.min.js"></script>
+	<link rel="stylesheet" href="example.css">
+</head>
+
+<body>
+	<script>
+		// Map legend:
+		// # wall, X pillar, * crate, . floor, P player spawn, E enemy spawn
+		const MAP_LINES = [
+			"###############",
+			"#P..*..X..*..E#",
+			"#.*.*.*X*.*.*.#",
+			"#...*..X..*...#",
+			"#X#X#X#X#X#X#X#",
+			"#..*..*.*..*..#",
+			"#.*.*.*X*.*.*.#",
+			"#..*..X..*..E.#",
+			"#X#X#X#X#X#X#X#",
+			"#...*..X..*...#",
+			"#.*.*.*X*.*.*.#",
+			"#E..*..X..*..E#",
+			"###############"
+		];
+
+		// Tile defs matching your example shape: { fg, bg, t, coll }
+		// Handy ids from your notes: 0 blank, 330 wall, 268 fire, 182 tree (we'll reuse 182 as crate).
+		const TILES = {
+			"#": { fg: 7, t: 330, coll: true },	// wall
+			"X": { fg: 12, t: 182, coll: true },// pillar (reuse wall glyph)
+			"*": { fg: 12, t: 182, coll: true },// crate (solid until destroyed)
+			".": { fg: 1, t: 0, coll: false },	// floor
+			"P": { fg: 1, t: 0, coll: false },	// spawn (draw as floor)
+			"E": { fg: 1, t: 0, coll: false }	// spawn (draw as floor)
+		};
+
+		// Overlay glyphs
+		const GLYPH = {
+			player: { color: 15, bg: 0, actorId: 14, walk: { L: "move-left", R: "move-right", U: "move-up", D: "move-down" }, idle: "idle" },
+			enemy: { color: 15, bg: 0, actorId: 13, anim: "idle" },
+			bomb: { color: 10, bg: 0, t: 283 },
+			fire: { color: 8, bg: 0, t: 268 }
+		};
+
+		const CFG = {
+			stepCooldown: 0.3,
+			bombFuse: 1.75,
+			fireTime: 0.30,
+			blast: 3,
+			maxBombs: 1,
+			enemyThink: 0.4
+		};
+
+		let G = null; // runtime state
+
+		function loadMap() {
+			// Convert to array-of-strings then to char grid via API helper
+			const mapArrayRaw = beep8.Tilemap.convertFromText( MAP_LINES.join( "\n" ) );
+			const spawns = { p: { x: 1, y: 1 }, e: [] };
+
+			// Clone to a drawable array, replacing P/E with '.' for visuals, but recording spawns
+			const mapArray = mapArrayRaw.map( ( row, y ) => row.map( ( ch, x ) => {
+				if ( ch === "P" ) { spawns.p = { x, y }; return "."; }
+				if ( ch === "E" ) { spawns.e.push( { x, y } ); return "."; }
+				return ch;
+			} ) );
+
+			// Build tilemap object the same way as your sample
+			const map = beep8.Tilemap.createFromArray( mapArray, TILES );
+
+			// Collision grid derived from chars at load-time
+			const H = mapArray.length, W = mapArray[ 0 ].length;
+			const coll = [];
+			for ( let y = 0; y < H; y++ ) {
+				const row = [];
+				for ( let x = 0; x < W; x++ ) {
+					const ch = mapArray[ y ][ x ];
+					const def = TILES[ ch ] || TILES[ "." ];
+					row.push( {
+						coll: !!def.coll,
+						breakable: ch === "*" || ch === 'X' // crates and pillars are breakable
+					} );
+				}
+				coll.push( row );
+			}
+
+			return { map, mapArray, coll, spawns, W, H };
+		}
+
+		function resetGame() {
+			const { map, mapArray, coll, spawns, W, H } = loadMap();
+			G = {
+				W, H,
+				map,				// Tilemap object for drawing
+				mapArray,			// Char grid for edits
+				coll,				// Collision/breakability
+				player: { x: spawns.p.x, y: spawns.p.y, dir: "D", alive: true, cd: 0, bombs: CFG.maxBombs },
+				enemies: spawns.e.map( s => ( { x: s.x, y: s.y, alive: true, think: 0 } ) ),
+				bombs: [],			// {x,y,t}
+				fires: [],			// {x,y,t}
+				banner: ""
+			};
+		}
+
+		function inBounds( x, y ) { return x >= 0 && x < G.W && y >= 0 && y < G.H; }
+		function bombAt( x, y ) { return G.bombs.some( b => b.x === x && b.y === y ); }
+
+		function solidAt( x, y ) {
+			if ( !inBounds( x, y ) ) return true;
+			if ( bombAt( x, y ) ) return true;				// bombs block
+			return !!G.coll[ y ][ x ].coll;
+		}
+
+		function canStep( x, y ) { return inBounds( x, y ) && !solidAt( x, y ); }
+
+		function placeBomb( x, y ) {
+			if ( G.player.bombs <= 0 ) return;
+			if ( bombAt( x, y ) ) return;
+			G.bombs.push( { x, y, t: CFG.bombFuse } );
+			G.player.bombs--;
+		}
+
+		function explodeBomb( b ) {
+			G.fires.push( { x: b.x, y: b.y, t: CFG.fireTime } );
+			const rays = [ [ 0, -1 ], [ 1, 0 ], [ 0, 1 ], [ -1, 0 ] ];
+			for ( const [ dx, dy ] of rays ) {
+				for ( let i = 1; i <= CFG.blast; i++ ) {
+					const x = b.x + dx * i, y = b.y + dy * i;
+					if ( !inBounds( x, y ) ) break;
+					const cell = G.coll[ y ][ x ];
+					// stop at indestructible
+					if ( cell.coll && !cell.breakable ) break;
+					G.fires.push( { x, y, t: CFG.fireTime } );
+					// destroy crate then stop ray
+					if ( cell.breakable ) {
+						cell.breakable = false;
+						cell.coll = false;
+						G.mapArray[ y ][ x ] = '.';
+						G.map[ y ][ x ][ 0 ] = 0;
+						break;
+					}
+				}
+			}
+		}
+
+		function onFire( x, y ) { return G.fires.some( f => f.x === x && f.y === y ); }
+
+		function clearLine( x0, y0, x1, y1 ) {
+			if ( x0 !== x1 && y0 !== y1 ) return false;
+			const dx = Math.sign( x1 - x0 ), dy = Math.sign( y1 - y0 );
+			let x = x0, y = y0;
+			while ( x !== x1 || y !== y1 ) {
+				x += dx; y += dy;
+				const c = G.coll[ y ][ x ];
+				if ( c.coll && !c.breakable ) return false;
+			}
+			return true;
+		}
+
+		function dangerSoon( x, y ) {
+			for ( const b of G.bombs ) {
+				if ( b.t > 0.5 ) continue;
+				if ( b.x === x && Math.abs( b.y - y ) <= CFG.blast && clearLine( b.x, b.y, x, y ) ) return true;
+				if ( b.y === y && Math.abs( b.x - x ) <= CFG.blast && clearLine( b.x, b.y, x, y ) ) return true;
+			}
+			return false;
+		}
+
+		const game = {
+			init: () => {
+				beep8.Input.init();
+				resetGame();
+			},
+
+			update: async ( dt ) => {
+				// restart
+				if ( beep8.keyp( "R" ) ) resetGame();
+
+				// player movement with simple grid cooldown
+				G.player.cd -= dt;
+				let dx = 0, dy = 0, dir = G.player.dir;
+				if ( beep8.key( "ArrowLeft" ) ) { dx = -1; dy = 0; dir = "L"; }
+				else if ( beep8.key( "ArrowRight" ) ) { dx = 1; dy = 0; dir = "R"; }
+				else if ( beep8.key( "ArrowUp" ) ) { dx = 0; dy = -1; dir = "U"; }
+				else if ( beep8.key( "ArrowDown" ) ) { dx = 0; dy = 1; dir = "D"; }
+
+				if ( G.player.alive && ( dx || dy ) && G.player.cd <= 0 ) {
+					const nx = G.player.x + dx, ny = G.player.y + dy;
+					if ( canStep( nx, ny ) ) { G.player.x = nx; G.player.y = ny; }
+					G.player.dir = dir;
+					G.player.cd = CFG.stepCooldown;
+				}
+
+				// drop bomb
+				if ( G.player.alive && beep8.keyp( "ButtonA" ) ) {
+					placeBomb( G.player.x, G.player.y );
+				}
+
+				// bombs fuse
+				for ( const b of G.bombs ) b.t -= dt;
+				const exploding = G.bombs.filter( b => b.t <= 0 );
+				for ( const b of exploding ) explodeBomb( b );
+				if ( exploding.length ) {
+					G.bombs = G.bombs.filter( b => b.t > 0 );
+					G.player.bombs = Math.min( CFG.maxBombs, G.player.bombs + exploding.length );
+				}
+
+				// fire decay
+				for ( const f of G.fires ) f.t -= dt;
+				G.fires = G.fires.filter( f => f.t > 0 );
+
+				// enemies: random walk avoiding imminent blast tiles
+				for ( const e of G.enemies ) {
+					if ( !e.alive ) continue;
+					e.think -= dt;
+					if ( e.think <= 0 ) {
+						e.think = CFG.enemyThink;
+						const opts = [ { dx: 0, dy: -1 }, { dx: 1, dy: 0 }, { dx: 0, dy: 1 }, { dx: -1, dy: 0 } ]
+							.filter( d => canStep( e.x + d.dx, e.y + d.dy ) )
+							.filter( d => !dangerSoon( e.x + d.dx, e.y + d.dy ) );
+						if ( opts.length ) {
+							const d = opts[ ( Math.random() * opts.length ) | 0 ];
+							e.x += d.dx; e.y += d.dy;
+						}
+					}
+				}
+
+				// deaths
+				if ( onFire( G.player.x, G.player.y ) ) G.player.alive = false;
+				for ( const e of G.enemies ) if ( onFire( e.x, e.y ) ) e.alive = false;
+
+				// banner
+				if ( !G.player.alive ) G.banner = "You blew it. R to restart.";
+				else if ( !G.enemies.some( e => e.alive ) ) G.banner = "Clear! R to restart.";
+				else G.banner = "";
+			},
+
+			render: () => {
+				beep8.cls( 0 );
+
+				// Map. Like your RPG sample, we can offset by one row if you want HUD space.
+				beep8.locate( 0, 1 );
+				beep8.Tilemap.draw( G.map, 0, 0 );
+
+				// Bombs
+				for ( const b of G.bombs ) {
+					beep8.locate( b.x, b.y + 1 );
+					beep8.color( GLYPH.bomb.color, GLYPH.bomb.bg );
+					beep8.printChar( GLYPH.bomb.t );
+				}
+
+				// Fires
+				for ( const f of G.fires ) {
+					beep8.locate( f.x, f.y + 1 );
+					beep8.color( GLYPH.fire.color, GLYPH.fire.bg );
+					beep8.printChar( GLYPH.fire.t );
+				}
+
+				// Enemies
+				for ( const e of G.enemies ) {
+					if ( !e.alive ) continue;
+					beep8.locate( e.x, e.y + 1 );
+					beep8.color( GLYPH.enemy.color, GLYPH.enemy.bg );
+					beep8.drawActor( GLYPH.enemy.actorId, GLYPH.enemy.anim );
+				}
+
+				// Player
+				if ( G.player.alive ) {
+					const anim = GLYPH.player.walk[ G.player.dir ] || GLYPH.player.idle;
+					beep8.locate( G.player.x, G.player.y + 1 );
+					beep8.color( GLYPH.player.color, GLYPH.player.bg );
+					beep8.drawActor( GLYPH.player.actorId, anim );
+				}
+
+				// HUD
+				beep8.locate( 0, 22 );
+				beep8.color( 8, 0 );
+				beep8.print(
+					"Bombs:" + G.player.bombs +
+					"  Enemies:" + G.enemies.filter( e => e.alive ).length +
+					"\nArrows move. Z bomb. R restart." +
+					( G.banner ? "\n" + G.banner : "" )
+				);
+			}
+		};
+
+		// Boot
+		window.addEventListener( "load", () => {
+			beep8.init( async () => {
+				beep8.Scene.add( "game", game, 30 );
+				beep8.Scene.set( "game" );
+			} );
+		} );
+	</script>
+</body>
+
+</html>
