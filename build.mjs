@@ -79,13 +79,15 @@ const buildBeep8 = async () => {
 		let pluginFiles = globSync( `src/plugins/${pluginName}/**/*.js`, { nodir: true } );
 
 		// Sort files: root files first, then subdirectory files
-		pluginFiles = pluginFiles.sort( ( a, b ) => {
-			const aIsRoot = !a.replace( pluginDir, '' ).includes( '/' );
-			const bIsRoot = !b.replace( pluginDir, '' ).includes( '/' );
-			if ( aIsRoot && !bIsRoot ) return -1; // Root files come first
-			if ( !aIsRoot && bIsRoot ) return 1;  // Subdirectory files come later
-			return a.localeCompare( b ); // Alphabetical order
-		} );
+		pluginFiles = pluginFiles.sort(
+			( a, b ) => {
+				const aIsRoot = !a.replace( pluginDir, '' ).includes( '/' );
+				const bIsRoot = !b.replace( pluginDir, '' ).includes( '/' );
+				if ( aIsRoot && !bIsRoot ) return -1; // Root files come first
+				if ( !aIsRoot && bIsRoot ) return 1;  // Subdirectory files come later
+				return a.localeCompare( b ); // Alphabetical order
+			}
+		);
 
 		const pluginInput = await readConcat( pluginFiles );
 
