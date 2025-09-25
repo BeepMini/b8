@@ -200,7 +200,7 @@
 
 		beep8.Utilities.checkNumber( "probability", probability );
 
-		return beep8.Random.num() < ( probability / 100 );
+		return beep8.Random.num() <= ( probability / 100 );
 
 	}
 
