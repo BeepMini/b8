@@ -119,11 +119,13 @@ if ( mode === 'watch' ) {
 		.on(
 			'all',
 			async () => {
+				console.log( '[beep8] Change detected. Rebuilding...' );
 				try {
-					await buildJS();
+					await buildBeep8();
 				} catch ( err ) {
 					console.error( '[beep8] Error:', err );
 				}
+				console.log( '[beep8] Watching...' );
 			}
 		);
 
