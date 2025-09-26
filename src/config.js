@@ -54,9 +54,7 @@
 		// Make sure to change the tiles image as well if you change this.
 		SCREEN_COLORS: 1,
 		// Disable to turn off CRT effect.
-		// This is a number between 0 and 1, where 0 is no CRT effect and 1 is full CRT effect.
-		// Anything over 0.4 is probably too much.
-		CRT_ENABLE: 0.3,
+		CRT_ENABLE: true,
 		// Enable/ Disable vignette effect.
 		// This is a boolean value.
 		CRT_VIGNETTE: true,
