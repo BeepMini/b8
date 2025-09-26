@@ -14,6 +14,7 @@ const coreOrder = [
 	'src/config.js',
 	'src/public.js',
 	'src/public-async.js',
+	'src/internal/hooks.js',
 	'src/internal/*.js'
 ];
 
