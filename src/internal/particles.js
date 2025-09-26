@@ -164,8 +164,8 @@
 			const center = p.size / 2;
 
 			// Draw the square particle with p.x, p.y at the center.
-			beep8.Core.ctx.fillStyle = beep8.Core.getColorHex( p.color );
-			beep8.Core.ctx.fillRect( Math.round( p.x - center ), Math.round( p.y - center ), Math.round( p.size ), Math.round( p.size ) );
+			beep8.Core.offCtx.fillStyle = beep8.Core.getColorHex( p.color );
+			beep8.Core.offCtx.fillRect( Math.round( p.x - center ), Math.round( p.y - center ), Math.round( p.size ), Math.round( p.size ) );
 
 		}
 

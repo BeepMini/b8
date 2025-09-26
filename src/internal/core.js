@@ -4,8 +4,8 @@
 
 	beep8.Core.realCanvas = null;
 	beep8.Core.realCtx = null;
-	beep8.Core.canvas = null;
-	beep8.Core.ctx = null;
+	beep8.Core.offCanvas = null;
+	beep8.Core.offCtx = null;
 	beep8.Core.container = null;
 	beep8.Core.startTime = 0;
 	beep8.Core.deltaTime = 0;
@@ -65,7 +65,6 @@
 		beep8.Core.startTime = beep8.Core.getNow();
 
 		beep8.Hooks.doAction( 'afterInit' );
-
 
 		beep8.Utilities.event( 'initComplete' );
 
@@ -138,13 +137,16 @@
 		// Set up the virtual canvas (the one we render to). This canvas isn't
 		// part of the document( it's not added to document.body), it only
 		// exists off-screen.
-		beep8.Core.canvas = document.createElement( "canvas" );
-		beep8.Core.canvas.width = beep8.CONFIG.SCREEN_WIDTH;
-		beep8.Core.canvas.height = beep8.CONFIG.SCREEN_HEIGHT;
-		beep8.Core.canvas.style.width = beep8.CONFIG.SCREEN_WIDTH + "px";
-		beep8.Core.canvas.style.height = beep8.CONFIG.SCREEN_HEIGHT + "px";
-		beep8.Core.ctx = beep8.Core.canvas.getContext( "2d", { willReadFrequently: true } );
-		beep8.Core.ctx.imageSmoothingEnabled = false;
+		beep8.Core.offCanvas = new OffscreenCanvas( beep8.CONFIG.SCREEN_WIDTH, beep8.CONFIG.SCREEN_HEIGHT );
+		beep8.Core.offCtx = beep8.Core.offCanvas.getContext(
+			"2d",
+			{
+				alpha: false,
+				colorSpace: 'srgb',
+				desynchronized: true
+			}
+		);
+		beep8.Core.offCtx.imageSmoothingEnabled = false;
 
 		// Load and initialize default fonts.
 		await beep8.TextRenderer.initAsync();
@@ -496,8 +498,8 @@
 
 		beep8.Utilities.checkNumber( "bgColor", bgColor );
 
-		beep8.Core.ctx.fillStyle = beep8.Core.getColorHex( bgColor );
-		beep8.Core.ctx.fillRect( 0, 0, beep8.Core.canvas.width, beep8.Core.canvas.height );
+		beep8.Core.offCtx.fillStyle = beep8.Core.getColorHex( bgColor );
+		beep8.Core.offCtx.fillRect( 0, 0, beep8.Core.offCanvas.width, beep8.Core.offCanvas.height );
 
 		beep8.Core.setCursorLocation( 0, 0 );
 		beep8.Renderer.markDirty();
@@ -661,9 +663,9 @@
 			srcX !== undefined && srcY !== undefined &&
 			width !== undefined && height !== undefined
 		) {
-			beep8.Core.ctx.drawImage( img, srcX, srcY, width, height, x, y, width, height );
+			beep8.Core.offCtx.drawImage( img, srcX, srcY, width, height, x, y, width, height );
 		} else {
-			beep8.Core.ctx.drawImage( img, x, y );
+			beep8.Core.offCtx.drawImage( img, x, y );
 		}
 
 	}
@@ -762,21 +764,21 @@
 		beep8.Utilities.checkNumber( "height", height );
 		beep8.Utilities.checkNumber( "lineWidth", lineWidth );
 
-		const oldStrokeStyle = beep8.Core.ctx.strokeStyle;
-		const oldLineWidth = beep8.Core.ctx.lineWidth;
+		const oldStrokeStyle = beep8.Core.offCtx.strokeStyle;
+		const oldLineWidth = beep8.Core.offCtx.lineWidth;
 
-		beep8.Core.ctx.strokeStyle = beep8.Core.getColorHex( beep8.Core.drawState.fgColor );
-		beep8.Core.ctx.lineWidth = lineWidth;
+		beep8.Core.offCtx.strokeStyle = beep8.Core.getColorHex( beep8.Core.drawState.fgColor );
+		beep8.Core.offCtx.lineWidth = lineWidth;
 
 		// Drawn inside the shape.
-		beep8.Core.ctx.strokeRect(
+		beep8.Core.offCtx.strokeRect(
 			Math.round( x ), Math.round( y ),
 			Math.round( width ), Math.round( height )
 		);
 
 		// Restore properties.
-		beep8.Core.ctx.strokeStyle = oldStrokeStyle;
-		beep8.Core.ctx.lineWidth = oldLineWidth;
+		beep8.Core.offCtx.strokeStyle = oldStrokeStyle;
+		beep8.Core.offCtx.lineWidth = oldLineWidth;
 
 	}
 
@@ -799,8 +801,8 @@
 		beep8.Utilities.checkNumber( "width", width );
 		beep8.Utilities.checkNumber( "height", height );
 
-		beep8.Core.ctx.fillStyle = beep8.Core.getColorHex( beep8.Core.drawState.fgColor );
-		beep8.Core.ctx.fillRect(
+		beep8.Core.offCtx.fillStyle = beep8.Core.getColorHex( beep8.Core.drawState.fgColor );
+		beep8.Core.offCtx.fillRect(
 			Math.round( x ) + 0.5, Math.round( y ) + 0.5,
 			Math.round( width ) - 1, Math.round( height ) - 1
 		);
@@ -839,9 +841,9 @@
 	 */
 	beep8.Core.saveScreen = function() {
 
-		return beep8.Core.ctx.getImageData(
+		return beep8.Core.offCtx.getImageData(
 			0, 0,
-			beep8.Core.canvas.width, beep8.Core.canvas.height
+			beep8.Core.offCanvas.width, beep8.Core.offCanvas.height
 		);
 
 	}
@@ -876,9 +878,7 @@
 	beep8.Core.getHighResDataURL = function( canvas, scale = 4, mimeType = "image/png", quality = 1 ) {
 
 		// Create an offscreen canvas
-		const offscreenCanvas = document.createElement( "canvas" );
-		offscreenCanvas.width = canvas.width * scale;
-		offscreenCanvas.height = canvas.height * scale;
+		const offscreenCanvas = new OffscreenCanvas( canvas.width * scale, canvas.height * scale );
 
 		// Copy and scale the content
 		const offscreenCtx = offscreenCanvas.getContext( "2d" );
@@ -901,7 +901,7 @@
 	beep8.Core.restoreScreen = function( screenData ) {
 
 		beep8.Utilities.checkInstanceOf( "screenData", screenData, ImageData );
-		beep8.Core.ctx.putImageData( screenData, 0, 0 );
+		beep8.Core.offCtx.putImageData( screenData, 0, 0 );
 
 	}
 
@@ -930,8 +930,15 @@
 	 */
 	beep8.Core.updateLayout2d = function() {
 
-		beep8.Core.realCtx = beep8.Core.realCanvas.getContext( "2d", { willReadFrequently: true } );
+		beep8.Core.realCtx = beep8.Core.realCanvas.getContext(
+			"2d",
+			{
+				alpha: false,
+				desynchronized: true
+			}
+		);
 		beep8.Core.realCtx.imageSmoothingEnabled = false;
+		beep8.Core.realCtx.imageSmoothingQuality = 'pixelated';
 
 		beep8.CONFIG.SCREEN_EL_WIDTH = beep8.CONFIG.SCREEN_WIDTH;
 		beep8.CONFIG.SCREEN_EL_HEIGHT = beep8.CONFIG.SCREEN_HEIGHT;

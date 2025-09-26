@@ -770,8 +770,8 @@
 		// If bgColor is -1 then don't draw the background.
 		// Or make the background transparent.
 		if ( bgColor >= 0 ) {
-			beep8.Core.ctx.fillStyle = beep8.Core.getColorHex( bgColor );
-			beep8.Core.ctx.fillRect( x, y, chrW, chrH );
+			beep8.Core.offCtx.fillStyle = beep8.Core.getColorHex( bgColor );
+			beep8.Core.offCtx.fillRect( x, y, chrW, chrH );
 		}
 
 		// Foreground and background are the same so don't draw anything else.
@@ -783,7 +783,7 @@
 		if ( direction > 0 ) {
 
 			// Save the current state of the canvas context if flipping is needed.
-			beep8.Core.ctx.save();
+			beep8.Core.offCtx.save();
 
 			// Determine whether to flip horizontally or vertically
 			const flipH = ( direction & 1 ) !== 0; // Check if bit 1 is set (horizontal flip)
@@ -792,12 +792,12 @@
 			// Adjust the origin based on flip direction
 			const translateX = flipH ? chrW : 0;
 			const translateY = flipV ? chrH : 0;
-			beep8.Core.ctx.translate( x + translateX, y + translateY );
+			beep8.Core.offCtx.translate( x + translateX, y + translateY );
 
 			// Apply scaling to flip the image
 			const scaleX = flipH ? -1 : 1;
 			const scaleY = flipV ? -1 : 1;
-			beep8.Core.ctx.scale( scaleX, scaleY );
+			beep8.Core.offCtx.scale( scaleX, scaleY );
 
 			// Reset x and y to 0 because the translate operation adjusts the positioning
 			x = 0;
@@ -808,7 +808,7 @@
 		const color = beep8.Utilities.clamp( fgColor, 0, beep8.CONFIG.COLORS.length - 1 );
 		const img = font.getImageForColor( color );
 
-		beep8.Core.ctx.drawImage(
+		beep8.Core.offCtx.drawImage(
 			img,
 			fontCol * chrW,
 			fontRow * chrH,
@@ -819,7 +819,7 @@
 
 		// Restore the canvas context if flipping was needed.
 		if ( direction > 0 ) {
-			beep8.Core.ctx.restore();
+			beep8.Core.offCtx.restore();
 		}
 
 		beep8.Renderer.markDirty();
