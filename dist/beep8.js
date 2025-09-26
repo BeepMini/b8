@@ -104,9 +104,7 @@ const beep8 = {};
     // Make sure to change the tiles image as well if you change this.
     SCREEN_COLORS: 1,
     // Disable to turn off CRT effect.
-    // This is a number between 0 and 1, where 0 is no CRT effect and 1 is full CRT effect.
-    // Anything over 0.4 is probably too much.
-    CRT_ENABLE: 0.3,
+    CRT_ENABLE: true,
     // Enable/ Disable vignette effect.
     // This is a boolean value.
     CRT_VIGNETTE: true,
@@ -585,6 +583,42 @@ const beep8 = {};
   };
 })(beep8);
 (function(beep82) {
+  beep82.Hooks = {};
+  const actions = {};
+  const filters = {};
+  function _add(store, hookName, callback, priority = 10) {
+    if (!store[hookName]) store[hookName] = [];
+    store[hookName].push({ callback, priority });
+    store[hookName].sort((a, b) => a.priority - b.priority);
+  }
+  beep82.Hooks.addAction = function(hookName, callback, priority = 10) {
+    _add(actions, hookName, callback, priority);
+  };
+  beep82.Hooks.doAction = function(hookName, ...args) {
+    if (!actions[hookName]) return;
+    for (const { callback } of actions[hookName]) {
+      callback(...args);
+    }
+  };
+  beep82.Hooks.addFilter = function(hookName, callback, priority = 10) {
+    _add(filters, hookName, callback, priority);
+  };
+  beep82.Hooks.applyFilters = function(hookName, value, ...args) {
+    if (!filters[hookName]) return value;
+    let result = value;
+    for (const { callback } of filters[hookName]) {
+      result = callback(result, ...args);
+    }
+    return result;
+  };
+  beep82.Hooks.removeAction = function(hookName, callback) {
+    actions[hookName] = (actions[hookName] || []).filter((h) => h.callback !== callback);
+  };
+  beep82.Hooks.removeFilter = function(hookName, callback) {
+    filters[hookName] = (filters[hookName] || []).filter((h) => h.callback !== callback);
+  };
+})(beep8);
+(function(beep82) {
   beep82.Joystick = {};
   let repeatIntervals = null;
   const VJOY_HTML = `
@@ -1036,15 +1070,6 @@ const beep8 = {};
   };
   beep82.Utilities.clamp = function(x, lo, hi) {
     return Math.min(Math.max(x, lo), hi);
-  };
-  beep82.Utilities.dist2d = function(x0, y0, x1, y1) {
-    beep82.Utilities.checkNumber("x0", x0);
-    beep82.Utilities.checkNumber("y0", y0);
-    beep82.Utilities.checkNumber("x1", x1);
-    beep82.Utilities.checkNumber("y1", y1);
-    const dx = x0 - x1;
-    const dy = y0 - y1;
-    return Math.sqrt(dx * dx + dy * dy);
   };
   beep82.Utilities.hexToRgb = function(hex) {
     hex = hex.replace("#", "");
@@ -1964,28 +1989,28 @@ const beep8 = {};
     x = Math.round(x);
     y = Math.round(y);
     if (bgColor >= 0) {
-      beep82.Core.ctx.fillStyle = beep82.Core.getColorHex(bgColor);
-      beep82.Core.ctx.fillRect(x, y, chrW, chrH);
+      beep82.Core.offCtx.fillStyle = beep82.Core.getColorHex(bgColor);
+      beep82.Core.offCtx.fillRect(x, y, chrW, chrH);
     }
     if (beep82.CONFIG.SCREEN_COLORS === 1 && bgColor === fgColor) {
       return;
     }
     if (direction > 0) {
-      beep82.Core.ctx.save();
+      beep82.Core.offCtx.save();
       const flipH = (direction & 1) !== 0;
       const flipV = (direction & 2) !== 0;
       const translateX = flipH ? chrW : 0;
       const translateY = flipV ? chrH : 0;
-      beep82.Core.ctx.translate(x + translateX, y + translateY);
+      beep82.Core.offCtx.translate(x + translateX, y + translateY);
       const scaleX = flipH ? -1 : 1;
       const scaleY = flipV ? -1 : 1;
-      beep82.Core.ctx.scale(scaleX, scaleY);
+      beep82.Core.offCtx.scale(scaleX, scaleY);
       x = 0;
       y = 0;
     }
     const color = beep82.Utilities.clamp(fgColor, 0, beep82.CONFIG.COLORS.length - 1);
     const img = font.getImageForColor(color);
-    beep82.Core.ctx.drawImage(
+    beep82.Core.offCtx.drawImage(
       img,
       fontCol * chrW,
       fontRow * chrH,
@@ -1997,7 +2022,7 @@ const beep8 = {};
       chrH
     );
     if (direction > 0) {
-      beep82.Core.ctx.restore();
+      beep82.Core.offCtx.restore();
     }
     beep82.Renderer.markDirty();
   };
@@ -2541,16 +2566,34 @@ const beep8 = {};
 (function(beep82) {
   beep82.Renderer = {};
   let dirty = false;
-  const phosphor_bloom = [];
-  const scale_add = 1;
-  const scale_times = 0.4;
-  let canvasImageData = null;
   let screenshakeDuration = 0;
+  let vignetteGradient = null;
+  let scanPattern = null;
   const initCrt = () => {
-    for (let i = 0; i < 256; i++) {
-      phosphor_bloom[i] = scale_times * (i / 255) ** (1 / 2.2) + scale_add;
+    if (!beep82.Core.realCtx) {
+      setTimeout(initCrt, 10);
+      return;
     }
+    vignetteGradient = beep82.Core.realCtx.createRadialGradient(
+      beep82.Core.realCanvas.width / 2,
+      beep82.Core.realCanvas.height / 2,
+      Math.max(beep82.Core.realCanvas.width, beep82.Core.realCanvas.height) * 0.4,
+      beep82.Core.realCanvas.width / 2,
+      beep82.Core.realCanvas.height / 2,
+      Math.max(beep82.Core.realCanvas.width, beep82.Core.realCanvas.height) * 0.9
+    );
+    vignetteGradient.addColorStop(0, "rgba(255,255,255,0)");
+    vignetteGradient.addColorStop(0.7, "rgba(0,0,0,0.5)");
+    vignetteGradient.addColorStop(1, "rgba(0,0,0,1)");
+    const pat = new OffscreenCanvas(1, 2);
+    const patCtx = pat.getContext("2d");
+    patCtx.fillStyle = "rgba(0,0,0,0.15)";
+    patCtx.fillRect(0, 1, 1, 1);
+    patCtx.fillStyle = "rgba(255,255,255,0.0)";
+    patCtx.fillRect(0, 0, 1, 1);
+    scanPattern = beep82.Core.realCtx.createPattern(pat, "repeat");
   };
+  document.addEventListener("beep8.initComplete", initCrt);
   beep82.Renderer.render = function() {
     if (beep82.Core.crashed) return;
     beep82.Core.realCtx.imageSmoothingEnabled = false;
@@ -2564,6 +2607,7 @@ const beep8 = {};
       y = beep82.Utilities.clamp(y, -6, 6);
       screenshakeDuration -= beep82.Core.deltaTime;
     }
+    beep82.Core.realCtx.globalCompositeOperation = "source-over";
     beep82.Core.realCtx.clearRect(
       0,
       0,
@@ -2571,7 +2615,7 @@ const beep8 = {};
       beep82.Core.realCanvas.height
     );
     beep82.Core.realCtx.drawImage(
-      beep82.Core.canvas,
+      beep82.Core.offCanvas,
       x,
       y,
       beep82.Core.realCanvas.width,
@@ -2579,7 +2623,26 @@ const beep8 = {};
     );
     dirty = false;
     beep82.CursorRenderer.draw(beep82.Core.realCtx);
-    beep82.Renderer.applyCrtFilter();
+    applyScanlines();
+    applyVignette();
+  };
+  const applyVignette = () => {
+    if (!vignetteGradient) return;
+    if (!beep82.CONFIG.CRT_ENABLE) return;
+    beep82.Core.realCtx.save();
+    beep82.Core.realCtx.globalCompositeOperation = "multiply";
+    beep82.Core.realCtx.fillStyle = vignetteGradient;
+    beep82.Core.realCtx.fillRect(0, 0, beep82.Core.realCanvas.width, beep82.Core.realCanvas.height);
+    beep82.Core.realCtx.restore();
+  };
+  const applyScanlines = () => {
+    if (!scanPattern) return;
+    if (!beep82.CONFIG.CRT_ENABLE) return;
+    beep82.Core.realCtx.save();
+    beep82.Core.realCtx.globalCompositeOperation = "soft-light";
+    beep82.Core.realCtx.fillStyle = scanPattern;
+    beep82.Core.realCtx.fillRect(0, 0, beep82.Core.realCanvas.width, beep82.Core.realCanvas.height);
+    beep82.Core.realCtx.restore();
   };
   beep82.Renderer.shakeScreen = function(durationSeconds = 0.25) {
     beep82.Utilities.checkNumber("duration", durationSeconds);
@@ -2597,88 +2660,6 @@ const beep8 = {};
     dirty = true;
     setTimeout(beep82.Renderer.render, 1);
   };
-  beep82.Renderer.applyCrtFilter = function() {
-    if (beep82.CONFIG.CRT_ENABLE <= 0 || !beep82.CONFIG.CRT_VIGNETTE) {
-      return;
-    }
-    canvasImageData = beep82.Core.realCtx.getImageData(
-      0,
-      0,
-      beep82.CONFIG.SCREEN_WIDTH,
-      beep82.CONFIG.SCREEN_HEIGHT
-    );
-    const imageData = canvasImageData.data;
-    drawVignette(imageData);
-    drawScanlines(imageData);
-    beep82.Core.realCtx.putImageData(canvasImageData, 0, 0);
-  };
-  const drawVignette = (imageData) => {
-    if (!beep82.CONFIG.CRT_VIGNETTE) {
-      return imageData;
-    }
-    const width = beep82.CONFIG.SCREEN_WIDTH;
-    const height = beep82.CONFIG.SCREEN_HEIGHT;
-    const centerRadius = 0.8;
-    const maxDarkness = 0.25;
-    const centerX = width / 2, centerY = height / 2;
-    const maxDistance = Math.sqrt(centerX ** 2 + centerY ** 2);
-    const innerRadius = centerRadius * maxDistance;
-    const scaleFactor = maxDarkness / (maxDistance * (1 - centerRadius));
-    for (let i = 0; i < imageData.length; i += 4) {
-      const x = i / 4 % width;
-      const y = Math.floor(i / 4 / width);
-      const distance = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
-      const vignetteFactor = distance < innerRadius ? 1 : Math.max(0, 1 - (distance - innerRadius) * scaleFactor);
-      imageData[i] *= vignetteFactor;
-      imageData[i + 1] *= vignetteFactor;
-      imageData[i + 2] *= vignetteFactor;
-    }
-  };
-  const drawScanlines = (imageData) => {
-    const width = beep82.CONFIG.SCREEN_WIDTH;
-    const height = beep82.CONFIG.SCREEN_HEIGHT;
-    for (let y = 0; y < height; y += 2) {
-      for (let x = 0; x < width; x++) {
-        const currentPixelPos = getPixelPosition(x, y);
-        const current_pixel_data = getPixelData(imageData, currentPixelPos);
-        const previous_pixel_data = x > 0 ? getPixelData(imageData, getPixelPosition(x - 1, y)) : current_pixel_data;
-        const next_pixel_data = x < width - 1 ? getPixelData(imageData, getPixelPosition(x + 1, y)) : current_pixel_data;
-        setPixel(
-          imageData,
-          currentPixelPos,
-          blendPixels(current_pixel_data, previous_pixel_data, next_pixel_data)
-        );
-      }
-    }
-  };
-  const blendPixels = (currentPixel, previousPixel, nextPixel) => {
-    const phosphor_bleed = beep82.CONFIG.CRT_ENABLE;
-    const phosphor_blend = 1 - phosphor_bleed;
-    return {
-      r: currentPixel[0] * phosphor_blend + (previousPixel[0] + nextPixel[0]) / 2 * phosphor_bleed * phosphor_bloom[previousPixel[0]],
-      g: currentPixel[1] * phosphor_blend + (previousPixel[1] + nextPixel[1]) / 2 * phosphor_bleed * phosphor_bloom[previousPixel[1]],
-      b: currentPixel[2] * phosphor_blend + (previousPixel[2] + nextPixel[2]) / 2 * phosphor_bleed * phosphor_bloom[previousPixel[2]]
-    };
-  };
-  const getPixelData = (imageData, pixelPos) => {
-    return [
-      imageData[pixelPos + 1],
-      // Red
-      imageData[pixelPos + 2],
-      // Green
-      imageData[pixelPos + 3]
-      // Blue
-    ];
-  };
-  const setPixel = (imageData, pixelPos, color) => {
-    imageData[pixelPos + 1] = color.r;
-    imageData[pixelPos + 2] = color.g;
-    imageData[pixelPos + 3] = color.b;
-  };
-  const getPixelPosition = (x, y) => {
-    return y * beep82.CONFIG.SCREEN_WIDTH * 4 + x * 4;
-  };
-  initCrt();
 })(beep8);
 (function(beep82) {
   beep82.Random = {};
@@ -2730,9 +2711,15 @@ const beep8 = {};
     const index = beep82.Random.int(0, array.length - 1);
     return array[index];
   };
+  const weightedArrayCache = /* @__PURE__ */ new Map();
   beep82.Random.pickWeighted = function(array, decayFactor = 0.2) {
     beep82.Utilities.checkArray("array", array);
-    const weightedArray = beep82.Random.weightedArray(array, decayFactor);
+    const cacheKey = JSON.stringify(array) + `|${decayFactor}`;
+    let weightedArray = weightedArrayCache.get(cacheKey);
+    if (!weightedArray) {
+      weightedArray = beep82.Random.weightedArray(array, decayFactor);
+      weightedArrayCache.set(cacheKey, weightedArray);
+    }
     return beep82.Random.pick(weightedArray);
   };
   beep82.Random.shuffleArray = function(array) {
@@ -2748,7 +2735,7 @@ const beep8 = {};
   };
   beep82.Random.chance = function(probability) {
     beep82.Utilities.checkNumber("probability", probability);
-    return beep82.Random.num() < probability / 100;
+    return beep82.Random.num() <= probability / 100;
   };
   beep82.Random.weightedArray = function(array, decayFactor = 0.2) {
     beep82.Utilities.checkArray("array", array);
@@ -2760,6 +2747,32 @@ const beep8 = {};
       }
     }
     return weightedArray;
+  };
+  beep82.Random.coord2D = function(x, y, seed) {
+    let h = 2166136261 ^ seed;
+    h = Math.imul(h ^ x, 16777619);
+    h = Math.imul(h ^ y, 16777619);
+    h ^= h >>> 13;
+    h = Math.imul(h, 2246822507);
+    h ^= h >>> 16;
+    return (h >>> 0) / 4294967296;
+  };
+  beep82.Random.smooth2D = function(x, y, seed = 0, freq = 1) {
+    x *= freq;
+    y *= freq;
+    const ix = Math.floor(x);
+    const iy = Math.floor(y);
+    const fx = x - ix;
+    const fy = y - iy;
+    const v00 = beep82.Random.coord2D(ix, iy, seed);
+    const v10 = beep82.Random.coord2D(ix + 1, iy, seed);
+    const v01 = beep82.Random.coord2D(ix, iy + 1, seed);
+    const v11 = beep82.Random.coord2D(ix + 1, iy + 1, seed);
+    const u = beep82.Math.fade(fx);
+    const v = beep82.Math.fade(fy);
+    const i1 = beep82.Math.lerp(v00, v10, u);
+    const i2 = beep82.Math.lerp(v01, v11, u);
+    return beep82.Math.lerp(i1, i2, v);
   };
   beep82.Random.setSeed();
 })(beep8);
@@ -2891,8 +2904,8 @@ const beep8 = {};
     for (let i = 0; i < particles_.length; i++) {
       const p = particles_[i];
       const center = p.size / 2;
-      beep82.Core.ctx.fillStyle = beep82.Core.getColorHex(p.color);
-      beep82.Core.ctx.fillRect(Math.round(p.x - center), Math.round(p.y - center), Math.round(p.size), Math.round(p.size));
+      beep82.Core.offCtx.fillStyle = beep82.Core.getColorHex(p.color);
+      beep82.Core.offCtx.fillRect(Math.round(p.x - center), Math.round(p.y - center), Math.round(p.size), Math.round(p.size));
     }
   };
   beep82.Particles.clearAll = function() {
@@ -3337,6 +3350,30 @@ const beep8 = {};
   };
 })(beep8);
 (function(beep82) {
+  beep82.Math = {};
+  beep82.Math.dist2D = function(x0, y0, x1, y1) {
+    beep82.Utilities.checkNumber("x0", x0);
+    beep82.Utilities.checkNumber("y0", y0);
+    beep82.Utilities.checkNumber("x1", x1);
+    beep82.Utilities.checkNumber("y1", y1);
+    const dx = x0 - x1;
+    const dy = y0 - y1;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+  beep82.Math.lerp = function(a, b, t) {
+    return a + (b - a) * t;
+  };
+  beep82.Math.fade = function(t) {
+    return t * t * t * (t * (t * 6 - 15) + 10);
+  };
+  beep82.Math.smoothstep = function(t) {
+    return t * t * (3 - 2 * t);
+  };
+  function fade(t) {
+    return t * t * t * (t * (t * 6 - 15) + 10);
+  }
+})(beep8);
+(function(beep82) {
   beep82.Inventory = {};
   document.addEventListener(
     "beep8.initComplete",
@@ -3552,42 +3589,6 @@ const beep8 = {};
   };
 })(beep8);
 (function(beep82) {
-  beep82.Hooks = {};
-  const actions = {};
-  const filters = {};
-  function _add(store, hookName, callback, priority = 10) {
-    if (!store[hookName]) store[hookName] = [];
-    store[hookName].push({ callback, priority });
-    store[hookName].sort((a, b) => a.priority - b.priority);
-  }
-  beep82.Hooks.addAction = function(hookName, callback, priority = 10) {
-    _add(actions, hookName, callback, priority);
-  };
-  beep82.Hooks.doAction = function(hookName, ...args) {
-    if (!actions[hookName]) return;
-    for (const { callback } of actions[hookName]) {
-      callback(...args);
-    }
-  };
-  beep82.Hooks.addFilter = function(hookName, callback, priority = 10) {
-    _add(filters, hookName, callback, priority);
-  };
-  beep82.Hooks.applyFilters = function(hookName, value, ...args) {
-    if (!filters[hookName]) return value;
-    let result = value;
-    for (const { callback } of filters[hookName]) {
-      result = callback(result, ...args);
-    }
-    return result;
-  };
-  beep82.Hooks.removeAction = function(hookName, callback) {
-    actions[hookName] = (actions[hookName] || []).filter((h) => h.callback !== callback);
-  };
-  beep82.Hooks.removeFilter = function(hookName, callback) {
-    filters[hookName] = (filters[hookName] || []).filter((h) => h.callback !== callback);
-  };
-})(beep8);
-(function(beep82) {
   "use strict";
   beep82.ECS = {};
   let nextId = 0;
@@ -3761,8 +3762,8 @@ const beep8 = {};
   beep82.Core = {};
   beep82.Core.realCanvas = null;
   beep82.Core.realCtx = null;
-  beep82.Core.canvas = null;
-  beep82.Core.ctx = null;
+  beep82.Core.offCanvas = null;
+  beep82.Core.offCtx = null;
   beep82.Core.container = null;
   beep82.Core.startTime = 0;
   beep82.Core.deltaTime = 0;
@@ -3828,13 +3829,16 @@ const beep8 = {};
     beep82.Core.container.style.position = "relative";
     beep82.Core.container.appendChild(beep82.Core.realCanvas);
     beep82.Core.getBeepContainerEl().appendChild(beep82.Core.container);
-    beep82.Core.canvas = document.createElement("canvas");
-    beep82.Core.canvas.width = beep82.CONFIG.SCREEN_WIDTH;
-    beep82.Core.canvas.height = beep82.CONFIG.SCREEN_HEIGHT;
-    beep82.Core.canvas.style.width = beep82.CONFIG.SCREEN_WIDTH + "px";
-    beep82.Core.canvas.style.height = beep82.CONFIG.SCREEN_HEIGHT + "px";
-    beep82.Core.ctx = beep82.Core.canvas.getContext("2d", { willReadFrequently: true });
-    beep82.Core.ctx.imageSmoothingEnabled = false;
+    beep82.Core.offCanvas = new OffscreenCanvas(beep82.CONFIG.SCREEN_WIDTH, beep82.CONFIG.SCREEN_HEIGHT);
+    beep82.Core.offCtx = beep82.Core.offCanvas.getContext(
+      "2d",
+      {
+        alpha: false,
+        colorSpace: "srgb",
+        desynchronized: true
+      }
+    );
+    beep82.Core.offCtx.imageSmoothingEnabled = false;
     await beep82.TextRenderer.initAsync();
     beep82.Input.init();
     beep82.Core.updateLayout(false);
@@ -3981,8 +3985,8 @@ const beep8 = {};
   beep82.Core.cls = function(bgColor = void 0) {
     bgColor = bgColor || beep82.Core.drawState.bgColor;
     beep82.Utilities.checkNumber("bgColor", bgColor);
-    beep82.Core.ctx.fillStyle = beep82.Core.getColorHex(bgColor);
-    beep82.Core.ctx.fillRect(0, 0, beep82.Core.canvas.width, beep82.Core.canvas.height);
+    beep82.Core.offCtx.fillStyle = beep82.Core.getColorHex(bgColor);
+    beep82.Core.offCtx.fillRect(0, 0, beep82.Core.offCanvas.width, beep82.Core.offCanvas.height);
     beep82.Core.setCursorLocation(0, 0);
     beep82.Renderer.markDirty();
   };
@@ -4037,9 +4041,9 @@ const beep8 = {};
     if (width !== void 0) beep82.Utilities.checkNumber("width", width);
     if (height !== void 0) beep82.Utilities.checkNumber("height", height);
     if (srcX !== void 0 && srcY !== void 0 && width !== void 0 && height !== void 0) {
-      beep82.Core.ctx.drawImage(img, srcX, srcY, width, height, x, y, width, height);
+      beep82.Core.offCtx.drawImage(img, srcX, srcY, width, height, x, y, width, height);
     } else {
-      beep82.Core.ctx.drawImage(img, x, y);
+      beep82.Core.offCtx.drawImage(img, x, y);
     }
   };
   beep82.Core.loadImage = async function(url) {
@@ -4082,26 +4086,26 @@ const beep8 = {};
     beep82.Utilities.checkNumber("width", width);
     beep82.Utilities.checkNumber("height", height);
     beep82.Utilities.checkNumber("lineWidth", lineWidth);
-    const oldStrokeStyle = beep82.Core.ctx.strokeStyle;
-    const oldLineWidth = beep82.Core.ctx.lineWidth;
-    beep82.Core.ctx.strokeStyle = beep82.Core.getColorHex(beep82.Core.drawState.fgColor);
-    beep82.Core.ctx.lineWidth = lineWidth;
-    beep82.Core.ctx.strokeRect(
+    const oldStrokeStyle = beep82.Core.offCtx.strokeStyle;
+    const oldLineWidth = beep82.Core.offCtx.lineWidth;
+    beep82.Core.offCtx.strokeStyle = beep82.Core.getColorHex(beep82.Core.drawState.fgColor);
+    beep82.Core.offCtx.lineWidth = lineWidth;
+    beep82.Core.offCtx.strokeRect(
       Math.round(x),
       Math.round(y),
       Math.round(width),
       Math.round(height)
     );
-    beep82.Core.ctx.strokeStyle = oldStrokeStyle;
-    beep82.Core.ctx.lineWidth = oldLineWidth;
+    beep82.Core.offCtx.strokeStyle = oldStrokeStyle;
+    beep82.Core.offCtx.lineWidth = oldLineWidth;
   };
   beep82.Core.fillRect = function(x, y, width, height) {
     beep82.Utilities.checkNumber("x", x);
     beep82.Utilities.checkNumber("y", y);
     beep82.Utilities.checkNumber("width", width);
     beep82.Utilities.checkNumber("height", height);
-    beep82.Core.ctx.fillStyle = beep82.Core.getColorHex(beep82.Core.drawState.fgColor);
-    beep82.Core.ctx.fillRect(
+    beep82.Core.offCtx.fillStyle = beep82.Core.getColorHex(beep82.Core.drawState.fgColor);
+    beep82.Core.offCtx.fillRect(
       Math.round(x) + 0.5,
       Math.round(y) + 0.5,
       Math.round(width) - 1,
@@ -4121,11 +4125,11 @@ const beep8 = {};
     document.addEventListener("keyup", takeScreenshot);
   };
   beep82.Core.saveScreen = function() {
-    return beep82.Core.ctx.getImageData(
+    return beep82.Core.offCtx.getImageData(
       0,
       0,
-      beep82.Core.canvas.width,
-      beep82.Core.canvas.height
+      beep82.Core.offCanvas.width,
+      beep82.Core.offCanvas.height
     );
   };
   beep82.Core.downloadScreenshot = function() {
@@ -4133,9 +4137,7 @@ const beep8 = {};
     beep82.Utilities.downloadFile("beep8-screenshot.png", dataUrl);
   };
   beep82.Core.getHighResDataURL = function(canvas, scale = 4, mimeType = "image/png", quality = 1) {
-    const offscreenCanvas = document.createElement("canvas");
-    offscreenCanvas.width = canvas.width * scale;
-    offscreenCanvas.height = canvas.height * scale;
+    const offscreenCanvas = new OffscreenCanvas(canvas.width * scale, canvas.height * scale);
     const offscreenCtx = offscreenCanvas.getContext("2d");
     offscreenCtx.imageSmoothingEnabled = false;
     offscreenCtx.scale(scale, scale);
@@ -4144,7 +4146,7 @@ const beep8 = {};
   };
   beep82.Core.restoreScreen = function(screenData) {
     beep82.Utilities.checkInstanceOf("screenData", screenData, ImageData);
-    beep82.Core.ctx.putImageData(screenData, 0, 0);
+    beep82.Core.offCtx.putImageData(screenData, 0, 0);
   };
   beep82.Core.updateLayout = function(renderNow) {
     beep82.Core.updateLayout2d();
@@ -4153,8 +4155,15 @@ const beep8 = {};
     }
   };
   beep82.Core.updateLayout2d = function() {
-    beep82.Core.realCtx = beep82.Core.realCanvas.getContext("2d", { willReadFrequently: true });
+    beep82.Core.realCtx = beep82.Core.realCanvas.getContext(
+      "2d",
+      {
+        alpha: false,
+        desynchronized: true
+      }
+    );
     beep82.Core.realCtx.imageSmoothingEnabled = false;
+    beep82.Core.realCtx.imageSmoothingQuality = "pixelated";
     beep82.CONFIG.SCREEN_EL_WIDTH = beep82.CONFIG.SCREEN_WIDTH;
     beep82.CONFIG.SCREEN_EL_HEIGHT = beep82.CONFIG.SCREEN_HEIGHT;
     beep82.CONFIG.SCREEN_REAL_WIDTH = beep82.CONFIG.SCREEN_WIDTH;
