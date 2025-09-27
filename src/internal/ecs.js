@@ -230,7 +230,7 @@
 	 * @param {string} name
 	 * @returns {Map<number,Object>} Map<entityId,data>
 	 */
-	beep8.ECS.get = function( name ) {
+	beep8.ECS.getComponents = function( name ) {
 
 		beep8.Utilities.checkString( 'name', name );
 
@@ -267,6 +267,9 @@
 	 */
 	beep8.ECS.getComponent = function( id, name ) {
 
+		beep8.Utilities.checkInt( 'id', id );
+		beep8.Utilities.checkString( 'name', name );
+
 		return components.get( name )?.get( id );
 
 	}
@@ -280,6 +283,9 @@
 	 * @returns {boolean}
 	 */
 	beep8.ECS.hasComponent = function( id, name ) {
+
+		beep8.Utilities.checkInt( 'id', id );
+		beep8.Utilities.checkString( 'name', name );
 
 		return components.get( name )?.has( id ) ?? false;
 
@@ -295,7 +301,19 @@
 	 */
 	beep8.ECS.removeComponent = function( id, name ) {
 
+		beep8.Utilities.checkInt( 'id', id );
+		beep8.Utilities.checkString( 'name', name );
+
 		components.get( name )?.delete( id );
+
+		// If removing a Loc component, also update the position grid.
+		if ( 'Loc' === name ) {
+			const loc = this.getComponent( id, 'Loc' );
+			if ( loc ) {
+				const cell = grid[ loc.row ]?.[ loc.col ];
+				if ( cell ) cell.splice( cell.indexOf( id ), 1 );
+			}
+		}
 
 	}
 
@@ -327,6 +345,8 @@
 	 * @returns {number} The new entity ID
 	 */
 	beep8.ECS.create = function( bundle ) {
+
+		beep8.Utilities.checkObject( 'bundle', bundle );
 
 		const id = makeEntity();
 		for ( const [ name, data ] of Object.entries( bundle ) ) {
