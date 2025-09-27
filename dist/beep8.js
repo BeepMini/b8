@@ -513,29 +513,31 @@ const beep8 = {};
   beep82.Async.pointer = async function() {
     return await beep82.Input.readPointerAsync();
   };
-  beep82.Async.readLine = async function(initString = "", maxLen = -1, maxWidth = -1) {
+  beep82.Async.readLine = async function(prompt2 = "Enter text:", initString = "", maxLen = -1, maxWidth = -1) {
     beep82.Utilities.checkString("initString", initString);
+    beep82.Utilities.checkString("prompt", prompt2);
     beep82.Utilities.checkNumber("maxLen", maxLen);
-    return await beep82.Input.readLine(initString, maxLen, maxWidth);
+    beep82.Utilities.checkNumber("maxWidth", maxWidth);
+    return await beep82.Input.readLine(prompt2, initString, maxLen, maxWidth);
   };
   beep82.Async.menu = async function(choices, options = {}) {
     beep82.Utilities.checkArray("choices", choices);
     beep82.Utilities.checkObject("options", options);
     return await beep82.Menu.display(choices, options);
   };
-  beep82.Async.dialog = async function(prompt, choices = ["OK"], options = {}) {
-    beep82.Utilities.checkString("prompt", prompt);
+  beep82.Async.dialog = async function(prompt2, choices = ["OK"], options = {}) {
+    beep82.Utilities.checkString("prompt", prompt2);
     beep82.Utilities.checkArray("choices", choices);
-    return beep82.Async.menu(choices, { prompt, center: true, ...options });
+    return beep82.Async.menu(choices, { prompt: prompt2, center: true, ...options });
   };
-  beep82.Async.dialogTypewriter = async function(prompt, choices = ["OK"], wrapWidth = -1, delay = 0.05, options = {}) {
-    beep82.Utilities.checkString("prompt", prompt);
+  beep82.Async.dialogTypewriter = async function(prompt2, choices = ["OK"], wrapWidth = -1, delay = 0.05, options = {}) {
+    beep82.Utilities.checkString("prompt", prompt2);
     beep82.Utilities.checkArray("choices", choices);
     beep82.Utilities.checkNumber("delay", delay);
     if (wrapWidth > 0) {
-      prompt = beep82.TextRenderer.wrapText(prompt, wrapWidth);
+      prompt2 = beep82.TextRenderer.wrapText(prompt2, wrapWidth);
     }
-    return await beep82.Async.menu(choices, { prompt, typewriter: true, center: true, ...options });
+    return await beep82.Async.menu(choices, { prompt: prompt2, typewriter: true, center: true, ...options });
   };
   beep82.Async.typewriter = async function(text, wrapWidth = -1, delay = 0.035, fontName = null) {
     beep82.Utilities.checkString("text", text);
@@ -2812,8 +2814,7 @@ const beep8 = {};
     beep82.Core.setCursorLocation(xPosition, yPosition);
     beep82.TextRenderer.printBox(width, height);
     beep82.Core.setCursorLocation(xPosition + 2, yPosition + 2);
-    beep82.TextRenderer.print(message + "\n>");
-    const passcode = await beep82.Async.readLine("", beep82.Passcodes.codeLength);
+    const passcode = await beep82.Async.readLine(message, "", beep82.Passcodes.codeLength);
     const value = beep82.Passcodes.getId(passcode);
     return value;
   };
@@ -3540,7 +3541,16 @@ const beep8 = {};
     }
     return keys;
   };
-  beep82.Input.readLine = async function(initString, maxLen, maxWidth = -1) {
+  beep82.Input.readLine = async function(prompt2 = "Enter text:", initString = "", maxLen = 100, maxWidth = -1) {
+    if (prompt2 && prompt2.length > 0) {
+      beep82.print(prompt2 + "\n> ");
+    }
+    if (beep82.Core.isMobile()) {
+      const textInput = await readPrompt(prompt2, initString, maxLen, maxWidth);
+      beep82.print(textInput + "\n");
+      await beep82.Async.wait(0.2);
+      return textInput;
+    }
     const startCol = beep82.Core.drawState.cursorCol;
     const startRow = beep82.Core.drawState.cursorRow;
     let curCol = startCol;
@@ -3567,7 +3577,6 @@ const beep8 = {};
           beep82.TextRenderer.print(" ");
           beep82.Sfx.play(beep82.CONFIG.SFX.TYPING);
         } else if (key === "Enter") {
-          beep82.Core.setCursorLocation(1, curRow + 1);
           beep82.CursorRenderer.setCursorVisible(cursorWasVisible);
           beep82.Sfx.play(beep82.CONFIG.SFX.TYPING);
           return curStrings.join("");
@@ -3586,6 +3595,22 @@ const beep8 = {};
         }
       }
     }
+  };
+  const readPrompt = async function(promptString = "Enter text:", initString = "", maxLen = 100, maxWidth = -1) {
+    let valid = false;
+    let textInput = "";
+    const allowedChars = beep82.CONFIG.CHRS;
+    do {
+      await beep82.Async.wait(0.333);
+      textInput = prompt(promptString, initString);
+      textInput = textInput.trim();
+      textInput = textInput.split("").filter((char) => allowedChars.includes(char)).join("");
+      if (maxLen !== -1) {
+        textInput = textInput.substring(0, maxLen);
+      }
+      valid = textInput.length > 0;
+    } while (valid === false);
+    return textInput;
   };
 })(beep8);
 (function(beep82) {
@@ -3658,7 +3683,7 @@ const beep8 = {};
     if (!grid[row][col]) grid[row][col] = [];
     grid[row][col].push(id);
   };
-  beep82.ECS.get = function(name) {
+  beep82.ECS.getComponents = function(name) {
     beep82.Utilities.checkString("name", name);
     return components.get(name) ?? /* @__PURE__ */ new Map();
   };
@@ -3671,13 +3696,26 @@ const beep8 = {};
     return out;
   };
   beep82.ECS.getComponent = function(id, name) {
+    beep82.Utilities.checkInt("id", id);
+    beep82.Utilities.checkString("name", name);
     return components.get(name)?.get(id);
   };
   beep82.ECS.hasComponent = function(id, name) {
+    beep82.Utilities.checkInt("id", id);
+    beep82.Utilities.checkString("name", name);
     return components.get(name)?.has(id) ?? false;
   };
   beep82.ECS.removeComponent = function(id, name) {
+    beep82.Utilities.checkInt("id", id);
+    beep82.Utilities.checkString("name", name);
     components.get(name)?.delete(id);
+    if ("Loc" === name) {
+      const loc = this.getComponent(id, "Loc");
+      if (loc) {
+        const cell = grid[loc.row]?.[loc.col];
+        if (cell) cell.splice(cell.indexOf(id), 1);
+      }
+    }
   };
   beep82.ECS.removeEntity = function(id) {
     const loc = this.getComponent(id, "Loc");
@@ -3688,6 +3726,7 @@ const beep8 = {};
     for (const store of components.values()) store.delete(id);
   };
   beep82.ECS.create = function(bundle) {
+    beep82.Utilities.checkObject("bundle", bundle);
     const id = makeEntity();
     for (const [name, data] of Object.entries(bundle)) {
       beep82.ECS.add(id, name, data);

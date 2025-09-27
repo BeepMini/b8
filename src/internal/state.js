@@ -136,7 +136,6 @@
 			beep8.State.load();
 		}
 
-		// beep8.data = beep8.Utilities.deepMergeByIndex( beep8.data, defaults );
 		beep8.data = beep8.Utilities.deepMergeByIndex( defaults, beep8.data );
 
 		beep8.Utilities.log( 'State initialized:', beep8.data );

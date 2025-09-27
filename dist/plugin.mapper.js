@@ -38,7 +38,6 @@ const mapper = {
     beep8.Utilities.checkString("mapDataString", mapDataString);
     mapper.settings = { ...mapData.settings };
     beep8.Utilities.checkObject("mapper.settings", mapper.settings);
-    console.log("settings", mapper.settings);
     mapper.player = beep8.ECS.create(
       {
         Type: { name: "player" },
@@ -60,8 +59,6 @@ const mapper = {
     );
     const maze = beep8.Tilemap.convertFromText(mapDataString);
     const map = beep8.Tilemap.createFromArray(maze, mapData.tiles);
-    console.log("map", map);
-    console.log("maze", maze);
     mapper.maps.push(
       {
         "name": mapName,
@@ -83,6 +80,8 @@ const mapper = {
         shouldAdd = handler.spawn(obj.x, obj.y, obj.props);
       }
     }
+    const coinCount = mapData.objects.filter((obj) => obj.type === "coin").length;
+    beep8.data.totalCoins = coinCount;
     beep8.ECS.addSystem("characterAnimation", mapper.systems.characterAnimation);
     if (mapper.settings.bgm) {
       beep8.Music.play(world.settings.bgm);
@@ -310,7 +309,8 @@ mapper.actions.read = async function(playerId) {
     const sprite = beep8.ECS.getComponent(id, "Sprite");
     if (!obj || !sprite) continue;
     beep8.color(sprite.fg ?? 15, sprite.bg ?? 5);
-    await beep8.Async.dialogTypewriter(obj.message, ["OK"], 20);
+    const message = mapper.helpers.processChatText(obj.message || "");
+    await beep8.Async.dialogTypewriter(message, ["OK"], 20);
   }
 };
 mapper.camera = {
@@ -356,13 +356,31 @@ mapper.camera = {
   }
 };
 mapper.collision = {
+  /**
+   * Check if there is a solid object at (col,row).
+   *
+   * @param {number} col
+   */
   isSolidAt: (col, row) => {
     return beep8.ECS.entitiesAt(col, row).some((id) => beep8.ECS.hasComponent(id, "Solid"));
   },
+  /**
+   * Check if (col,row) is free (walkable and no solid object).
+   *
+   * @param {number} col
+   * @param {number} row
+   * @returns {boolean}
+   */
   isFree: (col, row) => {
     return mapper.collision.isWalkable(col, row) && !mapper.collision.isSolidAt(col, row);
   },
-  // Returns true if (col,row) is inside the maze and not a wall or closed door.
+  /**
+   * Check if (col,row) is walkable (not a wall or closed door).
+   *
+   * @param {number} col
+   * @param {number} row
+   * @returns {boolean}
+   */
   isWalkable: function(col, row) {
     if (col < 0 || row < 0 || col >= mapper.currentMap.map.mapHeight || row >= mapper.currentMap.map.mapWidth) {
       return false;
@@ -375,8 +393,26 @@ mapper.collision = {
   }
 };
 mapper.helpers = {
+  /**
+   * Capitalize the first letter of each word in a string.
+   *
+   * @param {string} str Input string
+   * @returns {string} Capitalized string
+   */
   capitalizeWords: (str) => {
     return str.replace(/\b\p{L}/gu, (c) => c.toUpperCase());
+  },
+  /**
+   * Process chat text, replacing tokens with dynamic values.
+   *
+   * @param {string} str Input string
+   * @returns {string} Processed string
+   */
+  processChatText: (str) => {
+    str = str.replace(/\[levelName\]/g, beep8.data.levelName ?? "Unknown");
+    str = str.replace(/\[playerName\]/g, beep8.data.playerName ?? "Player");
+    str = str.replace(/\[totalCoins\]/g, beep8.data.totalCoins ?? "0");
+    return str;
   }
 };
 mapper.menu = {
@@ -443,10 +479,21 @@ mapper.menu = {
 };
 mapper.sceneGame = {
   UI: null,
+  /**
+   * Initialize the game scene.
+   *
+   * @returns {void}
+   */
   init: function() {
     console.log(mapper.CONFIG);
     mapper.sceneGame.UI = beep8.Tilemap.load(mapper.CONFIG.gameUI);
   },
+  /**
+   * Update the game scene.
+   *
+   * @param {number} dt Delta time in seconds since last frame.
+   * @returns {void}
+   */
   update: function(dt) {
     mapper.CONFIG.moveDelay -= dt;
     if (mapper.CONFIG.moveDelay > 0) return;
@@ -482,6 +529,11 @@ mapper.sceneGame = {
     }
     mapper.update(dt);
   },
+  /**
+   * Render the game scene.
+   *
+   * @returns {void}
+   */
   render: function() {
     beep8.cls();
     beep8.locate(mapper.CONFIG.mapOffsetX, mapper.CONFIG.mapOffsetY);
@@ -512,10 +564,20 @@ mapper.sceneGame = {
   }
 };
 mapper.sceneMenu = {
+  /**
+   * Initialize the menu scene.
+   *
+   * @returns {void}
+   */
   init: function() {
     if (!mapper.menu.hasSplash()) return;
     mapper.sceneMenu.main();
   },
+  /**
+   * Draw the main menu.
+   *
+   * @returns {void}
+   */
   main: async () => {
     beep8.locate(0, 0);
     mapper.menu.drawSplash();
