@@ -109,16 +109,19 @@
 	 * Waits until the user inputs a line of text, then returns it.
 	 *
 	 * @param {string} [initString=""] - The initial string presented for the user to edit.
+	 * @param {string} [prompt="Enter text:"] - An optional prompt to display before the input.
 	 * @param {number} [maxLen=-1] - The maximum length of the string the user can type. -1 means no limit.
 	 * @param {number} [maxWidth=-1] - The maximum width of the input line in characters. -1 means no wrapping.
 	 * @returns {Promise<string>} The input text.
 	 */
-	beep8.Async.readLine = async function( initString = "", maxLen = -1, maxWidth = -1 ) {
+	beep8.Async.readLine = async function( prompt = "Enter text:", initString = "", maxLen = -1, maxWidth = -1 ) {
 
 		beep8.Utilities.checkString( "initString", initString );
+		beep8.Utilities.checkString( "prompt", prompt );
 		beep8.Utilities.checkNumber( "maxLen", maxLen );
+		beep8.Utilities.checkNumber( "maxWidth", maxWidth );
 
-		return await beep8.Input.readLine( initString, maxLen, maxWidth );
+		return await beep8.Input.readLine( prompt, initString, maxLen, maxWidth );
 
 	}
 

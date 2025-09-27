@@ -231,12 +231,27 @@
 	 * Handles user input to build a string until the Enter key is pressed.
 	 *
 	 * @param {string} initString - The initial string to display.
-	 * @param {number} maxLen - The maximum length of the string to read.
+	 * @param {string} [prompt=''] - An optional prompt to display before the input.
+	 * @param {number} [maxLen=100] - The maximum length of the string to read.
 	 * @param {number} [maxWidth=-1] - The maximum width of the line.
 	 * @returns {Promise<string>} A promise that resolves to the string that was read.
 	 */
-	beep8.Input.readLine = async function( initString, maxLen, maxWidth = -1 ) {
+	beep8.Input.readLine = async function( prompt = 'Enter text:', initString = '', maxLen = 100, maxWidth = -1 ) {
 
+		// If a prompt is specified, print it first.
+		if ( prompt && prompt.length > 0 ) {
+			beep8.print( prompt + "\n> " );
+		}
+
+		// On mobile we use a prompt dialog since they don't have a keyboard for typing things in.
+		if ( beep8.Core.isMobile() ) {
+			const textInput = await readPrompt( prompt, initString, maxLen, maxWidth );
+			beep8.print( textInput + "\n" );
+			await beep8.Async.wait( 0.2 );
+			return textInput;
+		}
+
+		// On desktop we handle the input ourselves.
 		const startCol = beep8.Core.drawState.cursorCol;
 		const startRow = beep8.Core.drawState.cursorRow;
 
@@ -280,7 +295,6 @@
 				} else if ( key === "Enter" ) {
 
 					// Handle enter: submit the text.
-					beep8.Core.setCursorLocation( 1, curRow + 1 );
 					beep8.CursorRenderer.setCursorVisible( cursorWasVisible );
 
 					beep8.Sfx.play( beep8.CONFIG.SFX.TYPING );
@@ -315,6 +329,53 @@
 
 			}
 		}
+	}
+
+
+	/**
+	 * Helper function to show a prompt dialog on mobile devices.
+	 * This is used because mobile devices don't have a physical keyboard.
+	 *
+	 * @param {string} [promptString='Enter text:'] - The prompt to display.
+	 * @param {string} [initString=''] - The initial string to display.
+	 * @param {number} [maxLen=100] - The maximum length of the string to read.
+	 * @param {number} [maxWidth=-1] - The maximum width of the line.
+	 * @returns {Promise<string>} A promise that resolves to the string that was read.
+	 */
+	const readPrompt = async function( promptString = 'Enter text:', initString = '', maxLen = 100, maxWidth = -1 ) {
+
+		// If the prompted string is valid.
+		let valid = false;
+		// The value to return.
+		let textInput = "";
+		// The characters that are allowed.
+		const allowedChars = beep8.CONFIG.CHRS;
+
+		do {
+
+			// A little pause to ensure the screen updates before the prompt appears.
+			await beep8.Async.wait( 0.333 );
+
+			// Show the prompt and get the input.
+			textInput = prompt( promptString, initString );
+
+			// Trim whitespace from start and end.
+			textInput = textInput.trim();
+
+			// Remove disallowed characters.
+			textInput = textInput.split( '' ).filter( char => allowedChars.includes( char ) ).join( '' );
+
+			// Enforce max length.
+			if ( maxLen !== -1 ) {
+				textInput = textInput.substring( 0, maxLen );
+			}
+
+			valid = textInput.length > 0;
+
+		} while ( valid === false );
+
+		return textInput;
+
 	}
 
 } )( beep8 );

@@ -21,7 +21,15 @@
 				beep8.print( "System Boot Menu\n\n" );
 				beep8.color( 1, 12 );
 				// Show a menu of options.
-				const choice = await beep8.Async.menu( [ "Install OS", "Format disk", "Eject disk", "Fix disk" ] );
+				const choice = await beep8.Async.menu(
+					[
+						"Install OS",
+						"Format disk",
+						"Eject disk",
+						"Enter Passcode",
+						"Fix disk"
+					]
+				);
 				beep8.color( 6, 2 );
 				// Show a message box depending on the choice.
 				switch ( choice ) {
@@ -30,7 +38,8 @@
 						if ( await beep8.Async.dialog( "Are you sure?", [ "No", "Yes" ] ) ) await formatDisk();
 						break;
 					case 2: await beep8.Async.dialog( "Can't eject.\nDisk in use." ); break;
-					case 3: await beep8.Async.dialog( "No problems detected." ); break;
+					case 3: await beep8.Passcodes.input(); break;
+					case 4: await beep8.Async.dialog( "No problems detected." ); break;
 				}
 			}
 		}

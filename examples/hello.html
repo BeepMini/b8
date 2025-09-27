@@ -18,12 +18,15 @@
 			beep8.cls();
 			// Print greeting at position 1,1.
 			beep8.locate( 1, 1 );
+			beep8.color( 14 );
 			beep8.print( "Hello world!\n\n" );
+
 			// Ask the user's name.
-			beep8.print( "What is your name?\n> " );
 			// Don't forget: beep8.Async.* functions need to be called with await:
-			const name = await beep8.Async.readLine();
-			// Print it back, but in yellow (15).
+			const name = await beep8.Async.readLine( 'What is your name?' );
+
+			// Print it back in white (15).
+			beep8.locate( 1, 5 );
 			beep8.color( 15 );
 			beep8.print( "\n\nHi, " + name + "." );
 		}
