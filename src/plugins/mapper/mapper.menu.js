@@ -37,6 +37,7 @@ mapper.menu = {
 		if ( mapper.hasCredits() ) {
 			return mapper.settings.credits;
 		}
+
 		return '';
 
 	},

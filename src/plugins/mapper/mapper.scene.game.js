@@ -3,6 +3,11 @@ mapper.sceneGame = {
 	UI: null,
 
 
+	/**
+	 * Initialize the game scene.
+	 *
+	 * @returns {void}
+	 */
 	init: function() {
 
 		console.log( mapper.CONFIG );
@@ -12,6 +17,12 @@ mapper.sceneGame = {
 	},
 
 
+	/**
+	 * Update the game scene.
+	 *
+	 * @param {number} dt Delta time in seconds since last frame.
+	 * @returns {void}
+	 */
 	update: function( dt ) {
 
 		mapper.CONFIG.moveDelay -= dt;
@@ -63,6 +74,11 @@ mapper.sceneGame = {
 	},
 
 
+	/**
+	 * Render the game scene.
+	 *
+	 * @returns {void}
+	 */
 	render: function() {
 
 		beep8.cls();

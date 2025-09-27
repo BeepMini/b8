@@ -55,8 +55,6 @@ const mapper = {
 		mapper.settings = { ...mapData.settings };
 		beep8.Utilities.checkObject( 'mapper.settings', mapper.settings );
 
-		console.log( 'settings', mapper.settings );
-
 		// Setup player.
 		mapper.player = beep8.ECS.create(
 			{
@@ -82,9 +80,6 @@ const mapper = {
 		const maze = beep8.Tilemap.convertFromText( mapDataString );
 		const map = beep8.Tilemap.createFromArray( maze, mapData.tiles );
 
-		console.log( 'map', map );
-		console.log( 'maze', maze );
-
 		mapper.maps.push(
 			{
 				"name": mapName,
@@ -106,12 +101,15 @@ const mapper = {
 		for ( const obj of mapData.objects ) {
 
 			const handler = mapper.types[ obj.type ];
-			// console.log( obj.type, handler );
 			if ( handler?.spawn ) {
 				shouldAdd = handler.spawn( obj.x, obj.y, obj.props );
 			}
 
 		}
+
+		// Count coin objects.
+		const coinCount = mapData.objects.filter( obj => obj.type === 'coin' ).length;
+		beep8.data.totalCoins = coinCount;
 
 		// Add systems.
 		beep8.ECS.addSystem( 'characterAnimation', mapper.systems.characterAnimation );

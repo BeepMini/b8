@@ -1,14 +1,38 @@
 mapper.collision = {
 
+	/**
+	 * Check if there is a solid object at (col,row).
+	 *
+	 * @param {number} col
+	 */
 	isSolidAt: ( col, row ) => {
+
 		return beep8.ECS.entitiesAt( col, row ).some( id => beep8.ECS.hasComponent( id, 'Solid' ) );
+
 	},
 
+
+	/**
+	 * Check if (col,row) is free (walkable and no solid object).
+	 *
+	 * @param {number} col
+	 * @param {number} row
+	 * @returns {boolean}
+	 */
 	isFree: ( col, row ) => {
+
 		return mapper.collision.isWalkable( col, row ) && !mapper.collision.isSolidAt( col, row );
+
 	},
 
-	// Returns true if (col,row) is inside the maze and not a wall or closed door.
+
+	/**
+	 * Check if (col,row) is walkable (not a wall or closed door).
+	 *
+	 * @param {number} col
+	 * @param {number} row
+	 * @returns {boolean}
+	 */
 	isWalkable: function( col, row ) {
 
 		// Check bounds.

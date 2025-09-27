@@ -2,6 +2,11 @@
 
 mapper.sceneMenu = {
 
+	/**
+	 * Initialize the menu scene.
+	 *
+	 * @returns {void}
+	 */
 	init: function() {
 
 		// No splash screen so skip the menu.
@@ -12,6 +17,11 @@ mapper.sceneMenu = {
 	},
 
 
+	/**
+	 * Draw the main menu.
+	 *
+	 * @returns {void}
+	 */
 	main: async () => {
 
 		beep8.locate( 0, 0 );
