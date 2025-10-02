@@ -1,9 +1,9 @@
-( function( beep8 ) {
+( function( b8 ) {
 
 	/**
-	 * beep8.CursorRenderer handles the rendering and blinking of the cursor.
+	 * b8.CursorRenderer handles the rendering and blinking of the cursor.
 	 */
-	beep8.CursorRenderer = {};
+	b8.CursorRenderer = {};
 
 	let blinkCycle_ = 0;
 	let toggleBlinkHandle_ = null;
@@ -15,17 +15,17 @@
 	 * @param {boolean} visible - Whether the cursor should be visible
 	 * @returns {void}
 	 */
-	beep8.CursorRenderer.setCursorVisible = function( visible ) {
+	b8.CursorRenderer.setCursorVisible = function( visible ) {
 
-		beep8.Utilities.checkBoolean( "visible", visible );
+		b8.Utilities.checkBoolean( "visible", visible );
 
 		// If the cursor is already in the desired state, do nothing.
-		if ( beep8.Core.drawState.cursorVisible === visible ) return;
+		if ( b8.Core.drawState.cursorVisible === visible ) return;
 
-		beep8.Core.drawState.cursorVisible = visible;
+		b8.Core.drawState.cursorVisible = visible;
 
 		blinkCycle_ = 0;
-		beep8.Renderer.render();
+		b8.Renderer.render();
 
 		if ( toggleBlinkHandle_ !== null ) {
 			clearInterval( toggleBlinkHandle_ );
@@ -36,7 +36,7 @@
 		if ( visible ) {
 			toggleBlinkHandle_ = setInterval(
 				() => advanceBlink_(),
-				beep8.CONFIG.CURSOR.BLINK_INTERVAL
+				b8.CONFIG.CURSOR.BLINK_INTERVAL
 			);
 		}
 
@@ -45,27 +45,27 @@
 
 	/**
 	 * Draws the flashing cursor.
-	 * This is called automatically in the beep8 render function so does not
+	 * This is called automatically in the b8 render function so does not
 	 * need to be called manually.
 	 *
 	 * @param {CanvasRenderingContext2D} targetCtx - The context to draw the cursor on
 	 * @returns {void}
 	 */
-	beep8.CursorRenderer.draw = function( targetCtx ) {
+	b8.CursorRenderer.draw = function( targetCtx ) {
 
-		beep8.Utilities.checkInstanceOf( "targetCtx", targetCtx, CanvasRenderingContext2D );
+		b8.Utilities.checkInstanceOf( "targetCtx", targetCtx, CanvasRenderingContext2D );
 
 		// If the cursor is not visible or it is not time to blink, do nothing.
-		if ( !beep8.Core.drawState.cursorVisible || blinkCycle_ <= 0 ) return;
+		if ( !b8.Core.drawState.cursorVisible || blinkCycle_ <= 0 ) return;
 
-		const font = beep8.TextRenderer.getFont();
+		const font = b8.TextRenderer.getFont();
 
 		// Calculate the real position of the cursor.
-		const realX = beep8.Core.drawState.cursorCol * beep8.CONFIG.CHR_WIDTH;
-		const realY = beep8.Core.drawState.cursorRow * beep8.CONFIG.CHR_HEIGHT;
+		const realX = b8.Core.drawState.cursorCol * b8.CONFIG.CHR_WIDTH;
+		const realY = b8.Core.drawState.cursorRow * b8.CONFIG.CHR_HEIGHT;
 
 		// Draw the cursor.
-		targetCtx.fillStyle = beep8.Core.getColorHex( beep8.Core.drawState.fgColor );
+		targetCtx.fillStyle = b8.Core.getColorHex( b8.Core.drawState.fgColor );
 
 		targetCtx.fillRect(
 			realX + 1, realY + 1,
@@ -84,9 +84,9 @@
 	function advanceBlink_() {
 
 		blinkCycle_ = ( blinkCycle_ + 1 ) % 2;
-		beep8.Renderer.render();
+		b8.Renderer.render();
 
 	}
 
 
-} )( beep8 );
+} )( b8 );

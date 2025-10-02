@@ -8,26 +8,26 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
 	<link rel="stylesheet" href="example.css">
-	<script src="../dist/beep8.js"></script>
+	<script src="../dist/b8.js"></script>
 
 	<script>
 
-		console.log( beep8.CONFIG );
+		console.log( b8.CONFIG );
 		async function main() {
 			// Clear screen.
-			beep8.color( 13, 10 );
-			beep8.cls();
-			beep8.locate( 1, 8 );
-			beep8.print( "Type a key to show its name:\n", beep8.CONFIG.SCREEN_COLS - 2 );
+			b8.color( 13, 10 );
+			b8.cls();
+			b8.locate( 1, 8 );
+			b8.print( "Type a key to show its name:\n", b8.CONFIG.SCREEN_COLS - 2 );
 			while ( true ) {
-				const keyName = await beep8.Async.key();
-				beep8.locate( 1, 10 );
-				beep8.color( 5 );
-				beep8.print( "'" + keyName.join( "' '" ) + "'                 " );
+				const keyName = await b8.Async.key();
+				b8.locate( 1, 10 );
+				b8.color( 5 );
+				b8.print( "'" + keyName.join( "' '" ) + "'                 " );
 			}
 		}
 
-		window.addEventListener( "load", () => beep8.init( main ) );
+		window.addEventListener( "load", () => b8.init( main ) );
 	</script>
 </head>
 

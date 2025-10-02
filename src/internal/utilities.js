@@ -1,6 +1,6 @@
-( function( beep8 ) {
+( function( b8 ) {
 
-	beep8.Utilities = {};
+	b8.Utilities = {};
 
 
 	/**
@@ -10,14 +10,14 @@
 	 * @throws {Error} The error message.
 	 * @returns {void}
 	 */
-	beep8.Utilities.fatal = function( error ) {
+	b8.Utilities.fatal = function( error ) {
 
-		beep8.Utilities.error( "Fatal error: " + error );
+		b8.Utilities.error( "Fatal error: " + error );
 
 		try {
-			beep8.Core.handleCrash( error );
+			b8.Core.handleCrash( error );
 		} catch ( e ) {
-			beep8.Utilities.error( "Error in beep8.Core.handleCrash: " + e + " while handling error " + error );
+			b8.Utilities.error( "Error in b8.Core.handleCrash: " + e + " while handling error " + error );
 		}
 
 		throw new Error( error );
@@ -32,10 +32,10 @@
 	 * @param {string} msg - The error message to show if the condition is false.
 	 * @returns {boolean} The 'cond' parameter.
 	 */
-	beep8.Utilities.assert = function( cond, msg ) {
+	b8.Utilities.assert = function( cond, msg ) {
 
 		if ( !cond ) {
-			beep8.Utilities.fatal( msg || "Assertion Failed" );
+			b8.Utilities.fatal( msg || "Assertion Failed" );
 		}
 
 		return cond;
@@ -44,20 +44,20 @@
 
 
 	/**
-	 * Same as beep8.Utilities.assert() but only asserts if beep8.CONFIG.DEBUG is true.
+	 * Same as b8.Utilities.assert() but only asserts if b8.CONFIG.DEBUG is true.
 	 *
 	 * @param {boolean} cond - The condition that you fervently hope will be true.
 	 * @param {string} msg - The error message to show if the condition is false.
 	 * @returns {boolean} The 'cond' parameter.
 	 */
-	beep8.Utilities.assertDebug = function( cond, msg ) {
+	b8.Utilities.assertDebug = function( cond, msg ) {
 
 		if ( !cond ) {
 
-			if ( beep8.CONFIG.DEBUG ) {
+			if ( b8.CONFIG.DEBUG ) {
 				warn( "DEBUG ASSERT failed: " + msg );
 			} else {
-				beep8.Utilities.fatal( msg );
+				b8.Utilities.fatal( msg );
 			}
 
 		}
@@ -75,10 +75,10 @@
 	 * @param {string} what - A description of what the value is.
 	 * @returns {any} The 'actual' parameter.
 	 */
-	beep8.Utilities.assertEquals = function( expected, actual, what ) {
+	b8.Utilities.assertEquals = function( expected, actual, what ) {
 
 		if ( expected !== actual ) {
-			beep8.Utilities.fatal( `${what}: expected ${expected} but got ${actual}` );
+			b8.Utilities.fatal( `${what}: expected ${expected} but got ${actual}` );
 		}
 
 		return actual;
@@ -94,11 +94,11 @@
 	 * @param {string} varType - The expected type of the variable.
 	 * @returns {any} The 'varValue' parameter.
 	 */
-	beep8.Utilities.checkType = function( varName, varValue, varType ) {
+	b8.Utilities.checkType = function( varName, varValue, varType ) {
 
-		beep8.Utilities.assert( varName, "checkType: varName must be provided." );
-		beep8.Utilities.assert( varType, "checkType: varType must be provided." );
-		beep8.Utilities.assert(
+		b8.Utilities.assert( varName, "checkType: varName must be provided." );
+		b8.Utilities.assert( varType, "checkType: varType must be provided." );
+		b8.Utilities.assert(
 			typeof ( varValue ) === varType,
 			`${varName} should be of type ${varType} but was ${typeof ( varValue )}: ${varValue}`
 		);
@@ -117,24 +117,24 @@
 	 * @param {number} [optMax=undefined] - The maximum acceptable value for the variable.
 	 * @returns {number} The 'varValue' parameter.
 	 */
-	beep8.Utilities.checkNumber = function( varName, varValue, optMin = undefined, optMax = undefined ) {
+	b8.Utilities.checkNumber = function( varName, varValue, optMin = undefined, optMax = undefined ) {
 
-		beep8.Utilities.checkType( varName, varValue, "number" );
+		b8.Utilities.checkType( varName, varValue, "number" );
 
 		if ( isNaN( varValue ) ) {
-			beep8.Utilities.fatal( `${varName} should be a number but is NaN` );
+			b8.Utilities.fatal( `${varName} should be a number but is NaN` );
 		}
 
 		if ( !isFinite( varValue ) ) {
-			beep8.Utilities.fatal( `${varName} should be a number but is infinite: ${varValue}` );
+			b8.Utilities.fatal( `${varName} should be a number but is infinite: ${varValue}` );
 		}
 
 		if ( optMin !== undefined ) {
-			beep8.Utilities.assert( varValue >= optMin, `${varName} should be >= ${optMin} but is ${varValue}` );
+			b8.Utilities.assert( varValue >= optMin, `${varName} should be >= ${optMin} but is ${varValue}` );
 		}
 
 		if ( optMax !== undefined ) {
-			beep8.Utilities.assert( varValue <= optMax, `${varName} should be <= ${optMax} but is ${varValue}` );
+			b8.Utilities.assert( varValue <= optMax, `${varName} should be <= ${optMax} but is ${varValue}` );
 		}
 
 		return varValue;
@@ -149,12 +149,12 @@
 	 * @param {any} varValue - The value of the variable.
 	 * @returns {number} The 'varValue' parameter.
 	 */
-	beep8.Utilities.checkInt = function( varName, varValue, optMin, optMax ) {
+	b8.Utilities.checkInt = function( varName, varValue, optMin, optMax ) {
 
-		beep8.Utilities.checkNumber( varName, varValue, optMin, optMax );
+		b8.Utilities.checkNumber( varName, varValue, optMin, optMax );
 
 		if ( varValue !== Math.round( varValue ) ) {
-			beep8.Utilities.fatal( `${varName} should be an integer but is ${varValue}` );
+			b8.Utilities.fatal( `${varName} should be an integer but is ${varValue}` );
 		}
 
 		return varValue;
@@ -169,9 +169,9 @@
 	 * @param {any} varValue - The value of the variable.
 	 * @returns {string} The 'varValue' parameter.
 	 */
-	beep8.Utilities.checkString = function( varName, varValue ) {
+	b8.Utilities.checkString = function( varName, varValue ) {
 
-		return beep8.Utilities.checkType( varName, varValue, "string" );
+		return b8.Utilities.checkType( varName, varValue, "string" );
 
 	}
 
@@ -183,9 +183,9 @@
 	 * @param {any} varValue - The value of the variable.
 	 * @returns {boolean} The 'varValue' parameter.
 	 */
-	beep8.Utilities.checkBoolean = function( varName, varValue ) {
+	b8.Utilities.checkBoolean = function( varName, varValue ) {
 
-		return beep8.Utilities.checkType( varName, varValue, "boolean" );
+		return b8.Utilities.checkType( varName, varValue, "boolean" );
 
 	}
 
@@ -197,13 +197,13 @@
 	 * @param {any} varValue - The value of the variable.
 	 * @returns {Function} The 'varValue' parameter.
 	 */
-	beep8.Utilities.checkFunction = function( varName, varValue ) {
+	b8.Utilities.checkFunction = function( varName, varValue ) {
 
 		if ( varValue === null ) {
-			beep8.Utilities.fatal( `${varName} should be a function, but was null` );
+			b8.Utilities.fatal( `${varName} should be a function, but was null` );
 		}
 
-		return beep8.Utilities.checkType( varName, varValue, "function" );
+		return b8.Utilities.checkType( varName, varValue, "function" );
 
 	}
 
@@ -215,13 +215,13 @@
 	 * @param {any} varValue - The value of the variable.
 	 * @returns {Object} The 'varValue' parameter.
 	 */
-	beep8.Utilities.checkObject = function( varName, varValue ) {
+	b8.Utilities.checkObject = function( varName, varValue ) {
 
 		if ( varValue === null ) {
-			beep8.Utilities.fatal( `${varName} should be an object, but was null` );
+			b8.Utilities.fatal( `${varName} should be an object, but was null` );
 		}
 
-		return beep8.Utilities.checkType( varName, varValue, "object" );
+		return b8.Utilities.checkType( varName, varValue, "object" );
 
 	}
 
@@ -234,9 +234,9 @@
 	 * @param {Function} expectedClass - The expected class.
 	 * @returns {any} The 'varValue' parameter.
 	 */
-	beep8.Utilities.checkInstanceOf = function( varName, varValue, expectedClass ) {
+	b8.Utilities.checkInstanceOf = function( varName, varValue, expectedClass ) {
 
-		beep8.Utilities.assert(
+		b8.Utilities.assert(
 			varValue instanceof expectedClass,
 			`${varName} should be an instance of ${expectedClass.name} but was not, it's: ${varValue}`
 		);
@@ -253,9 +253,9 @@
 	 * @param {any} varValue - The value of the variable.
 	 * @returns {any} The 'varValue' parameter.
 	 */
-	beep8.Utilities.checkIsSet = function( varName, varValue ) {
+	b8.Utilities.checkIsSet = function( varName, varValue ) {
 
-		beep8.Utilities.assert(
+		b8.Utilities.assert(
 			varValue !== undefined && varValue !== null,
 			`${varName} should be set but was: ${varValue}`
 		);
@@ -272,23 +272,23 @@
 	 * @param {any} varValue - The value of the variable.
 	 * @returns {Array} The 'varValue' parameter.
 	 */
-	beep8.Utilities.checkArray = function( varName, varValue ) {
+	b8.Utilities.checkArray = function( varName, varValue ) {
 
-		beep8.Utilities.assert( Array.isArray( varValue ), `${varName} should be an array, but was: ${varValue}` );
+		b8.Utilities.assert( Array.isArray( varValue ), `${varName} should be an array, but was: ${varValue}` );
 
 		return varValue;
 
 	}
 
 	/**
-	 * Prints a log to the console if beep8.CONFIG.DEBUG is true.
+	 * Prints a log to the console if b8.CONFIG.DEBUG is true.
 	 *
 	 * @param {string} msg - The message to print.
 	 * @returns {void}
 	 */
-	beep8.Utilities.log = function( msg ) {
+	b8.Utilities.log = function( msg ) {
 
-		if ( beep8.CONFIG.DEBUG ) {
+		if ( b8.CONFIG.DEBUG ) {
 			console.log( msg );
 		}
 
@@ -301,7 +301,7 @@
 	 * @param {string} msg - The message to print.
 	 * @returns {void}
 	 */
-	beep8.Utilities.warn = function( msg ) {
+	b8.Utilities.warn = function( msg ) {
 
 		console.warn( msg );
 
@@ -314,7 +314,7 @@
 	 * @param {string} msg - The message to print.
 	 * @returns {void}
 	 */
-	beep8.Utilities.error = function( msg ) {
+	b8.Utilities.error = function( msg ) {
 
 		console.error( msg );
 
@@ -327,7 +327,7 @@
 	 * @param {string} src - The source URL of the image.
 	 * @returns {Promise<HTMLImageElement>} A promise that resolves to the loaded image.
 	 */
-	beep8.Utilities.loadImageAsync = async function( src ) {
+	b8.Utilities.loadImageAsync = async function( src ) {
 
 		return new Promise(
 			( resolver ) => {
@@ -354,7 +354,7 @@
 	 * @param {number} range - The range of RGB values to consider as the target color.
 	 * @returns The processed image.
 	 */
-	beep8.Utilities.makeColorTransparent = async function( img, color = [ 255, 0, 255 ], range = 5 ) {
+	b8.Utilities.makeColorTransparent = async function( img, color = [ 255, 0, 255 ], range = 5 ) {
 
 		// Create a canvas the same size as the image and draw the image on it.
 		const canvas = document.createElement( "canvas" );
@@ -401,7 +401,7 @@
 	 * @param {string} url - The URL of the file.
 	 * @returns {Promise<string>} A promise that resolves to the file content.
 	 */
-	beep8.Utilities.loadFileAsync = function( url ) {
+	b8.Utilities.loadFileAsync = function( url ) {
 
 		return new Promise(
 			( resolve, reject ) => {
@@ -438,7 +438,7 @@
 	 * @param {number} hi - The maximum value.
 	 * @returns {number} The clamped number.
 	 */
-	beep8.Utilities.clamp = function( x, lo, hi ) {
+	b8.Utilities.clamp = function( x, lo, hi ) {
 
 		return Math.min( Math.max( x, lo ), hi );
 
@@ -451,7 +451,7 @@
 	 * @param {string} hex - The hex color string (e.g., "#ff0000").
 	 * @returns {object} An object with r, g, b properties.
 	 */
-	beep8.Utilities.hexToRgb = function( hex ) {
+	b8.Utilities.hexToRgb = function( hex ) {
 
 		// Remove the "#" if present
 		hex = hex.replace( "#", "" );
@@ -484,15 +484,15 @@
 	 * @param {Object} [result=null] - If provided, used to return the intersection.
 	 * @returns {boolean} True if there is an intersection, false otherwise.
 	 */
-	beep8.Utilities.intersectIntervals = function( as, ae, bs, be, result = null ) {
+	b8.Utilities.intersectIntervals = function( as, ae, bs, be, result = null ) {
 
-		beep8.Utilities.checkNumber( "as", as );
-		beep8.Utilities.checkNumber( "ae", ae );
-		beep8.Utilities.checkNumber( "bs", bs );
-		beep8.Utilities.checkNumber( "be", be );
+		b8.Utilities.checkNumber( "as", as );
+		b8.Utilities.checkNumber( "ae", ae );
+		b8.Utilities.checkNumber( "bs", bs );
+		b8.Utilities.checkNumber( "be", be );
 
 		if ( result ) {
-			beep8.Utilities.checkObject( "result", result );
+			b8.Utilities.checkObject( "result", result );
 		}
 
 		const start = Math.max( as, bs );
@@ -523,22 +523,22 @@
 	 * @param {Object} [result=null] - If provided, used to return the intersection.
 	 * @returns {boolean} True if there is a non-empty intersection, false otherwise.
 	 */
-	beep8.Utilities.intersectRects = function( r1, r2, dx1 = 0, dy1 = 0, dx2 = 0, dy2 = 0, result = null ) {
+	b8.Utilities.intersectRects = function( r1, r2, dx1 = 0, dy1 = 0, dx2 = 0, dy2 = 0, result = null ) {
 
-		beep8.Utilities.checkObject( "r1", r1 );
-		beep8.Utilities.checkObject( "r2", r2 );
-		beep8.Utilities.checkNumber( "r1.x", r1.x );
-		beep8.Utilities.checkNumber( "r1.y", r1.y );
-		beep8.Utilities.checkNumber( "r1.w", r1.w );
-		beep8.Utilities.checkNumber( "r1.h", r1.h );
-		beep8.Utilities.checkNumber( "r2.x", r2.x );
-		beep8.Utilities.checkNumber( "r2.y", r2.y );
-		beep8.Utilities.checkNumber( "r2.w", r2.w );
-		beep8.Utilities.checkNumber( "r2.h", r2.h );
-		beep8.Utilities.checkNumber( "dx1", dx1 );
-		beep8.Utilities.checkNumber( "dx2", dx2 );
-		beep8.Utilities.checkNumber( "dy1", dy1 );
-		beep8.Utilities.checkNumber( "dy2", dy2 );
+		b8.Utilities.checkObject( "r1", r1 );
+		b8.Utilities.checkObject( "r2", r2 );
+		b8.Utilities.checkNumber( "r1.x", r1.x );
+		b8.Utilities.checkNumber( "r1.y", r1.y );
+		b8.Utilities.checkNumber( "r1.w", r1.w );
+		b8.Utilities.checkNumber( "r1.h", r1.h );
+		b8.Utilities.checkNumber( "r2.x", r2.x );
+		b8.Utilities.checkNumber( "r2.y", r2.y );
+		b8.Utilities.checkNumber( "r2.w", r2.w );
+		b8.Utilities.checkNumber( "r2.h", r2.h );
+		b8.Utilities.checkNumber( "dx1", dx1 );
+		b8.Utilities.checkNumber( "dx2", dx2 );
+		b8.Utilities.checkNumber( "dy1", dy1 );
+		b8.Utilities.checkNumber( "dy2", dy2 );
 
 		if ( result ) {
 			checkObject( "result", result );
@@ -548,7 +548,7 @@
 		const yint = intersectRects_yint;
 
 		if (
-			!beep8.Utilities.intersectIntervals(
+			!b8.Utilities.intersectIntervals(
 				r1.x + dx1,
 				r1.x + dx1 + r1.w - 1,
 				r2.x + dx2,
@@ -559,7 +559,7 @@
 		}
 
 		if (
-			!beep8.Utilities.intersectIntervals(
+			!b8.Utilities.intersectIntervals(
 				r1.y + dy1,
 				r1.y + dy1 + r1.h - 1,
 				r2.y + dy2,
@@ -590,9 +590,9 @@
 	 * @param {string} str - The string to convert.
 	 * @returns {string} The pretty string.
 	 */
-	beep8.Utilities.makeUrlPretty = function( uglyStr ) {
+	b8.Utilities.makeUrlPretty = function( uglyStr ) {
 
-		beep8.Utilities.checkString( "uglyStr", uglyStr );
+		b8.Utilities.checkString( "uglyStr", uglyStr );
 
 		let str = uglyStr;
 
@@ -623,7 +623,7 @@
 	 * @param {...object} objects - Objects to merge
 	 * @returns {object} New object with merged key/values
 	 */
-	beep8.Utilities.deepMerge = function( ...objects ) {
+	b8.Utilities.deepMerge = function( ...objects ) {
 
 		const isObject = obj => obj && typeof obj === 'object';
 
@@ -639,7 +639,7 @@
 							prev[ key ] = existingValue.concat( ...newValue );
 						}
 						else if ( isObject( existingValue ) && isObject( newValue ) ) {
-							prev[ key ] = beep8.Utilities.deepMerge( existingValue, newValue );
+							prev[ key ] = b8.Utilities.deepMerge( existingValue, newValue );
 						}
 						else {
 							prev[ key ] = newValue;
@@ -662,7 +662,7 @@
 	 * @param {...object} objects - Objects to merge
 	 * @returns {object} New object with merged key/values
 	 */
-	beep8.Utilities.deepMergeByIndex = function( ...objects ) {
+	b8.Utilities.deepMergeByIndex = function( ...objects ) {
 
 		const isObject = obj => obj && typeof obj === 'object';
 
@@ -678,7 +678,7 @@
 							prev[ key ] = mergeArraysByIndex( existingValue, newValue );
 						}
 						else if ( isObject( existingValue ) && isObject( newValue ) ) {
-							prev[ key ] = beep8.Utilities.deepMergeByIndex( existingValue, newValue );
+							prev[ key ] = b8.Utilities.deepMergeByIndex( existingValue, newValue );
 						}
 						else {
 							prev[ key ] = newValue;
@@ -701,13 +701,13 @@
 	 * @param {number} length - The desired length of the output string.
 	 * @returns {string} - The padded number as a string.
 	 */
-	beep8.Utilities.padWithZeros = function( number, length ) {
+	b8.Utilities.padWithZeros = function( number, length ) {
 
-		beep8.Utilities.checkNumber( "number", number );
-		beep8.Utilities.checkInt( "length", length );
+		b8.Utilities.checkNumber( "number", number );
+		b8.Utilities.checkInt( "length", length );
 
 		if ( number < 0 ) {
-			beep8.Utilities.fatal( "padWithZeros does not support negative numbers" );
+			b8.Utilities.fatal( "padWithZeros does not support negative numbers" );
 		}
 
 		return number.toString().padStart( length, '0' );
@@ -723,14 +723,14 @@
 	 * @param {EventTarget} [target=document] - The target of the event.
 	 * @returns {void}
 	 */
-	beep8.Utilities.event = function( eventName, detail = {}, target = document ) {
+	b8.Utilities.event = function( eventName, detail = {}, target = document ) {
 
-		beep8.Utilities.checkString( "eventName", eventName );
-		beep8.Utilities.checkObject( "detail", detail );
-		beep8.Utilities.checkObject( "target", target );
+		b8.Utilities.checkString( "eventName", eventName );
+		b8.Utilities.checkObject( "detail", detail );
+		b8.Utilities.checkObject( "target", target );
 
-		// Prefix event name with beep8.
-		eventName = `beep8.${eventName}`;
+		// Prefix event name with b8.
+		eventName = `b8.${eventName}`;
 
 		// Create a custom event.
 		const event = new CustomEvent( eventName, { detail } );
@@ -748,10 +748,10 @@
 	 * @param {number} times - The number of times to repeat the array.
 	 * @returns {Array} The repeated array.
 	 */
-	beep8.Utilities.repeatArray = function( array, times ) {
+	b8.Utilities.repeatArray = function( array, times ) {
 
-		beep8.Utilities.checkArray( "array", array );
-		beep8.Utilities.checkInt( "times", times, 0 );
+		b8.Utilities.checkArray( "array", array );
+		b8.Utilities.checkInt( "times", times, 0 );
 
 		return Array( times ).fill().flatMap( () => array );
 
@@ -765,10 +765,10 @@
 	 * @param {string} src - The source URL of the file.
 	 * @returns {void}
 	 */
-	beep8.Utilities.downloadFile = function( filename = '', src = '' ) {
+	b8.Utilities.downloadFile = function( filename = '', src = '' ) {
 
-		beep8.Utilities.checkString( "filename", filename );
-		beep8.Utilities.checkString( "src", src );
+		b8.Utilities.checkString( "filename", filename );
+		b8.Utilities.checkString( "src", src );
 
 		// Create a link element to use to download the image.
 		const element = document.createElement( 'a' );
@@ -793,7 +793,7 @@
 	 * @param {any} data - The data to encode.
 	 * @returns {string} The encoded data as a Base64 string.
 	 */
-	beep8.Utilities.encodeData = function( data ) {
+	b8.Utilities.encodeData = function( data ) {
 
 		const cborString = CBOR.encode( data );
 		const encodedString = btoa( String.fromCharCode.apply( null, new Uint8Array( cborString ) ) );
@@ -808,7 +808,7 @@
 	 * @param {string} data - The Base64 encoded data.
 	 * @returns {any} The decoded data.
 	 */
-	beep8.Utilities.decodeData = function( data ) {
+	b8.Utilities.decodeData = function( data ) {
 
 		// Step 1: Decode the Base64 string back to a binary string
 		const binaryString = atob( data );
@@ -847,4 +847,4 @@
 	}
 
 
-} )( beep8 );
+} )( b8 );

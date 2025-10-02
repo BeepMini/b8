@@ -8,35 +8,35 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
 	<link rel="stylesheet" href="example.css">
-	<script src="../dist/beep8.js"></script>
+	<script src="../dist/b8.js"></script>
 
 	<script>
 
 		const fontList = [];
-		const maxWidth = beep8.CONFIG.SCREEN_COLS - 2;
+		const maxWidth = b8.CONFIG.SCREEN_COLS - 2;
 		let currentFont = 0;
 
 		async function main() {
 
 			// Load the custom fonts.
-			beep8.cls();
-			beep8.print( "Loading fonts..." );
+			b8.cls();
+			b8.print( "Loading fonts..." );
 
-			fontList.push( beep8.getFont() );
-			fontList.push( await beep8.Async.loadFont( "../assets/font-default-tall.png", 0.5, 1 ) );
-			fontList.push( await beep8.Async.loadFont( "../assets/font-default-tall-bold.png", 0.5, 1 ) );
-			fontList.push( await beep8.Async.loadFont( "../assets/font-default.png" ) );
-			fontList.push( await beep8.Async.loadFont( "../assets/font-bold.png" ) );
-			fontList.push( await beep8.Async.loadFont( "../assets/font-mini.png" ) );
-			fontList.push( await beep8.Async.loadFont( "../assets/font-big.png", 2, 2 ) );
-			fontList.push( await beep8.Async.loadFont( "../assets/font-news.png" ) );
-			fontList.push( await beep8.Async.loadFont( "../assets/font-retro.png" ) );
-			fontList.push( await beep8.Async.loadFont( "../assets/font-space.png" ) );
+			fontList.push( b8.getFont() );
+			fontList.push( await b8.Async.loadFont( "../assets/font-default-tall.png", 0.5, 1 ) );
+			fontList.push( await b8.Async.loadFont( "../assets/font-default-tall-bold.png", 0.5, 1 ) );
+			fontList.push( await b8.Async.loadFont( "../assets/font-default.png" ) );
+			fontList.push( await b8.Async.loadFont( "../assets/font-bold.png" ) );
+			fontList.push( await b8.Async.loadFont( "../assets/font-mini.png" ) );
+			fontList.push( await b8.Async.loadFont( "../assets/font-big.png", 2, 2 ) );
+			fontList.push( await b8.Async.loadFont( "../assets/font-news.png" ) );
+			fontList.push( await b8.Async.loadFont( "../assets/font-retro.png" ) );
+			fontList.push( await b8.Async.loadFont( "../assets/font-space.png" ) );
 
 			draw();
 
 			while ( true ) {
-				await beep8.Async.key();
+				await b8.Async.key();
 				currentFont = ( currentFont + 1 ) % fontList.length;
 				draw();
 			}
@@ -45,28 +45,28 @@
 
 		function draw() {
 
-			beep8.color( 1, 3 );
-			beep8.cls();
-			beep8.locate( 1, 1 );
+			b8.color( 1, 3 );
+			b8.cls();
+			b8.locate( 1, 1 );
 			console.log( "currentFont: " + fontList[ currentFont ] );
-			beep8.setFont( fontList[ currentFont ] );
-			beep8.print( "the quick brown fox jumped over the lazy dog.\n", maxWidth );
+			b8.setFont( fontList[ currentFont ] );
+			b8.print( "the quick brown fox jumped over the lazy dog.\n", maxWidth );
 
-			beep8.color( 5 );
-			beep8.print( "THE QUICK BROWN FOX JUMPED OVER THE LAZY DOG.\n\n", maxWidth );
+			b8.color( 5 );
+			b8.print( "THE QUICK BROWN FOX JUMPED OVER THE LAZY DOG.\n\n", maxWidth );
 
-			beep8.color( 6 );
-			beep8.print( "0123456789\n\n" );
+			b8.color( 6 );
+			b8.print( "0123456789\n\n" );
 
-			beep8.color( 7 );
-			beep8.print( "the five boxing wizards jump quickly.\n", maxWidth );
+			b8.color( 7 );
+			b8.print( "the five boxing wizards jump quickly.\n", maxWidth );
 
-			beep8.color( 8 );
-			beep8.print( "THE FIVE BOXING WIZARDS JUMP QUICKLY.\n\n", maxWidth );
+			b8.color( 8 );
+			b8.print( "THE FIVE BOXING WIZARDS JUMP QUICKLY.\n\n", maxWidth );
 
 		}
 
-		window.addEventListener( "load", () => beep8.init( main ) );
+		window.addEventListener( "load", () => b8.init( main ) );
 	</script>
 </head>
 

@@ -25,7 +25,7 @@ mapper.types.door = {
 			doorProps.Solid = {};
 		}
 
-		return beep8.ECS.create( doorProps );
+		return b8.ECS.create( doorProps );
 
 	},
 
@@ -33,7 +33,7 @@ mapper.types.door = {
 	onCharacterCollision: function( id, newCol, newRow, dx, dy ) {
 
 		// If the door is open, allow passing through.
-		if ( !beep8.ECS.hasComponent( id, 'Solid' ) ) {
+		if ( !b8.ECS.hasComponent( id, 'Solid' ) ) {
 
 			// Check if the player is trying to step onto a portal.
 			mapper.systems.tryPortal( newCol, newRow );
@@ -41,13 +41,13 @@ mapper.types.door = {
 
 		}
 
-		const sprite = beep8.ECS.getComponent( id, 'Sprite' );
+		const sprite = b8.ECS.getComponent( id, 'Sprite' );
 		const keyName = `key-${sprite.fg ?? "default"}`;
 
-		if ( beep8.Inventory.has( keyName ) ) {
-			beep8.ECS.removeComponent( id, 'Solid' );
+		if ( b8.Inventory.has( keyName ) ) {
+			b8.ECS.removeComponent( id, 'Solid' );
 			sprite.tile = mapper.types.door.TILE_DOOR_OPEN;
-			beep8.Sfx.play( 'ui/click/004' );
+			b8.Sfx.play( 'ui/click/004' );
 			return true;
 		}
 

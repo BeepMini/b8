@@ -1,9 +1,9 @@
 
-( function( beep8 ) {
+( function( b8 ) {
 	'use strict';
 
 	/**
-	 * Lightweight Entity-Component store for Beep8.
+	 * Lightweight Entity-Component store for b8.
 	 * ---------------------------------------------
 	 * • Entity: A reference to a collection of data for an object in game. It is a numeric ID. Automatically assigned when using the create() method.
 	 * • Component: A property for an entity. The data can be any plain object. Each entity has a key string used as a property name. Loc is reserved for location.
@@ -12,7 +12,7 @@
 	 * All data is stored by reference; mutating the returned
 	 * component objects is intentional and fast.
 	 */
-	beep8.ECS = {};
+	b8.ECS = {};
 
 	// auto-incrementing entity IDs
 	let nextId = 0;
@@ -65,7 +65,7 @@
 	 * @param {number} row
 	 * @returns {number[]} Array of entity IDs at that location
 	 */
-	beep8.ECS.entitiesAt = function( col, row ) {
+	b8.ECS.entitiesAt = function( col, row ) {
 
 		return grid[ row ]?.[ col ] ?? [];
 
@@ -79,13 +79,13 @@
 	 * @param {string}   name Unique system name
 	 * @param {number}  [order=0] Lower numbers run first
 	 */
-	beep8.ECS.addSystem = function( name, fn, order = 0 ) {
+	b8.ECS.addSystem = function( name, fn, order = 0 ) {
 
-		beep8.Utilities.checkFunction( 'fn', fn );
-		beep8.Utilities.checkString( 'name', name );
-		beep8.Utilities.checkInt( 'order', order );
+		b8.Utilities.checkFunction( 'fn', fn );
+		b8.Utilities.checkString( 'name', name );
+		b8.Utilities.checkInt( 'order', order );
 
-		if ( systems.has( name ) ) beep8.Utilities.warn( `ECS: overwriting existing system "${name}"` );
+		if ( systems.has( name ) ) b8.Utilities.warn( `ECS: overwriting existing system "${name}"` );
 
 		systems.set( name, { fn, order } );
 
@@ -99,15 +99,15 @@
 	 * @param {string}   name Unique system name
 	 * @param {number}  [order=0] Lower numbers run first
 	 */
-	beep8.ECS.addSystemOnce = function( fn, name, order = 0 ) {
+	b8.ECS.addSystemOnce = function( fn, name, order = 0 ) {
 
-		beep8.Utilities.checkFunction( 'fn', fn );
-		beep8.Utilities.checkString( 'name', name );
-		beep8.Utilities.checkInt( 'order', order );
+		b8.Utilities.checkFunction( 'fn', fn );
+		b8.Utilities.checkString( 'name', name );
+		b8.Utilities.checkInt( 'order', order );
 
 		if ( systems.has( name ) ) return;
 
-		beep8.ECS.addSystem( fn, name, order );
+		b8.ECS.addSystem( fn, name, order );
 
 	};
 
@@ -117,7 +117,7 @@
 	 *
 	 * @param {string} name
 	 */
-	beep8.ECS.removeSystem = function( name ) {
+	b8.ECS.removeSystem = function( name ) {
 
 		systems.delete( name );
 
@@ -131,7 +131,7 @@
 	 * @param {number} dt Delta-time in seconds
 	 * @param {(name:string)=>boolean=} filter Skip systems that return false
 	 */
-	beep8.ECS.run = function( dt, filter = () => true ) {
+	b8.ECS.run = function( dt, filter = () => true ) {
 
 		[ ...systems.entries() ]
 			// Sort by order/ priority.
@@ -154,17 +154,17 @@
 	 * @param {Object} [data={}] Component data (stored by reference)
 	 * @returns {void}
 	 */
-	beep8.ECS.add = function( id, name = null, data = {} ) {
+	b8.ECS.add = function( id, name = null, data = {} ) {
 
-		beep8.Utilities.checkInt( 'id', id );
-		beep8.Utilities.checkString( 'name', name );
-		beep8.Utilities.checkObject( 'data', data );
+		b8.Utilities.checkInt( 'id', id );
+		b8.Utilities.checkString( 'name', name );
+		b8.Utilities.checkObject( 'data', data );
 
 		// Add the new component to the store.
 		bucket( name ).set( id, data );
 
 		// If the component is Loc (location), update the position grid.
-		if ( 'Loc' === name ) beep8.ECS.setLoc( id, data.col, data.row );
+		if ( 'Loc' === name ) b8.ECS.setLoc( id, data.col, data.row );
 
 	}
 
@@ -178,9 +178,9 @@
 	 * @param {Object} data Component data (stored by reference)
 	 * @returns {void}
 	 */
-	beep8.ECS.set = function( id, name, data ) {
+	b8.ECS.set = function( id, name, data ) {
 
-		beep8.ECS.add( id, name, data );
+		b8.ECS.add( id, name, data );
 
 	}
 
@@ -193,11 +193,11 @@
 	 * @param {number} row Y tile coordinate
 	 * @returns {void}
 	 */
-	beep8.ECS.setLoc = function( id, col, row ) {
+	b8.ECS.setLoc = function( id, col, row ) {
 
-		beep8.Utilities.checkInt( 'id', id );
-		beep8.Utilities.checkInt( 'col', col );
-		beep8.Utilities.checkInt( 'row', row );
+		b8.Utilities.checkInt( 'id', id );
+		b8.Utilities.checkInt( 'col', col );
+		b8.Utilities.checkInt( 'row', row );
 
 		// Get the current location component.
 		const loc = this.getComponent( id, 'Loc' );
@@ -230,9 +230,9 @@
 	 * @param {string} name
 	 * @returns {Map<number,Object>} Map<entityId,data>
 	 */
-	beep8.ECS.getComponents = function( name ) {
+	b8.ECS.getComponents = function( name ) {
 
-		beep8.Utilities.checkString( 'name', name );
+		b8.Utilities.checkString( 'name', name );
 
 		return components.get( name ) ?? new Map();
 
@@ -245,9 +245,9 @@
 	 * @param {number} id
 	 * @returns {Map<string, Object>} Map of name → data
 	 */
-	beep8.ECS.getEntity = function( id ) {
+	b8.ECS.getEntity = function( id ) {
 
-		beep8.Utilities.checkInt( 'id', id );
+		b8.Utilities.checkInt( 'id', id );
 
 		const out = new Map();
 		for ( const [ name, map ] of components ) {
@@ -265,10 +265,10 @@
 	 * @param {string} name
 	 * @returns {Object|undefined}
 	 */
-	beep8.ECS.getComponent = function( id, name ) {
+	b8.ECS.getComponent = function( id, name ) {
 
-		beep8.Utilities.checkInt( 'id', id );
-		beep8.Utilities.checkString( 'name', name );
+		b8.Utilities.checkInt( 'id', id );
+		b8.Utilities.checkString( 'name', name );
 
 		return components.get( name )?.get( id );
 
@@ -282,10 +282,10 @@
 	 * @param {string} name
 	 * @returns {boolean}
 	 */
-	beep8.ECS.hasComponent = function( id, name ) {
+	b8.ECS.hasComponent = function( id, name ) {
 
-		beep8.Utilities.checkInt( 'id', id );
-		beep8.Utilities.checkString( 'name', name );
+		b8.Utilities.checkInt( 'id', id );
+		b8.Utilities.checkString( 'name', name );
 
 		return components.get( name )?.has( id ) ?? false;
 
@@ -299,10 +299,10 @@
 	 * @param {string} name
 	 * @returns {void}
 	 */
-	beep8.ECS.removeComponent = function( id, name ) {
+	b8.ECS.removeComponent = function( id, name ) {
 
-		beep8.Utilities.checkInt( 'id', id );
-		beep8.Utilities.checkString( 'name', name );
+		b8.Utilities.checkInt( 'id', id );
+		b8.Utilities.checkString( 'name', name );
 
 		components.get( name )?.delete( id );
 
@@ -324,7 +324,7 @@
 	 * @param {number} id
 	 * @returns {void}
 	 */
-	beep8.ECS.removeEntity = function( id ) {
+	b8.ECS.removeEntity = function( id ) {
 
 		const loc = this.getComponent( id, 'Loc' );
 
@@ -344,13 +344,13 @@
 	 * @param {Object.<string, Object>} bundle Keys = component names
 	 * @returns {number} The new entity ID
 	 */
-	beep8.ECS.create = function( bundle ) {
+	b8.ECS.create = function( bundle ) {
 
-		beep8.Utilities.checkObject( 'bundle', bundle );
+		b8.Utilities.checkObject( 'bundle', bundle );
 
 		const id = makeEntity();
 		for ( const [ name, data ] of Object.entries( bundle ) ) {
-			beep8.ECS.add( id, name, data );
+			b8.ECS.add( id, name, data );
 		}
 		return id;
 
@@ -363,7 +363,7 @@
 	 * @param {...string} names
 	 * @returns {number[]} Array of entity IDs
 	 */
-	beep8.ECS.query = function( ...names ) {
+	b8.ECS.query = function( ...names ) {
 
 		if ( names.length === 0 ) return [];
 		const base = components.get( names[ 0 ] );
@@ -383,7 +383,7 @@
 	 * @param {string} typeName
 	 * @returns {number}
 	 */
-	beep8.ECS.countByType = function( typeName ) {
+	b8.ECS.countByType = function( typeName ) {
 
 		// get all entities with a Type component
 		const typeMap = this.get( 'Type' );
@@ -405,7 +405,7 @@
 	 *
 	 * @returns {void}
 	 */
-	beep8.ECS.reset = function() {
+	b8.ECS.reset = function() {
 
 		components = new Map();
 		systems = new Map();
@@ -414,6 +414,6 @@
 
 	}
 
-} )( beep8 );
+} )( b8 );
 
 

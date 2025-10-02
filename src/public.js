@@ -1,25 +1,25 @@
-( function( beep8 ) {
+( function( b8 ) {
 
 	/**
 	 * Initializes the API. This must be called before other functions and must
 	 * finish executing before other API functions are called.
-	 * Once the supplied callback is called, you can start using beep8 functions.
+	 * Once the supplied callback is called, you can start using b8 functions.
 	 *
 	 * @param {Function} callback - The callback to call when initialization is done.
 	 * @param {Object} [options] - Optional options object.
 	 * @returns {void}
 	 */
-	beep8.init = function( callback, options = {} ) {
+	b8.init = function( callback, options = {} ) {
 
-		beep8.Utilities.checkFunction( "callback", callback );
-		beep8.Utilities.checkObject( "options", options );
+		b8.Utilities.checkFunction( "callback", callback );
+		b8.Utilities.checkObject( "options", options );
 
-		// Combine options with beep8.CONFIG using deep merge
+		// Combine options with b8.CONFIG using deep merge
 		if ( options !== null ) {
-			beep8.CONFIG = beep8.Utilities.deepMerge( beep8.CONFIG, options );
+			b8.CONFIG = b8.Utilities.deepMerge( b8.CONFIG, options );
 		}
 
-		return beep8.Core.init( callback );
+		return b8.Core.init( callback );
 
 	}
 
@@ -33,21 +33,21 @@
 	 * @param {number} [fps=30] - The target frames per second. Recommended: 30.
 	 * @returns {void}
 	 */
-	beep8.frame = function( renderHandler = null, updateHandler = null, fps = 30 ) {
+	b8.frame = function( renderHandler = null, updateHandler = null, fps = 30 ) {
 
-		beep8.Core.preflight( "beep8.frame" );
+		b8.Core.preflight( "b8.frame" );
 
 		if ( renderHandler !== null ) {
-			beep8.Utilities.checkFunction( "render handler", renderHandler );
+			b8.Utilities.checkFunction( "render handler", renderHandler );
 		}
 
 		if ( updateHandler !== null ) {
-			beep8.Utilities.checkFunction( "update handler", updateHandler );
+			b8.Utilities.checkFunction( "update handler", updateHandler );
 		}
 
-		beep8.Utilities.checkNumber( "fps", fps );
+		b8.Utilities.checkNumber( "fps", fps );
 
-		return beep8.Core.setFrameHandlers( renderHandler, updateHandler, fps );
+		return b8.Core.setFrameHandlers( renderHandler, updateHandler, fps );
 
 	}
 
@@ -63,11 +63,11 @@
 	 *
 	 * @returns {void}
 	 */
-	beep8.render = function() {
+	b8.render = function() {
 
-		beep8.Core.preflight( "beep8.render" );
+		b8.Core.preflight( "b8.render" );
 
-		return beep8.Renderer.render();
+		return b8.Renderer.render();
 
 	}
 
@@ -81,16 +81,16 @@
 	 * @param {number} [bg=undefined] - The background color (optional).
 	 * @returns {void}
 	 */
-	beep8.color = function( fg, bg = undefined ) {
+	b8.color = function( fg, bg = undefined ) {
 
-		beep8.Core.preflight( "beep8.color" );
-		beep8.Utilities.checkNumber( "fg", fg );
+		b8.Core.preflight( "b8.color" );
+		b8.Utilities.checkNumber( "fg", fg );
 
 		if ( bg !== undefined ) {
-			beep8.Utilities.checkNumber( "bg", bg );
+			b8.Utilities.checkNumber( "bg", bg );
 		}
 
-		beep8.Core.setColor( fg, bg );
+		b8.Core.setColor( fg, bg );
 
 	}
 
@@ -100,11 +100,11 @@
 	 *
 	 * @returns {number} The current foreground color.
 	 */
-	beep8.getFgColor = function() {
+	b8.getFgColor = function() {
 
-		beep8.Core.preflight( "getFgColor" );
+		b8.Core.preflight( "getFgColor" );
 
-		return beep8.Core.drawState.fgColor;
+		return b8.Core.drawState.fgColor;
 
 	}
 
@@ -115,11 +115,11 @@
 	 *
 	 * @returns {number} The current background color.
 	 */
-	beep8.getBgColor = function() {
+	b8.getBgColor = function() {
 
-		beep8.Core.preflight( "beep8.getBgColor" );
+		b8.Core.preflight( "b8.getBgColor" );
 
-		return beep8.Core.drawState.bgColor;
+		return b8.Core.drawState.bgColor;
 
 	}
 
@@ -132,13 +132,13 @@
 	 * provided, uses the current background color (drawState.bgColor).
 	 * @returns {void}
 	 */
-	beep8.cls = function( bg = undefined ) {
+	b8.cls = function( bg = undefined ) {
 
-		beep8.Core.preflight( "beep8.Core.cls" );
+		b8.Core.preflight( "b8.Core.cls" );
 
-		if ( bg !== undefined ) beep8.Utilities.checkNumber( "bg", bg );
+		if ( bg !== undefined ) b8.Utilities.checkNumber( "bg", bg );
 
-		beep8.Core.cls( bg );
+		b8.Core.cls( bg );
 
 	}
 
@@ -151,16 +151,16 @@
 	 * @param {number} [row] - The row where the cursor is to be placed (optional).
 	 * @returns {void}
 	 */
-	beep8.locate = function( col, row ) {
+	b8.locate = function( col, row ) {
 
-		beep8.Core.preflight( "beep8.locate" );
-		beep8.Utilities.checkNumber( "col", col );
+		b8.Core.preflight( "b8.locate" );
+		b8.Utilities.checkNumber( "col", col );
 
 		if ( row !== undefined ) {
-			beep8.Utilities.checkNumber( "row", row );
+			b8.Utilities.checkNumber( "row", row );
 		}
 
-		beep8.Core.setCursorLocation( col, row );
+		b8.Core.setCursorLocation( col, row );
 
 	}
 
@@ -170,11 +170,11 @@
 	 *
 	 * @returns {number} The cursor's current column.
 	 */
-	beep8.col = function() {
+	b8.col = function() {
 
-		beep8.Core.preflight( "col" );
+		b8.Core.preflight( "col" );
 
-		return beep8.Core.drawState.cursorCol;
+		return b8.Core.drawState.cursorCol;
 
 	}
 
@@ -184,11 +184,11 @@
 	 *
 	 * @returns {number} The cursor's current row.
 	 */
-	beep8.row = function() {
+	b8.row = function() {
 
-		beep8.Core.preflight( "row" );
+		b8.Core.preflight( "row" );
 
-		return beep8.Core.drawState.cursorRow;
+		return b8.Core.drawState.cursorRow;
 
 	}
 
@@ -200,12 +200,12 @@
 	 * cursor.
 	 * @returns {void}
 	 */
-	beep8.cursor = function( visible ) {
+	b8.cursor = function( visible ) {
 
-		beep8.Core.preflight( "cursor" );
-		beep8.Utilities.checkBoolean( "visible", visible );
+		b8.Core.preflight( "cursor" );
+		b8.Utilities.checkBoolean( "visible", visible );
 
-		beep8.CursorRenderer.setCursorVisible( visible );
+		b8.CursorRenderer.setCursorVisible( visible );
 
 	}
 
@@ -236,20 +236,20 @@
 	 * @param {number} [maxWidth=-1] - The maximum width to wrap text at. -1 for no wrapping.
 	 * @returns {void}
 	 */
-	beep8.print = function( text, maxWidth = -1, fontName = null ) {
+	b8.print = function( text, maxWidth = -1, fontName = null ) {
 
-		beep8.Core.preflight( "beep8.text" );
+		b8.Core.preflight( "b8.text" );
 
-		beep8.Utilities.checkString( "text", text );
-		beep8.Utilities.checkNumber( "maxWidth", maxWidth );
+		b8.Utilities.checkString( "text", text );
+		b8.Utilities.checkNumber( "maxWidth", maxWidth );
 
 		let font = fontName;
 		if ( null !== font ) {
-			beep8.Utilities.checkString( "fontName", fontName );
-			font = beep8.TextRenderer.getFontByName( fontName );
+			b8.Utilities.checkString( "fontName", fontName );
+			font = b8.TextRenderer.getFontByName( fontName );
 		}
 
-		beep8.TextRenderer.print( text, font, maxWidth );
+		b8.TextRenderer.print( text, font, maxWidth );
 
 	}
 
@@ -263,20 +263,20 @@
 	 * @param {number} width - The width of the space to place the text in, measured in Columns. Defaults to the screen width.
 	 * @returns {void}
 	 */
-	beep8.printCentered = function( text, width = beep8.CONFIG.SCREEN_COLS, fontName = null ) {
+	b8.printCentered = function( text, width = b8.CONFIG.SCREEN_COLS, fontName = null ) {
 
-		beep8.Core.preflight( "beep8.printCentered" );
+		b8.Core.preflight( "b8.printCentered" );
 
-		beep8.Utilities.checkString( "text", text );
-		beep8.Utilities.checkNumber( "width", width );
+		b8.Utilities.checkString( "text", text );
+		b8.Utilities.checkNumber( "width", width );
 
 		let font = fontName;
 		if ( null !== font ) {
-			beep8.Utilities.checkString( "fontName", fontName );
-			font = beep8.TextRenderer.getFontByName( fontName );
+			b8.Utilities.checkString( "fontName", fontName );
+			font = b8.TextRenderer.getFontByName( fontName );
 		}
 
-		beep8.TextRenderer.printCentered( text, width, font );
+		b8.TextRenderer.printCentered( text, width, font );
 
 	}
 
@@ -290,20 +290,20 @@
 	 * @param {string} [fontName=null] - The font ID to use.
 	 * @returns {void}
 	 */
-	beep8.printRight = function( text, width = beep8.CONFIG.SCREEN_COLS, fontName = null ) {
+	b8.printRight = function( text, width = b8.CONFIG.SCREEN_COLS, fontName = null ) {
 
-		beep8.Core.preflight( "beep8.printRight" );
+		b8.Core.preflight( "b8.printRight" );
 
-		beep8.Utilities.checkString( "text", text );
-		beep8.Utilities.checkNumber( "width", width );
+		b8.Utilities.checkString( "text", text );
+		b8.Utilities.checkNumber( "width", width );
 
 		let font = fontName;
 		if ( null !== font ) {
-			beep8.Utilities.checkString( "fontName", fontName );
-			font = beep8.TextRenderer.getFontByName( fontName );
+			b8.Utilities.checkString( "fontName", fontName );
+			font = b8.TextRenderer.getFontByName( fontName );
 		}
 
-		beep8.TextRenderer.printRight( text, width, font );
+		b8.TextRenderer.printRight( text, width, font );
 
 	}
 
@@ -318,18 +318,18 @@
 	 * @param {string} [fontName=null] - The font ID to use.
 	 * @returns {void}
 	 */
-	beep8.drawText = function( x, y, text, fontName = null ) {
+	b8.drawText = function( x, y, text, fontName = null ) {
 
-		beep8.Core.preflight( "beep8.drawText" );
-		beep8.Utilities.checkNumber( "x", x );
-		beep8.Utilities.checkNumber( "y", y );
-		beep8.Utilities.checkString( "text", text );
+		b8.Core.preflight( "b8.drawText" );
+		b8.Utilities.checkNumber( "x", x );
+		b8.Utilities.checkNumber( "y", y );
+		b8.Utilities.checkString( "text", text );
 
 		if ( fontName ) {
-			beep8.Utilities.checkString( "fontName", fontName );
+			b8.Utilities.checkString( "fontName", fontName );
 		}
 
-		beep8.TextRenderer.drawText( x, y, text, fontName );
+		b8.TextRenderer.drawText( x, y, text, fontName );
 
 	}
 
@@ -340,12 +340,12 @@
 	 * @param {string} text - The text to measure.
 	 * @returns {Object} An object with {cols, rows} indicating the dimensions.
 	 */
-	beep8.measure = function( text ) {
+	b8.measure = function( text ) {
 
-		beep8.Core.preflight( "measure" );
-		beep8.Utilities.checkString( "text", text );
+		b8.Core.preflight( "measure" );
+		b8.Utilities.checkString( "text", text );
 
-		return beep8.TextRenderer.measure( text );
+		return b8.TextRenderer.measure( text );
 
 	}
 
@@ -360,16 +360,16 @@
 	 * @param {string} fontName - The font id for the font to draw with.
 	 * @returns {void}
 	 */
-	beep8.printChar = function( charCode, numTimes = 1, fontName = null ) {
+	b8.printChar = function( charCode, numTimes = 1, fontName = null ) {
 
-		beep8.Core.preflight( "beep8.printChar" );
+		b8.Core.preflight( "b8.printChar" );
 
-		charCode = beep8.convChar( charCode );
-		beep8.Utilities.checkInt( "charCode", charCode );
-		beep8.Utilities.checkInt( "numTimes", numTimes );
+		charCode = b8.convChar( charCode );
+		b8.Utilities.checkInt( "charCode", charCode );
+		b8.Utilities.checkInt( "numTimes", numTimes );
 
 		if ( numTimes < 0 ) {
-			beep8.Utilities.fatal( "[beep8.printChar] numTimes must be a positive integer" );
+			b8.Utilities.fatal( "[b8.printChar] numTimes must be a positive integer" );
 		}
 
 		// Nothing to print.
@@ -379,11 +379,11 @@
 
 		let font = fontName;
 		if ( null !== font ) {
-			beep8.Utilities.checkString( "fontName", fontName );
-			font = beep8.TextRenderer.getFontByName( fontName );
+			b8.Utilities.checkString( "fontName", fontName );
+			font = b8.TextRenderer.getFontByName( fontName );
 		}
 
-		beep8.TextRenderer.printChar( charCode, numTimes, font );
+		b8.TextRenderer.printChar( charCode, numTimes, font );
 
 	}
 
@@ -397,16 +397,16 @@
 	 * @param {number|string} [charCode=8] - The character to print.
 	 * @returns {void}
 	 */
-	beep8.printRect = function( widthCols, heightRows, charCode = 8 ) {
+	b8.printRect = function( widthCols, heightRows, charCode = 8 ) {
 
-		beep8.Core.preflight( "beep8.printRect" );
-		charCode = beep8.convChar( charCode );
+		b8.Core.preflight( "b8.printRect" );
+		charCode = b8.convChar( charCode );
 
-		beep8.Utilities.checkNumber( "widthCols", widthCols );
-		beep8.Utilities.checkNumber( "heightRows", heightRows );
-		beep8.Utilities.checkNumber( "charCode", charCode );
+		b8.Utilities.checkNumber( "widthCols", widthCols );
+		b8.Utilities.checkNumber( "heightRows", heightRows );
+		b8.Utilities.checkNumber( "charCode", charCode );
 
-		beep8.TextRenderer.printRect( widthCols, heightRows, charCode );
+		b8.TextRenderer.printRect( widthCols, heightRows, charCode );
 
 	}
 
@@ -424,43 +424,43 @@
 	 * use.
 	 * @returns {void}
 	 */
-	beep8.printBox = function( widthCols, heightRows, fill = true, borderChar = beep8.CONFIG.BORDER_CHAR ) {
+	b8.printBox = function( widthCols, heightRows, fill = true, borderChar = b8.CONFIG.BORDER_CHAR ) {
 
-		beep8.Core.preflight( "beep8.printBox" );
-		borderChar = beep8.convChar( borderChar );
+		b8.Core.preflight( "b8.printBox" );
+		borderChar = b8.convChar( borderChar );
 
-		beep8.Utilities.checkNumber( "widthCols", widthCols );
-		beep8.Utilities.checkNumber( "heightRows", heightRows );
-		beep8.Utilities.checkBoolean( "fill", fill );
-		beep8.Utilities.checkNumber( "borderChar", borderChar );
+		b8.Utilities.checkNumber( "widthCols", widthCols );
+		b8.Utilities.checkNumber( "heightRows", heightRows );
+		b8.Utilities.checkBoolean( "fill", fill );
+		b8.Utilities.checkNumber( "borderChar", borderChar );
 
-		beep8.TextRenderer.printBox( widthCols, heightRows, fill, borderChar );
+		b8.TextRenderer.printBox( widthCols, heightRows, fill, borderChar );
 
 	}
 
 
 	/**
-	 * Draws an image (previously loaded with beep8.loadImage).
+	 * Draws an image (previously loaded with b8.loadImage).
 	 *
 	 * @param {number} x - The X coordinate of the top-left of the image.
 	 * @param {number} y - The Y coordinate of the top-left of the image.
 	 * @param {HTMLImageElement} image - The image to draw.
 	 * @returns {void}
 	 */
-	beep8.drawImage = function( x, y, image ) {
+	b8.drawImage = function( x, y, image ) {
 
-		beep8.Utilities.checkInstanceOf( "image", image, HTMLImageElement );
-		beep8.Utilities.checkNumber( "x", x );
-		beep8.Utilities.checkNumber( "y", y );
+		b8.Utilities.checkInstanceOf( "image", image, HTMLImageElement );
+		b8.Utilities.checkNumber( "x", x );
+		b8.Utilities.checkNumber( "y", y );
 
-		beep8.Core.drawImage( image, x, y );
+		b8.Core.drawImage( image, x, y );
 
 	}
 
 
 	/**
 	 * Draws a rectangular part of an image (previously loaded with
-	 * beep8.loadImage).
+	 * b8.loadImage).
 	 *
 	 * @param {number} x - The X coordinate of the top-left of the image.
 	 * @param {number} y - The Y coordinate of the top-left of the image.
@@ -474,17 +474,17 @@
 	 * drawn.
 	 * @returns {void}
 	 */
-	beep8.drawImageRect = function( x, y, image, srcX, srcY, width, height ) {
+	b8.drawImageRect = function( x, y, image, srcX, srcY, width, height ) {
 
-		beep8.Utilities.checkInstanceOf( "image", image, HTMLImageElement );
-		beep8.Utilities.checkNumber( "x", x );
-		beep8.Utilities.checkNumber( "y", y );
-		beep8.Utilities.checkNumber( "srcX", srcX );
-		beep8.Utilities.checkNumber( "srcY", srcY );
-		beep8.Utilities.checkNumber( "width", width );
-		beep8.Utilities.checkNumber( "height", height );
+		b8.Utilities.checkInstanceOf( "image", image, HTMLImageElement );
+		b8.Utilities.checkNumber( "x", x );
+		b8.Utilities.checkNumber( "y", y );
+		b8.Utilities.checkNumber( "srcX", srcX );
+		b8.Utilities.checkNumber( "srcY", srcY );
+		b8.Utilities.checkNumber( "width", width );
+		b8.Utilities.checkNumber( "height", height );
 
-		beep8.Core.drawImage( image, x, y, srcX, srcY, width, height );
+		b8.Core.drawImage( image, x, y, srcX, srcY, width, height );
 
 	}
 
@@ -498,15 +498,15 @@
 	 * @param {number} height - The height of the rectangle in pixels.
 	 * @returns {void}
 	 */
-	beep8.drawRect = function( x, y, width, height, lineWidth = 1 ) {
+	b8.drawRect = function( x, y, width, height, lineWidth = 1 ) {
 
-		beep8.Utilities.checkNumber( "x", x );
-		beep8.Utilities.checkNumber( "y", y );
-		beep8.Utilities.checkNumber( "width", width );
-		beep8.Utilities.checkNumber( "height", height );
-		beep8.Utilities.checkNumber( "lineWidth", lineWidth );
+		b8.Utilities.checkNumber( "x", x );
+		b8.Utilities.checkNumber( "y", y );
+		b8.Utilities.checkNumber( "width", width );
+		b8.Utilities.checkNumber( "height", height );
+		b8.Utilities.checkNumber( "lineWidth", lineWidth );
 
-		beep8.Core.drawRect( x, y, width, height, lineWidth );
+		b8.Core.drawRect( x, y, width, height, lineWidth );
 
 	}
 
@@ -520,29 +520,29 @@
 	 * @param {number} height - The height of the rectangle in pixels.
 	 * @returns {void}
 	 */
-	beep8.fillRect = function( x, y, width, height ) {
+	b8.fillRect = function( x, y, width, height ) {
 
-		beep8.Utilities.checkNumber( "x", x );
-		beep8.Utilities.checkNumber( "y", y );
-		beep8.Utilities.checkNumber( "width", width );
-		beep8.Utilities.checkNumber( "height", height );
+		b8.Utilities.checkNumber( "x", x );
+		b8.Utilities.checkNumber( "y", y );
+		b8.Utilities.checkNumber( "width", width );
+		b8.Utilities.checkNumber( "height", height );
 
-		beep8.Core.fillRect( x, y, width, height );
+		b8.Core.fillRect( x, y, width, height );
 
 	}
 
 
 	/**
-	 * Plays a sound (previously loaded with beep8.loadSound).
+	 * Plays a sound (previously loaded with b8.loadSound).
 	 *
 	 * @param {HTMLAudioElement} sfx - The sound to play.
 	 * @param {number} [volume=1] - The volume to play the sound at.
 	 * @param {boolean} [loop=false] - If true, play the sound in a loop.
 	 * @returns {void}
 	 */
-	beep8.playSound = function( sfx, volume = 1, loop = false ) {
+	b8.playSound = function( sfx, volume = 1, loop = false ) {
 
-		beep8.Utilities.checkInstanceOf( "sfx", sfx, HTMLAudioElement );
+		b8.Utilities.checkInstanceOf( "sfx", sfx, HTMLAudioElement );
 
 		sfx.currentTime = 0;
 		sfx.volume = volume;
@@ -561,15 +561,15 @@
 	 * @param {number} y - The Y position at which to draw.
 	 * @returns {void}
 	 */
-	beep8.spr = function( ch, x, y ) {
+	b8.spr = function( ch, x, y ) {
 
-		ch = beep8.convChar( ch );
+		ch = b8.convChar( ch );
 
-		beep8.Utilities.checkNumber( "ch", ch );
-		beep8.Utilities.checkNumber( "x", x );
-		beep8.Utilities.checkNumber( "y", y );
+		b8.Utilities.checkNumber( "ch", ch );
+		b8.Utilities.checkNumber( "x", x );
+		b8.Utilities.checkNumber( "y", y );
 
-		beep8.TextRenderer.spr( ch, x, y );
+		b8.TextRenderer.spr( ch, x, y );
 
 	}
 
@@ -582,14 +582,14 @@
 	 * @param {number} [direction=0] - The direction to draw the actor in. 0 = right, 1 = left.
 	 * @returns {void}
 	 */
-	beep8.drawActor = function( ch, animation ) {
+	b8.drawActor = function( ch, animation ) {
 
-		ch = beep8.convChar( ch );
+		ch = b8.convChar( ch );
 
-		beep8.Utilities.checkInt( "ch", ch );
-		beep8.Utilities.checkString( "animation", animation );
+		b8.Utilities.checkInt( "ch", ch );
+		b8.Utilities.checkString( "animation", animation );
 
-		beep8.Actors.draw( ch, animation );
+		b8.Actors.draw( ch, animation );
 
 	}
 
@@ -604,17 +604,17 @@
 	 * @param {number|null} startTime - The start time of the animation in milliseconds.
 	 * @returns {boolean} True if the sprite was drawn, otherwise false.
 	 */
-	beep8.sprActor = function( ch, animation, x, y, startTime = null ) {
+	b8.sprActor = function( ch, animation, x, y, startTime = null ) {
 
-		ch = beep8.convChar( ch );
+		ch = b8.convChar( ch );
 
-		beep8.Utilities.checkInt( "ch", ch );
-		beep8.Utilities.checkString( "animation", animation );
-		beep8.Utilities.checkNumber( "x", x );
-		beep8.Utilities.checkNumber( "y", y );
-		if ( startTime !== null ) beep8.Utilities.checkNumber( "startTime", startTime );
+		b8.Utilities.checkInt( "ch", ch );
+		b8.Utilities.checkString( "animation", animation );
+		b8.Utilities.checkNumber( "x", x );
+		b8.Utilities.checkNumber( "y", y );
+		if ( startTime !== null ) b8.Utilities.checkNumber( "startTime", startTime );
 
-		return beep8.Actors.spr( ch, animation, x, y, startTime );
+		return b8.Actors.spr( ch, animation, x, y, startTime );
 
 	}
 
@@ -625,13 +625,13 @@
 	 * @param {string} keyName - The name of the key.
 	 * @returns {boolean} True if the key is pressed, otherwise false.
 	 */
-	beep8.key = function( keyName ) {
+	b8.key = function( keyName ) {
 
-		beep8.Core.preflight( "beep8.key" );
+		b8.Core.preflight( "b8.key" );
 
-		beep8.Utilities.checkString( "keyName", keyName );
+		b8.Utilities.checkString( "keyName", keyName );
 
-		return beep8.Input.keyHeld( keyName );
+		return b8.Input.keyHeld( keyName );
 
 	}
 
@@ -642,13 +642,13 @@
 	 * @param {string} keyName - The name of the key.
 	 * @returns {boolean} True if the key was just pressed, otherwise false.
 	 */
-	beep8.keyp = function( keyName ) {
+	b8.keyp = function( keyName ) {
 
-		beep8.Core.preflight( "beep8.keyp" );
+		b8.Core.preflight( "b8.keyp" );
 
-		beep8.Utilities.checkString( "keyName", keyName );
+		b8.Utilities.checkString( "keyName", keyName );
 
-		return beep8.Input.keyJustPressed( keyName );
+		return b8.Input.keyJustPressed( keyName );
 
 	}
 
@@ -660,11 +660,11 @@
 	 * @param {string} song - The name of the song to play.
 	 * @returns {void}
 	 */
-	beep8.playSong = function( song ) {
+	b8.playSong = function( song ) {
 
-		beep8.Utilities.checkString( "song", song );
+		b8.Utilities.checkString( "song", song );
 
-		beep8.Sound.playSong( song );
+		b8.Sound.playSong( song );
 
 	}
 
@@ -675,11 +675,11 @@
 	 * @param {string} sfx - The name of the sound effect to play.
 	 * @returns {void}
 	 */
-	beep8.playSfx = function( sfx ) {
+	b8.playSfx = function( sfx ) {
 
-		beep8.Utilities.checkString( "sfx", sfx );
+		b8.Utilities.checkString( "sfx", sfx );
 
-		beep8.Sfx.play( sfx );
+		b8.Sfx.play( sfx );
 
 	}
 
@@ -690,13 +690,13 @@
 	 * @param {Array<number>} colors - An array of RGB values.
 	 * @returns {void}
 	 */
-	beep8.redefineColors = function( colors ) {
+	b8.redefineColors = function( colors ) {
 
-		beep8.Core.preflight( "beep8.redefineColors" );
+		b8.Core.preflight( "b8.redefineColors" );
 
-		beep8.Utilities.checkArray( "colors", colors );
+		b8.Utilities.checkArray( "colors", colors );
 
-		beep8.Core.defineColors( colors );
+		b8.Core.defineColors( colors );
 
 	}
 
@@ -708,14 +708,14 @@
 	 * omit to reset to default font.
 	 * @returns {void}
 	 */
-	beep8.setFont = function( fontName ) {
+	b8.setFont = function( fontName ) {
 
-		beep8.Core.preflight( "beep8.setFont" );
+		b8.Core.preflight( "b8.setFont" );
 
 		fontName = fontName || "default-thin";
-		beep8.Utilities.checkString( "fontName", fontName );
+		b8.Utilities.checkString( "fontName", fontName );
 
-		beep8.TextRenderer.setFont( fontName );
+		b8.TextRenderer.setFont( fontName );
 
 	}
 
@@ -725,11 +725,11 @@
 	 *
 	 * @returns {string} The current font.
 	 */
-	beep8.getFont = function() {
+	b8.getFont = function() {
 
-		beep8.Core.preflight( "beep8.getFont" );
+		b8.Core.preflight( "b8.getFont" );
 
-		beep8.TextRenderer.getFont();
+		b8.TextRenderer.getFont();
 
 	}
 
@@ -740,11 +740,11 @@
 	 * @param {string} fontName - The name of the font.
 	 * @returns {Object} The font object.
 	 */
-	beep8.getFontByName = function( fontName ) {
+	b8.getFontByName = function( fontName ) {
 
-		beep8.Utilities.checkString( "fontName", fontName );
+		b8.Utilities.checkString( "fontName", fontName );
 
-		return beep8.TextRenderer.getFontByName( fontName );
+		return b8.TextRenderer.getFontByName( fontName );
 
 	}
 
@@ -756,14 +756,14 @@
 	 * omit to reset to default font.
 	 * @returns {void}
 	 */
-	beep8.setTileFont = function( fontName ) {
+	b8.setTileFont = function( fontName ) {
 
-		beep8.Core.preflight( "beep8.setTileFont" );
+		b8.Core.preflight( "b8.setTileFont" );
 
 		fontName = fontName || "tiles";
-		beep8.Utilities.checkString( "fontName", fontName );
+		b8.Utilities.checkString( "fontName", fontName );
 
-		beep8.TextRenderer.setTileFont( fontName );
+		b8.TextRenderer.setTileFont( fontName );
 
 	}
 
@@ -774,7 +774,7 @@
 	 * @param {number|string} charCode - The character code to convert.
 	 * @returns {number} The integer representation of the character code.
 	 */
-	beep8.convChar = function( charCode ) {
+	b8.convChar = function( charCode ) {
 
 		if ( typeof ( charCode ) === "string" && charCode.length > 0 ) {
 			return charCode.charCodeAt( 0 );
@@ -786,14 +786,14 @@
 
 
 	/**
-	 * Stops a sound (previously loaded with beep8.playSound).
+	 * Stops a sound (previously loaded with b8.playSound).
 	 *
 	 * @param {HTMLAudioElement} sfx - The sound to stop playing.
 	 * @returns {void}
 	 */
-	beep8.stopSound = function( sfx ) {
+	b8.stopSound = function( sfx ) {
 
-		beep8.Utilities.checkInstanceOf( "sfx", sfx, HTMLAudioElement );
+		b8.Utilities.checkInstanceOf( "sfx", sfx, HTMLAudioElement );
 		sfx.currentTime = 0;
 		sfx.pause();
 
@@ -805,9 +805,9 @@
 	 *
 	 * @returns {CanvasRenderingContext2D} The raw HTML 2D canvas context.
 	 */
-	beep8.getContext = function() {
+	b8.getContext = function() {
 
-		return beep8.Core.getContext();
+		return b8.Core.getContext();
 
 	}
 
@@ -817,9 +817,9 @@
 	 *
 	 * @returns {ImageData} An ImageData object with the screen's contents.
 	 */
-	beep8.saveScreen = function() {
+	b8.saveScreen = function() {
 
-		return beep8.Core.saveScreen();
+		return b8.Core.saveScreen();
 
 	}
 
@@ -830,11 +830,11 @@
 	 * @param {number} duration - The duration of the screenshake effect in seconds.
 	 * @returns {boolean} Returns true if the screenshake effect was successfully triggered.
 	 */
-	beep8.screenShake = function( duration ) {
+	b8.screenShake = function( duration ) {
 
-		beep8.Utilities.checkNumber( "duration", duration );
+		b8.Utilities.checkNumber( "duration", duration );
 
-		return beep8.Renderer.shakeScreen( duration );
+		return b8.Renderer.shakeScreen( duration );
 
 	}
 
@@ -846,9 +846,9 @@
 	 * contents.
 	 * @returns {void}
 	 */
-	beep8.restoreScreen = function( screenData ) {
+	b8.restoreScreen = function( screenData ) {
 
-		return beep8.Core.restoreScreen( screenData );
+		return b8.Core.restoreScreen( screenData );
 
 	}
 
@@ -861,12 +861,12 @@
 	 * @param {number} maxWidth - The maximum width to wrap text at.
 	 * @returns {string} The wrapped text.
 	 */
-	beep8.wrapText = function( text, maxWidth ) {
+	b8.wrapText = function( text, maxWidth ) {
 
-		beep8.Utilities.checkString( "text", text );
-		beep8.Utilities.checkNumber( "maxWidth", maxWidth );
+		b8.Utilities.checkString( "text", text );
+		b8.Utilities.checkNumber( "maxWidth", maxWidth );
 
-		return beep8.TextRenderer.wrapText( text, maxWidth );
+		return b8.TextRenderer.wrapText( text, maxWidth );
 
 	}
 
@@ -878,9 +878,9 @@
 	 * @param {Function} update - The update function for the scene.
 	 * @returns {void}
 	 */
-	beep8.addScene = function( name, update = {} ) {
+	b8.addScene = function( name, update = {} ) {
 
-		beep8.Scene.add( name, update );
+		b8.Scene.add( name, update );
 
 	}
 
@@ -891,9 +891,9 @@
 	 * @param {string} name - The name of the scene to switch to.
 	 * @returns {void}
 	 */
-	beep8.switchScene = function( name ) {
+	b8.switchScene = function( name ) {
 
-		beep8.Scene.set( name );
+		b8.Scene.set( name );
 
 	}
 
@@ -903,9 +903,9 @@
 	 *
 	 * @returns {Object|null} The active scene object, or null if no scene is active.
 	 */
-	beep8.getScene = function() {
+	b8.getScene = function() {
 
-		return beep8.Scene.get();
+		return b8.Scene.get();
 
 	}
 
@@ -920,13 +920,13 @@
 	 * @param {number} [options.volume=1] - The volume of the speech.
 	 * @returns {void}
 	 */
-	beep8.speak = function( text, options = {} ) {
+	b8.speak = function( text, options = {} ) {
 
 		// Speech synthesis is not supported in this browser.
 		if ( !window.speechSynthesis ) return;
 
-		beep8.Utilities.checkString( "text", text );
-		beep8.Utilities.checkObject( "options", options );
+		b8.Utilities.checkString( "text", text );
+		b8.Utilities.checkObject( "options", options );
 
 		const utterance = new SpeechSynthesisUtterance( text );
 
@@ -939,4 +939,4 @@
 
 	};
 
-} )( beep8 );
+} )( b8 );

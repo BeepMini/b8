@@ -1,17 +1,17 @@
-( function( beep8 ) {
+( function( b8 ) {
 
-	beep8.State = beep8.State || {};
+	b8.State = b8.State || {};
 
 
 	// This is the key used to store the state in localStorage.
 	let STORAGE_KEY = '';
 
 	document.addEventListener(
-		'beep8.initComplete',
+		'b8.initComplete',
 		function() {
 
-			// Set the storage key based on the beep8 configuration name.
-			STORAGE_KEY = `beep8.${beep8.Utilities.makeUrlPretty( beep8.CONFIG.NAME )}.state`;
+			// Set the storage key based on the b8 configuration name.
+			STORAGE_KEY = `b8.${b8.Utilities.makeUrlPretty( b8.CONFIG.NAME )}.state`;
 
 		},
 		{ once: true }
@@ -61,7 +61,7 @@
 				set( obj, prop, value ) {
 
 					obj[ prop ] = value;
-					beep8.Utilities.event( 'stateChange', { prop, value } );
+					b8.Utilities.event( 'stateChange', { prop, value } );
 					return true;
 
 				}
@@ -75,20 +75,20 @@
 	/**
 	 * Saves the current state to localStorage using CBOR and base64.
 	 *
-	 * @param {string} [key='beep8.state'] - Optional localStorage key.
+	 * @param {string} [key='b8.state'] - Optional localStorage key.
 	 */
-	beep8.State.save = function( key = STORAGE_KEY ) {
+	b8.State.save = function( key = STORAGE_KEY ) {
 
-		const encoded = beep8.Utilities.encodeData(
+		const encoded = b8.Utilities.encodeData(
 			{
 				time: Date.now(),
-				data: beep8.data
+				data: b8.data
 			}
 		);
 
 		localStorage.setItem( key, encoded );
 
-		beep8.State.lastSave = Date.now();
+		b8.State.lastSave = Date.now();
 
 	}
 
@@ -96,24 +96,24 @@
 	/**
 	 * Loads state from localStorage, replacing State.data.
 	 *
-	 * @param {string} [key='beep8.state'] - Optional localStorage key.
+	 * @param {string} [key='b8.state'] - Optional localStorage key.
 	 */
-	beep8.State.load = function( key = STORAGE_KEY ) {
+	b8.State.load = function( key = STORAGE_KEY ) {
 
 		const b64 = localStorage.getItem( key );
 
 		if ( !b64 ) {
-			beep8.Utilities.log( 'No state found for the given key.' );
+			b8.Utilities.log( 'No state found for the given key.' );
 			return;
 		}
 
-		const rawState = beep8.Utilities.decodeData( b64 );
+		const rawState = b8.Utilities.decodeData( b64 );
 		if ( rawState.data ) {
-			beep8.data = createProxy( rawState.data );
+			b8.data = createProxy( rawState.data );
 		}
 
 		if ( rawState.time ) {
-			beep8.State.lastSave = rawState.time;
+			b8.State.lastSave = rawState.time;
 		}
 
 	}
@@ -125,20 +125,20 @@
 	 *
 	 * @param {Object} defaults - An object containing default key/value pairs.
 	 */
-	beep8.State.init = function( defaults ) {
+	b8.State.init = function( defaults ) {
 
-		if ( !beep8.data ) {
-			beep8.data = createProxy( {} );
+		if ( !b8.data ) {
+			b8.data = createProxy( {} );
 		}
 
 		// If there is a save file then load that too.
 		if ( localStorage.getItem( STORAGE_KEY ) ) {
-			beep8.State.load();
+			b8.State.load();
 		}
 
-		beep8.data = beep8.Utilities.deepMergeByIndex( defaults, beep8.data );
+		b8.data = b8.Utilities.deepMergeByIndex( defaults, b8.data );
 
-		beep8.Utilities.log( 'State initialized:', beep8.data );
+		b8.Utilities.log( 'State initialized:', b8.data );
 
 	}
 
@@ -147,23 +147,23 @@
 	 * Resets the state to its initial values.
 	 * This is useful for starting a new game or resetting the application.
 	 *
-	 * @param {string} [key='beep8.state'] - Optional localStorage key.
+	 * @param {string} [key='b8.state'] - Optional localStorage key.
 	 * @returns {void}
 	 */
-	beep8.State.clear = function( key = STORAGE_KEY ) {
+	b8.State.clear = function( key = STORAGE_KEY ) {
 
-		beep8.Utilities.log( 'Clearing state...' );
+		b8.Utilities.log( 'Clearing state...' );
 
 		localStorage.removeItem( key );
-		beep8.data = createProxy( {} );
+		b8.data = createProxy( {} );
 
 	}
 
 
 	/**
-	 * The beep8.State data object.
+	 * The b8.State data object.
 	 */
-	beep8.data = createProxy( {} );
+	b8.data = createProxy( {} );
 
 
-} )( beep8 );
+} )( b8 );

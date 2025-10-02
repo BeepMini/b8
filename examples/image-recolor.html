@@ -4,40 +4,40 @@
 <head>
 	<meta charset="utf-8">
 	<title>Custom Image</title>
-	<meta name="description" content="Load a photo and recolor it to use the beep8 palette.">
+	<meta name="description" content="Load a photo and recolor it to use the b8 palette.">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
 	<link rel="stylesheet" href="example.css">
-	<script src="../dist/beep8.js"></script>
+	<script src="../dist/b8.js"></script>
 
 	<script>
 
 		async function main() {
-			beep8.color( 3, 0 );
-			beep8.cls();
-			beep8.locate( 0, 0 );
-			beep8.print( "Loading..." );
+			b8.color( 3, 0 );
+			b8.cls();
+			b8.locate( 0, 0 );
+			b8.print( "Loading..." );
 
 			const images = [];
 			let currentImage = 1;
 
 			// Images are from unsplash.com
 			for ( let i = 1; i <= 19; i++ ) {
-				images.push( await beep8.Async.loadImage( "../assets/photo-" + i + ".jpeg" ) );
+				images.push( await b8.Async.loadImage( "../assets/photo-" + i + ".jpeg" ) );
 			}
 
 			while ( true ) {
-				beep8.cls();
-				let x = ( beep8.CONFIG.SCREEN_WIDTH / 2 ) - ( images[ currentImage ].width / 2 );
-				let y = ( beep8.CONFIG.SCREEN_HEIGHT / 2 ) - ( images[ currentImage ].height / 2 );
-				beep8.drawImage( x, y, images[ currentImage ] );
+				b8.cls();
+				let x = ( b8.CONFIG.SCREEN_WIDTH / 2 ) - ( images[ currentImage ].width / 2 );
+				let y = ( b8.CONFIG.SCREEN_HEIGHT / 2 ) - ( images[ currentImage ].height / 2 );
+				b8.drawImage( x, y, images[ currentImage ] );
 				currentImage++;
 				if ( currentImage >= images.length ) currentImage = 0;
-				await beep8.Async.key();
+				await b8.Async.key();
 			}
 		}
 
-		window.addEventListener( "load", () => beep8.init( main ) );
+		window.addEventListener( "load", () => b8.init( main ) );
 	</script>
 </head>
 

@@ -8,30 +8,30 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
 	<link rel="stylesheet" href="example.css">
-	<script src="../dist/beep8.js"></script>
+	<script src="../dist/b8.js"></script>
 
 	<script>
 
 		async function main() {
 			// Clear screen using white foreground (7) over blue background (1).
-			beep8.color( 10, 5 );
-			beep8.cls();
+			b8.color( 10, 5 );
+			b8.cls();
 			// Print greeting at position 1,1.
-			beep8.locate( 1, 1 );
-			beep8.color( 14 );
-			beep8.print( "Hello world!\n\n" );
+			b8.locate( 1, 1 );
+			b8.color( 14 );
+			b8.print( "Hello world!\n\n" );
 
 			// Ask the user's name.
-			// Don't forget: beep8.Async.* functions need to be called with await:
-			const name = await beep8.Async.readLine( 'What is your name?' );
+			// Don't forget: b8.Async.* functions need to be called with await:
+			const name = await b8.Async.readLine( 'What is your name?' );
 
 			// Print it back in white (15).
-			beep8.locate( 1, 5 );
-			beep8.color( 15 );
-			beep8.print( "\n\nHi, " + name + "." );
+			b8.locate( 1, 5 );
+			b8.color( 15 );
+			b8.print( "\n\nHi, " + name + "." );
 		}
 
-		window.addEventListener( "load", () => beep8.init( main, { NAME: 'Hello' } ) );
+		window.addEventListener( "load", () => b8.init( main, { NAME: 'Hello' } ) );
 	</script>
 </head>
 

@@ -1,7 +1,7 @@
-( function( beep8 ) {
+( function( b8 ) {
 
-	// Define the Renderer object inside beep8.
-	beep8.Renderer = {};
+	// Define the Renderer object inside b8.
+	b8.Renderer = {};
 
 	// Has the screen updated.
 	let dirty = false;
@@ -21,20 +21,20 @@
 	 */
 	const initCrt = () => {
 
-		if ( !beep8.Core.realCtx ) {
+		if ( !b8.Core.realCtx ) {
 			setTimeout( initCrt, 10 );
 			return;
 		}
 
 		// A gradient for the vignette effect.
-		vignetteGradient = beep8.Core.realCtx.createRadialGradient(
-			beep8.Core.realCanvas.width / 2,
-			beep8.Core.realCanvas.height / 2,
-			Math.max( beep8.Core.realCanvas.width, beep8.Core.realCanvas.height ) * 0.4,
+		vignetteGradient = b8.Core.realCtx.createRadialGradient(
+			b8.Core.realCanvas.width / 2,
+			b8.Core.realCanvas.height / 2,
+			Math.max( b8.Core.realCanvas.width, b8.Core.realCanvas.height ) * 0.4,
 
-			beep8.Core.realCanvas.width / 2,
-			beep8.Core.realCanvas.height / 2,
-			Math.max( beep8.Core.realCanvas.width, beep8.Core.realCanvas.height ) * 0.9
+			b8.Core.realCanvas.width / 2,
+			b8.Core.realCanvas.height / 2,
+			Math.max( b8.Core.realCanvas.width, b8.Core.realCanvas.height ) * 0.9
 		);
 		vignetteGradient.addColorStop( 0, 'rgba(255,255,255,0)' );
 		vignetteGradient.addColorStop( 0.7, 'rgba(0,0,0,0.5)' );
@@ -47,11 +47,11 @@
 		patCtx.fillRect( 0, 1, 1, 1 );
 		patCtx.fillStyle = 'rgba(255,255,255,0.0)';
 		patCtx.fillRect( 0, 0, 1, 1 );
-		scanPattern = beep8.Core.realCtx.createPattern( pat, 'repeat' );
+		scanPattern = b8.Core.realCtx.createPattern( pat, 'repeat' );
 
 	}
 
-	document.addEventListener( 'beep8.initComplete', initCrt );
+	document.addEventListener( 'b8.initComplete', initCrt );
 
 
 	/**
@@ -59,11 +59,11 @@
 	 *
 	 * @returns {void}
 	 */
-	beep8.Renderer.render = function() {
+	b8.Renderer.render = function() {
 
-		if ( beep8.Core.crashed ) return;
+		if ( b8.Core.crashed ) return;
 
-		beep8.Core.realCtx.imageSmoothingEnabled = false;
+		b8.Core.realCtx.imageSmoothingEnabled = false;
 
 		// Canvas Drawing location.
 		let x = 0;
@@ -72,39 +72,39 @@
 		// Do screenshake.
 		if ( screenshakeDuration > 0 ) {
 
-			let amount = screenshakeDuration * beep8.CONFIG.CHR_WIDTH;
+			let amount = screenshakeDuration * b8.CONFIG.CHR_WIDTH;
 
 			x = Math.round( ( Math.random() * amount ) - ( amount / 2 ) );
 			y = Math.round( ( Math.random() * amount ) - ( amount / 2 ) );
 
-			x = beep8.Utilities.clamp( x, -6, 6 );
-			y = beep8.Utilities.clamp( y, -6, 6 );
+			x = b8.Utilities.clamp( x, -6, 6 );
+			y = b8.Utilities.clamp( y, -6, 6 );
 
-			screenshakeDuration -= beep8.Core.deltaTime;
+			screenshakeDuration -= b8.Core.deltaTime;
 
 		}
 
 		// Reset real ctx composite mode.
-		beep8.Core.realCtx.globalCompositeOperation = 'source-over';
+		b8.Core.realCtx.globalCompositeOperation = 'source-over';
 
 		// Clear the real canvas.
-		beep8.Core.realCtx.clearRect(
+		b8.Core.realCtx.clearRect(
 			0, 0,
-			beep8.Core.realCanvas.width,
-			beep8.Core.realCanvas.height
+			b8.Core.realCanvas.width,
+			b8.Core.realCanvas.height
 		);
 
 		// Draw the offscreen canvas to the real canvas, scaling it up.
-		beep8.Core.realCtx.drawImage(
-			beep8.Core.offCanvas,
+		b8.Core.realCtx.drawImage(
+			b8.Core.offCanvas,
 			x, y,
-			beep8.Core.realCanvas.width,
-			beep8.Core.realCanvas.height
+			b8.Core.realCanvas.width,
+			b8.Core.realCanvas.height
 		);
 
 		dirty = false;
 
-		beep8.CursorRenderer.draw( beep8.Core.realCtx );
+		b8.CursorRenderer.draw( b8.Core.realCtx );
 
 		applyScanlines();
 		applyVignette();
@@ -121,13 +121,13 @@
 
 		if ( !vignetteGradient ) return;
 
-		if ( !beep8.CONFIG.CRT_ENABLE ) return;
+		if ( !b8.CONFIG.CRT_ENABLE ) return;
 
-		beep8.Core.realCtx.save();
-		beep8.Core.realCtx.globalCompositeOperation = 'multiply';
-		beep8.Core.realCtx.fillStyle = vignetteGradient;
-		beep8.Core.realCtx.fillRect( 0, 0, beep8.Core.realCanvas.width, beep8.Core.realCanvas.height );
-		beep8.Core.realCtx.restore();
+		b8.Core.realCtx.save();
+		b8.Core.realCtx.globalCompositeOperation = 'multiply';
+		b8.Core.realCtx.fillStyle = vignetteGradient;
+		b8.Core.realCtx.fillRect( 0, 0, b8.Core.realCanvas.width, b8.Core.realCanvas.height );
+		b8.Core.realCtx.restore();
 
 	};
 
@@ -141,13 +141,13 @@
 
 		if ( !scanPattern ) return;
 
-		if ( !beep8.CONFIG.CRT_ENABLE ) return;
+		if ( !b8.CONFIG.CRT_ENABLE ) return;
 
-		beep8.Core.realCtx.save();
-		beep8.Core.realCtx.globalCompositeOperation = 'soft-light';
-		beep8.Core.realCtx.fillStyle = scanPattern;
-		beep8.Core.realCtx.fillRect( 0, 0, beep8.Core.realCanvas.width, beep8.Core.realCanvas.height );
-		beep8.Core.realCtx.restore();
+		b8.Core.realCtx.save();
+		b8.Core.realCtx.globalCompositeOperation = 'soft-light';
+		b8.Core.realCtx.fillStyle = scanPattern;
+		b8.Core.realCtx.fillRect( 0, 0, b8.Core.realCanvas.width, b8.Core.realCanvas.height );
+		b8.Core.realCtx.restore();
 
 	};
 
@@ -158,12 +158,12 @@
 	 * @param {number} durationSeconds - The duration of the screenshake effect in seconds.
 	 * @returns {boolean} Returns true if the screenshake effect was successfully triggered.
 	 */
-	beep8.Renderer.shakeScreen = function( durationSeconds = 0.25 ) {
+	b8.Renderer.shakeScreen = function( durationSeconds = 0.25 ) {
 
-		beep8.Utilities.checkNumber( "duration", durationSeconds );
+		b8.Utilities.checkNumber( "duration", durationSeconds );
 
 		if ( durationSeconds <= 0 ) {
-			beep8.Utilities.warn( `Screenshake duration must be positive. Currently: ${durationSeconds}` );
+			b8.Utilities.warn( `Screenshake duration must be positive. Currently: ${durationSeconds}` );
 			return false;
 		}
 
@@ -179,16 +179,16 @@
 	 *
 	 * @returns {void}
 	 */
-	beep8.Renderer.markDirty = function() {
+	b8.Renderer.markDirty = function() {
 
 		if ( dirty ) {
 			return;
 		}
 
 		dirty = true;
-		setTimeout( beep8.Renderer.render, 1 );
+		setTimeout( b8.Renderer.render, 1 );
 
 	}
 
 
-} )( beep8 );
+} )( b8 );

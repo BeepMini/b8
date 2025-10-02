@@ -5,7 +5,8 @@
 	<meta charset="utf-8">
 	<title>BombKing</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<script src="../dist/beep8.min.js"></script>
+	<meta name="description" content="A Bomberman-like game made with BeepMini.">
+	<script src="../dist/b8.min.js"></script>
 	<link rel="stylesheet" href="example.css">
 </head>
 
@@ -61,7 +62,7 @@
 
 		function loadMap() {
 			// Convert to array-of-strings then to char grid via API helper
-			const mapArrayRaw = beep8.Tilemap.convertFromText( MAP_LINES.join( "\n" ) );
+			const mapArrayRaw = b8.Tilemap.convertFromText( MAP_LINES.join( "\n" ) );
 			const spawns = { p: { x: 1, y: 1 }, e: [] };
 
 			// Clone to a drawable array, replacing P/E with '.' for visuals, but recording spawns
@@ -72,7 +73,7 @@
 			} ) );
 
 			// Build tilemap object the same way as your sample
-			const map = beep8.Tilemap.createFromArray( mapArray, TILES );
+			const map = b8.Tilemap.createFromArray( mapArray, TILES );
 
 			// Collision grid derived from chars at load-time
 			const H = mapArray.length, W = mapArray[ 0 ].length;
@@ -174,21 +175,21 @@
 
 		const game = {
 			init: () => {
-				beep8.Input.init();
+				b8.Input.init();
 				resetGame();
 			},
 
 			update: async ( dt ) => {
 				// restart
-				if ( beep8.keyp( "R" ) ) resetGame();
+				if ( b8.keyp( "R" ) ) resetGame();
 
 				// player movement with simple grid cooldown
 				G.player.cd -= dt;
 				let dx = 0, dy = 0, dir = G.player.dir;
-				if ( beep8.key( "ArrowLeft" ) ) { dx = -1; dy = 0; dir = "L"; }
-				else if ( beep8.key( "ArrowRight" ) ) { dx = 1; dy = 0; dir = "R"; }
-				else if ( beep8.key( "ArrowUp" ) ) { dx = 0; dy = -1; dir = "U"; }
-				else if ( beep8.key( "ArrowDown" ) ) { dx = 0; dy = 1; dir = "D"; }
+				if ( b8.key( "ArrowLeft" ) ) { dx = -1; dy = 0; dir = "L"; }
+				else if ( b8.key( "ArrowRight" ) ) { dx = 1; dy = 0; dir = "R"; }
+				else if ( b8.key( "ArrowUp" ) ) { dx = 0; dy = -1; dir = "U"; }
+				else if ( b8.key( "ArrowDown" ) ) { dx = 0; dy = 1; dir = "D"; }
 
 				if ( G.player.alive && ( dx || dy ) && G.player.cd <= 0 ) {
 					const nx = G.player.x + dx, ny = G.player.y + dy;
@@ -198,7 +199,7 @@
 				}
 
 				// drop bomb
-				if ( G.player.alive && beep8.keyp( "ButtonA" ) ) {
+				if ( G.player.alive && b8.keyp( "ButtonA" ) ) {
 					placeBomb( G.player.x, G.player.y );
 				}
 
@@ -242,46 +243,46 @@
 			},
 
 			render: () => {
-				beep8.cls( 0 );
+				b8.cls( 0 );
 
 				// Map. Like your RPG sample, we can offset by one row if you want HUD space.
-				beep8.locate( 0, 1 );
-				beep8.Tilemap.draw( G.map, 0, 0 );
+				b8.locate( 0, 1 );
+				b8.Tilemap.draw( G.map, 0, 0 );
 
 				// Bombs
 				for ( const b of G.bombs ) {
-					beep8.locate( b.x, b.y + 1 );
-					beep8.color( GLYPH.bomb.color, GLYPH.bomb.bg );
-					beep8.printChar( GLYPH.bomb.t );
+					b8.locate( b.x, b.y + 1 );
+					b8.color( GLYPH.bomb.color, GLYPH.bomb.bg );
+					b8.printChar( GLYPH.bomb.t );
 				}
 
 				// Fires
 				for ( const f of G.fires ) {
-					beep8.locate( f.x, f.y + 1 );
-					beep8.color( GLYPH.fire.color, GLYPH.fire.bg );
-					beep8.printChar( GLYPH.fire.t );
+					b8.locate( f.x, f.y + 1 );
+					b8.color( GLYPH.fire.color, GLYPH.fire.bg );
+					b8.printChar( GLYPH.fire.t );
 				}
 
 				// Enemies
 				for ( const e of G.enemies ) {
 					if ( !e.alive ) continue;
-					beep8.locate( e.x, e.y + 1 );
-					beep8.color( GLYPH.enemy.color, GLYPH.enemy.bg );
-					beep8.drawActor( GLYPH.enemy.actorId, GLYPH.enemy.anim );
+					b8.locate( e.x, e.y + 1 );
+					b8.color( GLYPH.enemy.color, GLYPH.enemy.bg );
+					b8.drawActor( GLYPH.enemy.actorId, GLYPH.enemy.anim );
 				}
 
 				// Player
 				if ( G.player.alive ) {
 					const anim = GLYPH.player.walk[ G.player.dir ] || GLYPH.player.idle;
-					beep8.locate( G.player.x, G.player.y + 1 );
-					beep8.color( GLYPH.player.color, GLYPH.player.bg );
-					beep8.drawActor( GLYPH.player.actorId, anim );
+					b8.locate( G.player.x, G.player.y + 1 );
+					b8.color( GLYPH.player.color, GLYPH.player.bg );
+					b8.drawActor( GLYPH.player.actorId, anim );
 				}
 
 				// HUD
-				beep8.locate( 0, 22 );
-				beep8.color( 8, 0 );
-				beep8.print(
+				b8.locate( 0, 22 );
+				b8.color( 8, 0 );
+				b8.print(
 					"Bombs:" + G.player.bombs +
 					"  Enemies:" + G.enemies.filter( e => e.alive ).length +
 					"\nArrows move. Z bomb. R restart." +
@@ -292,9 +293,9 @@
 
 		// Boot
 		window.addEventListener( "load", () => {
-			beep8.init( async () => {
-				beep8.Scene.add( "game", game, 30 );
-				beep8.Scene.set( "game" );
+			b8.init( async () => {
+				b8.Scene.add( "game", game, 30 );
+				b8.Scene.set( "game" );
 			} );
 		} );
 	</script>

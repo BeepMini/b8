@@ -8,7 +8,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
 	<link rel="stylesheet" href="example.css">
-	<script src="../dist/beep8.js"></script>
+	<script src="../dist/b8.js"></script>
 
 	<script>
 
@@ -16,7 +16,7 @@
 		let currentTime = 0;
 
 		async function main() {
-			beep8.frame( render, update );
+			b8.frame( render, update );
 		}
 
 		async function update( dt ) {
@@ -24,22 +24,22 @@
 			currentTime += dt;
 
 			if ( currentTime >= delayGap ) {
-				beep8.Particles.createExplosion(
+				b8.Particles.createExplosion(
 					150, 100, 100,
 					{ speed: 40, life: 5, color: [ 15, 10 ] }
 				);
 
-				beep8.Particles.createExplosion(
+				b8.Particles.createExplosion(
 					150, 250, 100,
 					{ speed: 25, life: 4, gravity: 20, color: [ 13, 12, 11, 8, 9 ], size: 4 }
 				);
 
-				beep8.Particles.createExplosion(
+				b8.Particles.createExplosion(
 					100, 175, 10,
 					{ speed: 20, life: 3, color: [ 1, 6, 5 ], size: 10 }
 				);
 
-				beep8.Particles.createExplosion(
+				b8.Particles.createExplosion(
 					200, 175, 100,
 					{ speed: 20, life: 3.5, color: [ 2, 3 ], gravity: -20, size: 5 }
 				);
@@ -50,11 +50,11 @@
 		}
 
 		function render() {
-			beep8.cls();
-			beep8.Particles.render();
+			b8.cls();
+			b8.Particles.render();
 		}
 
-		window.addEventListener( "load", () => beep8.init( main ) );
+		window.addEventListener( "load", () => b8.init( main ) );
 	</script>
 </head>
 

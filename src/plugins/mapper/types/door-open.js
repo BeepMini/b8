@@ -16,7 +16,7 @@ mapper.types.doorOpen = {
 			},
 		};
 
-		return beep8.ECS.create( doorProps );
+		return b8.ECS.create( doorProps );
 
 	},
 

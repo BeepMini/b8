@@ -1,13 +1,13 @@
-( function( beep8 ) {
+( function( b8 ) {
 
-	beep8.Inventory = {};
+	b8.Inventory = {};
 
 
 	document.addEventListener(
-		'beep8.initComplete',
+		'b8.initComplete',
 		() => {
 
-			beep8.Inventory.reset();
+			b8.Inventory.reset();
 
 		},
 		{ once: true }
@@ -21,9 +21,9 @@
 	 *
 	 * @returns {void}
 	 */
-	beep8.Inventory.reset = function() {
+	b8.Inventory.reset = function() {
 
-		beep8.data.inventory = {
+		b8.data.inventory = {
 			counts: {},
 			flags: {}
 		};
@@ -37,9 +37,9 @@
 	 * @param {string} id The item ID to check.
 	 * @returns {number} The count of the item (default: 0 if not found).
 	 */
-	beep8.Inventory.getCount = function( id ) {
+	b8.Inventory.getCount = function( id ) {
 
-		return beep8.data.inventory.counts[ id ] ?? 0;
+		return b8.data.inventory.counts[ id ] ?? 0;
 
 	}
 
@@ -53,10 +53,10 @@
 	 * @param {number} [amount=1] The amount to add (default: 1).
 	 * @param {number} [max=Infinity] The maximum amount allowed (default: Infinity).
 	 */
-	beep8.Inventory.add = function( id, amount = 1, max = Infinity ) {
+	b8.Inventory.add = function( id, amount = 1, max = Infinity ) {
 
-		const current = beep8.Inventory.getCount( id );
-		beep8.data.inventory.counts[ id ] = Math.min( current + amount, max );
+		const current = b8.Inventory.getCount( id );
+		b8.data.inventory.counts[ id ] = Math.min( current + amount, max );
 
 	}
 
@@ -69,10 +69,10 @@
 	 * @param {string} id The item ID to remove.
 	 * @param {number} [amount=1] The amount to remove (default: 1).
 	 */
-	beep8.Inventory.remove = function( id, amount = 1 ) {
+	b8.Inventory.remove = function( id, amount = 1 ) {
 
-		const current = beep8.Inventory.getCount( id );
-		beep8.data.inventory.counts[ id ] = Math.max( current - amount, 0 );
+		const current = b8.Inventory.getCount( id );
+		b8.data.inventory.counts[ id ] = Math.max( current - amount, 0 );
 
 	}
 
@@ -84,9 +84,9 @@
 	 * @param {number} [amount=1] The minimum amount required (default: 1).
 	 * @returns {boolean} True if the inventory has at least the specified amount, false otherwise.
 	 */
-	beep8.Inventory.has = function( id, amount = 1 ) {
+	b8.Inventory.has = function( id, amount = 1 ) {
 
-		return beep8.Inventory.getCount( id ) >= amount;
+		return b8.Inventory.getCount( id ) >= amount;
 
 	}
 
@@ -99,9 +99,9 @@
 	 * @param {string} flag The flag name to set.
 	 * @param {boolean} [value=true] The value to set the flag to (default: true).
 	 */
-	beep8.Inventory.setFlag = function( flag, value = true ) {
+	b8.Inventory.setFlag = function( flag, value = true ) {
 
-		beep8.data.inventory.flags[ flag ] = value;
+		b8.data.inventory.flags[ flag ] = value;
 
 	}
 
@@ -114,11 +114,11 @@
 	 * @param {string} flag The flag name to get.
 	 * @returns {boolean} The value of the flag (default: false).
 	 */
-	beep8.Inventory.getFlag = function( flag ) {
+	b8.Inventory.getFlag = function( flag ) {
 
-		beep8.Utilities.checkString( 'flag', flag );
+		b8.Utilities.checkString( 'flag', flag );
 
-		return !!beep8.data.inventory.flags[ flag ];
+		return !!b8.data.inventory.flags[ flag ];
 
 	}
 
@@ -131,24 +131,24 @@
 	 *
 	 * Examples:
 	 * - To get all keys by prefix:
-	 *   const keys = beep8.Inventory.filter("key-");
+	 *   const keys = b8.Inventory.filter("key-");
 	 *
 	 * - To use a regex for finer control:
-	 *   const special = beep8.Inventory.filter(/^potion-|^scroll-/);
+	 *   const special = b8.Inventory.filter(/^potion-|^scroll-/);
 	 *
 	 * @param {string|RegExp} match Item ID prefix or regex to match.
 	 * @returns {Array<{id:string,count:number}>} Matching items with counts.
 	 */
-	beep8.Inventory.filter = function( match ) {
+	b8.Inventory.filter = function( match ) {
 
 		// Array to store matching items
 		const out = [];
 		// Reference to the inventory counts
-		const counts = beep8.data.inventory.counts;
+		const counts = b8.data.inventory.counts;
 		// Check if `match` is a regular expression
 		const isRegex = match instanceof RegExp;
 		// Ensure the `match` parameter is a valid string or RegExp
-		if ( !isRegex ) beep8.Utilities.checkString( 'match', match );
+		if ( !isRegex ) b8.Utilities.checkString( 'match', match );
 
 
 		// Iterate over all item IDs in the inventory
@@ -175,4 +175,4 @@
 
 
 
-} )( beep8 );
+} )( b8 );

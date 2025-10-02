@@ -1,10 +1,10 @@
 /**
- * beep8 Music Module
+ * b8 Music Module
  * This module handles the creation, manipulation, and playback of procedurally generated music.
  */
-( function( beep8 ) {
+( function( b8 ) {
 
-	beep8.Music = {};
+	b8.Music = {};
 
 
 	/**
@@ -76,7 +76,7 @@
 
 		if ( midi === null ) return "?";
 
-		midi = beep8.Utilities.clamp( midi, 36, 87 );
+		midi = b8.Utilities.clamp( midi, 36, 87 );
 
 		return p1Alphabet.charAt( midi - 36 );
 
@@ -157,7 +157,7 @@
 		);
 
 		for ( var i = 0; i < freq; i++ ) {
-			pt[ beep8.Random.int( 0, interval - 1 ) ] = true;
+			pt[ b8.Random.int( 0, interval - 1 ) ] = true;
 		}
 
 		return pattern.map(
@@ -292,7 +292,7 @@
 	function generateChordProgression( len ) {
 
 		var keys = [ "C", "D", "Eb", "F", "G", "A", "Bb" ];
-		var key = beep8.Random.pick( keys );
+		var key = b8.Random.pick( keys );
 		var chordChangeInterval = 4;
 		var currentRoman = null;
 		var chordsIndex = 0;
@@ -301,14 +301,14 @@
 		for ( var i = 0; i < len; i++ ) {
 			if ( i % chordChangeInterval === 0 ) {
 				if ( i === 0 ) {
-					chordsIndex = beep8.Random.int( 0, chords.length - 1 );
-					currentRoman = beep8.Random.pick( chords[ chordsIndex ] );
+					chordsIndex = b8.Random.int( 0, chords.length - 1 );
+					currentRoman = b8.Random.pick( chords[ chordsIndex ] );
 				} else if (
-					beep8.Random.num() <
+					b8.Random.num() <
 					0.8 - ( ( i / chordChangeInterval ) % 2 ) * 0.5
 				) {
-					chordsIndex = beep8.Random.pick( nextChordsIndex[ chordsIndex ] );
-					currentRoman = beep8.Random.pick( chords[ chordsIndex ] );
+					chordsIndex = b8.Random.pick( nextChordsIndex[ chordsIndex ] );
+					currentRoman = b8.Random.pick( chords[ chordsIndex ] );
 				}
 				var currentChord = getChordNotes( key, currentRoman );
 			}
@@ -333,15 +333,15 @@
 	 */
 	function generateMelodyNote( noteCount, chordProgressionNotes ) {
 
-		var notes = [ beep8.Random.pick( instrumentOptions ), '|' ];
+		var notes = [ b8.Random.pick( instrumentOptions ), '|' ];
 		var pattern = createRandomPattern( noteCount, 4, 8, 3 );
-		var octaveOffset = beep8.Random.int( -1, 1 );
+		var octaveOffset = b8.Random.int( -1, 1 );
 
 		for ( var i = 0; i < noteCount; i++ ) {
 
 			// Occasionally adjust the octave offset.
-			if ( beep8.Random.chance( 10 ) ) {
-				octaveOffset += beep8.Random.int( -1, 1 );
+			if ( b8.Random.chance( 10 ) ) {
+				octaveOffset += b8.Random.int( -1, 1 );
 			}
 
 			// Add a rest if no note should be played.
@@ -352,10 +352,10 @@
 
 			var chordNotes = chordProgressionNotes[ i ];
 			// Select a random note from the chord.
-			var ns = chordNotes[ beep8.Random.int( 0, chordNotes.length - 1 ) ];
+			var ns = chordNotes[ b8.Random.int( 0, chordNotes.length - 1 ) ];
 			var baseOctave = parseInt( ns.slice( -1 ), 10 );
 			// Clamp the octave so it fits within p1.js range (3 to 6).
-			var newOctave = beep8.Utilities.clamp( baseOctave + octaveOffset, 3, 6 );
+			var newOctave = b8.Utilities.clamp( baseOctave + octaveOffset, 3, 6 );
 			var noteName = ns.slice( 0, -1 ).toUpperCase();
 			var finalNote = noteName + newOctave;
 			var p1Note = noteToP1( finalNote );
@@ -379,18 +379,18 @@
 	 */
 	function generateChordNote( noteCount, chordProgressionNotes ) {
 
-		const notes = [ beep8.Random.pick( instrumentOptions ), '|' ];
+		const notes = [ b8.Random.pick( instrumentOptions ), '|' ];
 
-		var isArpeggio = beep8.Random.chance( 30 );
-		var arpeggioInterval = beep8.Random.pick( [ 4, 8, 16 ] );
+		var isArpeggio = b8.Random.chance( 30 );
+		var arpeggioInterval = b8.Random.pick( [ 4, 8, 16 ] );
 		var arpeggioPattern = times(
 			arpeggioInterval,
 			function() {
-				return beep8.Random.int( 0, 3 );
+				return b8.Random.int( 0, 3 );
 			}
 		);
 
-		var interval = beep8.Random.pick( [ 2, 4, 8 ] );
+		var interval = b8.Random.pick( [ 2, 4, 8 ] );
 		var pattern = isArpeggio
 			? times(
 				noteCount,
@@ -398,10 +398,10 @@
 					return true;
 				}
 			)
-			: createRandomPattern( noteCount, beep8.Random.pick( [ 1, 1, interval / 2 ] ), interval, 2 );
+			: createRandomPattern( noteCount, b8.Random.pick( [ 1, 1, interval / 2 ] ), interval, 2 );
 
-		var baseOctave = beep8.Random.int( -1, 1 );
-		var isReciprocatingOctave = beep8.Random.chance( isArpeggio ? 30 : 80 );
+		var baseOctave = b8.Random.int( -1, 1 );
+		var isReciprocatingOctave = b8.Random.chance( isArpeggio ? 30 : 80 );
 		var octaveOffset = 0;
 
 		for ( var i = 0; i < noteCount; i++ ) {
@@ -421,7 +421,7 @@
 			var noteIndex = isArpeggio ? arpeggioPattern[ i % arpeggioInterval ] : 0;
 			var ns = chordNotes[ noteIndex ];
 			var baseOct = parseInt( ns.slice( -1 ), 10 );
-			var newOct = beep8.Utilities.clamp( baseOct + baseOctave + octaveOffset, 3, 6 );
+			var newOct = b8.Utilities.clamp( baseOct + baseOctave + octaveOffset, 3, 6 );
 			var noteName = ns.slice( 0, -1 ).toUpperCase();
 			var finalNote = noteName + newOct;
 			var p1Note = noteToP1( finalNote );
@@ -445,13 +445,13 @@
 	function generateDrumNote( noteCount ) {
 
 		// Pick an instrument and add the starting pipe.
-		const notes = [ beep8.Random.pick( drumOptions ), '|' ];
+		const notes = [ b8.Random.pick( drumOptions ), '|' ];
 
 		// Create a random pattern for drum hits.
 		const pattern = createRandomPattern(
 			noteCount,
-			beep8.Random.int( 1, 3 ),
-			beep8.Random.pick( [ 4, 8 ] ),
+			b8.Random.int( 1, 3 ),
+			b8.Random.pick( [ 4, 8 ] ),
 			3
 		);
 
@@ -482,10 +482,10 @@
 	 * @param {number|null} [options.hold] - Hold duration. If null, hold info is omitted.
 	 * @returns {string} The generated multi-track music string.
 	 */
-	beep8.Music.generate = function( options ) {
+	b8.Music.generate = function( options ) {
 
 		if ( options && options.seed ) {
-			beep8.Random.setSeed( options.seed );
+			b8.Random.setSeed( options.seed );
 		}
 
 		/**
@@ -494,29 +494,29 @@
 		 * @type {Object}
 		 */
 		const defaultOptions = {
-			seed: beep8.Random.int( 10000, 99999 ),
-			noteCount: beep8.Random.pick( [ 16, 32, 48, 64 ] ),
-			channelCount: beep8.Random.int( 2, 5 ),
+			seed: b8.Random.int( 10000, 99999 ),
+			noteCount: b8.Random.pick( [ 16, 32, 48, 64 ] ),
+			channelCount: b8.Random.int( 2, 5 ),
 			drumPartRatio: 0.3,
-			tempo: beep8.Random.pick( [ 70, 100, 140, 170, 200, 240, 280 ] ), // Default tempo (BPM).
-			hold: beep8.Random.pick( [ 40, 50, 60, 60, 70, 70, 70, 80, 80, 80, 80, 90, 90, 90, 100, 110, 120, 130, 140, 150 ] )    // Default hold duration.
+			tempo: b8.Random.pick( [ 70, 100, 140, 170, 200, 240, 280 ] ), // Default tempo (BPM).
+			hold: b8.Random.pick( [ 40, 50, 60, 60, 70, 70, 70, 80, 80, 80, 80, 90, 90, 90, 100, 110, 120, 130, 140, 150 ] )    // Default hold duration.
 		};
 
 		// Merge default options with provided options.
 		const opts = Object.assign( {}, defaultOptions, options );
 
-		beep8.Music.currentSongProperties = opts;
+		b8.Music.currentSongProperties = opts;
 
-		beep8.Random.setSeed( opts.seed );
+		b8.Random.setSeed( opts.seed );
 		var chordProgressionNotes = generateChordProgression( opts.noteCount );
 		var parts = times(
 			opts.channelCount,
 			function() {
-				var isDrum = beep8.Random.num() < opts.drumPartRatio;
+				var isDrum = b8.Random.num() < opts.drumPartRatio;
 				if ( isDrum ) {
 					return generateDrumNote( opts.noteCount );
 				} else {
-					if ( beep8.Random.num() < 0.5 ) {
+					if ( b8.Random.num() < 0.5 ) {
 						return generateMelodyNote( opts.noteCount, chordProgressionNotes );
 					} else {
 						return generateChordNote( opts.noteCount, chordProgressionNotes );
@@ -550,7 +550,7 @@
 	 * @param {string} song - The music string to play.
 	 * @returns {void}
 	 */
-	beep8.Music.play = function( song ) {
+	b8.Music.play = function( song ) {
 
 		p1( song );
 
@@ -569,14 +569,14 @@
 	 * @param {boolean} [clearCurrentSong=true] - Whether to clear the current song reference.
 	 * @returns {void}
 	 */
-	beep8.Music.stop = function( clearCurrentSong = true ) {
+	b8.Music.stop = function( clearCurrentSong = true ) {
 
 		// Clear the currently stored song.
-		beep8.Utilities.checkBoolean( "clearCurrentSong", clearCurrentSong );
+		b8.Utilities.checkBoolean( "clearCurrentSong", clearCurrentSong );
 		if ( clearCurrentSong ) currentSong = null;
 
 		// Stop the music playback.
-		beep8.Music.play( "" );
+		b8.Music.play( "" );
 
 	}
 
@@ -586,10 +586,10 @@
 	 *
 	 * @returns {void}
 	 */
-	beep8.Music.pause = function() {
+	b8.Music.pause = function() {
 
-		if ( beep8.Music.isPlaying() ) {
-			beep8.Music.stop( false );
+		if ( b8.Music.isPlaying() ) {
+			b8.Music.stop( false );
 		}
 
 	}
@@ -603,11 +603,11 @@
 	 *
 	 * @returns {void}
 	 */
-	beep8.Music.resume = function() {
+	b8.Music.resume = function() {
 
 		// If there is a current song and it is not playing, resume playback.
-		if ( currentSong && !beep8.Music.isPlaying() ) {
-			beep8.Music.play( currentSong );
+		if ( currentSong && !b8.Music.isPlaying() ) {
+			b8.Music.play( currentSong );
 		}
 
 	}
@@ -619,9 +619,9 @@
 	 * @param {number} volume - The volume level (0 to 1).
 	 * @returns {void}
 	 */
-	beep8.Music.setVolume = function( volume ) {
+	b8.Music.setVolume = function( volume ) {
 
-		beep8.Utilities.checkNumber( "volume", volume );
+		b8.Utilities.checkNumber( "volume", volume );
 
 		p1.setVolume( volume );
 
@@ -634,9 +634,9 @@
 	 * @param {number} tempo - The new tempo in BPM.
 	 * @returns {void}
 	 */
-	beep8.Music.setTempo = function( tempo ) {
+	b8.Music.setTempo = function( tempo ) {
 
-		beep8.Utilities.checkInt( "tempo", tempo );
+		b8.Utilities.checkInt( "tempo", tempo );
 
 		// Ensure tempo is within a valid range.
 		if ( tempo < 50 ) {
@@ -653,13 +653,13 @@
 	 *
 	 * @returns {boolean} True if music is playing, otherwise false.
 	 */
-	beep8.Music.isPlaying = function() {
+	b8.Music.isPlaying = function() {
 
 		return p1.isPlaying();
 
 	}
 
-	document.addEventListener( 'beep8.pageVisibility.wake', beep8.Music.resume );
-	document.addEventListener( 'beep8.pageVisibility.sleep', beep8.Music.pause );
+	document.addEventListener( 'b8.pageVisibility.wake', b8.Music.resume );
+	document.addEventListener( 'b8.pageVisibility.sleep', b8.Music.pause );
 
-} )( beep8 );
+} )( b8 );

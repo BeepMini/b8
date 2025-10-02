@@ -98,7 +98,7 @@
 		}
 
 		if ( noteBuffers.length > 200 ) {
-			console.warn( "Beep8.Music: Note buffers exceeded limit, clearing old buffers." );
+			console.warn( "b8.Music: Note buffers exceeded limit, clearing old buffers." );
 			noteBuffers = {};
 		}
 

@@ -2,7 +2,7 @@ mapper.types.coin = {
 
 	spawn: function( col, row, props ) {
 
-		return beep8.ECS.create(
+		return b8.ECS.create(
 			{
 				Type: { name: 'coin' },
 				Loc: { col, row },
@@ -18,9 +18,9 @@ mapper.types.coin = {
 
 	onCharacterCollision: function( id ) {
 
-		beep8.ECS.removeEntity( id );
-		beep8.Inventory.add( 'coin' );
-		beep8.Sfx.play( 'game/coin/002' );
+		b8.ECS.removeEntity( id );
+		b8.Inventory.add( 'coin' );
+		b8.Sfx.play( 'game/coin/002' );
 
 		return false;
 

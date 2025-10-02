@@ -2,7 +2,7 @@ mapper.types.key = {
 
 	spawn: function( col, row, props ) {
 
-		return beep8.ECS.create(
+		return b8.ECS.create(
 			{
 				Type: { name: 'key' },
 				Loc: { col, row },
@@ -18,13 +18,13 @@ mapper.types.key = {
 
 	onCharacterCollision: function( id, newCol, newRow, dx, dy ) {
 
-		const keyName = `key-${beep8.ECS.getComponent( id, 'Sprite' ).fg ?? "default"}`;
-		beep8.Inventory.add( keyName );
+		const keyName = `key-${b8.ECS.getComponent( id, 'Sprite' ).fg ?? "default"}`;
+		b8.Inventory.add( keyName );
 
 		// console.log( 'Collect key:', keyName );
 
-		beep8.ECS.removeEntity( id );
-		beep8.Sfx.play( 'tone/bloop/006' );
+		b8.ECS.removeEntity( id );
+		b8.Sfx.play( 'tone/bloop/006' );
 
 		return false;
 

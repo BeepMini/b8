@@ -18,11 +18,11 @@ const mapper = {
    * @returns {void}
    */
   play: function(mapData) {
-    beep8.Utilities.checkObject("mapData", mapData);
+    b8.Utilities.checkObject("mapData", mapData);
     mapper.load(mapData);
-    beep8.Scene.add("menu", mapper.sceneMenu);
-    beep8.Scene.add("game", mapper.sceneGame);
-    beep8.Scene.set("menu");
+    b8.Scene.add("menu", mapper.sceneMenu);
+    b8.Scene.add("game", mapper.sceneGame);
+    b8.Scene.set("menu");
   },
   /**
    * Load a map into the game.
@@ -33,12 +33,12 @@ const mapper = {
    * @returns {void}
    */
   load: function(mapData, mapName = "world", setCurrentMap = true) {
-    beep8.Utilities.checkObject("mapData", mapData);
+    b8.Utilities.checkObject("mapData", mapData);
     const mapDataString = mapData.map.join("\n");
-    beep8.Utilities.checkString("mapDataString", mapDataString);
+    b8.Utilities.checkString("mapDataString", mapDataString);
     mapper.settings = { ...mapData.settings };
-    beep8.Utilities.checkObject("mapper.settings", mapper.settings);
-    mapper.player = beep8.ECS.create(
+    b8.Utilities.checkObject("mapper.settings", mapper.settings);
+    mapper.player = b8.ECS.create(
       {
         Type: { name: "player" },
         Loc: { row: 0, col: 0 },
@@ -57,8 +57,8 @@ const mapper = {
         }
       }
     );
-    const maze = beep8.Tilemap.convertFromText(mapDataString);
-    const map = beep8.Tilemap.createFromArray(maze, mapData.tiles);
+    const maze = b8.Tilemap.convertFromText(mapDataString);
+    const map = b8.Tilemap.createFromArray(maze, mapData.tiles);
     mapper.maps.push(
       {
         "name": mapName,
@@ -81,13 +81,13 @@ const mapper = {
       }
     }
     const coinCount = mapData.objects.filter((obj) => obj.type === "coin").length;
-    beep8.data.totalCoins = coinCount;
-    beep8.ECS.addSystem("characterAnimation", mapper.systems.characterAnimation);
+    b8.data.totalCoins = coinCount;
+    b8.ECS.addSystem("characterAnimation", mapper.systems.characterAnimation);
     if (mapper.settings.bgm) {
-      beep8.Music.play(world.settings.bgm);
+      b8.Music.play(world.settings.bgm);
     }
-    if (mapper.settings.splash && mapper.settings.splash.length > 10 && beep8.Tilemap.validateTilemap(mapper.settings.splash)) {
-      mapper.bg.splash = beep8.Tilemap.load(mapper.settings.splash);
+    if (mapper.settings.splash && mapper.settings.splash.length > 10 && b8.Tilemap.validateTilemap(mapper.settings.splash)) {
+      mapper.bg.splash = b8.Tilemap.load(mapper.settings.splash);
     }
   },
   /**
@@ -97,7 +97,7 @@ const mapper = {
    * @returns {void}
    */
   update: function(dt) {
-    beep8.ECS.run(dt);
+    b8.ECS.run(dt);
   },
   /**
    * Draw an actor at its location with optional offsets.
@@ -107,15 +107,15 @@ const mapper = {
    */
   drawActor: function(actor) {
     if (!mapper.currentMap) {
-      beep8.Utilities.error("No current map set.");
+      b8.Utilities.error("No current map set.");
       return;
     }
     const screenPosition = mapper.camera.getScreenPosition(actor.col, actor.row);
     const actorX = actor.col - screenPosition.col;
     const actorY = actor.row - screenPosition.row;
-    beep8.locate(actorX + offsetX, actorY + offsetY);
-    beep8.color(actor.fg, actor.bg);
-    beep8.drawActor(actor.id, actor.animation);
+    b8.locate(actorX + offsetX, actorY + offsetY);
+    b8.color(actor.fg, actor.bg);
+    b8.drawActor(actor.id, actor.animation);
   },
   /**
    * Render all entities on the screen with optional offsets.
@@ -126,22 +126,22 @@ const mapper = {
    */
   render: function(offsetX2 = 0, offsetY2 = 0) {
     const list = [];
-    for (const id of beep8.ECS.query("Sprite", "Loc")) {
-      const spr = beep8.ECS.getComponent(id, "Sprite");
-      const loc = beep8.ECS.getComponent(id, "Loc");
-      const anim = beep8.ECS.getComponent(id, "CharacterAnimation");
+    for (const id of b8.ECS.query("Sprite", "Loc")) {
+      const spr = b8.ECS.getComponent(id, "Sprite");
+      const loc = b8.ECS.getComponent(id, "Loc");
+      const anim = b8.ECS.getComponent(id, "CharacterAnimation");
       list.push({ spr, loc, anim });
     }
     if (list.length === 0) return;
     list.sort((a, b) => (a.spr.depth ?? 0) - (b.spr.depth ?? 0));
     for (const { spr, loc, anim } of list) {
       const pos = mapper.camera.getTilePosition(loc.col, loc.row);
-      beep8.locate(pos.col + offsetX2, pos.row + offsetY2);
-      beep8.color(spr.fg ?? 15, spr.bg ?? 0);
+      b8.locate(pos.col + offsetX2, pos.row + offsetY2);
+      b8.color(spr.fg ?? 15, spr.bg ?? 0);
       if ("actor" === spr.type) {
-        beep8.drawActor(parseInt(spr.tile), anim.name);
+        b8.drawActor(parseInt(spr.tile), anim.name);
       } else {
-        beep8.printChar(parseInt(spr.tile));
+        b8.printChar(parseInt(spr.tile));
       }
     }
   },
@@ -152,13 +152,13 @@ const mapper = {
    */
   drawScreen: function() {
     if (!mapper.currentMap) {
-      beep8.Utilities.error("No current map set.");
+      b8.Utilities.error("No current map set.");
       return;
     }
-    const loc = beep8.ECS.getComponent(mapper.player, "Loc");
+    const loc = b8.ECS.getComponent(mapper.player, "Loc");
     const screenPosition = mapper.camera.getScreenPosition(loc.col, loc.row);
     const currentMap = mapper.currentMap;
-    beep8.Tilemap.draw(
+    b8.Tilemap.draw(
       currentMap.map,
       screenPosition.col,
       screenPosition.row,
@@ -190,11 +190,11 @@ const mapper = {
    */
   setTile: function(x, y, tile) {
     if (!mapper.currentMap) {
-      beep8.Utilities.error("No current map set.");
+      b8.Utilities.error("No current map set.");
       return;
     }
     if (x < 0 || y < 0 || y >= mapper.currentMap.map.mapHeight || x >= mapper.currentMap.map.mapWidth) {
-      beep8.Utilities.error("Mapper.setTile, coordinates out of bounds.");
+      b8.Utilities.error("Mapper.setTile, coordinates out of bounds.");
       return;
     }
     mapper.currentMap.map[y][x] = tile;
@@ -206,7 +206,7 @@ const mapper = {
    * @returns {string} The action verb associated with the entity, or an empty string if none exists.
    */
   getVerbForEntity: (id) => {
-    const a = beep8.ECS.getComponent(id, "Action");
+    const a = b8.ECS.getComponent(id, "Action");
     return a?.verb ?? "";
   },
   /**
@@ -230,8 +230,8 @@ const mapper = {
    * @returns {Object} An object with x and y properties representing the tile coordinates ahead of the player.
    */
   ahead: (playerId) => {
-    const loc = beep8.ECS.getComponent(playerId, "Loc");
-    const dir = beep8.ECS.getComponent(playerId, "Direction");
+    const loc = b8.ECS.getComponent(playerId, "Loc");
+    const dir = b8.ECS.getComponent(playerId, "Direction");
     const x = loc.col + (dir.dx || 0);
     const y = loc.row + (dir.dy || 0);
     return { x, y };
@@ -244,7 +244,7 @@ const mapper = {
    */
   entitiesAhead: (playerId) => {
     const { x, y } = mapper.ahead(playerId);
-    return beep8.ECS.entitiesAt(x, y) ?? [];
+    return b8.ECS.entitiesAt(x, y) ?? [];
   },
   /**
    * Handle collision when the player attempts to move to a new tile.
@@ -259,14 +259,14 @@ const mapper = {
    */
   doCollision: function(x, y, newCol, newRow, dx, dy) {
     if (mapper.systems.tryPushing(x, y, dx, dy)) return true;
-    for (const id of beep8.ECS.entitiesAt(newCol, newRow)) {
-      const typeComp = beep8.ECS.getComponent(id, "Type");
+    for (const id of b8.ECS.entitiesAt(newCol, newRow)) {
+      const typeComp = b8.ECS.getComponent(id, "Type");
       const handler = typeComp ? mapper.types[typeComp.name] : null;
       if (handler?.onCharacterCollision) {
         const blocked = handler.onCharacterCollision(id, newCol, newRow, dx, dy);
         if (blocked) return true;
       }
-      const isSolid = beep8.ECS.hasComponent(id, "Solid");
+      const isSolid = b8.ECS.hasComponent(id, "Solid");
       if (isSolid) return true;
     }
     return false;
@@ -298,19 +298,19 @@ mapper.CONFIG = {
   gameUI: `hpgYhRhhCAAAoIUYYQgAAKCFGGEIAACghRhhCAAAoIUYYQgAAKCFGGEIAACghRhhCAAAoIUYYQgAAKCFGGEIAACghRhhCAAAoIUYYQgAAKCFGGEIAACghRhhCAAAoIUYYQgAAKCFGGEIAACghRhhCAAAoIUYYQgAAKCFGGEIAACghRhhCAAAoIUYYQgAAKCFGJUHAACghRiVBwAAoIUYlQcAAKCFGJUKAACgmBiFGBwHBgCghRgZBwYAoIUYGQcGAKCFGBkHBgCghRgZBwYAoIUYGQcGAKCFDAYHAKCFGBkHBgCghRgZBwYAoIUYGQcGAKCFGBkHBgCghRgZBwYAoIUYGQcGAKCFGBkHBgCghRgZBwYAoIUYGQcGAKCFGBkHBgCghRgZBwYAoIUYGQcGAKCFGB0HBgCghRgZBwgAoIUYIAgHAKCFGCsHBgCghRkBXAoAAKCYGIUYKwYHAKCFEgAHAKCFAAgAAKCFAAgAAKCFAAgAAKCFAwEAAKCFAAgAAKCFAA8AAKCFEwAHAKCFAQcGAKCFGQG0CgcAoIUBBwYAoIUBBwYAoIUBBwYAoIUZAbUKBwCghQEHBgCghQEHBgCghQEHBgCghQEHBgCghREGBwCghQAAAACghRMABwCghRgrBwYAoIUZAV4KAACgmBiFGCsGBwCghQEABwCghRkBnwgAAKCFGQGfCAAAoIUZAZ8IAACghRkBnwgAAKCFGQGfCAAAoIUZAZ8IAACghQEABwCghRg9AAEAoIUYPQABAKCFGD0AAQCghRg9AAEAoIUYPQABAKCFGD0AAQCghRg9AAEAoIUYPQABAKCFGD4AAQCghQEHBgCghRgrBwYAoIUAAAAAoIUAAAAAoIUYKwcGAKCFGQFdCgAAoJgYhRgrBgcAoIUBAAcAoIUBAAEAoIUADgAAoIUADwAAoIUADwAAoIUADwAAoIUADwAAoIUAAQAAoIUABQEAoIUBAQcAoIUBAQcAoIUBAQcAoIUBAQcAoIUBAQcAoIUBAQcAoIUBAQcAoIUYUAABAKCFAAYHAKCFGCsHBgCghQAAAACghRglAAcAoIUYKwcGAKCFGQFeCgAAoJgYhRguBwYAoIUBAAEAoIUAAQAAoIUAAQAAoIUAAQAAoIUAAQAAoIURAQAAoIURAQAAoIUBAAEAoIUYYQABAKCFGGEAAQCghRhhAAEAoIUYYQABAKCFGGEAAQCghRhhAAEAoIURBgEAoIURBgEAoIUYYgABAKCFEQYHAKCFGC8HBgCghRgZBgcAoIUYGQYHAKCFGDEHBgCghRkBXQoAAKA=`
 };
 mapper.actions.pull = function(playerId) {
-  const loc = beep8.ECS.getComponent(playerId, "Loc");
-  const dir = beep8.ECS.getComponent(playerId, "Direction");
+  const loc = b8.ECS.getComponent(playerId, "Loc");
+  const dir = b8.ECS.getComponent(playerId, "Direction");
   mapper.systems.tryPulling(loc.col, loc.row, dir.dx, dir.dy, playerId);
 };
 mapper.actions.read = async function(playerId) {
   const entities = mapper.entitiesAhead(playerId);
   for (const id of entities) {
-    const obj = beep8.ECS.getComponent(id, "Message");
-    const sprite = beep8.ECS.getComponent(id, "Sprite");
+    const obj = b8.ECS.getComponent(id, "Message");
+    const sprite = b8.ECS.getComponent(id, "Sprite");
     if (!obj || !sprite) continue;
-    beep8.color(sprite.fg ?? 15, sprite.bg ?? 5);
+    b8.color(sprite.fg ?? 15, sprite.bg ?? 5);
     const message = mapper.helpers.processChatText(obj.message || "");
-    await beep8.Async.dialogTypewriter(message, ["OK"], 20);
+    await b8.Async.dialogTypewriter(message, ["OK"], 20);
   }
 };
 mapper.camera = {
@@ -323,7 +323,7 @@ mapper.camera = {
    */
   getScreenPosition: function(pCol, pRow) {
     if (!mapper.currentMap) {
-      beep8.Utilities.error("No current map set.");
+      b8.Utilities.error("No current map set.");
       return { col: 0, row: 0 };
     }
     const currentMap = mapper.currentMap;
@@ -341,7 +341,7 @@ mapper.camera = {
    * @returns {Object} An object with col and row properties representing the tile's on-screen position.
    */
   getTilePosition: function(col, row) {
-    const loc = beep8.ECS.getComponent(mapper.player, "Loc");
+    const loc = b8.ECS.getComponent(mapper.player, "Loc");
     const pos = mapper.camera.getScreenPosition(loc.col, loc.row);
     let tileCol = col - pos.col;
     let tileRow = row - pos.row;
@@ -362,7 +362,7 @@ mapper.collision = {
    * @param {number} col
    */
   isSolidAt: (col, row) => {
-    return beep8.ECS.entitiesAt(col, row).some((id) => beep8.ECS.hasComponent(id, "Solid"));
+    return b8.ECS.entitiesAt(col, row).some((id) => b8.ECS.hasComponent(id, "Solid"));
   },
   /**
    * Check if (col,row) is free (walkable and no solid object).
@@ -409,9 +409,9 @@ mapper.helpers = {
    * @returns {string} Processed string
    */
   processChatText: (str) => {
-    str = str.replace(/\[levelName\]/g, beep8.data.levelName ?? "Unknown");
-    str = str.replace(/\[playerName\]/g, beep8.data.playerName ?? "Player");
-    str = str.replace(/\[totalCoins\]/g, beep8.data.totalCoins ?? "0");
+    str = str.replace(/\[levelName\]/g, b8.data.levelName ?? "Unknown");
+    str = str.replace(/\[playerName\]/g, b8.data.playerName ?? "Player");
+    str = str.replace(/\[totalCoins\]/g, b8.data.totalCoins ?? "0");
     return str;
   }
 };
@@ -461,11 +461,11 @@ mapper.menu = {
    */
   drawSplash: function() {
     if (mapper.bg.splash) {
-      beep8.Tilemap.draw(mapper.bg.splash);
-      console.log("Drawing Beep8 logo");
-      beep8.locate(beep8.CONFIG.SCREEN_COLS - 1, beep8.CONFIG.SCREEN_ROWS - 1);
-      beep8.color(15, 0);
-      beep8.printChar(88);
+      b8.Tilemap.draw(mapper.bg.splash);
+      console.log("Drawing b8 logo");
+      b8.locate(b8.CONFIG.SCREEN_COLS - 1, b8.CONFIG.SCREEN_ROWS - 1);
+      b8.color(15, 0);
+      b8.printChar(88);
     }
   },
   /**
@@ -486,7 +486,7 @@ mapper.sceneGame = {
    */
   init: function() {
     console.log(mapper.CONFIG);
-    mapper.sceneGame.UI = beep8.Tilemap.load(mapper.CONFIG.gameUI);
+    mapper.sceneGame.UI = b8.Tilemap.load(mapper.CONFIG.gameUI);
   },
   /**
    * Update the game scene.
@@ -497,20 +497,20 @@ mapper.sceneGame = {
   update: function(dt) {
     mapper.CONFIG.moveDelay -= dt;
     if (mapper.CONFIG.moveDelay > 0) return;
-    const loc = beep8.ECS.getComponent(mapper.player, "Loc");
-    const anim = beep8.ECS.getComponent(mapper.player, "CharacterAnimation");
+    const loc = b8.ECS.getComponent(mapper.player, "Loc");
+    const anim = b8.ECS.getComponent(mapper.player, "CharacterAnimation");
     if (mapper.CONFIG.moveDelay > 0) return;
     let dx = 0, dy = 0;
-    if (beep8.keyp("ArrowUp")) {
+    if (b8.keyp("ArrowUp")) {
       dy = -1;
-    } else if (beep8.keyp("ArrowDown")) {
+    } else if (b8.keyp("ArrowDown")) {
       dy = 1;
-    } else if (beep8.keyp("ArrowLeft")) {
+    } else if (b8.keyp("ArrowLeft")) {
       dx = -1;
-    } else if (beep8.keyp("ArrowRight")) {
+    } else if (b8.keyp("ArrowRight")) {
       dx = 1;
     }
-    if (beep8.keyp("ButtonB")) mapper.doAction(mapper.player);
+    if (b8.keyp("ButtonB")) mapper.doAction(mapper.player);
     if (dx !== 0 || dy !== 0) {
       let newCol = loc.col + dx;
       let newRow = loc.row + dy;
@@ -523,8 +523,8 @@ mapper.sceneGame = {
         newCol = loc.col;
         newRow = loc.row;
       }
-      beep8.ECS.set(mapper.player, "Direction", { dx, dy });
-      beep8.ECS.setLoc(mapper.player, newCol, newRow);
+      b8.ECS.set(mapper.player, "Direction", { dx, dy });
+      b8.ECS.setLoc(mapper.player, newCol, newRow);
       mapper.CONFIG.moveDelay = 0.15;
     }
     mapper.update(dt);
@@ -535,31 +535,31 @@ mapper.sceneGame = {
    * @returns {void}
    */
   render: function() {
-    beep8.cls();
-    beep8.locate(mapper.CONFIG.mapOffsetX, mapper.CONFIG.mapOffsetY);
+    b8.cls();
+    b8.locate(mapper.CONFIG.mapOffsetX, mapper.CONFIG.mapOffsetY);
     mapper.drawScreen();
     mapper.render(mapper.CONFIG.mapOffsetX, mapper.CONFIG.mapOffsetY);
-    beep8.locate(0, beep8.CONFIG.SCREEN_ROWS - mapper.sceneGame.UI.length);
-    beep8.Tilemap.draw(mapper.sceneGame.UI);
-    beep8.locate(2, beep8.CONFIG.SCREEN_ROWS - 2);
-    beep8.color(mapper.settings.coinColor, 0);
-    beep8.printChar(mapper.settings.coin || 266);
-    beep8.color(15, 0);
-    beep8.print(" " + parseInt(beep8.Inventory.getCount("coin")).toString().padStart(4, "0"));
-    const keys = beep8.Inventory.filter(/^key/);
+    b8.locate(0, b8.CONFIG.SCREEN_ROWS - mapper.sceneGame.UI.length);
+    b8.Tilemap.draw(mapper.sceneGame.UI);
+    b8.locate(2, b8.CONFIG.SCREEN_ROWS - 2);
+    b8.color(mapper.settings.coinColor, 0);
+    b8.printChar(mapper.settings.coin || 266);
+    b8.color(15, 0);
+    b8.print(" " + parseInt(b8.Inventory.getCount("coin")).toString().padStart(4, "0"));
+    const keys = b8.Inventory.filter(/^key/);
     keys.forEach(
       (item, index) => {
         const color = parseInt(item.id.split("-")[1]) || 15;
-        beep8.locate(10 + index, beep8.CONFIG.SCREEN_ROWS - 2);
-        beep8.color(color, -1);
-        beep8.printChar(255);
+        b8.locate(10 + index, b8.CONFIG.SCREEN_ROWS - 2);
+        b8.color(color, -1);
+        b8.printChar(255);
       }
     );
-    beep8.color(15, -1);
-    beep8.locate(11, beep8.CONFIG.SCREEN_ROWS - 4);
-    beep8.print(" ");
-    beep8.locate(15, beep8.CONFIG.SCREEN_ROWS - 4);
-    beep8.print(mapper.helpers.capitalizeWords(" " + mapper.promptAhead(mapper.player)));
+    b8.color(15, -1);
+    b8.locate(11, b8.CONFIG.SCREEN_ROWS - 4);
+    b8.print(" ");
+    b8.locate(15, b8.CONFIG.SCREEN_ROWS - 4);
+    b8.print(mapper.helpers.capitalizeWords(" " + mapper.promptAhead(mapper.player)));
     return;
   }
 };
@@ -579,14 +579,14 @@ mapper.sceneMenu = {
    * @returns {void}
    */
   main: async () => {
-    beep8.locate(0, 0);
+    b8.locate(0, 0);
     mapper.menu.drawSplash();
-    beep8.locate(5, 18);
-    beep8.color(0, 10);
+    b8.locate(5, 18);
+    b8.color(0, 10);
     let menuChoices = ["Start Game"];
     if (mapper.menu.hasInstructions()) menuChoices.push("Instructions");
     if (mapper.menu.hasCredits()) menuChoices.push("Credits");
-    let choice = await beep8.Async.menu(
+    let choice = await b8.Async.menu(
       menuChoices,
       {
         border: false,
@@ -596,41 +596,41 @@ mapper.sceneMenu = {
     );
     const selected = menuChoices[choice];
     if ("Start Game" === selected) {
-      beep8.Scene.set("game");
+      b8.Scene.set("game");
       return;
     }
     if ("Instructions" === selected) {
-      beep8.locate(2, 2);
-      beep8.color(15, 13);
-      const instructions = beep8.wrapText(
+      b8.locate(2, 2);
+      b8.color(15, 13);
+      const instructions = b8.wrapText(
         mapper.menu.getInstructions(),
-        beep8.CONFIG.SCREEN_COLS - 6
+        b8.CONFIG.SCREEN_COLS - 6
       );
-      await beep8.Async.dialog(instructions, ["OK"]);
+      await b8.Async.dialog(instructions, ["OK"]);
     }
     if ("Credits" === selected) {
-      beep8.locate(2, 2);
-      beep8.color(15, 13);
-      const credits = beep8.wrapText(
+      b8.locate(2, 2);
+      b8.color(15, 13);
+      const credits = b8.wrapText(
         mapper.menu.getCredits(),
-        beep8.CONFIG.SCREEN_COLS - 6
+        b8.CONFIG.SCREEN_COLS - 6
       );
-      await beep8.Async.dialog(credits, ["OK"]);
+      await b8.Async.dialog(credits, ["OK"]);
     }
     setTimeout(mapper.sceneMenu.main, 10);
   }
 };
 mapper.systems.characterAnimation = function(dt) {
-  const anims = beep8.ECS.query("CharacterAnimation");
+  const anims = b8.ECS.query("CharacterAnimation");
   if (!anims) return;
   for (const id of anims) {
-    const anim = beep8.ECS.getComponent(id, "CharacterAnimation");
+    const anim = b8.ECS.getComponent(id, "CharacterAnimation");
     if (!anim) continue;
     if (anim.duration > 0) {
       anim.duration -= dt;
       if (anim.duration <= 0) {
         let defaultAnimation = anim.default || "";
-        const direction = beep8.ECS.getComponent(id, "Direction");
+        const direction = b8.ECS.getComponent(id, "Direction");
         if (direction) {
           const directionNames = {
             "0,1": "",
@@ -647,29 +647,29 @@ mapper.systems.characterAnimation = function(dt) {
   }
 };
 mapper.systems.tryPortal = async function(col, row) {
-  const id = beep8.ECS.entitiesAt(col, row);
+  const id = b8.ECS.entitiesAt(col, row);
   console.log("Checking for portal at", col, row, id);
   if (!id) return false;
   for (const entityId of id) {
-    const portal = beep8.ECS.getComponent(entityId, "Portal");
+    const portal = b8.ECS.getComponent(entityId, "Portal");
     return mapper.systems.handlePortal(portal);
   }
 };
 mapper.systems.handlePortal = async function(portal) {
   if (!portal) return false;
   if (portal.target === "") return false;
-  const doorways = beep8.ECS.query("Portal");
+  const doorways = b8.ECS.query("Portal");
   const targetDoorway = doorways.find(
     (id) => {
-      const targetPortal = beep8.ECS.getComponent(id, "Portal");
+      const targetPortal = b8.ECS.getComponent(id, "Portal");
       return targetPortal.name === portal.target;
     }
   );
   if (targetDoorway) {
-    const targetLoc = beep8.ECS.getComponent(targetDoorway, "Loc");
+    const targetLoc = b8.ECS.getComponent(targetDoorway, "Loc");
     if (targetLoc) {
-      await beep8.Async.wait(0.1);
-      beep8.ECS.setLoc(mapper.player, targetLoc.col, targetLoc.row);
+      await b8.Async.wait(0.1);
+      b8.ECS.setLoc(mapper.player, targetLoc.col, targetLoc.row);
     }
   }
   return false;
@@ -677,16 +677,16 @@ mapper.systems.handlePortal = async function(portal) {
 mapper.systems.tryPushing = (col, row, dx, dy) => {
   const hitX = col + dx;
   const hitY = row + dy;
-  for (const id of beep8.ECS.entitiesAt(hitX, hitY)) {
-    if (!beep8.ECS.hasComponent(id, "Solid")) continue;
-    if (!beep8.ECS.hasComponent(id, "Pushable")) continue;
-    const loc = beep8.ECS.getComponent(id, "Loc");
+  for (const id of b8.ECS.entitiesAt(hitX, hitY)) {
+    if (!b8.ECS.hasComponent(id, "Solid")) continue;
+    if (!b8.ECS.hasComponent(id, "Pushable")) continue;
+    const loc = b8.ECS.getComponent(id, "Loc");
     const newCol = loc.col + dx;
     const newRow = loc.row + dy;
-    const blocked = !mapper.collision.isWalkable(newCol, newRow) || beep8.ECS.entitiesAt(newCol, newRow).some((e) => beep8.ECS.hasComponent(e, "Solid"));
+    const blocked = !mapper.collision.isWalkable(newCol, newRow) || b8.ECS.entitiesAt(newCol, newRow).some((e) => b8.ECS.hasComponent(e, "Solid"));
     if (!blocked) {
-      beep8.ECS.setLoc(id, newCol, newRow);
-      beep8.Sfx.play("fx/action/drag");
+      b8.ECS.setLoc(id, newCol, newRow);
+      b8.Sfx.play("fx/action/drag");
       return false;
     }
     return true;
@@ -696,39 +696,39 @@ mapper.systems.tryPushing = (col, row, dx, dy) => {
 mapper.systems.tryPulling = (col, row, dx, dy, playerId) => {
   const hitCol = col + dx;
   const hitRow = row + dy;
-  for (const id of beep8.ECS.entitiesAt(hitCol, hitRow)) {
-    if (!beep8.ECS.hasComponent(id, "Solid")) continue;
-    if (!beep8.ECS.hasComponent(id, "Pushable")) continue;
+  for (const id of b8.ECS.entitiesAt(hitCol, hitRow)) {
+    if (!b8.ECS.hasComponent(id, "Solid")) continue;
+    if (!b8.ECS.hasComponent(id, "Pushable")) continue;
     const backCol = col - dx;
     const backRow = row - dy;
-    if (!mapper.collision.isWalkable(backCol, backRow) || beep8.ECS.entitiesAt(backCol, backRow).some((e) => beep8.ECS.hasComponent(e, "Solid"))) {
+    if (!mapper.collision.isWalkable(backCol, backRow) || b8.ECS.entitiesAt(backCol, backRow).some((e) => b8.ECS.hasComponent(e, "Solid"))) {
       return false;
     }
-    beep8.ECS.setLoc(id, col, row);
-    beep8.ECS.setLoc(playerId, backCol, backRow);
-    beep8.Sfx.play("fx/action/drag");
+    b8.ECS.setLoc(id, col, row);
+    b8.ECS.setLoc(playerId, backCol, backRow);
+    b8.Sfx.play("fx/action/drag");
     return true;
   }
   return false;
 };
 mapper.systems.teleportSystem = async function(dt) {
-  const list = beep8.ECS.query("Teleport");
+  const list = b8.ECS.query("Teleport");
   for (const [id, teleport] of list) {
-    const doorways = beep8.ECS.query("Portal");
+    const doorways = b8.ECS.query("Portal");
     const targetDoorway = doorways.find(
       ([targetId]) => {
-        const targetPortal = beep8.ECS.getComponent(targetId, "Portal");
+        const targetPortal = b8.ECS.getComponent(targetId, "Portal");
         return targetPortal?.name === teleport.target;
       }
     );
     if (targetDoorway) {
-      const targetLoc = beep8.ECS.getComponent(targetDoorway[0], "Loc");
+      const targetLoc = b8.ECS.getComponent(targetDoorway[0], "Loc");
       if (targetLoc) {
-        await beep8.Async.wait(0.1);
-        beep8.ECS.setLoc(id, targetLoc.col, targetLoc.row);
+        await b8.Async.wait(0.1);
+        b8.ECS.setLoc(id, targetLoc.col, targetLoc.row);
       }
     }
-    beep8.ECS.removeComponent(id, "Teleport");
+    b8.ECS.removeComponent(id, "Teleport");
   }
 };
 mapper.types.skeleton = {
@@ -743,7 +743,7 @@ mapper.types.skeleton = {
 };
 mapper.types.coin = {
   spawn: function(col, row, props) {
-    return beep8.ECS.create(
+    return b8.ECS.create(
       {
         Type: { name: "coin" },
         Loc: { col, row },
@@ -756,15 +756,15 @@ mapper.types.coin = {
     );
   },
   onCharacterCollision: function(id) {
-    beep8.ECS.removeEntity(id);
-    beep8.Inventory.add("coin");
-    beep8.Sfx.play("game/coin/002");
+    b8.ECS.removeEntity(id);
+    b8.Inventory.add("coin");
+    b8.Sfx.play("game/coin/002");
     return false;
   }
 };
 mapper.types.crate = {
   spawn: function(col, row, props) {
-    return beep8.ECS.create(
+    return b8.ECS.create(
       {
         Type: { name: "crate" },
         Loc: { col, row },
@@ -796,7 +796,7 @@ mapper.types.doorOpen = {
         target: props.leadsTo || ""
       }
     };
-    return beep8.ECS.create(doorProps);
+    return b8.ECS.create(doorProps);
   },
   onCharacterCollision: function(id, newCol, newRow, dx, dy) {
     mapper.systems.tryPortal(newCol, newRow);
@@ -819,7 +819,7 @@ mapper.types.doorStairs = {
         target: props.leadsTo || ""
       }
     };
-    return beep8.ECS.create(stairsProps);
+    return b8.ECS.create(stairsProps);
   },
   onCharacterCollision: function(id, newCol, newRow, dx, dy) {
     mapper.systems.tryPortal(newCol, newRow);
@@ -847,19 +847,19 @@ mapper.types.door = {
     if (icon !== mapper.types.door.TILE_DOOR_OPEN) {
       doorProps.Solid = {};
     }
-    return beep8.ECS.create(doorProps);
+    return b8.ECS.create(doorProps);
   },
   onCharacterCollision: function(id, newCol, newRow, dx, dy) {
-    if (!beep8.ECS.hasComponent(id, "Solid")) {
+    if (!b8.ECS.hasComponent(id, "Solid")) {
       mapper.systems.tryPortal(newCol, newRow);
       return false;
     }
-    const sprite = beep8.ECS.getComponent(id, "Sprite");
+    const sprite = b8.ECS.getComponent(id, "Sprite");
     const keyName = `key-${sprite.fg ?? "default"}`;
-    if (beep8.Inventory.has(keyName)) {
-      beep8.ECS.removeComponent(id, "Solid");
+    if (b8.Inventory.has(keyName)) {
+      b8.ECS.removeComponent(id, "Solid");
       sprite.tile = mapper.types.door.TILE_DOOR_OPEN;
-      beep8.Sfx.play("ui/click/004");
+      b8.Sfx.play("ui/click/004");
       return true;
     }
     return true;
@@ -867,7 +867,7 @@ mapper.types.door = {
 };
 mapper.types.key = {
   spawn: function(col, row, props) {
-    return beep8.ECS.create(
+    return b8.ECS.create(
       {
         Type: { name: "key" },
         Loc: { col, row },
@@ -880,16 +880,16 @@ mapper.types.key = {
     );
   },
   onCharacterCollision: function(id, newCol, newRow, dx, dy) {
-    const keyName = `key-${beep8.ECS.getComponent(id, "Sprite").fg ?? "default"}`;
-    beep8.Inventory.add(keyName);
-    beep8.ECS.removeEntity(id);
-    beep8.Sfx.play("tone/bloop/006");
+    const keyName = `key-${b8.ECS.getComponent(id, "Sprite").fg ?? "default"}`;
+    b8.Inventory.add(keyName);
+    b8.ECS.removeEntity(id);
+    b8.Sfx.play("tone/bloop/006");
     return false;
   }
 };
 mapper.types.signpost = {
   spawn: function(col, row, props) {
-    return beep8.ECS.create(
+    return b8.ECS.create(
       {
         Type: { name: "signpost" },
         Loc: { col, row },
@@ -907,7 +907,7 @@ mapper.types.signpost = {
 };
 mapper.types.start = {
   spawn: function(col, row, props) {
-    beep8.ECS.setLoc(mapper.player, col, row);
+    b8.ECS.setLoc(mapper.player, col, row);
   }
 };
 //# sourceMappingURL=plugin.mapper.js.map

@@ -1,6 +1,6 @@
-( function( beep8 ) {
+( function( b8 ) {
 
-	beep8.Random = {};
+	b8.Random = {};
 
 	/**
 	 * The seed for the random number generator.
@@ -17,7 +17,7 @@
 	 * @param {number|string} seed - The seed to use for the random number generator.
 	 * @returns {void}
 	 */
-	beep8.Random.setSeed = function( seed = null ) {
+	b8.Random.setSeed = function( seed = null ) {
 
 		if ( seed === null ) {
 			seed = Date.now();
@@ -39,7 +39,7 @@
 
 		// Burn a few random numbers to mix up initial values.
 		for ( let i = 0; i < 10; i++ ) {
-			beep8.Random.num();
+			b8.Random.num();
 		}
 
 	}
@@ -50,7 +50,7 @@
 	 *
 	 * @returns {number} The seed for the random number generator.
 	 */
-	beep8.Random.getSeed = function() {
+	b8.Random.getSeed = function() {
 
 		return randomSeed;
 
@@ -62,7 +62,7 @@
 	 *
 	 * @returns {number} A random number between 0 and 1.
 	 */
-	beep8.Random.num = function() {
+	b8.Random.num = function() {
 
 		const a = 1664525;
 		const c = 1013904223;
@@ -82,12 +82,12 @@
 	 * @param {number} max - The maximum value (inclusive).
 	 * @returns {number} A random number between min and max.
 	 */
-	beep8.Random.range = function( min, max ) {
+	b8.Random.range = function( min, max ) {
 
-		beep8.Utilities.checkNumber( "min", min );
-		beep8.Utilities.checkNumber( "max", max );
+		b8.Utilities.checkNumber( "min", min );
+		b8.Utilities.checkNumber( "max", max );
 
-		return min + beep8.Random.num() * ( max - min );
+		return min + b8.Random.num() * ( max - min );
 
 	}
 
@@ -99,10 +99,10 @@
 	 * @param {number} max - The maximum value (inclusive).
 	 * @returns {number} A random integer between min and max.
 	 */
-	beep8.Random.int = function( min, max ) {
+	b8.Random.int = function( min, max ) {
 
-		beep8.Utilities.checkInt( "min", min );
-		beep8.Utilities.checkInt( "max", max );
+		b8.Utilities.checkInt( "min", min );
+		b8.Utilities.checkInt( "max", max );
 
 		// Reverse max and min.
 		if ( max <= min ) {
@@ -111,7 +111,7 @@
 			min = tmp;
 		}
 
-		const randomValue = beep8.Random.range( min, max );
+		const randomValue = b8.Random.range( min, max );
 		return Math.round( randomValue );
 
 	}
@@ -123,12 +123,12 @@
 	 * @param {Array} array - The array to pick from.
 	 * @returns {any} A randomly picked element of the array, or null if the array is empty.
 	 */
-	beep8.Random.pick = function( array ) {
+	b8.Random.pick = function( array ) {
 
-		beep8.Utilities.checkArray( "array", array );
+		b8.Utilities.checkArray( "array", array );
 
 		// Pick a random number from 0 to array.length.
-		const index = beep8.Random.int( 0, array.length - 1 );
+		const index = b8.Random.int( 0, array.length - 1 );
 
 		return array[ index ];
 
@@ -145,9 +145,9 @@
 	 * @param {number} decayFactor - The decay factor for the weighted array.
 	 * @returns {any} A randomly picked element of the array, or null if the array is empty.
 	 */
-	beep8.Random.pickWeighted = function( array, decayFactor = 0.2 ) {
+	b8.Random.pickWeighted = function( array, decayFactor = 0.2 ) {
 
-		beep8.Utilities.checkArray( "array", array );
+		b8.Utilities.checkArray( "array", array );
 
 		// Create a unique cache key based on the array and decayFactor
 		const cacheKey = JSON.stringify( array ) + `|${decayFactor}`;
@@ -156,11 +156,11 @@
 		let weightedArray = weightedArrayCache.get( cacheKey );
 
 		if ( !weightedArray ) {
-			weightedArray = beep8.Random.weightedArray( array, decayFactor );
+			weightedArray = b8.Random.weightedArray( array, decayFactor );
 			weightedArrayCache.set( cacheKey, weightedArray );
 		}
 
-		return beep8.Random.pick( weightedArray );
+		return b8.Random.pick( weightedArray );
 
 	};
 
@@ -172,14 +172,14 @@
 	 * @param {Array} array - The array to shuffle.
 	 * @returns {Array} The shuffled array.
 	 */
-	beep8.Random.shuffleArray = function( array ) {
+	b8.Random.shuffleArray = function( array ) {
 
-		beep8.Utilities.checkArray( "array", array );
+		b8.Utilities.checkArray( "array", array );
 
 		array = array.slice();
 
 		for ( let i = 0; i < array.length; i++ ) {
-			const j = beep8.Random.int( 0, array.length - 1 );
+			const j = b8.Random.int( 0, array.length - 1 );
 			const tmp = array[ i ];
 			array[ i ] = array[ j ];
 			array[ j ] = tmp;
@@ -196,11 +196,11 @@
 	 * @param {number} probability - A percentage value between 0 and 100 representing the chance of returning true.
 	 * @returns {boolean} True with the specified probability, false otherwise.
 	 */
-	beep8.Random.chance = function( probability ) {
+	b8.Random.chance = function( probability ) {
 
-		beep8.Utilities.checkNumber( "probability", probability );
+		b8.Utilities.checkNumber( "probability", probability );
 
-		return beep8.Random.num() <= ( probability / 100 );
+		return b8.Random.num() <= ( probability / 100 );
 
 	}
 
@@ -213,9 +213,9 @@
 	 * @param {number} decayFactor - The decay factor for the weighted array.
 	 * @returns {Array} The weighted array.
 	 */
-	beep8.Random.weightedArray = function( array, decayFactor = 0.2 ) {
+	b8.Random.weightedArray = function( array, decayFactor = 0.2 ) {
 
-		beep8.Utilities.checkArray( "array", array );
+		b8.Utilities.checkArray( "array", array );
 
 		const weightedArray = [];
 
@@ -240,7 +240,7 @@
 	 * @param {number} seed - The seed value.
 	 * @returns {number} A pseudo-random number between 0 and 1.
 	 */
-	beep8.Random.coord2D = function( x, y, seed ) {
+	b8.Random.coord2D = function( x, y, seed ) {
 
 		let h = 2166136261 ^ seed;
 		h = Math.imul( h ^ x, 16777619 );
@@ -262,7 +262,7 @@
 	 * @param {number} freq - The frequency of the noise.
 	 * @returns {number} A smooth noise value between 0 and 1.
 	 */
-	beep8.Random.smooth2D = function( x, y, seed = 0, freq = 1 ) {
+	b8.Random.smooth2D = function( x, y, seed = 0, freq = 1 ) {
 
 		// scale space to control feature size
 		x *= freq;
@@ -274,24 +274,24 @@
 		const fy = y - iy;
 
 		// corner values from your coord-based RNG
-		const v00 = beep8.Random.coord2D( ix, iy, seed );
-		const v10 = beep8.Random.coord2D( ix + 1, iy, seed );
-		const v01 = beep8.Random.coord2D( ix, iy + 1, seed );
-		const v11 = beep8.Random.coord2D( ix + 1, iy + 1, seed );
+		const v00 = b8.Random.coord2D( ix, iy, seed );
+		const v10 = b8.Random.coord2D( ix + 1, iy, seed );
+		const v01 = b8.Random.coord2D( ix, iy + 1, seed );
+		const v11 = b8.Random.coord2D( ix + 1, iy + 1, seed );
 
 		// fade curves for smooth interpolation
-		const u = beep8.Math.fade( fx );
-		const v = beep8.Math.fade( fy );
+		const u = b8.Math.fade( fx );
+		const v = b8.Math.fade( fy );
 
 		// bilinear interpolation
-		const i1 = beep8.Math.lerp( v00, v10, u );
-		const i2 = beep8.Math.lerp( v01, v11, u );
-		return beep8.Math.lerp( i1, i2, v );
+		const i1 = b8.Math.lerp( v00, v10, u );
+		const i2 = b8.Math.lerp( v01, v11, u );
+		return b8.Math.lerp( i1, i2, v );
 
 	}
 
 
-	beep8.Random.setSeed();
+	b8.Random.setSeed();
 
-} )( beep8 );
+} )( b8 );
 

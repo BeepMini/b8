@@ -8,7 +8,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
 	<link rel="stylesheet" href="example.css">
-	<script src="../dist/beep8.js"></script>
+	<script src="../dist/b8.js"></script>
 
 	<script>
 
@@ -109,11 +109,11 @@
 		let sfxStep = null, sfxPush = null, sfxLevelUp = null;
 
 		async function main() {
-			beep8.cls();
-			beep8.print( "Loading..." );
-			sfxStep = await beep8.Async.loadSound( "../assets/step.wav" );
-			sfxPush = await beep8.Async.loadSound( "../assets/push.wav" );
-			sfxLevelUp = await beep8.Async.loadSound( "../assets/levelup.wav" );
+			b8.cls();
+			b8.print( "Loading..." );
+			sfxStep = await b8.Async.loadSound( "../assets/step.wav" );
+			sfxPush = await b8.Async.loadSound( "../assets/push.wav" );
+			sfxLevelUp = await b8.Async.loadSound( "../assets/levelup.wav" );
 			setUpLevel( 0 );
 			while ( true ) {
 				drawEverything();
@@ -123,52 +123,52 @@
 		}
 
 		function drawEverything() {
-			beep8.cls();
+			b8.cls();
 			drawMap();
 			drawBoxes();
 			drawPlayer();
 		}
 
 		function drawMap() {
-			beep8.color( 7, 0 );
-			beep8.cls();
-			beep8.locate( 0, 1 );
-			beep8.color( 14 );
-			beep8.printCentered( `SOKOBAN\n`, beep8.CONFIG.SCREEN_COLS - 2 );
-			beep8.color( 8 );
-			beep8.printCentered( `LEVEL ${curLevelNumber + 1}\n`, beep8.CONFIG.SCREEN_COLS - 2 );
+			b8.color( 7, 0 );
+			b8.cls();
+			b8.locate( 0, 1 );
+			b8.color( 14 );
+			b8.printCentered( `SOKOBAN\n`, b8.CONFIG.SCREEN_COLS - 2 );
+			b8.color( 8 );
+			b8.printCentered( `LEVEL ${curLevelNumber + 1}\n`, b8.CONFIG.SCREEN_COLS - 2 );
 			for ( let y = 0; y < LEVEL_SIZE; y++ ) {
-				beep8.locate( DRAW_OFFSET_X, DRAW_OFFSET_Y + y );
+				b8.locate( DRAW_OFFSET_X, DRAW_OFFSET_Y + y );
 				for ( let x = 0; x < LEVEL_SIZE; x++ ) {
 					const cell = curLevel[ y ][ x ];
 					const tile = TILES[ cell ];
-					beep8.color( tile ? tile.color : 0 );
-					beep8.printChar( tile ? tile.char : 0x20 );
+					b8.color( tile ? tile.color : 0 );
+					b8.printChar( tile ? tile.char : 0x20 );
 				}
 			}
 		}
 
 		function drawBoxes() {
 			boxes.forEach( box => {
-				beep8.locate( DRAW_OFFSET_X + box.x, DRAW_OFFSET_Y + box.y );
+				b8.locate( DRAW_OFFSET_X + box.x, DRAW_OFFSET_Y + box.y );
 				// If the box is on a target, make it green; otherwise, black.
-				beep8.color( curLevel[ box.y ][ box.x ] === "." ? 12 : 14 );
-				beep8.printChar( 352 );
+				b8.color( curLevel[ box.y ][ box.x ] === "." ? 12 : 14 );
+				b8.printChar( 352 );
 			} );
 		}
 
 		function drawPlayer() {
-			beep8.locate( DRAW_OFFSET_X + px, DRAW_OFFSET_Y + py );
-			beep8.color( 15 );
+			b8.locate( DRAW_OFFSET_X + px, DRAW_OFFSET_Y + py );
+			b8.color( 15 );
 			let animation = 'move-right';
 			if ( facingLeft ) {
 				animation = 'move-left';
 			}
-			beep8.drawActor( 2, animation ); // 0xc0 is the player facing right, 0xc1 is left.
+			b8.drawActor( 2, animation ); // 0xc0 is the player facing right, 0xc1 is left.
 		}
 
 		async function movePlayer() {
-			const keyName = await beep8.Async.key();
+			const keyName = await b8.Async.key();
 			console.log( 'key', keyName );
 			if ( keyName.includes( "ButtonB" ) ) setUpLevel( curLevelNumber ); // Reset level
 			if ( keyName.includes( "ArrowLeft" ) ) facingLeft = 1;
@@ -186,8 +186,8 @@
 				px = candX, py = candY;
 				moved = true;
 			}
-			if ( pushed ) beep8.playSound( sfxPush );
-			else if ( moved ) beep8.playSound( sfxStep );
+			if ( pushed ) b8.playSound( sfxPush );
+			else if ( moved ) b8.playSound( sfxStep );
 		}
 
 		function tryPushBox( box ) {
@@ -208,8 +208,8 @@
 			curLevel = LEVELS[ curLevelNumber ];
 			boxes = [];
 
-			DRAW_OFFSET_X = Math.round( ( beep8.CONFIG.SCREEN_COLS / 2 ) - ( LEVELS[ curLevelNumber ][ 0 ].length / 2 ) );
-			DRAW_OFFSET_Y = Math.round( ( beep8.CONFIG.SCREEN_ROWS / 2 ) - ( LEVELS[ curLevelNumber ].length / 2 ) );
+			DRAW_OFFSET_X = Math.round( ( b8.CONFIG.SCREEN_COLS / 2 ) - ( LEVELS[ curLevelNumber ][ 0 ].length / 2 ) );
+			DRAW_OFFSET_Y = Math.round( ( b8.CONFIG.SCREEN_ROWS / 2 ) - ( LEVELS[ curLevelNumber ].length / 2 ) );
 
 			for ( let y = 0; y < LEVEL_SIZE; y++ ) {
 				for ( let x = 0; x < LEVEL_SIZE; x++ ) {
@@ -225,14 +225,14 @@
 			if ( boxes.find( box => curLevel[ box.y ][ box.x ] !== "." ) ) return;
 			drawEverything();
 			// Otherwise, congratulate and move on to the next one.
-			beep8.color( 15, 4 );
-			beep8.locate( 1, 19 );
-			beep8.printBox( beep8.CONFIG.SCREEN_COLS - 2, 7 );
-			beep8.locate( 2, 21 );
-			beep8.print( "Level complete!\nPress ENTER\nto continue." );
-			beep8.playSound( sfxLevelUp );
+			b8.color( 15, 4 );
+			b8.locate( 1, 19 );
+			b8.printBox( b8.CONFIG.SCREEN_COLS - 2, 7 );
+			b8.locate( 2, 21 );
+			b8.print( "Level complete!\nPress ENTER\nto continue." );
+			b8.playSound( sfxLevelUp );
 			while ( true ) {
-				const key = await beep8.Async.key();
+				const key = await b8.Async.key();
 				if ( key.includes( "Enter" ) || key.includes( "ButtonA" ) ) break;
 			}
 			if ( curLevelNumber + 1 < LEVELS.length ) {
@@ -240,15 +240,15 @@
 				setUpLevel( curLevelNumber + 1 );
 			} else {
 				// User has beat all the levels.
-				beep8.cls();
-				beep8.locate( 2, 11 );
-				beep8.print( "CONGRATULATIONS!\nYou beat all the levels!" );
-				while ( "Enter" !== await beep8.Async.key() ) { }
+				b8.cls();
+				b8.locate( 2, 11 );
+				b8.print( "CONGRATULATIONS!\nYou beat all the levels!" );
+				while ( "Enter" !== await b8.Async.key() ) { }
 				setUpLevel( 0 );
 			}
 		}
 
-		window.addEventListener( "load", () => beep8.init( main ) );
+		window.addEventListener( "load", () => b8.init( main ) );
 	</script>
 </head>
 

@@ -8,7 +8,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
 	<link rel="stylesheet" href="example.css">
-	<script src="../dist/beep8.js"></script>
+	<script src="../dist/b8.js"></script>
 
 	<script>
 
@@ -44,56 +44,56 @@
 		let facingLeft = 0;
 
 		async function main() {
-			beep8.cls();
-			beep8.print( "Loading..." );
-			beep8.cls();
+			b8.cls();
+			b8.print( "Loading..." );
+			b8.cls();
 
-			beep8.Music.generate( "bgm", "scary", "amazing time" );
-			beep8.Music.play( "bgm" );
+			b8.Music.generate( "bgm", "scary", "amazing time" );
+			b8.Music.play( "bgm" );
 
 			while ( true ) {
 				drawMap();
 				drawPlayer();
 				// Did the player exit the maze? If so, win the game.
-				if ( px >= beep8.CONFIG.SCREEN_COLS - 1 ) { await youWon(); continue; }
+				if ( px >= b8.CONFIG.SCREEN_COLS - 1 ) { await youWon(); continue; }
 				// Move the player based on what key they press.
 				await movePlayer();
 			}
 		}
 
 		function drawMap() {
-			beep8.color( 7, 0 );
-			beep8.cls();
+			b8.color( 7, 0 );
+			b8.cls();
 			for ( let y = 0; y < MAZE_HEIGHT; y++ ) {
-				beep8.locate( 0, y );
+				b8.locate( 0, y );
 				for ( let x = 0; x < MAZE_WIDTH; x++ ) {
 					const cell = MAZE[ y ][ x ];
 
 					// Choose the draw color based on the distance to the player.
-					const distToPlayer = beep8.Math.dist2D( px, py, x, y );
+					const distToPlayer = b8.Math.dist2D( px, py, x, y );
 					let tile_color = 0;
 					if ( distToPlayer < 8 ) { tile_color = 1; }
 					if ( distToPlayer < 5 ) { tile_color = 5; }
 					if ( distToPlayer < 3 ) { tile_color = 4; }
 					if ( distToPlayer < 2 ) { tile_color = 3; }
-					beep8.color( tile_color );
+					b8.color( tile_color );
 
 					// For decorative purposes, use some graphical characters instead of the ASCII ones.
-					beep8.printChar( cell === "#" ? 327 : cell === "." ? 110 : cell === "+" ? 237 : 0 );
+					b8.printChar( cell === "#" ? 327 : cell === "." ? 110 : cell === "+" ? 237 : 0 );
 				}
 			}
 		}
 
 		function drawPlayer() {
-			beep8.locate( px, py );
-			beep8.color( 10, 0 );
+			b8.locate( px, py );
+			b8.color( 10, 0 );
 			let animation = "move-right";
 			if ( facingLeft ) { animation = "move-left"; }
-			beep8.drawActor( 3, animation );
+			b8.drawActor( 3, animation );
 		}
 
 		async function movePlayer() {
-			const keyName = await beep8.Async.key();
+			const keyName = await b8.Async.key();
 			if ( keyName.includes( "ArrowLeft" ) ) facingLeft = 1;
 			if ( keyName.includes( "ArrowRight" ) ) facingLeft = 0;
 			// Where does the player want to go?
@@ -103,11 +103,11 @@
 			switch ( MAZE[ candY ][ candX ] ) {
 				case ".": // Regular floor: we can move there.
 					px = candX; py = candY;
-					beep8.Sfx.play( 'tone/beep/003' );
+					b8.Sfx.play( 'tone/beep/003' );
 					break;
 				case "+": // Door: we can open it. It becomes a regular floor tile.
 					MAZE[ candY ][ candX ] = ".";
-					beep8.Sfx.play( 'tone/beep/001' );
+					b8.Sfx.play( 'tone/beep/001' );
 					break;
 				default: // Everything else is a wall and we can't move there.
 					break;
@@ -115,13 +115,13 @@
 		}
 
 		async function youWon() {
-			beep8.Sfx.play( 'tone/jingle/001' );
-			await beep8.Async.dialog( "Congratulations!" );
+			b8.Sfx.play( 'tone/jingle/001' );
+			await b8.Async.dialog( "Congratulations!" );
 			// As a reward, you get to play again.
 			px = 2; py = 2;
 		}
 
-		window.addEventListener( "load", () => beep8.init( main ) );
+		window.addEventListener( "load", () => b8.init( main ) );
 	</script>
 </head>
 

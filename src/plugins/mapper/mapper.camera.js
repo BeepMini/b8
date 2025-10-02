@@ -10,7 +10,7 @@ mapper.camera = {
 	getScreenPosition: function( pCol, pRow ) {
 
 		if ( !mapper.currentMap ) {
-			beep8.Utilities.error( "No current map set." );
+			b8.Utilities.error( "No current map set." );
 			return { col: 0, row: 0 };
 		}
 
@@ -37,7 +37,7 @@ mapper.camera = {
 	 */
 	getTilePosition: function( col, row ) {
 
-		const loc = beep8.ECS.getComponent( mapper.player, 'Loc' );
+		const loc = b8.ECS.getComponent( mapper.player, 'Loc' );
 		const pos = mapper.camera.getScreenPosition( loc.col, loc.row );
 
 		let tileCol = col - pos.col;

@@ -1,4 +1,4 @@
-( function( beep8 ) {
+( function( b8 ) {
 
 	let timeHidden = 0;
 	let isHidden = false;
@@ -19,7 +19,7 @@
 		timeHidden = Date.now();
 
 		// Log the event and notify listeners.
-		beep8.Utilities.event( 'pageVisibility.sleep' );
+		b8.Utilities.event( 'pageVisibility.sleep' );
 
 	};
 
@@ -38,8 +38,8 @@
 
 		// Document is shown again so the timer is stopped and totalled.
 		const timeAsleep = Date.now() - timeHidden;
-		beep8.Utilities.log( 'Time asleep:', ( timeAsleep / 1000 ).toFixed( 3 ) );
-		beep8.Utilities.event( 'pageVisibility.wake', { time: timeAsleep } );
+		b8.Utilities.log( 'Time asleep:', ( timeAsleep / 1000 ).toFixed( 3 ) );
+		b8.Utilities.event( 'pageVisibility.wake', { time: timeAsleep } );
 		timeHidden = 0;
 
 	}
@@ -62,4 +62,4 @@
 	window.addEventListener( 'blur', () => sleep() );
 	window.addEventListener( 'focus', () => wake() );
 
-} )( beep8 );
+} )( b8 );

@@ -22,13 +22,13 @@ mapper.helpers = {
 	processChatText: ( str ) => {
 
 		// Replace [levelName] with the actual level name.
-		str = str.replace( /\[levelName\]/g, beep8.data.levelName ?? 'Unknown' );
+		str = str.replace( /\[levelName\]/g, b8.data.levelName ?? 'Unknown' );
 
 		// Replace [playerName] with the actual player name.
-		str = str.replace( /\[playerName\]/g, beep8.data.playerName ?? 'Player' );
+		str = str.replace( /\[playerName\]/g, b8.data.playerName ?? 'Player' );
 
 		// Replace [totalCoins] with the actual total coins value.
-		str = str.replace( /\[totalCoins\]/g, beep8.data.totalCoins ?? '0' );
+		str = str.replace( /\[totalCoins\]/g, b8.data.totalCoins ?? '0' );
 
 		return str;
 

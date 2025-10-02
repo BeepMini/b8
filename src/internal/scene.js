@@ -1,11 +1,11 @@
-( function( beep8 ) {
+( function( b8 ) {
 
 	/**
 	 * Stores all scenes by name.
 	 *
 	 * @type {Object}
 	 */
-	beep8.Scene = {};
+	b8.Scene = {};
 
 
 	/**
@@ -40,18 +40,18 @@
 	 * @param {string} name - The name of the scene.
 	 * @param {object} gameObject - An object that includes init, update, and
 	 * render methods as well as other properties for the scene. If update and
-	 * render are set then these will be passed to `beep8.frame`.
+	 * render are set then these will be passed to `b8.frame`.
 	 * @param {number} frameRate - The frame rate at which to update and render
 	 */
-	beep8.Scene.add = function( name, gameObject = null, frameRate = 30 ) {
+	b8.Scene.add = function( name, gameObject = null, frameRate = 30 ) {
 
-		beep8.Utilities.checkString( 'name', name );
+		b8.Utilities.checkString( 'name', name );
 
 		if ( gameObject !== null ) {
-			beep8.Utilities.checkObject( 'gameObject', gameObject );
+			b8.Utilities.checkObject( 'gameObject', gameObject );
 		}
 
-		beep8.Utilities.checkInt( 'frameRate', frameRate );
+		b8.Utilities.checkInt( 'frameRate', frameRate );
 
 		const init = gameObject.init || null;
 		const update = gameObject.update || null;
@@ -67,23 +67,23 @@
 	 *
 	 * @param {string} name - The name of the scene to switch to.
 	 */
-	beep8.Scene.set = function( name ) {
+	b8.Scene.set = function( name ) {
 
-		beep8.Utilities.checkString( 'name', name );
+		b8.Utilities.checkString( 'name', name );
 
 		if ( !sceneList[ name ] ) {
-			beep8.Utilities.fatal( `Scene "${name}" does not exist.` );
+			b8.Utilities.fatal( `Scene "${name}" does not exist.` );
 		}
 
 		// Stop the current game loop.
-		beep8.Core.stopFrame();
+		b8.Core.stopFrame();
 
 		// Store the active scene.
 		activeScene = name;
 
 		// Clear any inputs.
-		if ( beep8.Input && typeof beep8.Input.onEndFrame === 'function' ) {
-			beep8.Input.onEndFrame();
+		if ( b8.Input && typeof b8.Input.onEndFrame === 'function' ) {
+			b8.Input.onEndFrame();
 		}
 
 		// Get the scene object.
@@ -96,7 +96,7 @@
 
 		// If there's an update or render method, call frame to create a synchronous game.
 		if ( currentScene.update || currentScene.render ) {
-			beep8.frame( currentScene.render, currentScene.update, currentScene.frameRate );
+			b8.frame( currentScene.render, currentScene.update, currentScene.frameRate );
 		}
 
 	};
@@ -108,9 +108,9 @@
 	 * @param {string} name - The name of the scene to pause.
 	 * @returns {void}
 	 */
-	beep8.Scene.pause = function() {
+	b8.Scene.pause = function() {
 
-		beep8.frame( null );
+		b8.frame( null );
 
 	};
 
@@ -120,7 +120,7 @@
 	 *
 	 * @returns {void}
 	 */
-	beep8.Scene.resume = function() {
+	b8.Scene.resume = function() {
 
 		// If there's no active scene, do nothing.
 		if ( !activeScene ) {
@@ -132,7 +132,7 @@
 
 		// If there's an update or render method, call frame to create a synchronous game.
 		if ( currentScene.update || currentScene.render ) {
-			beep8.frame(
+			b8.frame(
 				currentScene.render || ( () => { } ),
 				currentScene.update || ( () => { } ),
 				currentScene.frameRate || 30
@@ -147,7 +147,7 @@
 	 *
 	 * @returns {Object|null} The active scene object, or null if no scene is active.
 	 */
-	beep8.Scene.get = function() {
+	b8.Scene.get = function() {
 
 		return activeScene;
 
@@ -159,10 +159,10 @@
 	 *
 	 * @returns {Object} All scenes.
 	 */
-	beep8.Scene.getAll = function() {
+	b8.Scene.getAll = function() {
 
 		return sceneList;
 
 	};
 
-} )( beep8 );
+} )( b8 );

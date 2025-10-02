@@ -9,7 +9,7 @@ body {
 	height: 100vh;
 }
 
-#beep8 {
+#b8 {
 	width: min(100%, 80vh);
 	margin: auto;
 	max-height: 100vh;

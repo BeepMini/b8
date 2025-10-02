@@ -8,7 +8,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
 	<link rel="stylesheet" href="example.css">
-	<script src="../dist/beep8.js"></script>
+	<script src="../dist/b8.js"></script>
 
 	<script>
 
@@ -16,30 +16,30 @@
 
 		async function main() {
 
-			beep8.frame( draw );
+			b8.frame( draw );
 
 		}
 
 		const draw = function() {
 
-			beep8.cls();
+			b8.cls();
 
 			let y = 0;
 			for ( i = 0; i < 12; i++ ) {
 				let x = 0;
 				y += 2;
-				for ( const animation in beep8.Actors.animations ) {
+				for ( const animation in b8.Actors.animations ) {
 					x += 2;
-					if ( beep8.Actors.animations.hasOwnProperty( animation ) ) {
-						beep8.locate( x, y );
-						beep8.Actors.draw( i, animation );
+					if ( b8.Actors.animations.hasOwnProperty( animation ) ) {
+						b8.locate( x, y );
+						b8.Actors.draw( i, animation );
 					}
 				}
 			}
 
 		}
 
-		window.addEventListener( "load", () => beep8.init( main ) );
+		window.addEventListener( "load", () => b8.init( main ) );
 	</script>
 </head>
 

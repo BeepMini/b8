@@ -7,7 +7,7 @@ mapper.collision = {
 	 */
 	isSolidAt: ( col, row ) => {
 
-		return beep8.ECS.entitiesAt( col, row ).some( id => beep8.ECS.hasComponent( id, 'Solid' ) );
+		return b8.ECS.entitiesAt( col, row ).some( id => b8.ECS.hasComponent( id, 'Solid' ) );
 
 	},
 

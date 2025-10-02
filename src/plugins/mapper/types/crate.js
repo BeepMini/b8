@@ -2,7 +2,7 @@ mapper.types.crate = {
 
 	spawn: function( col, row, props ) {
 
-		return beep8.ECS.create(
+		return b8.ECS.create(
 			{
 				Type: { name: 'crate' },
 				Loc: { col, row },

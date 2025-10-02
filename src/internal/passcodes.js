@@ -1,6 +1,6 @@
-( function( beep8 ) {
+( function( b8 ) {
 
-	beep8.Passcodes = {};
+	b8.Passcodes = {};
 
 
 	/**
@@ -8,7 +8,7 @@
 	 *
 	 * @type {number}
 	 */
-	beep8.Passcodes.codeLength = 4;
+	b8.Passcodes.codeLength = 4;
 
 
 	/**
@@ -18,12 +18,12 @@
 	 * @param {string} id - The id to generate a code for.
 	 * @returns {string} The generated code.
 	 */
-	beep8.Passcodes.getCode = function( id ) {
+	b8.Passcodes.getCode = function( id ) {
 
-		beep8.Utilities.checkIsSet( "id", id );
+		b8.Utilities.checkIsSet( "id", id );
 
 		// Combine the id and secret key for uniqueness.
-		const combined = id + beep8.CONFIG.PASSKEY;
+		const combined = id + b8.CONFIG.PASSKEY;
 
 		// Generate hash of the combined string.
 		let hash = hashString( combined );
@@ -33,7 +33,7 @@
 		hash = hash.toUpperCase(); // Convert to uppercase
 
 		// Return the first 'codeLength' characters.
-		return hash.substring( 0, beep8.Passcodes.codeLength );
+		return hash.substring( 0, b8.Passcodes.codeLength );
 
 	}
 
@@ -45,12 +45,12 @@
 	 * @param {string} code - The code to check.
 	 * @returns {boolean} True if the code is valid, false otherwise.
 	 */
-	beep8.Passcodes.checkCode = function( id, code ) {
+	b8.Passcodes.checkCode = function( id, code ) {
 
-		beep8.Utilities.checkIsSet( "id", id );
-		beep8.Utilities.checkString( "code", code );
+		b8.Utilities.checkIsSet( "id", id );
+		b8.Utilities.checkString( "code", code );
 
-		const generatedCode = beep8.Passcodes.getCode( id );
+		const generatedCode = b8.Passcodes.getCode( id );
 		return generatedCode === code;
 
 	}
@@ -62,14 +62,14 @@
 	 * @param {string} code - The code to get the id for.
 	 * @returns {int} The id for the code.
 	 */
-	beep8.Passcodes.getId = function( code ) {
+	b8.Passcodes.getId = function( code ) {
 
-		beep8.Utilities.checkString( "code", code );
+		b8.Utilities.checkString( "code", code );
 
 		// Loop through all levels to find a match.
 		code = code.toUpperCase();
 		for ( c = 1; c < 999; c++ ) {
-			if ( beep8.Passcodes.checkCode( c, code ) ) {
+			if ( b8.Passcodes.checkCode( c, code ) ) {
 				return c;
 			}
 		}
@@ -86,26 +86,26 @@
 	 *
 	 * The level id of the specified passcode is returned as an integer.
 	 *
-	 * This can be coloured with the standard beep8.color function.
+	 * This can be coloured with the standard b8.color function.
 	 *
 	 * @returns {number|null} The level id of the passcode.
 	 */
-	beep8.Passcodes.input = async function() {
+	b8.Passcodes.input = async function() {
 
 		const message = 'Enter code:';
 		const width = message.length + 2 + 2;
 		const height = 6;
 
-		let xPosition = Math.round( ( beep8.CONFIG.SCREEN_COLS - width ) / 2 );
-		let yPosition = Math.round( ( beep8.CONFIG.SCREEN_ROWS - height ) / 2 );
+		let xPosition = Math.round( ( b8.CONFIG.SCREEN_COLS - width ) / 2 );
+		let yPosition = Math.round( ( b8.CONFIG.SCREEN_ROWS - height ) / 2 );
 
-		beep8.Core.setCursorLocation( xPosition, yPosition );
-		beep8.TextRenderer.printBox( width, height );
+		b8.Core.setCursorLocation( xPosition, yPosition );
+		b8.TextRenderer.printBox( width, height );
 
-		beep8.Core.setCursorLocation( xPosition + 2, yPosition + 2 );
+		b8.Core.setCursorLocation( xPosition + 2, yPosition + 2 );
 
-		const passcode = await beep8.Async.readLine( message, "", beep8.Passcodes.codeLength );
-		const value = beep8.Passcodes.getId( passcode );
+		const passcode = await b8.Async.readLine( message, "", b8.Passcodes.codeLength );
+		const value = b8.Passcodes.getId( passcode );
 
 		return value;
 
@@ -133,7 +133,7 @@
 		// Loop to extend the length of the result by rehashing.
 		// Adjust to control string length.
 		for ( let j = 0; j < 5; j++ ) {
-			hash = ( hash << 5 ) - hash + beep8.CONFIG.PASSKEY.charCodeAt( j % beep8.CONFIG.PASSKEY.length );
+			hash = ( hash << 5 ) - hash + b8.CONFIG.PASSKEY.charCodeAt( j % b8.CONFIG.PASSKEY.length );
 			// Append base-36 to the result.
 			result += Math.abs( hash ).toString( 36 );
 		}
@@ -143,4 +143,4 @@
 	}
 
 
-} )( beep8 );
+} )( b8 );

@@ -1,17 +1,17 @@
-( function( beep8 ) {
+( function( b8 ) {
 
-	beep8.CONFIG = {
+	b8.CONFIG = {
 		// Enable debug?
 		DEBUG: true,
 		// The name of the project.
-		NAME: "beep8 Project",
+		NAME: "b8 Project",
 		// The version of the project.
 		VERSION: "1.0.0-dev",
 		// Canvas settings
 		CANVAS_SETTINGS: {
-			// The ID to assign to the beep8 canvas.
-			CANVAS_ID: "beep8-canvas",
-			// If set, these CSS classes will be added to the beep8 canvas.
+			// The ID to assign to the b8 canvas.
+			CANVAS_ID: "b8-canvas",
+			// If set, these CSS classes will be added to the b8 canvas.
 			// This is an array of strings, each of which is a class name (without the "."),
 			// for example: [ "foo", "bar", "qux" ]
 			CANVAS_CLASSES: [],
@@ -64,7 +64,7 @@
 		// This can be as many colors as you want, but each color requires us to
 		// store a scaled copy of the characters image in memory, so more colors
 		// = more memory.
-		// You can redefine the colors at runtime with beep8.redefineColors([]).
+		// You can redefine the colors at runtime with b8.redefineColors([]).
 		COLORS: [
 			"#0A0C1F", // 0. Very dark blue - almost black. The darkest colour.
 			"#263264", // 1. Dark blue
@@ -86,9 +86,9 @@
 		// The passkey for the game.
 		// This is used when generating passcodes for levels.
 		// It should be unique for each game so that passcodes are different for each game.
-		// You can generate a passcode for a level with beep8.Passcode.getCode( levelId ).
+		// You can generate a passcode for a level with b8.Passcode.getCode( levelId ).
 		// The passcode will be a 4-character code.
-		PASSKEY: "beep8IsAwesome",
+		PASSKEY: "b8IsAwesome",
 		// If this is not null, then we will display a virtual joystick if the user
 		// is on a mobile device.
 		TOUCH_VJOY: true,
@@ -99,7 +99,7 @@
 		},
 		// If set, then special escape sequences can be used when printing (to set colors, etc).
 		// These are the sequences that starts and end an escape sequence. See the documentation for
-		// beep8.print() for more info on escape sequences.
+		// b8.print() for more info on escape sequences.
 		// If you don't want this, comment out these line, or set them to null.
 		PRINT_ESCAPE_START: "{{",
 		PRINT_ESCAPE_END: "}}",
@@ -109,4 +109,4 @@
 		BORDER_CHAR: 54,
 	};
 
-} )( beep8 );
+} )( b8 );

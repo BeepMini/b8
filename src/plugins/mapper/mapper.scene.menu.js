@@ -24,17 +24,17 @@ mapper.sceneMenu = {
 	 */
 	main: async () => {
 
-		beep8.locate( 0, 0 );
+		b8.locate( 0, 0 );
 		mapper.menu.drawSplash();
 
-		beep8.locate( 5, 18 );
-		beep8.color( 0, 10 );
+		b8.locate( 5, 18 );
+		b8.color( 0, 10 );
 
 		let menuChoices = [ "Start Game", ];
 		if ( mapper.menu.hasInstructions() ) menuChoices.push( "Instructions" );
 		if ( mapper.menu.hasCredits() ) menuChoices.push( "Credits" );
 
-		let choice = await beep8.Async.menu(
+		let choice = await b8.Async.menu(
 			menuChoices,
 			{
 				border: false,
@@ -47,30 +47,30 @@ mapper.sceneMenu = {
 
 		// Start a new game.
 		if ( 'Start Game' === selected ) {
-			beep8.Scene.set( 'game' );
+			b8.Scene.set( 'game' );
 			return;
 		}
 
 		// Show instructions.
 		if ( 'Instructions' === selected ) {
-			beep8.locate( 2, 2 );
-			beep8.color( 15, 13 );
-			const instructions = beep8.wrapText(
+			b8.locate( 2, 2 );
+			b8.color( 15, 13 );
+			const instructions = b8.wrapText(
 				mapper.menu.getInstructions(),
-				beep8.CONFIG.SCREEN_COLS - 6
+				b8.CONFIG.SCREEN_COLS - 6
 			);
-			await beep8.Async.dialog( instructions, [ "OK" ] );
+			await b8.Async.dialog( instructions, [ "OK" ] );
 		}
 
 		// Show credits.
 		if ( 'Credits' === selected ) {
-			beep8.locate( 2, 2 );
-			beep8.color( 15, 13 );
-			const credits = beep8.wrapText(
+			b8.locate( 2, 2 );
+			b8.color( 15, 13 );
+			const credits = b8.wrapText(
 				mapper.menu.getCredits(),
-				beep8.CONFIG.SCREEN_COLS - 6
+				b8.CONFIG.SCREEN_COLS - 6
 			);
-			await beep8.Async.dialog( credits, [ "OK" ] );
+			await b8.Async.dialog( credits, [ "OK" ] );
 		}
 
 		setTimeout( mapper.sceneMenu.main, 10 );

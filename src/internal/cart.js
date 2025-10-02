@@ -1,10 +1,10 @@
-( function( beep8 ) {
+( function( b8 ) {
 
-	beep8.Cart = {};
+	b8.Cart = {};
 
 
 	// Magic string used to identify the custom trailer in the PNG file
-	const MAGIC_STR = "BEEP8";
+	const MAGIC_STR = "b8";
 
 	// Encoded version of the magic string as a Uint8Array
 	const MAGIC = new TextEncoder().encode( MAGIC_STR );
@@ -24,11 +24,11 @@
 	 * @param {string} [filename="cart.png"] - The name of the file to save. Defaults to "cart.png".
 	 * @returns {Promise<void>} - A promise that resolves when the file is saved.
 	 */
-	beep8.Cart.save = async function( canvas, data, filename = "cart.png" ) {
+	b8.Cart.save = async function( canvas, data, filename = "cart.png" ) {
 
-		beep8.Utilities.checkInstanceOf( "canvas", canvas, HTMLCanvasElement );
-		beep8.Utilities.checkString( "data", data );
-		beep8.Utilities.checkString( "filename", filename );
+		b8.Utilities.checkInstanceOf( "canvas", canvas, HTMLCanvasElement );
+		b8.Utilities.checkString( "data", data );
+		b8.Utilities.checkString( "filename", filename );
 
 		const pngBlob = await new Promise( res => canvas.toBlob( res, "image/png" ) );
 
@@ -44,12 +44,12 @@
 	/**
 	 * Loads a PNG file with a custom trailer (set of game data) and extracts the appended data.
 	 *
-	 * The PNG file should be created using the beep8.Cart.save function which appends the required trailer data.
+	 * The PNG file should be created using the b8.Cart.save function which appends the required trailer data.
 	 *
 	 * @param {Blob|string} pngBlobOrUrl - The PNG file as a Blob or a URL.
 	 * @returns {Promise<Object>} - A promise that resolves to the extracted data object.
 	 */
-	beep8.Cart.load = async function( pngBlobOrUrl ) {
+	b8.Cart.load = async function( pngBlobOrUrl ) {
 
 		// Fetch the PNG data as an ArrayBuffer
 		const buffer = await ( typeof pngBlobOrUrl === "string"
@@ -61,11 +61,11 @@
 
 		// Find the position of the magic string in the byte array
 		const offset = _findMagicFromEnd( bytes, MAGIC_STR );
-		if ( offset < 0 ) beep8.Utilities.fatal( "Error Loading Cart: No BEEP8 trailer found" );
+		if ( offset < 0 ) b8.Utilities.fatal( "Error Loading Cart: No b8 trailer found" );
 
 		// Read the version number
 		const version = bytes[ offset + 5 ];
-		if ( version !== VERSION ) beep8.Utilities.fatal( `Error Loading Cart: Unsupported version ${version}` );
+		if ( version !== VERSION ) b8.Utilities.fatal( `Error Loading Cart: Unsupported version ${version}` );
 
 		// Read the payload length
 		const payloadLength = _readU32BE( bytes, offset + 6 );
@@ -76,7 +76,7 @@
 
 		// Ensure the payload length is within bounds
 		if ( payloadEnd + 4 > bytes.length ) {
-			beep8.Utilities.fatal( "Error Loading Cart: Trailer length out of range" );
+			b8.Utilities.fatal( "Error Loading Cart: Trailer length out of range" );
 		}
 
 		// Extract the payload data
@@ -85,7 +85,7 @@
 		// Verify the CRC32 checksum
 		const expectedCrc = _readU32BE( bytes, payloadEnd );
 		if ( _crc32( payload ) !== expectedCrc ) {
-			beep8.Utilities.fatal( "Error Loading Cart: Bad payload CRC" );
+			b8.Utilities.fatal( "Error Loading Cart: Bad payload CRC" );
 		}
 
 		// Decode and return the payload as a JSON object
@@ -245,4 +245,4 @@
 
 	}
 
-} )( beep8 );
+} )( b8 );

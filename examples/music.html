@@ -8,7 +8,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
 	<link rel="stylesheet" href="example.css">
-	<script src="../dist/beep8.js"></script>
+	<script src="../dist/b8.js"></script>
 </head>
 
 <body>
@@ -27,7 +27,7 @@
 	const GOODSEEDS = [ 25101 ];
 
 	// Get list of song types.
-	// const songTypes = Object.keys( beep8.Music.types );
+	// const songTypes = Object.keys( b8.Music.types );
 
 	const initialSeed = 46605;
 	const songName = 'song';
@@ -47,8 +47,8 @@
 
 		const playButton = document.getElementById( 'play-music' );
 
-		if ( beep8.Music.isPlaying( songName ) ) {
-			beep8.Music.stop();
+		if ( b8.Music.isPlaying( songName ) ) {
+			b8.Music.stop();
 			playButton.textContent = playText;
 			return;
 		}
@@ -58,10 +58,10 @@
 		// const type = document.getElementById( 'song-type' ).value; // Get the selected song type.
 		const seed = document.getElementById( 'song-seed' ).value; // Get the seed.
 		console.log( 'Generating song with seed:', seed );
-		const song = beep8.Music.generate( { seed } ); // Generate the song.
-		beep8.Music.play( song );
+		const song = b8.Music.generate( { seed } ); // Generate the song.
+		b8.Music.play( song );
 
-		document.querySelector( '#song-info' ).textContent = JSON.stringify( beep8.Music.currentSongProperties, null, 2 );
+		document.querySelector( '#song-info' ).textContent = JSON.stringify( b8.Music.currentSongProperties, null, 2 );
 
 	}
 

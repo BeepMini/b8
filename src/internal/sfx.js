@@ -1,6 +1,6 @@
-( function( beep8 ) {
+( function( b8 ) {
 
-	beep8.Sfx = {};
+	b8.Sfx = {};
 
 
 	/**
@@ -10,7 +10,7 @@
 	 * @see https://codepen.io/KilledByAPixel/pen/BaowKzv?editors=1000
 	 * @type {Object}
 	 */
-	beep8.Sfx.library = {
+	b8.Sfx.library = {
 
 		'fx/action/drag': [ , 0, 293.6648, .1, , , 4, 6, 32, , , , , 1, 1.4, .1, , .7, .1 ],
 
@@ -214,20 +214,20 @@
 	 * @throws {Error} If the sfx is not found.
 	 * @returns	{void}
 	 */
-	beep8.Sfx.play = function( sfx = '' ) {
+	b8.Sfx.play = function( sfx = '' ) {
 
 		// Quit if no sound specified.
 		if ( !sfx ) return;
 
 		// Check the sfx is a string.
-		beep8.Utilities.checkString( 'sfx', sfx );
+		b8.Utilities.checkString( 'sfx', sfx );
 
 		// SFX not found.
-		if ( !beep8.Sfx.library[ sfx ] ) {
-			beep8.Utilities.fatal( `SFX ${sfx} not found.` );
+		if ( !b8.Sfx.library[ sfx ] ) {
+			b8.Utilities.fatal( `SFX ${sfx} not found.` );
 		}
 
-		beep8.Sfx.playFromArray( beep8.Sfx.library[ sfx ] );
+		b8.Sfx.playFromArray( b8.Sfx.library[ sfx ] );
 
 	}
 
@@ -242,10 +242,10 @@
 	 * @param {Array} sfxArray - The sound effect array to play.
 	 * @returns {void}
 	 */
-	beep8.Sfx.playFromArray = function( sfxArray = [] ) {
+	b8.Sfx.playFromArray = function( sfxArray = [] ) {
 
 		// Check the sfx is an array.
-		beep8.Utilities.checkArray( 'sfxArray', sfxArray );
+		b8.Utilities.checkArray( 'sfxArray', sfxArray );
 
 		// Play the raw sound effect.
 		zzfx( ...sfxArray );
@@ -261,12 +261,12 @@
 	 * @throws {Error} If the sfxArray is not an array.
 	 * @return {void}
 	 */
-	beep8.Sfx.add = function( sfxName, sfxArray ) {
+	b8.Sfx.add = function( sfxName, sfxArray ) {
 
-		beep8.Utilities.checkString( 'sfxName', sfxName );
-		beep8.Utilities.checkArray( 'sfxArray', sfxArray );
+		b8.Utilities.checkString( 'sfxName', sfxName );
+		b8.Utilities.checkArray( 'sfxArray', sfxArray );
 
-		beep8.Sfx.library[ sfxName ] = sfxArray;
+		b8.Sfx.library[ sfxName ] = sfxArray;
 
 	}
 
@@ -276,10 +276,10 @@
 	 *
 	 * @return {Array} The list of sfx.
 	 */
-	beep8.Sfx.get = function() {
+	b8.Sfx.get = function() {
 
-		return Object.keys( beep8.Sfx.library );
+		return Object.keys( b8.Sfx.library );
 
 	}
 
-} )( beep8 );
+} )( b8 );

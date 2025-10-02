@@ -12,7 +12,7 @@ mapper.sceneGame = {
 
 		console.log( mapper.CONFIG );
 
-		mapper.sceneGame.UI = beep8.Tilemap.load( mapper.CONFIG.gameUI );
+		mapper.sceneGame.UI = b8.Tilemap.load( mapper.CONFIG.gameUI );
 
 	},
 
@@ -29,8 +29,8 @@ mapper.sceneGame = {
 		if ( mapper.CONFIG.moveDelay > 0 ) return;
 
 		// Get player components
-		const loc = beep8.ECS.getComponent( mapper.player, 'Loc' );
-		const anim = beep8.ECS.getComponent( mapper.player, 'CharacterAnimation' );
+		const loc = b8.ECS.getComponent( mapper.player, 'Loc' );
+		const anim = b8.ECS.getComponent( mapper.player, 'CharacterAnimation' );
 
 		if ( mapper.CONFIG.moveDelay > 0 ) return;
 
@@ -39,11 +39,11 @@ mapper.sceneGame = {
 		// Calculate direction of movement.
 		// Use else if so we can only move in one direction at a time and not jump
 		// over collision walls diagonally.
-		if ( beep8.keyp( "ArrowUp" ) ) { dy = -1; }
-		else if ( beep8.keyp( "ArrowDown" ) ) { dy = 1; }
-		else if ( beep8.keyp( "ArrowLeft" ) ) { dx = -1; }
-		else if ( beep8.keyp( "ArrowRight" ) ) { dx = 1; }
-		if ( beep8.keyp( "ButtonB" ) ) mapper.doAction( mapper.player );
+		if ( b8.keyp( "ArrowUp" ) ) { dy = -1; }
+		else if ( b8.keyp( "ArrowDown" ) ) { dy = 1; }
+		else if ( b8.keyp( "ArrowLeft" ) ) { dx = -1; }
+		else if ( b8.keyp( "ArrowRight" ) ) { dx = 1; }
+		if ( b8.keyp( "ButtonB" ) ) mapper.doAction( mapper.player );
 
 		if ( dx !== 0 || dy !== 0 ) {
 
@@ -62,8 +62,8 @@ mapper.sceneGame = {
 				newRow = loc.row;
 			}
 
-			beep8.ECS.set( mapper.player, 'Direction', { dx, dy } );
-			beep8.ECS.setLoc( mapper.player, newCol, newRow );
+			b8.ECS.set( mapper.player, 'Direction', { dx, dy } );
+			b8.ECS.setLoc( mapper.player, newCol, newRow );
 
 			mapper.CONFIG.moveDelay = 0.15;
 
@@ -81,47 +81,47 @@ mapper.sceneGame = {
 	 */
 	render: function() {
 
-		beep8.cls();
+		b8.cls();
 
-		beep8.locate( mapper.CONFIG.mapOffsetX, mapper.CONFIG.mapOffsetY );
+		b8.locate( mapper.CONFIG.mapOffsetX, mapper.CONFIG.mapOffsetY );
 		mapper.drawScreen();
 		mapper.render( mapper.CONFIG.mapOffsetX, mapper.CONFIG.mapOffsetY );
 
 		// Draw UI background.
-		beep8.locate( 0, beep8.CONFIG.SCREEN_ROWS - mapper.sceneGame.UI.length );
-		beep8.Tilemap.draw( mapper.sceneGame.UI );
+		b8.locate( 0, b8.CONFIG.SCREEN_ROWS - mapper.sceneGame.UI.length );
+		b8.Tilemap.draw( mapper.sceneGame.UI );
 
 		// Draw currency value.
-		beep8.locate( 2, beep8.CONFIG.SCREEN_ROWS - 2 );
-		beep8.color( mapper.settings.coinColor, 0 );
-		beep8.printChar( mapper.settings.coin || 266 );
+		b8.locate( 2, b8.CONFIG.SCREEN_ROWS - 2 );
+		b8.color( mapper.settings.coinColor, 0 );
+		b8.printChar( mapper.settings.coin || 266 );
 
-		beep8.color( 15, 0 );
-		beep8.print( ' ' + parseInt( beep8.Inventory.getCount( 'coin' ) ).toString().padStart( 4, '0' ) );
+		b8.color( 15, 0 );
+		b8.print( ' ' + parseInt( b8.Inventory.getCount( 'coin' ) ).toString().padStart( 4, '0' ) );
 
 		// Draw keys.
-		const keys = beep8.Inventory.filter( /^key/ );
+		const keys = b8.Inventory.filter( /^key/ );
 		// Loop through keys and draw them.
 		keys.forEach(
 			( item, index ) => {
 				const color = parseInt( item.id.split( '-' )[ 1 ] ) || 15;
-				beep8.locate( 10 + index, beep8.CONFIG.SCREEN_ROWS - 2 );
-				beep8.color( color, -1 );
-				beep8.printChar( 255 );
+				b8.locate( 10 + index, b8.CONFIG.SCREEN_ROWS - 2 );
+				b8.color( color, -1 );
+				b8.printChar( 255 );
 			}
 		);
 
 		// Draw actions.
 		// -------------
-		beep8.color( 15, -1 );
+		b8.color( 15, -1 );
 
 		// A button.
-		beep8.locate( 11, beep8.CONFIG.SCREEN_ROWS - 4 );
-		beep8.print( ' ' );
+		b8.locate( 11, b8.CONFIG.SCREEN_ROWS - 4 );
+		b8.print( ' ' );
 
 		// B button.
-		beep8.locate( 15, beep8.CONFIG.SCREEN_ROWS - 4 );
-		beep8.print( mapper.helpers.capitalizeWords( ' ' + mapper.promptAhead( mapper.player ) ) );
+		b8.locate( 15, b8.CONFIG.SCREEN_ROWS - 4 );
+		b8.print( mapper.helpers.capitalizeWords( ' ' + mapper.promptAhead( mapper.player ) ) );
 
 		return;
 

@@ -18,7 +18,7 @@ mapper.types.doorStairs = {
 			},
 		};
 
-		return beep8.ECS.create( stairsProps );
+		return b8.ECS.create( stairsProps );
 
 	},
 

@@ -8,7 +8,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
 	<link rel="stylesheet" href="example.css">
-	<script src="../dist/beep8.min.js"></script>
+	<script src="../dist/b8.min.js"></script>
 
 	<script>
 
@@ -108,15 +108,15 @@
 
 		function drawPlayer() {
 
-			beep8.locate( px, py );
-			beep8.color( 15, 0 );
+			b8.locate( px, py );
+			b8.color( 15, 0 );
 			let animation = 'move-right';
 
 			if ( facingLeft ) {
 				animation = 'move-left';
 			}
 
-			beep8.drawActor( 14, animation );
+			b8.drawActor( 14, animation );
 
 		}
 
@@ -125,9 +125,9 @@
 			for ( let y = 0; y < mapArray.length; y++ ) {
 				for ( let x = 0; x < mapArray[ y ].length; x++ ) {
 					if ( NPC_IDS.includes( mapArray[ y ][ x ] ) ) {
-						beep8.color( 15, 0 );
-						beep8.locate( x, y + 1 );
-						beep8.drawActor( parseInt( mapArray[ y ][ x ] ), "idle" );
+						b8.color( 15, 0 );
+						b8.locate( x, y + 1 );
+						b8.drawActor( parseInt( mapArray[ y ][ x ] ), "idle" );
 					}
 				}
 			}
@@ -137,24 +137,24 @@
 		function drawMap() {
 
 			// Map.
-			beep8.cls();
-			beep8.locate( 0, 1 );
-			beep8.Tilemap.draw( map, 0, 0 );
+			b8.cls();
+			b8.locate( 0, 1 );
+			b8.Tilemap.draw( map, 0, 0 );
 
 			// Draw NPCs.
 			drawNPCs();
 
 			// UI.
-			beep8.locate( 1, 22 );
-			beep8.color( 8, 0 );
-			beep8.print(
+			b8.locate( 1, 22 );
+			b8.color( 8, 0 );
+			b8.print(
 				"ROBIN  HP 34/34  Gold:72\n" +
 				"Paladin Lvl 6  XP:18,390" );
 		}
 
 		async function movePlayer() {
 
-			const keyName = await beep8.Async.key();
+			const keyName = await b8.Async.key();
 
 			if ( keyName.includes( "ArrowLeft" ) ) facingLeft = 1;
 			if ( keyName.includes( "ArrowRight" ) ) facingLeft = 0;
@@ -181,8 +181,8 @@
 		}
 
 		function loadMap( mapName ) {
-			mapArray = beep8.Tilemap.convertFromText( MAPS[ mapName ].join( "\n" ) );
-			return beep8.Tilemap.createFromArray( mapArray, TILES );
+			mapArray = b8.Tilemap.convertFromText( MAPS[ mapName ].join( "\n" ) );
+			return b8.Tilemap.createFromArray( mapArray, TILES );
 		}
 
 		function goToMap( mapName, x, y ) {
@@ -194,12 +194,12 @@
 
 		async function randomGreeting() {
 			const greeting = GREETINGS[ Math.floor( Math.random() * GREETINGS.length ) ];
-			await beep8.Async.dialog( `VILLAGER:\n${greeting}` );
+			await b8.Async.dialog( `VILLAGER:\n${greeting}` );
 		}
 
 		window.addEventListener(
 			"load",
-			() => beep8.init(
+			() => b8.init(
 				() => {
 					goToMap( "OVERWORLD", 7, 9 );
 					main();

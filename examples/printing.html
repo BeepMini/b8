@@ -8,63 +8,63 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
 	<link rel="stylesheet" href="example.css">
-	<script src="../dist/beep8.js"></script>
+	<script src="../dist/b8.js"></script>
 
 	<script>
 
 		async function main() {
 
 			// Load the custom fonts.
-			beep8.cls();
-			beep8.print( "Loading fonts..." );
+			b8.cls();
+			b8.print( "Loading fonts..." );
 
-			const boldFont = await beep8.Async.loadFont( "../assets/font-default-tall-bold.png", 0.5, 1 );
-			const bigFont = await beep8.Async.loadFont( "../assets/font-default-tall.png", 0.5, 1 );
+			const boldFont = await b8.Async.loadFont( "../assets/font-default-tall-bold.png", 0.5, 1 );
+			const bigFont = await b8.Async.loadFont( "../assets/font-default-tall.png", 0.5, 1 );
 
-			beep8.color( 15, 0 );
-			beep8.cls();
-			beep8.printBox( beep8.CONFIG.SCREEN_COLS, beep8.CONFIG.SCREEN_ROWS - 11 );
-			beep8.locate( 2, 2 );
-			beep8.color( 0, 15 );
-			beep8.print( "PRINTING/FONTS DEMO\n\n" );
-			beep8.color( 15, 0 );
-			beep8.print( "The default font.\n" );
-			beep8.setFont( boldFont );
-			beep8.print( "The bold font.\n" );
-			beep8.setFont( bigFont );
-			beep8.print( "Big font.\n" );
+			b8.color( 15, 0 );
+			b8.cls();
+			b8.printBox( b8.CONFIG.SCREEN_COLS, b8.CONFIG.SCREEN_ROWS - 11 );
+			b8.locate( 2, 2 );
+			b8.color( 0, 15 );
+			b8.print( "PRINTING/FONTS DEMO\n\n" );
+			b8.color( 15, 0 );
+			b8.print( "The default font.\n" );
+			b8.setFont( boldFont );
+			b8.print( "The bold font.\n" );
+			b8.setFont( bigFont );
+			b8.print( "Big font.\n" );
 
-			beep8.setFont( null );  // Return to default font.
-			beep8.print( "\nStyle markup can be used:\n", beep8.CONFIG.SCREEN_COLS - 2 );
+			b8.setFont( null );  // Return to default font.
+			b8.print( "\nStyle markup can be used:\n", b8.CONFIG.SCREEN_COLS - 2 );
 			// {{c13}} sets the foreground color to 13 (green).
 			// {{z}} resets the color.
 			// {{c0}} sets the color to 0 (black) and {{b14}} sets the background to 14 (pink).
 			// You can combine them in the same sequence: {{c0,b14}}.
-			beep8.print( "You can have a {{c12,t" + boldFont + "}}green{{z}} word. Or say an {{c0,b14}}important{{z}} thing. Or use a {{t" + bigFont + "}}bolder, retro{{z}} font.", beep8.CONFIG.SCREEN_COLS - 4 );
+			b8.print( "You can have a {{c12,t" + boldFont + "}}green{{z}} word. Or say an {{c0,b14}}important{{z}} thing. Or use a {{t" + bigFont + "}}bolder, retro{{z}} font.", b8.CONFIG.SCREEN_COLS - 4 );
 
 			// Text alignments.
-			beep8.locate( 2, 15 );
-			beep8.color( 10, 0 );
-			beep8.print( "Left aligned\n" );
-			beep8.printCentered( "Center aligned\n", beep8.CONFIG.SCREEN_COLS - 4 );
-			beep8.printRight( "Right aligned\n", beep8.CONFIG.SCREEN_COLS - 4 );
+			b8.locate( 2, 15 );
+			b8.color( 10, 0 );
+			b8.print( "Left aligned\n" );
+			b8.printCentered( "Center aligned\n", b8.CONFIG.SCREEN_COLS - 4 );
+			b8.printRight( "Right aligned\n", b8.CONFIG.SCREEN_COLS - 4 );
 
 			// Lower Typewriter box.
-			beep8.locate( 0, 19 );
-			beep8.color( 10, 6 );
-			beep8.printBox( beep8.CONFIG.SCREEN_COLS, beep8.CONFIG.SCREEN_ROWS - 20 );
+			b8.locate( 0, 19 );
+			b8.color( 10, 6 );
+			b8.printBox( b8.CONFIG.SCREEN_COLS, b8.CONFIG.SCREEN_ROWS - 20 );
 
-			beep8.locate( 2, 20 );
-			beep8.color( 15, 6 );
-			await beep8.Async.typewriter(
+			b8.locate( 2, 20 );
+			b8.color( 15, 6 );
+			await b8.Async.typewriter(
 				"What sayest thou?\n" +
 				"Why doth the swift auburn fox leap o'er the slothful dog?",
-				beep8.CONFIG.SCREEN_COLS - 4
+				b8.CONFIG.SCREEN_COLS - 4
 			);
 
 		}
 
-		window.addEventListener( "load", () => beep8.init( main ) );
+		window.addEventListener( "load", () => b8.init( main ) );
 	</script>
 </head>
 

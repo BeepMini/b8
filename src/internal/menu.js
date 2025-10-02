@@ -1,6 +1,6 @@
-( function( beep8 ) {
+( function( b8 ) {
 
-	beep8.Menu = {};
+	b8.Menu = {};
 
 
 	/**
@@ -29,20 +29,20 @@
 	 * @param {object} [options] - Options for the menu.
 	 * @returns {Promise<number>} A promise that resolves to the index of the selected choice.
 	 */
-	beep8.Menu.display = async function( choices, options ) {
+	b8.Menu.display = async function( choices, options ) {
 
 		options = options || {};
-		beep8.Utilities.checkArray( "choices", choices );
-		beep8.Utilities.checkObject( "options", options );
+		b8.Utilities.checkArray( "choices", choices );
+		b8.Utilities.checkObject( "options", options );
 
 		options = Object.assign(
 			{
 				title: "",
 				prompt: "",
-				selBgColor: beep8.Core.drawState.fgColor,
-				selFgColor: beep8.Core.drawState.bgColor,
+				selBgColor: b8.Core.drawState.fgColor,
+				selFgColor: b8.Core.drawState.bgColor,
 				border: true,
-				borderChar: beep8.CONFIG.BORDER_CHAR,
+				borderChar: b8.CONFIG.BORDER_CHAR,
 				center: false,
 				centerH: false,
 				centerV: false,
@@ -53,10 +53,10 @@
 			options
 		);
 
-		let startCol = beep8.Core.drawState.cursorCol;
-		let startRow = beep8.Core.drawState.cursorRow;
+		let startCol = b8.Core.drawState.cursorCol;
+		let startRow = b8.Core.drawState.cursorRow;
 
-		const promptSize = beep8.TextRenderer.measure( options.prompt );
+		const promptSize = b8.TextRenderer.measure( options.prompt );
 		const prompt01 = options.prompt ? 1 : 0;
 		const border01 = options.borderChar ? 1 : 0;
 		let choicesCols = 0;
@@ -64,51 +64,51 @@
 
 		choices.forEach(
 			( choice ) => {
-				choicesCols = Math.ceil( Math.max( choicesCols, beep8.TextRenderer.measure( choice ).cols ) );
+				choicesCols = Math.ceil( Math.max( choicesCols, b8.TextRenderer.measure( choice ).cols ) );
 			}
 		);
 
 		let totalCols = Math.ceil( Math.max( promptSize.cols, choicesCols ) ) + 2 * options.padding + 2 * border01;
-		totalCols = Math.min( totalCols, beep8.CONFIG.SCREEN_COLS );
+		totalCols = Math.min( totalCols, b8.CONFIG.SCREEN_COLS );
 
 		const totalRows = prompt01 * ( promptSize.rows + 1 ) + choicesRows + 2 * options.padding + 2 * border01;
 
 		if ( options.centerH || options.center ) {
-			startCol = Math.round( ( beep8.CONFIG.SCREEN_COLS - totalCols ) / 2 );
+			startCol = Math.round( ( b8.CONFIG.SCREEN_COLS - totalCols ) / 2 );
 		}
 
 		if ( options.centerV || options.center ) {
-			startRow = Math.round( ( beep8.CONFIG.SCREEN_ROWS - totalRows ) / 2 );
+			startRow = Math.round( ( b8.CONFIG.SCREEN_ROWS - totalRows ) / 2 );
 		}
 
-		beep8.Core.drawState.cursorCol = startCol;
-		beep8.Core.drawState.cursorRow = startRow;
+		b8.Core.drawState.cursorCol = startCol;
+		b8.Core.drawState.cursorRow = startRow;
 
 		if ( options.border ) {
 
 			// Print the background & border.
-			beep8.TextRenderer.printBox( totalCols, totalRows, true, options.borderChar );
+			b8.TextRenderer.printBox( totalCols, totalRows, true, options.borderChar );
 
 			// Print title at the top of the border.
 			if ( options.title ) {
 				const t = " " + options.title + " ";
-				beep8.Core.drawState.cursorCol = startCol + Math.round( ( totalCols - t.length ) / 2 );
-				beep8.TextRenderer.print( t );
+				b8.Core.drawState.cursorCol = startCol + Math.round( ( totalCols - t.length ) / 2 );
+				b8.TextRenderer.print( t );
 			}
 
 		}
 
 		if ( options.prompt ) {
 
-			beep8.Core.drawState.cursorCol = promptSize.cols <= totalCols ?
+			b8.Core.drawState.cursorCol = promptSize.cols <= totalCols ?
 				( startCol + border01 + options.padding ) :
 				( startCol + Math.round( ( totalCols - promptSize.cols ) / 2 ) );
-			beep8.Core.drawState.cursorRow = startRow + border01 + options.padding;
+			b8.Core.drawState.cursorRow = startRow + border01 + options.padding;
 
 			if ( options.typewriter ) {
-				await beep8.Async.typewriter( options.prompt );
+				await b8.Async.typewriter( options.prompt );
 			} else {
-				beep8.TextRenderer.print( options.prompt );
+				b8.TextRenderer.print( options.prompt );
 			}
 
 		}
@@ -120,26 +120,26 @@
 		while ( true ) {
 
 			// Draw choices.
-			beep8.Core.drawState.cursorRow = startRow + border01 + options.padding + prompt01 * ( promptSize.rows + 1 );
-			beep8.Core.drawState.cursorCol = ( promptSize.cols <= choicesCols ) ?
+			b8.Core.drawState.cursorRow = startRow + border01 + options.padding + prompt01 * ( promptSize.rows + 1 );
+			b8.Core.drawState.cursorCol = ( promptSize.cols <= choicesCols ) ?
 				( startCol + border01 + options.padding ) :
 				( startCol + Math.round( ( totalCols - choicesCols ) / 2 ) );
 
 			printChoices( choices, selIndex, options );
 
-			const k = await beep8.Input.readKeyAsync();
+			const k = await b8.Input.readKeyAsync();
 
 			if ( k.includes( "ArrowUp" ) ) {
 
 				// Go up the menu.
 				selIndex = selIndex > 0 ? selIndex - 1 : choices.length - 1;
-				if ( choices.length > 1 ) beep8.Sfx.play( beep8.CONFIG.SFX.MENU_UP );
+				if ( choices.length > 1 ) b8.Sfx.play( b8.CONFIG.SFX.MENU_UP );
 
 			} else if ( k.includes( "ArrowDown" ) ) {
 
 				// Go down the menu.
 				selIndex = ( selIndex + 1 ) % choices.length;
-				if ( choices.length > 1 ) beep8.Sfx.play( beep8.CONFIG.SFX.MENU_DOWN );
+				if ( choices.length > 1 ) b8.Sfx.play( b8.CONFIG.SFX.MENU_DOWN );
 
 			} else if (
 				k.includes( "Enter" ) ||
@@ -149,7 +149,7 @@
 			) {
 
 				// Select menu item.
-				beep8.Sfx.play( beep8.CONFIG.SFX.MENU_SELECT );
+				b8.Sfx.play( b8.CONFIG.SFX.MENU_SELECT );
 				return selIndex;
 
 			}
@@ -173,17 +173,17 @@
 	 */
 	const printChoices = function( choices, selIndex, options ) {
 
-		const origBg = beep8.Core.drawState.bgColor;
-		const origFg = beep8.Core.drawState.fgColor;
+		const origBg = b8.Core.drawState.bgColor;
+		const origFg = b8.Core.drawState.fgColor;
 
 		for ( let i = 0; i < choices.length; i++ ) {
 			const isSel = i === selIndex;
-			beep8.Core.setColor( isSel ? options.selFgColor : origFg, isSel ? options.selBgColor : origBg );
-			beep8.TextRenderer.print( choices[ i ] + "\n" );
+			b8.Core.setColor( isSel ? options.selFgColor : origFg, isSel ? options.selBgColor : origBg );
+			b8.TextRenderer.print( choices[ i ] + "\n" );
 		}
 
-		beep8.Core.setColor( origFg, origBg );
+		b8.Core.setColor( origFg, origBg );
 
 	}
 
-} )( beep8 );
+} )( b8 );

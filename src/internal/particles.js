@@ -1,9 +1,9 @@
-( function( beep8 ) {
+( function( b8 ) {
 
 	/**
-	 * beep8.Particles handles particles.
+	 * b8.Particles handles particles.
 	 */
-	beep8.Particles = {};
+	b8.Particles = {};
 
 	// Private particle array.
 	let particles_ = [];
@@ -17,17 +17,17 @@
 	 * - vx, vy: velocity (pixels per second, default=0),
 	 * - life: remaining life time (seconds, default=1),
 	 * - size: square size (pixels, default=1),
-	 * - color: fill color (a beep8 palette id, default=15).
+	 * - color: fill color (a b8 palette id, default=15).
 	 * - gravity: gravity (pixels per second, default=0).
 	 *
 	 * @param {object} particle - The particle object to add.
 	 * @returns {void}
 	 */
-	beep8.Particles.add = function( x, y, props ) {
+	b8.Particles.add = function( x, y, props ) {
 
-		beep8.Utilities.checkNumber( 'x', x );
-		beep8.Utilities.checkNumber( 'y', y );
-		beep8.Utilities.checkObject( 'props', props );
+		b8.Utilities.checkNumber( 'x', x );
+		b8.Utilities.checkNumber( 'y', y );
+		b8.Utilities.checkObject( 'props', props );
 
 		const defaults = {
 			x: x,
@@ -44,12 +44,12 @@
 
 		// Particle Color.
 		if ( Array.isArray( newParticle.color ) ) {
-			newParticle.color = beep8.Random.pick( newParticle.color );
+			newParticle.color = b8.Random.pick( newParticle.color );
 		}
 
 		// Particle Size.
 		if ( Array.isArray( newParticle.size ) ) {
-			newParticle.size = beep8.Random.pick( newParticle.size );
+			newParticle.size = b8.Random.pick( newParticle.size );
 		}
 
 		particles_.push( newParticle );
@@ -64,7 +64,7 @@
 	 *
 	 * The optional properties include:
 	 * - size: The size of the particles (in pixels, default=1).
-	 * - color: The color of the particles (a beep8 palette id, default=fgColor).
+	 * - color: The color of the particles (a b8 palette id, default=fgColor).
 	 * - life: The life of the particles (in seconds, default=2).
 	 * - speed: The speed of the particles (in pixels per second, default=25).
 	 * - gravity: The gravity of the particles (in pixels per second, default=0).
@@ -75,16 +75,16 @@
 	 * @param {object} props - The properties of the explosion.
 	 * @returns {void}
 	 */
-	beep8.Particles.createExplosion = function( x, y, count = 10, props = {} ) {
+	b8.Particles.createExplosion = function( x, y, count = 10, props = {} ) {
 
-		beep8.Utilities.checkNumber( 'x', x );
-		beep8.Utilities.checkNumber( 'y', y );
-		beep8.Utilities.checkNumber( 'count', count );
-		beep8.Utilities.checkObject( 'props', props );
+		b8.Utilities.checkNumber( 'x', x );
+		b8.Utilities.checkNumber( 'y', y );
+		b8.Utilities.checkNumber( 'count', count );
+		b8.Utilities.checkObject( 'props', props );
 
 		const defaults = {
 			size: 1,
-			color: beep8.Core.drawState.fgColor,
+			color: b8.Core.drawState.fgColor,
 			life: 2,
 			speed: 25,
 			gravity: 0,
@@ -94,10 +94,10 @@
 
 		for ( let i = 0; i < count; i++ ) {
 
-			const angle = beep8.Random.range( 0, Math.PI * 2 );
-			const speed = beep8.Random.range( newExplosion.speed / 2, newExplosion.speed );
+			const angle = b8.Random.range( 0, Math.PI * 2 );
+			const speed = b8.Random.range( newExplosion.speed / 2, newExplosion.speed );
 
-			beep8.Particles.add(
+			b8.Particles.add(
 				x,
 				y,
 				{
@@ -118,13 +118,13 @@
 	/**
 	 * Updates all particles.
 	 *
-	 * If you are using Beep8 scenes or the Beep8 game loop (doframe) then this
+	 * If you are using b8 scenes or the b8 game loop (doframe) then this
 	 * is called automatically and you don't need to call it manually.
 	 *
 	 * @param {number} dt - Delta time to update particle movement.
 	 * @returns {void}
 	 */
-	beep8.Particles.update = function( dt ) {
+	b8.Particles.update = function( dt ) {
 
 		// Loop backwards to allow for removal.
 		for ( let i = particles_.length - 1; i >= 0; i-- ) {
@@ -156,7 +156,7 @@
 	 *
 	 * @returns {void}
 	 */
-	beep8.Particles.render = function() {
+	b8.Particles.render = function() {
 
 		for ( let i = 0; i < particles_.length; i++ ) {
 
@@ -164,8 +164,8 @@
 			const center = p.size / 2;
 
 			// Draw the square particle with p.x, p.y at the center.
-			beep8.Core.offCtx.fillStyle = beep8.Core.getColorHex( p.color );
-			beep8.Core.offCtx.fillRect( Math.round( p.x - center ), Math.round( p.y - center ), Math.round( p.size ), Math.round( p.size ) );
+			b8.Core.offCtx.fillStyle = b8.Core.getColorHex( p.color );
+			b8.Core.offCtx.fillRect( Math.round( p.x - center ), Math.round( p.y - center ), Math.round( p.size ), Math.round( p.size ) );
 
 		}
 
@@ -177,7 +177,7 @@
 	 *
 	 * @returns {void}
 	 */
-	beep8.Particles.clearAll = function() {
+	b8.Particles.clearAll = function() {
 
 		particles_ = [];
 
@@ -192,7 +192,7 @@
 	 *
 	 * @returns {array} The particles array.
 	 */
-	beep8.Particles.getParticles = function() {
+	b8.Particles.getParticles = function() {
 
 		return [ ...particles_ ];
 
@@ -207,12 +207,12 @@
 	 * @param {array} particles - The particles array.
 	 * @returns {void}
 	 */
-	beep8.Particles.setParticles = function( particles ) {
+	b8.Particles.setParticles = function( particles ) {
 
-		beep8.Utilities.checkArray( 'particles', particles );
+		b8.Utilities.checkArray( 'particles', particles );
 
 		particles_ = particles;
 
 	};
 
-} )( beep8 );
+} )( b8 );

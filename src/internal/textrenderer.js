@@ -1,6 +1,6 @@
-( function( beep8 ) {
+( function( b8 ) {
 
-	beep8.TextRenderer = {};
+	b8.TextRenderer = {};
 
 	/**
 	 * An array of character codes for each character in the chars string.
@@ -10,18 +10,18 @@
 	 */
 	const charMap = [];
 
-	// beep8.TextRendererFont for each font, keyed by font name. The default font is called "default".
-	beep8.TextRenderer.fonts_ = {};
+	// b8.TextRendererFont for each font, keyed by font name. The default font is called "default".
+	b8.TextRenderer.fonts_ = {};
 
 	// Current font. This is never null after initialization. This is a reference
-	// to a beep8.TextRendererFont object. For a font to be set as current, it must have a
-	// character width and height that are INTEGER MULTIPLES of beep8.CONFIG.CHR_WIDTH and
-	// beep8.CONFIG.CHR_HEIGHT, respectively, to ensure the row/column system continues to work.
-	beep8.TextRenderer.curFont_ = null;
+	// to a b8.TextRendererFont object. For a font to be set as current, it must have a
+	// character width and height that are INTEGER MULTIPLES of b8.CONFIG.CHR_WIDTH and
+	// b8.CONFIG.CHR_HEIGHT, respectively, to ensure the row/column system continues to work.
+	b8.TextRenderer.curFont_ = null;
 
-	// Current tiles. This is a reference to a beep8.TextRendererFont object.
+	// Current tiles. This is a reference to a b8.TextRendererFont object.
 	// This is used for the tiles font.
-	beep8.TextRenderer.curTiles_ = null;
+	b8.TextRenderer.curTiles_ = null;
 
 
 	/**
@@ -32,9 +32,9 @@
 	 *
 	 * @returns {void}
 	 */
-	beep8.TextRenderer.prepareCharMap = function() {
+	b8.TextRenderer.prepareCharMap = function() {
 
-		let charString = [ ...beep8.CONFIG.CHRS ];
+		let charString = [ ...b8.CONFIG.CHRS ];
 
 		for ( let i = 0; i < charString.length; i++ ) {
 			charMap.push( charString[ i ].charCodeAt( 0 ) );
@@ -44,25 +44,25 @@
 
 
 	/**
-	 * Initializes the beep8.TextRenderer with the default font.
+	 * Initializes the b8.TextRenderer with the default font.
 	 *
 	 * @returns {Promise<void>}
 	 */
-	beep8.TextRenderer.initAsync = async function() {
+	b8.TextRenderer.initAsync = async function() {
 
-		beep8.Utilities.log( "beep8.TextRenderer init." );
+		b8.Utilities.log( "b8.TextRenderer init." );
 
 		// Prepare the text font.
-		beep8.TextRenderer.curFont_ = await beep8.TextRenderer.loadFontAsync( "default-thin", beep8.CONFIG.FONT_DEFAULT, 0.5, 1 );
+		b8.TextRenderer.curFont_ = await b8.TextRenderer.loadFontAsync( "default-thin", b8.CONFIG.FONT_DEFAULT, 0.5, 1 );
 
 		// Prepare the tiles font.
-		beep8.TextRenderer.curTiles_ = await beep8.TextRenderer.loadFontAsync( "tiles", beep8.CONFIG.FONT_TILES );
+		b8.TextRenderer.curTiles_ = await b8.TextRenderer.loadFontAsync( "tiles", b8.CONFIG.FONT_TILES );
 
 		// Prepare the actors/ player characters.
-		beep8.TextRenderer.curActors_ = await beep8.TextRenderer.loadFontAsync( "actors", beep8.CONFIG.FONT_ACTORS );
+		b8.TextRenderer.curActors_ = await b8.TextRenderer.loadFontAsync( "actors", b8.CONFIG.FONT_ACTORS );
 
 		// Prepare the charMap array.
-		beep8.TextRenderer.prepareCharMap();
+		b8.TextRenderer.prepareCharMap();
 
 	}
 
@@ -76,15 +76,15 @@
 	 * @param {number} [tileSizeHeightMultiplier=1] - The tile size height multiplier for the font.
 	 * @returns {Promise<void>}
 	 */
-	beep8.TextRenderer.loadFontAsync = async function( fontName, fontImageFile, tileSizeWidthMultiplier = 1, tileSizeHeightMultiplier = 1 ) {
+	b8.TextRenderer.loadFontAsync = async function( fontName, fontImageFile, tileSizeWidthMultiplier = 1, tileSizeHeightMultiplier = 1 ) {
 
-		beep8.Utilities.checkString( "fontName", fontName );
-		beep8.Utilities.checkString( "fontImageFile", fontImageFile );
+		b8.Utilities.checkString( "fontName", fontName );
+		b8.Utilities.checkString( "fontImageFile", fontImageFile );
 
-		const font = new beep8.TextRendererFont( fontName, fontImageFile, tileSizeWidthMultiplier, tileSizeHeightMultiplier );
+		const font = new b8.TextRendererFont( fontName, fontImageFile, tileSizeWidthMultiplier, tileSizeHeightMultiplier );
 		await font.initAsync();
 
-		beep8.TextRenderer.fonts_[ fontName ] = font;
+		b8.TextRenderer.fonts_[ fontName ] = font;
 
 		return font;
 
@@ -98,12 +98,12 @@
 	 * @returns {void}
 	 * @throws {Error} If the font is not found or its dimensions are not compatible.
 	 */
-	beep8.TextRenderer.setFont = function( fontName ) {
+	b8.TextRenderer.setFont = function( fontName ) {
 
-		const font = beep8.TextRenderer.getFontByName( fontName );
+		const font = b8.TextRenderer.getFontByName( fontName );
 
 		if ( font ) {
-			beep8.TextRenderer.curFont_ = font;
+			b8.TextRenderer.curFont_ = font;
 		}
 
 	}
@@ -112,11 +112,11 @@
 	/**
 	 * Get the current font.
 	 *
-	 * @returns {beep8.TextRendererFont} The current font.
+	 * @returns {b8.TextRendererFont} The current font.
 	 */
-	beep8.TextRenderer.getFont = function() {
+	b8.TextRenderer.getFont = function() {
 
-		return beep8.TextRenderer.curFont_;
+		return b8.TextRenderer.curFont_;
 
 	}
 
@@ -127,12 +127,12 @@
 	 * @param {string} fontName - The name of the font to set.
 	 * @returns {void}
 	 */
-	beep8.TextRenderer.setTileFont = function( fontName ) {
+	b8.TextRenderer.setTileFont = function( fontName ) {
 
-		const font = beep8.TextRenderer.getFontByName( fontName );
+		const font = b8.TextRenderer.getFontByName( fontName );
 
 		if ( font ) {
-			beep8.TextRenderer.curTiles_ = font;
+			b8.TextRenderer.curTiles_ = font;
 		}
 
 	}
@@ -142,15 +142,15 @@
 	 * Gets a font by name.
 	 *
 	 * @param {string} fontName - The name of the font to get.
-	 * @returns {beep8.TextRendererFont} The font.
+	 * @returns {b8.TextRendererFont} The font.
 	 */
-	beep8.TextRenderer.getFontByName = function( fontName ) {
+	b8.TextRenderer.getFontByName = function( fontName ) {
 
-		beep8.Utilities.checkString( "fontName", fontName );
-		const font = beep8.TextRenderer.fonts_[ fontName ];
+		b8.Utilities.checkString( "fontName", fontName );
+		const font = b8.TextRenderer.fonts_[ fontName ];
 
 		if ( !font ) {
-			beep8.Utilities.fatal( `setFont(): font not found: ${fontName}` );
+			b8.Utilities.fatal( `setFont(): font not found: ${fontName}` );
 			return;
 		}
 
@@ -163,33 +163,33 @@
 	 * Prints text at the current cursor position.
 	 *
 	 * @param {string} text - The text to print.
-	 * @param {beep8.TextRendererFont} [font=null] - The font to use for printing.
+	 * @param {b8.TextRendererFont} [font=null] - The font to use for printing.
 	 * @param {number} [maxWidth=-1] - The maximum width to wrap text at.
 	 * @returns {void}
 	 */
-	beep8.TextRenderer.print = function( text, font = null, maxWidth = -1 ) {
+	b8.TextRenderer.print = function( text, font = null, maxWidth = -1 ) {
 
-		beep8.TextRenderer.printFont_ = font || beep8.TextRenderer.curFont_;
+		b8.TextRenderer.printFont_ = font || b8.TextRenderer.curFont_;
 
 		// Property validation.
-		beep8.Utilities.checkString( "text", text );
-		beep8.Utilities.checkNumber( "maxWidth", maxWidth );
-		if ( font !== null ) beep8.Utilities.checkObject( "font", font );
+		b8.Utilities.checkString( "text", text );
+		b8.Utilities.checkNumber( "maxWidth", maxWidth );
+		if ( font !== null ) b8.Utilities.checkObject( "font", font );
 
 		// Wrap text to specified width.
-		text = beep8.TextRenderer.wrapText( text, maxWidth, font );
+		text = b8.TextRenderer.wrapText( text, maxWidth, font );
 
 		// Store the start location.
-		let col = beep8.Core.drawState.cursorCol;
-		let row = beep8.Core.drawState.cursorRow;
+		let col = b8.Core.drawState.cursorCol;
+		let row = b8.Core.drawState.cursorRow;
 
 		// Store a backup of foreground/background colors and fonts.
-		beep8.TextRenderer.origFgColor_ = beep8.Core.drawState.fgColor;
-		beep8.TextRenderer.origBgColor_ = beep8.Core.drawState.bgColor;
-		beep8.TextRenderer.origFont_ = beep8.TextRenderer.printFont_;
+		b8.TextRenderer.origFgColor_ = b8.Core.drawState.fgColor;
+		b8.TextRenderer.origBgColor_ = b8.Core.drawState.bgColor;
+		b8.TextRenderer.origFont_ = b8.TextRenderer.printFont_;
 
-		const colInc = beep8.TextRenderer.printFont_.getCharColCount();
-		const rowInc = beep8.TextRenderer.printFont_.getCharRowCount();
+		const colInc = b8.TextRenderer.printFont_.getCharColCount();
+		const rowInc = b8.TextRenderer.printFont_.getCharRowCount();
 
 		const initialCol = col;
 
@@ -214,8 +214,8 @@
 					put_(
 						chIndex,
 						col, row,
-						beep8.Core.drawState.fgColor, beep8.Core.drawState.bgColor,
-						beep8.TextRenderer.printFont_
+						b8.Core.drawState.fgColor, b8.Core.drawState.bgColor,
+						b8.TextRenderer.printFont_
 					);
 					col += colInc;
 
@@ -226,12 +226,12 @@
 		}
 
 		// Reset properties.
-		beep8.Core.drawState.cursorCol = col;
-		beep8.Core.drawState.cursorRow = row;
-		beep8.Core.drawState.fgColor = beep8.TextRenderer.origFgColor_;
-		beep8.Core.drawState.bgColor = beep8.TextRenderer.origBgColor_;
+		b8.Core.drawState.cursorCol = col;
+		b8.Core.drawState.cursorRow = row;
+		b8.Core.drawState.fgColor = b8.TextRenderer.origFgColor_;
+		b8.Core.drawState.bgColor = b8.TextRenderer.origBgColor_;
 
-		beep8.Renderer.markDirty();
+		b8.Renderer.markDirty();
 
 	}
 
@@ -242,42 +242,42 @@
 	 * @param {string} text - The text to print.
 	 * @param {number} [maxWidth=-1] - The width to wrap text at.
 	 * @param {number} [delay=0.05] - The delay between characters in seconds.
-	 * @param {beep8.TextRendererFont} [font=null] - The font to use.
+	 * @param {b8.TextRendererFont} [font=null] - The font to use.
 	 * @returns {Promise<void>} Resolves after the text is printed.
 	 */
-	beep8.TextRenderer.printTypewriter = async function( text, maxWidth = -1, delay = 0.05, font = null ) {
+	b8.TextRenderer.printTypewriter = async function( text, maxWidth = -1, delay = 0.05, font = null ) {
 
-		beep8.Utilities.checkString( "text", text );
-		beep8.Utilities.checkNumber( "maxWidth", maxWidth );
-		beep8.Utilities.checkNumber( "delay", delay );
+		b8.Utilities.checkString( "text", text );
+		b8.Utilities.checkNumber( "maxWidth", maxWidth );
+		b8.Utilities.checkNumber( "delay", delay );
 
-		const startCol = beep8.col();
-		const startRow = beep8.row();
+		const startCol = b8.col();
+		const startRow = b8.row();
 
-		text = beep8.TextRenderer.wrapText( text, maxWidth );
+		text = b8.TextRenderer.wrapText( text, maxWidth );
 
 		for ( let i = 0; i <= text.length; i++ ) {
 
 			// If this is the start of an escape sequence, skip to the end of it.
 			if (
-				beep8.CONFIG.PRINT_ESCAPE_START &&
-				text.substring( i, i + beep8.CONFIG.PRINT_ESCAPE_START.length ) === beep8.CONFIG.PRINT_ESCAPE_START
+				b8.CONFIG.PRINT_ESCAPE_START &&
+				text.substring( i, i + b8.CONFIG.PRINT_ESCAPE_START.length ) === b8.CONFIG.PRINT_ESCAPE_START
 			) {
 
-				const endPos = text.indexOf( beep8.CONFIG.PRINT_ESCAPE_END, i + beep8.CONFIG.PRINT_ESCAPE_START.length );
+				const endPos = text.indexOf( b8.CONFIG.PRINT_ESCAPE_END, i + b8.CONFIG.PRINT_ESCAPE_START.length );
 
 				if ( endPos >= 0 ) {
-					i = endPos + beep8.CONFIG.PRINT_ESCAPE_END.length;
+					i = endPos + b8.CONFIG.PRINT_ESCAPE_END.length;
 				}
 
 			}
 
 			const c = text.charCodeAt( i );
-			beep8.Core.setCursorLocation( startCol, startRow );
-			beep8.TextRenderer.print( text.substring( 0, i ), font );
+			b8.Core.setCursorLocation( startCol, startRow );
+			b8.TextRenderer.print( text.substring( 0, i ), font );
 
 			if ( c !== 32 ) {
-				await beep8.Async.wait( delay );
+				await b8.Async.wait( delay );
 			}
 
 		}
@@ -290,22 +290,22 @@
 	 *
 	 * @param {string} text - The text to print.
 	 * @param {number} width - The width to center the text within.
-	 * @param {beep8.TextRendererFont} [font=null] - The font to use.
+	 * @param {b8.TextRendererFont} [font=null] - The font to use.
 	 * @returns {void}
 	 */
-	beep8.TextRenderer.printCentered = function( text, width, font = null ) {
+	b8.TextRenderer.printCentered = function( text, width, font = null ) {
 
-		beep8.TextRenderer.printFont_ = font || beep8.TextRenderer.curFont_;
+		b8.TextRenderer.printFont_ = font || b8.TextRenderer.curFont_;
 
-		beep8.Utilities.checkString( "text", text );
-		beep8.Utilities.checkNumber( "width", width );
+		b8.Utilities.checkString( "text", text );
+		b8.Utilities.checkNumber( "width", width );
 
 		if ( !text ) {
 			return;
 		}
 
-		const col = beep8.Core.drawState.cursorCol;
-		const rowInc = beep8.TextRenderer.printFont_.getCharRowCount();
+		const col = b8.Core.drawState.cursorCol;
+		const rowInc = b8.TextRenderer.printFont_.getCharRowCount();
 
 		// Split the text into lines.
 		text = text.split( "\n" );
@@ -316,18 +316,18 @@
 		// Loop through each line of text.
 		for ( let i = 0; i < text.length; i++ ) {
 
-			const textWidth = beep8.TextRenderer.measure( text[ i ] ).cols;
+			const textWidth = b8.TextRenderer.measure( text[ i ] ).cols;
 			const tempCol = col + ( width - textWidth ) / 2;
 
-			beep8.Core.drawState.cursorCol = tempCol;
-			beep8.TextRenderer.print( text[ i ], font, width );
+			b8.Core.drawState.cursorCol = tempCol;
+			b8.TextRenderer.print( text[ i ], font, width );
 
-			beep8.Core.drawState.cursorRow += rowInc;
+			b8.Core.drawState.cursorRow += rowInc;
 
 		}
 
 		// Reset cursor position.
-		beep8.Core.drawState.cursorCol = col;
+		b8.Core.drawState.cursorCol = col;
 
 	}
 
@@ -337,24 +337,24 @@
 	 *
 	 * @param {string} text - The text to print.
 	 * @param {number} width - The width to right-align the text within.
-	 * @param {beep8.TextRendererFont} [font=null] - The font to use.
+	 * @param {b8.TextRendererFont} [font=null] - The font to use.
 	 * @returns {void}
 	 */
-	beep8.TextRenderer.printRight = function( text, width, font = null ) {
+	b8.TextRenderer.printRight = function( text, width, font = null ) {
 
-		beep8.TextRenderer.printFont_ = font || beep8.TextRenderer.curFont_;
+		b8.TextRenderer.printFont_ = font || b8.TextRenderer.curFont_;
 
-		beep8.Utilities.checkString( "text", text );
-		beep8.Utilities.checkNumber( "width", width );
+		b8.Utilities.checkString( "text", text );
+		b8.Utilities.checkNumber( "width", width );
 
 		if ( !text ) {
 			return;
 		}
 
-		const col = beep8.Core.drawState.cursorCol;
-		const rowInc = beep8.TextRenderer.printFont_.getCharRowCount();
+		const col = b8.Core.drawState.cursorCol;
+		const rowInc = b8.TextRenderer.printFont_.getCharRowCount();
 
-		text = beep8.TextRenderer.wrapText( text, width );
+		text = b8.TextRenderer.wrapText( text, width );
 
 		// Split the text into lines.
 		text = text.split( "\n" );
@@ -365,18 +365,18 @@
 		// Loop through each line of text.
 		for ( let i = 0; i < text.length; i++ ) {
 
-			let textWidth = beep8.TextRenderer.measure( text[ i ] ).cols;
+			let textWidth = b8.TextRenderer.measure( text[ i ] ).cols;
 			const tempCol = col + width - textWidth;
 
-			beep8.Core.drawState.cursorCol = tempCol;
-			beep8.TextRenderer.print( text[ i ], font, width );
+			b8.Core.drawState.cursorCol = tempCol;
+			b8.TextRenderer.print( text[ i ], font, width );
 
-			beep8.Core.drawState.cursorRow += rowInc;
+			b8.Core.drawState.cursorRow += rowInc;
 
 		}
 
 		// Reset cursor position.
-		beep8.Core.drawState.cursorCol = col;
+		b8.Core.drawState.cursorCol = col;
 
 	}
 
@@ -386,24 +386,24 @@
 	 *
 	 * @param {number} ch - The character to print.
 	 * @param {number} n - The number of times to print the character.
-	 * @param {beep8.TextRendererFont} [font=null] - The font to use.
+	 * @param {b8.TextRendererFont} [font=null] - The font to use.
 	 * @returns {void}
 	 */
-	beep8.TextRenderer.printChar = function( ch, n, font = null ) {
+	b8.TextRenderer.printChar = function( ch, n, font = null ) {
 
 		if ( n === undefined || isNaN( n ) ) {
 			n = 1;
 		}
 
-		beep8.Utilities.checkNumber( "ch", ch );
-		beep8.Utilities.checkNumber( "n", n );
+		b8.Utilities.checkNumber( "ch", ch );
+		b8.Utilities.checkNumber( "n", n );
 
 		// Check cursorCol and cursorRow are within bounds.
 		if (
-			beep8.Core.drawState.cursorCol < 0 ||
-			beep8.Core.drawState.cursorRow < 0 ||
-			beep8.Core.drawState.cursorCol >= beep8.CONFIG.SCREEN_COLS ||
-			beep8.Core.drawState.cursorRow >= beep8.CONFIG.SCREEN_ROWS
+			b8.Core.drawState.cursorCol < 0 ||
+			b8.Core.drawState.cursorRow < 0 ||
+			b8.Core.drawState.cursorCol >= b8.CONFIG.SCREEN_COLS ||
+			b8.Core.drawState.cursorRow >= b8.CONFIG.SCREEN_ROWS
 		) {
 			// No need for an error. Just end silently.
 			return;
@@ -413,18 +413,18 @@
 
 			put_(
 				ch,
-				beep8.Core.drawState.cursorCol,
-				beep8.Core.drawState.cursorRow,
-				beep8.Core.drawState.fgColor,
-				beep8.Core.drawState.bgColor,
+				b8.Core.drawState.cursorCol,
+				b8.Core.drawState.cursorRow,
+				b8.Core.drawState.fgColor,
+				b8.Core.drawState.bgColor,
 				font
 			);
 
-			beep8.Core.drawState.cursorCol++;
+			b8.Core.drawState.cursorCol++;
 
 		}
 
-		beep8.Renderer.markDirty();
+		b8.Renderer.markDirty();
 
 	}
 
@@ -437,20 +437,20 @@
 	 * @param {number} y - The y-coordinate.
 	 * @returns {void}
 	 */
-	beep8.TextRenderer.spr = function( ch, x, y, font = null, direction = 0 ) {
+	b8.TextRenderer.spr = function( ch, x, y, font = null, direction = 0 ) {
 
-		beep8.Utilities.checkNumber( "ch", ch );
-		beep8.Utilities.checkNumber( "x", x );
-		beep8.Utilities.checkNumber( "y", y );
-		beep8.Utilities.checkInt( "direction", direction );
-		if ( font !== null ) beep8.Utilities.checkObject( "font", font );
+		b8.Utilities.checkNumber( "ch", ch );
+		b8.Utilities.checkNumber( "x", x );
+		b8.Utilities.checkNumber( "y", y );
+		b8.Utilities.checkInt( "direction", direction );
+		if ( font !== null ) b8.Utilities.checkObject( "font", font );
 
 		putxy_(
 			ch,
 			x,
 			y,
-			beep8.Core.drawState.fgColor,
-			beep8.Core.drawState.bgColor,
+			b8.Core.drawState.fgColor,
+			b8.Core.drawState.bgColor,
 			font,
 			direction
 		);
@@ -467,21 +467,21 @@
 	 * @param {string} [fontName] - The name of the font to use.
 	 * @returns {void}
 	 */
-	beep8.TextRenderer.drawText = function( x, y, text, fontName ) {
+	b8.TextRenderer.drawText = function( x, y, text, fontName ) {
 
-		beep8.Utilities.checkNumber( "x", x );
-		beep8.Utilities.checkNumber( "y", y );
-		beep8.Utilities.checkString( "text", text );
+		b8.Utilities.checkNumber( "x", x );
+		b8.Utilities.checkNumber( "y", y );
+		b8.Utilities.checkString( "text", text );
 
 		if ( fontName ) {
-			beep8.Utilities.checkString( "fontName", fontName );
+			b8.Utilities.checkString( "fontName", fontName );
 		}
 
 		const x0 = x;
-		const font = fontName ? ( beep8.TextRenderer.fonts_[ fontName ] || beep8.TextRenderer.curFont_ ) : beep8.TextRenderer.curFont_;
+		const font = fontName ? ( b8.TextRenderer.fonts_[ fontName ] || b8.TextRenderer.curFont_ ) : b8.TextRenderer.curFont_;
 
 		if ( !font ) {
-			beep8.Utilities.warn( `Requested font '${fontName}' not found: not drawing text.` );
+			b8.Utilities.warn( `Requested font '${fontName}' not found: not drawing text.` );
 			return;
 		}
 
@@ -498,8 +498,8 @@
 				putxy_(
 					ch,
 					x, y,
-					beep8.Core.drawState.fgColor,
-					beep8.Core.drawState.bgColor,
+					b8.Core.drawState.fgColor,
+					b8.Core.drawState.bgColor,
 					font
 				);
 
@@ -516,14 +516,14 @@
 	 * Measures the dimensions of the text.
 	 *
 	 * @param {string} text - The text to measure.
-	 * @param {beep8.TextRendererFont} [font=null] - The font to use for measurement.
+	 * @param {b8.TextRendererFont} [font=null] - The font to use for measurement.
 	 * @returns {{cols: number, rows: number}} The dimensions of the text.
 	 */
-	beep8.TextRenderer.measure = function( text, font = null ) {
+	b8.TextRenderer.measure = function( text, font = null ) {
 
-		beep8.Utilities.checkString( "text", text );
+		b8.Utilities.checkString( "text", text );
 
-		font = font || beep8.TextRenderer.curFont_;
+		font = font || b8.TextRenderer.curFont_;
 
 		if ( "" === text ) {
 			return { cols: 0, rows: 0 }; // Special case
@@ -563,23 +563,23 @@
 	 * @param {number} ch - The character to fill the rectangle with.
 	 * @returns {void}
 	 */
-	beep8.TextRenderer.printRect = function( width, height, ch ) {
+	b8.TextRenderer.printRect = function( width, height, ch ) {
 
-		beep8.Utilities.checkNumber( "width", width );
-		beep8.Utilities.checkNumber( "height", height );
-		beep8.Utilities.checkNumber( "ch", ch );
+		b8.Utilities.checkNumber( "width", width );
+		b8.Utilities.checkNumber( "height", height );
+		b8.Utilities.checkNumber( "ch", ch );
 
-		const startCol = beep8.Core.drawState.cursorCol;
-		const startRow = beep8.Core.drawState.cursorRow;
+		const startCol = b8.Core.drawState.cursorCol;
+		const startRow = b8.Core.drawState.cursorRow;
 
 		for ( let i = 0; i < height; i++ ) {
-			beep8.Core.drawState.cursorCol = startCol;
-			beep8.Core.drawState.cursorRow = startRow + i;
-			beep8.TextRenderer.printChar( ch, width );
+			b8.Core.drawState.cursorCol = startCol;
+			b8.Core.drawState.cursorRow = startRow + i;
+			b8.TextRenderer.printChar( ch, width );
 		}
 
-		beep8.Core.drawState.cursorCol = startCol;
-		beep8.Core.drawState.cursorRow = startRow;
+		b8.Core.drawState.cursorCol = startCol;
+		b8.Core.drawState.cursorRow = startRow;
 
 	}
 
@@ -590,17 +590,17 @@
 	 * @param {number} width - The width of the box.
 	 * @param {number} height - The height of the box.
 	 * @param {boolean} [fill=true] - Whether to fill the box.
-	 * @param {number} [borderCh=beep8.CONFIG.BORDER_CHAR] - The character to use for the border.
+	 * @param {number} [borderCh=b8.CONFIG.BORDER_CHAR] - The character to use for the border.
 	 * @returns {void}
 	 */
-	beep8.TextRenderer.printBox = function( width, height, fill = true, borderChar = beep8.CONFIG.BORDER_CHAR ) {
+	b8.TextRenderer.printBox = function( width, height, fill = true, borderChar = b8.CONFIG.BORDER_CHAR ) {
 
-		beep8.Utilities.checkNumber( "width", width );
-		beep8.Utilities.checkNumber( "height", height );
-		beep8.Utilities.checkBoolean( "fill", fill );
-		beep8.Utilities.checkNumber( "borderChar", borderChar );
+		b8.Utilities.checkNumber( "width", width );
+		b8.Utilities.checkNumber( "height", height );
+		b8.Utilities.checkBoolean( "fill", fill );
+		b8.Utilities.checkNumber( "borderChar", borderChar );
 
-		const colCount = beep8.TextRenderer.curTiles_.getColCount();
+		const colCount = b8.TextRenderer.curTiles_.getColCount();
 		const borders = {
 			NW: borderChar,
 			NE: borderChar + 2,
@@ -610,7 +610,7 @@
 			H: borderChar + 1,
 		};
 
-		beep8.TextRenderer.drawBox( width, height, fill, borders );
+		b8.TextRenderer.drawBox( width, height, fill, borders );
 
 	}
 
@@ -630,42 +630,42 @@
 	 * @param {number} [borders.H] - The horizontal border character.
 	 * @returns {void}
 	 */
-	beep8.TextRenderer.drawBox = function( width, height, fill = true, borders = {} ) {
+	b8.TextRenderer.drawBox = function( width, height, fill = true, borders = {} ) {
 
-		const startCol = beep8.Core.drawState.cursorCol;
-		const startRow = beep8.Core.drawState.cursorRow;
+		const startCol = b8.Core.drawState.cursorCol;
+		const startRow = b8.Core.drawState.cursorRow;
 
 		for ( let i = 0; i < height; i++ ) {
 
-			beep8.Core.drawState.cursorCol = startCol;
-			beep8.Core.drawState.cursorRow = startRow + i;
+			b8.Core.drawState.cursorCol = startCol;
+			b8.Core.drawState.cursorRow = startRow + i;
 
 			if ( i === 0 ) {
 				// Top border
-				beep8.TextRenderer.printChar( borders.NW );
-				beep8.TextRenderer.printChar( borders.H, width - 2 );
-				beep8.TextRenderer.printChar( borders.NE );
+				b8.TextRenderer.printChar( borders.NW );
+				b8.TextRenderer.printChar( borders.H, width - 2 );
+				b8.TextRenderer.printChar( borders.NE );
 			} else if ( i === height - 1 ) {
 				// Bottom border.
-				beep8.TextRenderer.printChar( borders.SW );
-				beep8.TextRenderer.printChar( borders.H, width - 2 );
-				beep8.TextRenderer.printChar( borders.SE );
+				b8.TextRenderer.printChar( borders.SW );
+				b8.TextRenderer.printChar( borders.H, width - 2 );
+				b8.TextRenderer.printChar( borders.SE );
 			} else {
 				// Middle.
-				beep8.TextRenderer.printChar( borders.V );
-				beep8.Core.drawState.cursorCol = startCol + width - 1;
-				beep8.TextRenderer.printChar( borders.V );
+				b8.TextRenderer.printChar( borders.V );
+				b8.Core.drawState.cursorCol = startCol + width - 1;
+				b8.TextRenderer.printChar( borders.V );
 			}
 		}
 
 		if ( fill && width > 2 && height > 2 ) {
-			beep8.Core.drawState.cursorCol = startCol + 1;
-			beep8.Core.drawState.cursorRow = startRow + 1;
-			beep8.TextRenderer.printRect( width - 2, height - 2, 0 );
+			b8.Core.drawState.cursorCol = startCol + 1;
+			b8.Core.drawState.cursorRow = startRow + 1;
+			b8.TextRenderer.printRect( width - 2, height - 2, 0 );
 		}
 
-		beep8.Core.drawState.cursorCol = startCol;
-		beep8.Core.drawState.cursorRow = startRow;
+		b8.Core.drawState.cursorCol = startCol;
+		b8.Core.drawState.cursorRow = startRow;
 
 	}
 
@@ -675,12 +675,12 @@
 	 *
 	 * @param {string} text - The text to wrap.
 	 * @param {number} maxWidth - The width to wrap the text to.
-	 * @param {beep8.TextRendererFont} fontName - The font to use.
+	 * @param {b8.TextRendererFont} fontName - The font to use.
 	 * @returns {string} The wrapped text.
 	 */
-	beep8.TextRenderer.wrapText = function( text, maxWidth, font = null ) {
+	b8.TextRenderer.wrapText = function( text, maxWidth, font = null ) {
 
-		font = font || beep8.TextRenderer.curFont_;
+		font = font || b8.TextRenderer.curFont_;
 
 		// If 0 or less then don't wrap.
 		if ( maxWidth <= 0 ) return text;
@@ -698,7 +698,7 @@
 
 			for ( const word of words ) {
 
-				const lineWidth = beep8.TextRenderer.measure( ( wrappedLine + word ).trim() ).cols;
+				const lineWidth = b8.TextRenderer.measure( ( wrappedLine + word ).trim() ).cols;
 
 				// Is the line with the new word longer than the line width?
 				if ( lineWidth > maxWidth ) {
@@ -733,8 +733,8 @@
 	const put_ = function( ch, col, row, fgColor, bgColor, font = null, direction = 0 ) {
 
 		// Calculate x and y row and column to place character.
-		const x = Math.round( col * beep8.CONFIG.CHR_WIDTH );
-		const y = Math.round( row * beep8.CONFIG.CHR_HEIGHT );
+		const x = Math.round( col * b8.CONFIG.CHR_WIDTH );
+		const y = Math.round( row * b8.CONFIG.CHR_HEIGHT );
 
 		putxy_( ch, x, y, fgColor, bgColor, font, direction );
 
@@ -749,12 +749,12 @@
 	 * @param {number} y - The y-coordinate.
 	 * @param {number} fgColor - The foreground color.
 	 * @param {number} bgColor - The background color.
-	 * @param {beep8.TextRendererFont} [font=null] - The font to use.
+	 * @param {b8.TextRendererFont} [font=null] - The font to use.
 	 * @returns {void}
 	 */
 	const putxy_ = function( ch, x, y, fgColor, bgColor, font = null, direction = 0 ) {
 
-		font = font || beep8.TextRenderer.curTiles_;
+		font = font || b8.TextRenderer.curTiles_;
 
 		const colCount = font.getColCount();
 		const chrW = font.getCharWidth();
@@ -770,12 +770,12 @@
 		// If bgColor is -1 then don't draw the background.
 		// Or make the background transparent.
 		if ( bgColor >= 0 ) {
-			beep8.Core.offCtx.fillStyle = beep8.Core.getColorHex( bgColor );
-			beep8.Core.offCtx.fillRect( x, y, chrW, chrH );
+			b8.Core.offCtx.fillStyle = b8.Core.getColorHex( bgColor );
+			b8.Core.offCtx.fillRect( x, y, chrW, chrH );
 		}
 
 		// Foreground and background are the same so don't draw anything else.
-		if ( beep8.CONFIG.SCREEN_COLORS === 1 && bgColor === fgColor ) {
+		if ( b8.CONFIG.SCREEN_COLORS === 1 && bgColor === fgColor ) {
 			return;
 		}
 
@@ -783,7 +783,7 @@
 		if ( direction > 0 ) {
 
 			// Save the current state of the canvas context if flipping is needed.
-			beep8.Core.offCtx.save();
+			b8.Core.offCtx.save();
 
 			// Determine whether to flip horizontally or vertically
 			const flipH = ( direction & 1 ) !== 0; // Check if bit 1 is set (horizontal flip)
@@ -792,12 +792,12 @@
 			// Adjust the origin based on flip direction
 			const translateX = flipH ? chrW : 0;
 			const translateY = flipV ? chrH : 0;
-			beep8.Core.offCtx.translate( x + translateX, y + translateY );
+			b8.Core.offCtx.translate( x + translateX, y + translateY );
 
 			// Apply scaling to flip the image
 			const scaleX = flipH ? -1 : 1;
 			const scaleY = flipV ? -1 : 1;
-			beep8.Core.offCtx.scale( scaleX, scaleY );
+			b8.Core.offCtx.scale( scaleX, scaleY );
 
 			// Reset x and y to 0 because the translate operation adjusts the positioning
 			x = 0;
@@ -805,10 +805,10 @@
 
 		}
 
-		const color = beep8.Utilities.clamp( fgColor, 0, beep8.CONFIG.COLORS.length - 1 );
+		const color = b8.Utilities.clamp( fgColor, 0, b8.CONFIG.COLORS.length - 1 );
 		const img = font.getImageForColor( color );
 
-		beep8.Core.offCtx.drawImage(
+		b8.Core.offCtx.drawImage(
 			img,
 			fontCol * chrW,
 			fontRow * chrH,
@@ -819,10 +819,10 @@
 
 		// Restore the canvas context if flipping was needed.
 		if ( direction > 0 ) {
-			beep8.Core.offCtx.restore();
+			b8.Core.offCtx.restore();
 		}
 
-		beep8.Renderer.markDirty();
+		b8.Renderer.markDirty();
 
 	}
 
@@ -840,10 +840,10 @@
 	const processEscapeSeq_ = function( text, startPos, pretend = false ) {
 
 		// Shorthand.
-		const startSeq = beep8.CONFIG.PRINT_ESCAPE_START;
-		const endSeq = beep8.CONFIG.PRINT_ESCAPE_END;
+		const startSeq = b8.CONFIG.PRINT_ESCAPE_START;
+		const endSeq = b8.CONFIG.PRINT_ESCAPE_END;
 
-		// If no escape sequences are configured in beep8.CONFIG, stop.
+		// If no escape sequences are configured in b8.CONFIG, stop.
 		if ( !startSeq || !endSeq ) {
 			return startPos;
 		}
@@ -900,29 +900,29 @@
 			// Set foreground color.
 			case "f":
 			case "c":
-				beep8.Core.drawState.fgColor = arg !== "" ? argNum : beep8.TextRenderer.origFgColor_;
+				b8.Core.drawState.fgColor = arg !== "" ? argNum : b8.TextRenderer.origFgColor_;
 				break;
 
 			// Set background color.
 			case "b":
-				beep8.Core.drawState.bgColor = arg !== "" ? argNum : beep8.TextRenderer.origBgColor_;
+				b8.Core.drawState.bgColor = arg !== "" ? argNum : b8.TextRenderer.origBgColor_;
 				break;
 
 			// Change font.
 			case "t":
-				beep8.TextRenderer.printFont_ = beep8.TextRenderer.getFontByName( arg );
+				b8.TextRenderer.printFont_ = b8.TextRenderer.getFontByName( arg );
 				break;
 
 			// Reset state.
 			case "z":
-				beep8.Core.drawState.fgColor = beep8.TextRenderer.origFgColor_;
-				beep8.Core.drawState.bgColor = beep8.TextRenderer.origBgColor_;
+				b8.Core.drawState.fgColor = b8.TextRenderer.origFgColor_;
+				b8.Core.drawState.bgColor = b8.TextRenderer.origBgColor_;
 				// Use original font if available, otherwise default.
-				beep8.TextRenderer.printFont_ = beep8.TextRenderer.origFont_ || beep8.TextRenderer.fonts_[ "default" ];
+				b8.TextRenderer.printFont_ = b8.TextRenderer.origFont_ || b8.TextRenderer.fonts_[ "default" ];
 				break;
 
 			default:
-				beep8.Utilities.warn( "Unknown beep8 print escape command: " + command );
+				b8.Utilities.warn( "Unknown b8 print escape command: " + command );
 		}
 
 	}
@@ -933,11 +933,11 @@
 	 *
 	 * @returns {void}
 	 */
-	beep8.TextRenderer.regenColors = function() {
+	b8.TextRenderer.regenColors = function() {
 
 		// Tell all the fonts to regenerate their glyph images.
-		Object.values( beep8.TextRenderer.fonts_ ).forEach( f => f.regenColors() );
+		Object.values( b8.TextRenderer.fonts_ ).forEach( f => f.regenColors() );
 
 	}
 
-} )( beep8 );
+} )( b8 );

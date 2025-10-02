@@ -1,9 +1,9 @@
-( function( beep8 ) {
+( function( b8 ) {
 
 	/**
 	 * Input class handles keyboard input and provides methods to check key states.
 	 */
-	beep8.Input = {};
+	b8.Input = {};
 
 	/**
 	 * List of keys currently held down.
@@ -25,7 +25,7 @@
 	 *
 	 * @returns {void}
 	 */
-	beep8.Input.init = function() {
+	b8.Input.init = function() {
 
 		// Keys currently held down (set of strings).
 		keysHeld_ = new Set();
@@ -33,9 +33,9 @@
 		keysJustPressed_ = new Set();
 
 		// Bind event listeners to handle keydown and keyup events.
-		window.addEventListener( "keydown", e => beep8.Input.onKeyDown( e ) );
-		window.addEventListener( "keyup", e => beep8.Input.onKeyUp( e ) );
-		window.addEventListener( "pointerdown", e => beep8.Input.onPointerDown( e ) );
+		window.addEventListener( "keydown", e => b8.Input.onKeyDown( e ) );
+		window.addEventListener( "keyup", e => b8.Input.onKeyUp( e ) );
+		window.addEventListener( "pointerdown", e => b8.Input.onPointerDown( e ) );
 
 	}
 
@@ -46,7 +46,7 @@
 	 * @param {string} keyName - The name of the key to check.
 	 * @returns {boolean} Whether the key is currently held down.
 	 */
-	beep8.Input.keyHeld = function( keyName ) {
+	b8.Input.keyHeld = function( keyName ) {
 
 		return keysHeld_.has( keyName.toUpperCase() );
 
@@ -59,7 +59,7 @@
 	 * @param {string} keyName - The name of the key to check.
 	 * @returns {boolean} Whether the key was just pressed.
 	 */
-	beep8.Input.keyJustPressed = function( keyName ) {
+	b8.Input.keyJustPressed = function( keyName ) {
 
 		return keysJustPressed_.has( keyName.toUpperCase() );
 
@@ -72,7 +72,7 @@
 	 *
 	 * @returns {void}
 	 */
-	beep8.Input.onEndFrame = function() {
+	b8.Input.onEndFrame = function() {
 
 		keysJustPressed_.clear();
 
@@ -86,10 +86,10 @@
 	 * @param {KeyboardEvent} e - The event object.
 	 * @returns {void}
 	 */
-	beep8.Input.onKeyDown = function( e ) {
+	b8.Input.onKeyDown = function( e ) {
 
 		const key = e.key;
-		const keys = beep8.Input.getKeys( key );
+		const keys = b8.Input.getKeys( key );
 
 		// Stop page from scrolling when the arrows/ space are pressed.
 		if ( [ "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " " ].includes( key ) ) {
@@ -103,8 +103,8 @@
 		}
 
 		// Return any pending key events.
-		if ( beep8.Core.hasPendingAsync( "beep8.Async.key" ) ) {
-			beep8.Core.resolveAsync( "beep8.Async.key", keys );
+		if ( b8.Core.hasPendingAsync( "b8.Async.key" ) ) {
+			b8.Core.resolveAsync( "b8.Async.key", keys );
 		}
 
 	}
@@ -116,10 +116,10 @@
 	 * @param {PointerEvent} e - The event object.
 	 * @returns {void}
 	 */
-	beep8.Input.onPointerDown = function( e ) {
+	b8.Input.onPointerDown = function( e ) {
 
-		if ( beep8.Core.hasPendingAsync( "beep8.Async.pointer" ) ) {
-			beep8.Core.resolveAsync( "beep8.Async.pointer", { x: e.clientX, y: e.clientY } );
+		if ( b8.Core.hasPendingAsync( "b8.Async.pointer" ) ) {
+			b8.Core.resolveAsync( "b8.Async.pointer", { x: e.clientX, y: e.clientY } );
 		}
 
 	}
@@ -131,12 +131,12 @@
 	 * @param {KeyboardEvent} e - The event object.
 	 * @returns {void}
 	 */
-	beep8.Input.onKeyUp = function( e ) {
+	b8.Input.onKeyUp = function( e ) {
 
 		if ( !e.key ) return;
 
 		const key = e.key.toUpperCase();
-		const keys = beep8.Input.getKeys( key );
+		const keys = b8.Input.getKeys( key );
 
 		for ( const k of keys ) {
 			keysHeld_.delete( k.toUpperCase() );
@@ -150,11 +150,11 @@
 	 *
 	 * @returns {Promise<string>} A promise that resolves to the key that was pressed.
 	 */
-	beep8.Input.readKeyAsync = function() {
+	b8.Input.readKeyAsync = function() {
 
 		return new Promise(
 			( resolve, reject ) => {
-				beep8.Core.startAsync( "beep8.Async.key", resolve, reject );
+				b8.Core.startAsync( "b8.Async.key", resolve, reject );
 			}
 		);
 
@@ -167,11 +167,11 @@
 	 *
 	 * @returns {Promise<{x: number, y: number}>} A promise that resolves to the pointer position.
 	 */
-	beep8.Input.readPointerAsync = function() {
+	b8.Input.readPointerAsync = function() {
 
 		return new Promise(
 			( resolve, reject ) => {
-				beep8.Core.startAsync( "beep8.Async.pointer", resolve, reject );
+				b8.Core.startAsync( "b8.Async.pointer", resolve, reject );
 			}
 		);
 
@@ -185,7 +185,7 @@
 	 * @param {string} key - The key to get aliases for.
 	 * @returns {string[]} An array of key names.
 	 */
-	beep8.Input.getKeys = function( key ) {
+	b8.Input.getKeys = function( key ) {
 
 		let keys = [ key ];
 
@@ -236,39 +236,39 @@
 	 * @param {number} [maxWidth=-1] - The maximum width of the line.
 	 * @returns {Promise<string>} A promise that resolves to the string that was read.
 	 */
-	beep8.Input.readLine = async function( prompt = 'Enter text:', initString = '', maxLen = 100, maxWidth = -1 ) {
+	b8.Input.readLine = async function( prompt = 'Enter text:', initString = '', maxLen = 100, maxWidth = -1 ) {
 
 		// If a prompt is specified, print it first.
 		if ( prompt && prompt.length > 0 ) {
-			beep8.print( prompt + "\n> " );
+			b8.print( prompt + "\n> " );
 		}
 
 		// On mobile we use a prompt dialog since they don't have a keyboard for typing things in.
-		if ( beep8.Core.isMobile() ) {
+		if ( b8.Core.isMobile() ) {
 			const textInput = await readPrompt( prompt, initString, maxLen, maxWidth );
-			beep8.print( textInput + "\n" );
-			await beep8.Async.wait( 0.2 );
+			b8.print( textInput + "\n" );
+			await b8.Async.wait( 0.2 );
 			return textInput;
 		}
 
 		// On desktop we handle the input ourselves.
-		const startCol = beep8.Core.drawState.cursorCol;
-		const startRow = beep8.Core.drawState.cursorRow;
+		const startCol = b8.Core.drawState.cursorCol;
+		const startRow = b8.Core.drawState.cursorRow;
 
 		let curCol = startCol;
 		let curRow = startRow;
 		let curStrings = [ initString ];
 		let curPos = 0;
 
-		const cursorWasVisible = beep8.Core.drawState.cursorVisible;
-		beep8.CursorRenderer.setCursorVisible( true );
+		const cursorWasVisible = b8.Core.drawState.cursorVisible;
+		b8.CursorRenderer.setCursorVisible( true );
 
 		// Loop until the user presses Enter.
 		while ( true ) {
 
-			beep8.Core.setCursorLocation( curCol, curRow );
-			beep8.TextRenderer.print( curStrings[ curPos ] || "" );
-			const keys = await beep8.Input.readKeyAsync();
+			b8.Core.setCursorLocation( curCol, curRow );
+			b8.TextRenderer.print( curStrings[ curPos ] || "" );
+			const keys = await b8.Input.readKeyAsync();
 
 			for ( const key of keys ) {
 
@@ -287,17 +287,17 @@
 					// If the string is empty it leaves it unchanged.
 					curStrings[ curPos ] = curStrings[ curPos ].length > 0 ? curStrings[ curPos ].substring( 0, curStrings[ curPos ].length - 1 ) : curStrings[ curPos ];
 					// Position the flashing cursor and then print a space to remove the last character.
-					beep8.Core.setCursorLocation( curCol + beep8.TextRenderer.measure( curStrings[ curPos ] ).cols, curRow );
-					beep8.TextRenderer.print( " " );
+					b8.Core.setCursorLocation( curCol + b8.TextRenderer.measure( curStrings[ curPos ] ).cols, curRow );
+					b8.TextRenderer.print( " " );
 
-					beep8.Sfx.play( beep8.CONFIG.SFX.TYPING );
+					b8.Sfx.play( b8.CONFIG.SFX.TYPING );
 
 				} else if ( key === "Enter" ) {
 
 					// Handle enter: submit the text.
-					beep8.CursorRenderer.setCursorVisible( cursorWasVisible );
+					b8.CursorRenderer.setCursorVisible( cursorWasVisible );
 
-					beep8.Sfx.play( beep8.CONFIG.SFX.TYPING );
+					b8.Sfx.play( b8.CONFIG.SFX.TYPING );
 
 					return curStrings.join( "" );
 
@@ -311,7 +311,7 @@
 						// Check if maxWidth is set and the current string has reached/exceeded it
 						if ( maxWidth !== -1 && curStrings[ curPos ].length >= maxWidth ) {
 							// Print the last character of the current string (to visually fill the slot)
-							beep8.TextRenderer.print( curStrings[ curPos ].charAt( curStrings[ curPos ].length - 1 ) );
+							b8.TextRenderer.print( curStrings[ curPos ].charAt( curStrings[ curPos ].length - 1 ) );
 							// Reset the column to the starting column for the next line
 							curCol = startCol;
 							// Move to the next string position (start a new line)
@@ -323,7 +323,7 @@
 						}
 					}
 
-					beep8.Sfx.play( beep8.CONFIG.SFX.TYPING );
+					b8.Sfx.play( b8.CONFIG.SFX.TYPING );
 
 				}
 
@@ -349,12 +349,12 @@
 		// The value to return.
 		let textInput = "";
 		// The characters that are allowed.
-		const allowedChars = beep8.CONFIG.CHRS;
+		const allowedChars = b8.CONFIG.CHRS;
 
 		do {
 
 			// A little pause to ensure the screen updates before the prompt appears.
-			await beep8.Async.wait( 0.333 );
+			await b8.Async.wait( 0.333 );
 
 			// Show the prompt and get the input.
 			textInput = prompt( promptString, initString );
@@ -378,4 +378,4 @@
 
 	}
 
-} )( beep8 );
+} )( b8 );

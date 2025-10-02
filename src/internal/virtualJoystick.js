@@ -1,4 +1,4 @@
-( function( beep8 ) {
+( function( b8 ) {
 
 	/**
 	 * Virtual joystick setup.
@@ -9,7 +9,7 @@
 	 * The directional pad has up, down, left, and right buttons.
 	 * The right side has three buttons, labeled A, B, and =.
 	 */
-	beep8.Joystick = {};
+	b8.Joystick = {};
 
 	let repeatIntervals = null;
 
@@ -217,9 +217,9 @@
 	 *
 	 * @returns {void}
 	 */
-	beep8.Joystick.setup = function() {
+	b8.Joystick.setup = function() {
 
-		beep8.Utilities.log( "Setting up virtual joystick..." );
+		b8.Utilities.log( "Setting up virtual joystick..." );
 
 		// Add controller styles.
 		const styleEl = document.createElement( "style" );
@@ -232,9 +232,9 @@
 		container.className = 'vjoy-container';
 		container.innerHTML = VJOY_HTML;
 
-		beep8.Core.getBeepContainerEl().appendChild( container );
+		b8.Core.getBeepContainerEl().appendChild( container );
 
-		setTimeout( beep8.Joystick.continueSetup, 10 );
+		setTimeout( b8.Joystick.continueSetup, 10 );
 
 	}
 
@@ -244,16 +244,16 @@
 	 *
 	 * @returns {void}
 	 */
-	beep8.Joystick.continueSetup = function() {
+	b8.Joystick.continueSetup = function() {
 
-		beep8.Joystick.setUpButton( "vjoy-button-up", "ArrowUp" );
-		beep8.Joystick.setUpButton( "vjoy-button-down", "ArrowDown" );
-		beep8.Joystick.setUpButton( "vjoy-button-left", "ArrowLeft" );
-		beep8.Joystick.setUpButton( "vjoy-button-right", "ArrowRight" );
-		beep8.Joystick.setUpButton( "vjoy-button-pri", "ButtonA" );
-		beep8.Joystick.setUpButton( "vjoy-button-sec", "ButtonB" );
-		beep8.Joystick.setUpButton( "vjoy-button-ter", "Enter" );
-		beep8.Joystick.setUpButton( "vjoy-button-screenshot", "0" );
+		b8.Joystick.setUpButton( "vjoy-button-up", "ArrowUp" );
+		b8.Joystick.setUpButton( "vjoy-button-down", "ArrowDown" );
+		b8.Joystick.setUpButton( "vjoy-button-left", "ArrowLeft" );
+		b8.Joystick.setUpButton( "vjoy-button-right", "ArrowRight" );
+		b8.Joystick.setUpButton( "vjoy-button-pri", "ButtonA" );
+		b8.Joystick.setUpButton( "vjoy-button-sec", "ButtonB" );
+		b8.Joystick.setUpButton( "vjoy-button-ter", "Enter" );
+		b8.Joystick.setUpButton( "vjoy-button-screenshot", "0" );
 
 		// Prevent touches on the document body from doing what they usually do (opening
 		// context menus, selecting stuff, etc).
@@ -271,9 +271,9 @@
 	 * @param {string} buttonKeyName - The key name to simulate
 	 * @returns {void}
 	 */
-	beep8.Joystick.setUpButton = function( buttonId, buttonKeyName ) {
+	b8.Joystick.setUpButton = function( buttonId, buttonKeyName ) {
 
-		const button = beep8.Utilities.assert(
+		const button = b8.Utilities.assert(
 			document.getElementById( buttonId ),
 			"Could not find button ID " + buttonId
 		);
@@ -289,7 +289,7 @@
 				eventName,
 				( e ) => {
 					e.preventDefault();
-					beep8.Joystick.handleButtonEvent( buttonKeyName, true, e );
+					b8.Joystick.handleButtonEvent( buttonKeyName, true, e );
 				},
 				{ passive: false }
 			);
@@ -299,7 +299,7 @@
 		[ "pointerout", "pointerup", "pointerleave" ].forEach( eventName => {
 			button.addEventListener(
 				eventName,
-				( e ) => beep8.Joystick.handleButtonEvent( buttonKeyName, false, e )
+				( e ) => b8.Joystick.handleButtonEvent( buttonKeyName, false, e )
 			);
 		} );
 
@@ -328,7 +328,7 @@
 	 * @param {Event} evt - The event object
 	 * @returns {void}
 	 */
-	beep8.Joystick.handleButtonEvent = function( buttonKeyName, down, evt ) {
+	b8.Joystick.handleButtonEvent = function( buttonKeyName, down, evt ) {
 
 		// Add key property to event.
 		evt.key = buttonKeyName;
@@ -341,7 +341,7 @@
 		if ( down ) {
 
 			// Call onKeyDown immediately.
-			beep8.Input.onKeyDown( evt );
+			b8.Input.onKeyDown( evt );
 
 			// If no timer exists for this button, start one.
 			if ( !repeatIntervals[ buttonKeyName ] ) {
@@ -353,7 +353,7 @@
 						// After the delay, start repeating.
 						repeatIntervals[ buttonKeyName ].interval = setInterval(
 							function() {
-								beep8.Input.onKeyDown( evt );
+								b8.Input.onKeyDown( evt );
 							},
 							150
 						);
@@ -375,7 +375,7 @@
 				delete repeatIntervals[ buttonKeyName ];
 			}
 
-			beep8.Input.onKeyUp( evt );
+			b8.Input.onKeyUp( evt );
 
 		}
 
@@ -383,4 +383,4 @@
 
 	}
 
-} )( beep8 );
+} )( b8 );

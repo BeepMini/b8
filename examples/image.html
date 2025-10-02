@@ -8,42 +8,42 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
 	<link rel="stylesheet" href="example.css">
-	<script src="../dist/beep8.js"></script>
+	<script src="../dist/b8.js"></script>
 
 	<script>
 
 		async function main() {
 
-			beep8.color( 3, 0 );
-			beep8.cls();
-			beep8.locate( 1, 1 );
-			beep8.print( "Loading..." );
-			const img = await beep8.Async.loadImage( "../assets/castle.png" );
+			b8.color( 3, 0 );
+			b8.cls();
+			b8.locate( 1, 1 );
+			b8.print( "Loading..." );
+			const img = await b8.Async.loadImage( "../assets/castle.png" );
 
-			beep8.cls();
-			beep8.drawImage( 8, 24, img );
-			beep8.locate( 1, 1 );
+			b8.cls();
+			b8.drawImage( 8, 24, img );
+			b8.locate( 1, 1 );
 
-			beep8.print( "You stand in front of the castle. Will you enter?", beep8.CONFIG.SCREEN_COLS - 2 );
+			b8.print( "You stand in front of the castle. Will you enter?", b8.CONFIG.SCREEN_COLS - 2 );
 
-			beep8.locate( beep8.CONFIG.SCREEN_COLS - 10, 14 );
-			const choice = await beep8.Async.menu( [ "Enter", "Leave", "Look", "Cast", "Rest" ] );
+			b8.locate( b8.CONFIG.SCREEN_COLS - 10, 14 );
+			const choice = await b8.Async.menu( [ "Enter", "Leave", "Look", "Cast", "Rest" ] );
 
 			// TODO: do something interesting based on the choice.
 			// Here we just print a fascinating ending according to what the user did:
 
-			beep8.cls();
-			beep8.locate( 1, 1 );
+			b8.cls();
+			b8.locate( 1, 1 );
 			switch ( choice ) {
-				case 0: beep8.print( "You enter the castle.\nThe evil villain flees.\n\nTHE END", beep8.CONFIG.SCREEN_COLS - 2 ); break;
-				case 1: beep8.print( "You leave the area.\nAnother hero saves the kingdom.\n\nTHE END", beep8.CONFIG.SCREEN_COLS - 2 ); break;
-				case 2: beep8.print( "As you're looking around, a dragon eats you.\nYou died.\n\nTHE END", beep8.CONFIG.SCREEN_COLS - 2 ); break;
-				case 3: beep8.print( "You try to cast a spell, then you remember you're not a wizard.\n\nTHE END", beep8.CONFIG.SCREEN_COLS - 2 ); break;
-				case 4: beep8.print( "You lie down and rest.\nSomeone else saves the kingdom.\n\nTHE END", beep8.CONFIG.SCREEN_COLS - 2 ); break;
+				case 0: b8.print( "You enter the castle.\nThe evil villain flees.\n\nTHE END", b8.CONFIG.SCREEN_COLS - 2 ); break;
+				case 1: b8.print( "You leave the area.\nAnother hero saves the kingdom.\n\nTHE END", b8.CONFIG.SCREEN_COLS - 2 ); break;
+				case 2: b8.print( "As you're looking around, a dragon eats you.\nYou died.\n\nTHE END", b8.CONFIG.SCREEN_COLS - 2 ); break;
+				case 3: b8.print( "You try to cast a spell, then you remember you're not a wizard.\n\nTHE END", b8.CONFIG.SCREEN_COLS - 2 ); break;
+				case 4: b8.print( "You lie down and rest.\nSomeone else saves the kingdom.\n\nTHE END", b8.CONFIG.SCREEN_COLS - 2 ); break;
 			}
 		}
 
-		window.addEventListener( "load", () => beep8.init( main ) );
+		window.addEventListener( "load", () => b8.init( main ) );
 	</script>
 </head>
 

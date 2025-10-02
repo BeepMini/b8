@@ -8,9 +8,11 @@ import chokidar from 'chokidar';
 
 const ROOT = dirname( fileURLToPath( import.meta.url ) );
 const DIST = 'dist';
+const FILENAME = 'b8.js';
+const FILENAME_MIN = 'b8.min.js';
 
 const coreOrder = [
-	'src/beep8.js',
+	'src/b8.js',
 	'src/config.js',
 	'src/public.js',
 	'src/public-async.js',
@@ -56,20 +58,20 @@ async function buildJS( input = '', sourcefile = '', isProd = false ) {
 		}
 	);
 
-	console.log( `[beep8] Build → ${outfile}` );
+	console.log( `[b8] Build → ${outfile}` );
 
 }
 
-const buildBeep8 = async () => {
+const buildB8 = async () => {
 
 	const core = await readConcat( coreOrder );
 	const libs = await readConcat( libsOrder );
 	const input = `${core}\n${libs}`;
 
 	// Build dev.
-	await buildJS( input, 'beep8.js' );
+	await buildJS( input, FILENAME );
 	// Build prod.
-	await buildJS( input, 'beep8.min.js', true );
+	await buildJS( input, FILENAME_MIN, true );
 
 
 	// Process plugins
@@ -102,7 +104,7 @@ const buildBeep8 = async () => {
 };
 
 
-await buildBeep8();
+await buildB8();
 
 const mode = process.argv[ 2 ];
 
@@ -120,17 +122,17 @@ if ( mode === 'watch' ) {
 		.on(
 			'all',
 			async () => {
-				console.log( '[beep8] Change detected. Rebuilding...' );
+				console.log( '[b8] Change detected. Rebuilding...' );
 				try {
-					await buildBeep8();
+					await buildB8();
 				} catch ( err ) {
-					console.error( '[beep8] Error:', err );
+					console.error( '[b8] Error:', err );
 				}
-				console.log( '[beep8] Watching...' );
+				console.log( '[b8] Watching...' );
 			}
 		);
 
-	console.log( '[beep8] Watching...' );
+	console.log( '[b8] Watching...' );
 
 }
 

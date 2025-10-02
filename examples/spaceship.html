@@ -8,7 +8,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
 	<link rel="stylesheet" href="example.css">
-	<script src="../dist/beep8.js"></script>
+	<script src="../dist/b8.js"></script>
 
 	<script>
 
@@ -57,30 +57,30 @@
 		let sfxHit = null;
 		let sfxBlast = null;
 
-		beep8.Actors.animations.explode = {
+		b8.Actors.animations.explode = {
 			frames: [ 0, 1, 2, 3 ],
 			fps: 16,
 			loop: false
 		};
 
 		async function main() {
-			beep8.cls();
-			beep8.print( "Loading..." );
-			backgroundImg = await beep8.Async.loadImage( "../assets/city.png" );
-			sfxLaser = await beep8.Async.loadSound( "../assets/laser.wav" )
-			sfxHit = await beep8.Async.loadSound( "../assets/hit.wav" )
-			sfxBlast = await beep8.Async.loadSound( "../assets/blast.wav" )
-			beep8.drawImage( 0, 0, backgroundImg );
-			beep8.locate( 4, 6 );
-			beep8.color( 14, -1 );
-			beep8.print( "\u00d7  SPACESHIP EXAMPLE \u00d8 \u00d9" );
-			beep8.locate( 3, 8 );
-			beep8.color( 7, -1 );
-			beep8.print( "Press any button to start.\n\n" );
-			beep8.print( "Controls:\n  SPACE or 'A' button\n  to shoot." );
-			await beep8.Async.key();
-			beep8.cls();
-			beep8.frame( doFrame, render );
+			b8.cls();
+			b8.print( "Loading..." );
+			backgroundImg = await b8.Async.loadImage( "../assets/city.png" );
+			sfxLaser = await b8.Async.loadSound( "../assets/laser.wav" )
+			sfxHit = await b8.Async.loadSound( "../assets/hit.wav" )
+			sfxBlast = await b8.Async.loadSound( "../assets/blast.wav" )
+			b8.drawImage( 0, 0, backgroundImg );
+			b8.locate( 4, 6 );
+			b8.color( 14, -1 );
+			b8.print( "\u00d7  SPACESHIP EXAMPLE \u00d8 \u00d9" );
+			b8.locate( 3, 8 );
+			b8.color( 7, -1 );
+			b8.print( "Press any button to start.\n\n" );
+			b8.print( "Controls:\n  SPACE or 'A' button\n  to shoot." );
+			await b8.Async.key();
+			b8.cls();
+			b8.frame( doFrame, render );
 		}
 
 		async function doFrame() {
@@ -94,13 +94,13 @@
 			}
 
 			// Draw score
-			beep8.color( 7 );
-			beep8.locate( 25, 1 );
-			beep8.print( ( score < 10 ? "000" : score < 100 ? "00" : score < 1000 ? "0" : "" ) + score );
+			b8.color( 7 );
+			b8.locate( 25, 1 );
+			b8.print( ( score < 10 ? "000" : score < 100 ? "00" : score < 1000 ? "0" : "" ) + score );
 
 			// Game over?
 			if ( gameOver ) {
-				beep8.frame( null );
+				b8.frame( null );
 				showGameOver();
 			}
 
@@ -108,8 +108,8 @@
 
 		function render() {
 
-			beep8.cls();
-			beep8.drawImage( 0, 0, backgroundImg );
+			b8.cls();
+			b8.drawImage( 0, 0, backgroundImg );
 			// Update and draw everything.
 			updateAndDrawPlayer();
 			if ( laser ) updateAndDrawLaser();
@@ -120,34 +120,34 @@
 
 		function updateAndDrawPlayer() {
 			// Apply acceleration based on up/down keys.
-			playerSpeed += ( beep8.key( "ArrowRight" ) ? 1 : beep8.key( "ArrowLeft" ) ? -1 : 0 ) * ACCEL;
+			playerSpeed += ( b8.key( "ArrowRight" ) ? 1 : b8.key( "ArrowLeft" ) ? -1 : 0 ) * ACCEL;
 			// Apply friction (reduce speed).
 			playerSpeed = playerSpeed > 0 ?
 				Math.max( 0, playerSpeed - FRICTION ) : Math.min( 0, playerSpeed + FRICTION );
 			// Cap speed to maximum.
-			playerSpeed = beep8.Utilities.clamp( playerSpeed, -MAX_SPEED, MAX_SPEED );
+			playerSpeed = b8.Utilities.clamp( playerSpeed, -MAX_SPEED, MAX_SPEED );
 			// Apply speed to position.
-			playerX = beep8.Utilities.clamp( playerX + playerSpeed, MIN_X, MAX_X );
+			playerX = b8.Utilities.clamp( playerX + playerSpeed, MIN_X, MAX_X );
 			// Draw the spaceship.
-			beep8.color( 15 );
-			beep8.sprActor( CH_SPACESHIP, 'idle', playerX, playerY );
+			b8.color( 15 );
+			b8.sprActor( CH_SPACESHIP, 'idle', playerX, playerY );
 			// If there is no laser and the player presses Space (or the A button on mobile), shoot.
-			if ( !laser && ( beep8.key( " " ) || beep8.key( "ButtonA" ) ) ) shootLaser();
+			if ( !laser && ( b8.key( " " ) || b8.key( "ButtonA" ) ) ) shootLaser();
 		}
 
 		function updateAndDrawLaser() {
 			laser.y -= 16;
 			// Draw the laser. It's a double sprite (16 pixels tall).
-			beep8.color( 11 );
-			beep8.spr( CH_LASER, laser.x, laser.y );
-			beep8.spr( CH_LASER, laser.x, laser.y + 8 );
+			b8.color( 11 );
+			b8.spr( CH_LASER, laser.x, laser.y );
+			b8.spr( CH_LASER, laser.x, laser.y + 8 );
 			// Remove laser if it went off-screen.
 			if ( laser.y < -16 ) laser = null;
 		}
 
 		function shootLaser() {
 			laser = { x: playerX, y: playerY };
-			beep8.playSound( sfxLaser );
+			b8.playSound( sfxLaser );
 		}
 
 		function spawnEnemy() {
@@ -187,50 +187,50 @@
 			e.y = Math.min( e.y, playerY );
 
 			// Hit by laser?
-			if ( laser && beep8.Utilities.intersectRects( LASER_COLL_RECT, ENEMY_COLL_RECT, laser.x, laser.y, e.x, e.y ) ) {
+			if ( laser && b8.Utilities.intersectRects( LASER_COLL_RECT, ENEMY_COLL_RECT, laser.x, laser.y, e.x, e.y ) ) {
 				e.dead = true;
 				laser = null;
-				partFx = { x: e.x, y: e.y, startTime: beep8.Core.getNow() };
+				partFx = { x: e.x, y: e.y, startTime: b8.Core.getNow() };
 				score += 50;
-				beep8.playSound( sfxHit );
+				b8.playSound( sfxHit );
 			}
 
 			// Hit player?
-			if ( beep8.Utilities.intersectRects( ENEMY_COLL_RECT, PLAYER_COLL_RECT, e.x, e.y, playerX, playerY ) ) {
-				if ( !gameOver ) beep8.playSound( sfxBlast );
+			if ( b8.Utilities.intersectRects( ENEMY_COLL_RECT, PLAYER_COLL_RECT, e.x, e.y, playerX, playerY ) ) {
+				if ( !gameOver ) b8.playSound( sfxBlast );
 				gameOver = true;
 			}
 
 			// Draw.
-			beep8.color( e.color );
+			b8.color( e.color );
 
 			let animation = 'move-right';
 			if ( e.dir < 0 ) {
 				animation = 'move-left';
 			}
-			beep8.sprActor( 21, animation, e.x, e.y );
+			b8.sprActor( 21, animation, e.x, e.y );
 		}
 
 		function updateAndDrawPartFx() {
 			if ( !partFx ) return;
-			beep8.color( 15 );
-			const animating = beep8.sprActor( 39, 'explode', partFx.x, partFx.y, partFx.startTime );
+			b8.color( 15 );
+			const animating = b8.sprActor( 39, 'explode', partFx.x, partFx.y, partFx.startTime );
 			if ( !animating ) partFx = null;
 		}
 
 		function showGameOver() {
-			beep8.color( 15, 2 );
-			beep8.locate( 2, 10 );
-			beep8.printBox( beep8.CONFIG.SCREEN_COLS - 4, 3 );
-			beep8.locate( 0, 11 );
-			beep8.printCentered( "GAME OVER", beep8.CONFIG.SCREEN_COLS );
+			b8.color( 15, 2 );
+			b8.locate( 2, 10 );
+			b8.printBox( b8.CONFIG.SCREEN_COLS - 4, 3 );
+			b8.locate( 0, 11 );
+			b8.printCentered( "GAME OVER", b8.CONFIG.SCREEN_COLS );
 		}
 
 		function calcParam( paramSpec ) {
 			return paramSpec[ Math.min( Math.max( Math.floor( score / 500 ), 0 ), paramSpec.length - 1 ) ];
 		}
 
-		window.addEventListener( "load", () => beep8.init( main, { NAME: 'Spaceshop Shooter' } ) );
+		window.addEventListener( "load", () => b8.init( main, { NAME: 'Spaceshop Shooter' } ) );
 	</script>
 </head>
 

@@ -1,6 +1,6 @@
-( function( beep8 ) {
+( function( b8 ) {
 
-	beep8.Math = {};
+	b8.Math = {};
 
 
 	/**
@@ -12,12 +12,12 @@
 	 * @param {number} y1 - The y-coordinate of the second point.
 	 * @returns {number} The distance between the two points.
 	 */
-	beep8.Math.dist2D = function( x0, y0, x1, y1 ) {
+	b8.Math.dist2D = function( x0, y0, x1, y1 ) {
 
-		beep8.Utilities.checkNumber( "x0", x0 );
-		beep8.Utilities.checkNumber( "y0", y0 );
-		beep8.Utilities.checkNumber( "x1", x1 );
-		beep8.Utilities.checkNumber( "y1", y1 );
+		b8.Utilities.checkNumber( "x0", x0 );
+		b8.Utilities.checkNumber( "y0", y0 );
+		b8.Utilities.checkNumber( "x1", x1 );
+		b8.Utilities.checkNumber( "y1", y1 );
 
 		const dx = x0 - x1;
 		const dy = y0 - y1;
@@ -35,7 +35,7 @@
 	 * @param {number} t - The interpolation factor (0.0 to 1.0).
 	 * @returns {number} The interpolated value.
 	 */
-	beep8.Math.lerp = function( a, b, t ) {
+	b8.Math.lerp = function( a, b, t ) {
 
 		return a + ( b - a ) * t;
 
@@ -52,7 +52,7 @@
 	 * @param {number} t - The interpolation factor (0.0 to 1.0).
 	 * @returns {number} The smoothed interpolation factor.
 	 */
-	beep8.Math.fade = function( t ) {
+	b8.Math.fade = function( t ) {
 
 		return t * t * t * ( t * ( t * 6 - 15 ) + 10 );
 
@@ -69,7 +69,7 @@
 	 * @param {number} t - The interpolation factor (0.0 to 1.0).
 	 * @returns {number} The smoothed interpolation factor.
 	 */
-	beep8.Math.smoothstep = function( t ) {
+	b8.Math.smoothstep = function( t ) {
 
 		return t * t * ( 3 - 2 * t );
 
@@ -82,4 +82,4 @@
 	}
 
 
-} )( beep8 );
+} )( b8 );

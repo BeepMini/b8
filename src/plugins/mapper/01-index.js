@@ -25,13 +25,13 @@ const mapper = {
 	 */
 	play: function( mapData ) {
 
-		beep8.Utilities.checkObject( 'mapData', mapData );
+		b8.Utilities.checkObject( 'mapData', mapData );
 
 		mapper.load( mapData );
 
-		beep8.Scene.add( 'menu', mapper.sceneMenu );
-		beep8.Scene.add( 'game', mapper.sceneGame );
-		beep8.Scene.set( 'menu' );
+		b8.Scene.add( 'menu', mapper.sceneMenu );
+		b8.Scene.add( 'game', mapper.sceneGame );
+		b8.Scene.set( 'menu' );
 
 	},
 
@@ -46,17 +46,17 @@ const mapper = {
 	 */
 	load: function( mapData, mapName = 'world', setCurrentMap = true ) {
 
-		beep8.Utilities.checkObject( 'mapData', mapData );
+		b8.Utilities.checkObject( 'mapData', mapData );
 
 		// Combine map data into single string.
 		const mapDataString = mapData.map.join( '\n' );
-		beep8.Utilities.checkString( 'mapDataString', mapDataString );
+		b8.Utilities.checkString( 'mapDataString', mapDataString );
 
 		mapper.settings = { ...mapData.settings };
-		beep8.Utilities.checkObject( 'mapper.settings', mapper.settings );
+		b8.Utilities.checkObject( 'mapper.settings', mapper.settings );
 
 		// Setup player.
-		mapper.player = beep8.ECS.create(
+		mapper.player = b8.ECS.create(
 			{
 				Type: { name: 'player' },
 				Loc: { row: 0, col: 0 },
@@ -77,8 +77,8 @@ const mapper = {
 		);
 
 		// Convert maze strings to 2D array of characters.
-		const maze = beep8.Tilemap.convertFromText( mapDataString );
-		const map = beep8.Tilemap.createFromArray( maze, mapData.tiles );
+		const maze = b8.Tilemap.convertFromText( mapDataString );
+		const map = b8.Tilemap.createFromArray( maze, mapData.tiles );
 
 		mapper.maps.push(
 			{
@@ -109,24 +109,24 @@ const mapper = {
 
 		// Count coin objects.
 		const coinCount = mapData.objects.filter( obj => obj.type === 'coin' ).length;
-		beep8.data.totalCoins = coinCount;
+		b8.data.totalCoins = coinCount;
 
 		// Add systems.
-		beep8.ECS.addSystem( 'characterAnimation', mapper.systems.characterAnimation );
+		b8.ECS.addSystem( 'characterAnimation', mapper.systems.characterAnimation );
 
 		// Play music.
 		if ( mapper.settings.bgm ) {
-			beep8.Music.play( world.settings.bgm );
+			b8.Music.play( world.settings.bgm );
 		}
 
 		// Validate map data.
 		if (
 			mapper.settings.splash &&
 			mapper.settings.splash.length > 10 &&
-			beep8.Tilemap.validateTilemap( mapper.settings.splash )
+			b8.Tilemap.validateTilemap( mapper.settings.splash )
 		) {
 
-			mapper.bg.splash = beep8.Tilemap.load( mapper.settings.splash );
+			mapper.bg.splash = b8.Tilemap.load( mapper.settings.splash );
 
 		}
 
@@ -141,7 +141,7 @@ const mapper = {
 	 */
 	update: function( dt ) {
 
-		beep8.ECS.run( dt );
+		b8.ECS.run( dt );
 
 	},
 
@@ -155,7 +155,7 @@ const mapper = {
 	drawActor: function( actor ) {
 
 		if ( !mapper.currentMap ) {
-			beep8.Utilities.error( "No current map set." );
+			b8.Utilities.error( "No current map set." );
 			return;
 		}
 
@@ -165,9 +165,9 @@ const mapper = {
 		const actorY = actor.row - screenPosition.row;
 
 		// Draw the actor at its position with the specified offset.
-		beep8.locate( actorX + offsetX, actorY + offsetY );
-		beep8.color( actor.fg, actor.bg );
-		beep8.drawActor( actor.id, actor.animation );
+		b8.locate( actorX + offsetX, actorY + offsetY );
+		b8.color( actor.fg, actor.bg );
+		b8.drawActor( actor.id, actor.animation );
 
 	},
 
@@ -184,10 +184,10 @@ const mapper = {
 		// Handy caches so look-ups are O(1) inside the loop
 		const list = [];
 
-		for ( const id of beep8.ECS.query( 'Sprite', 'Loc' ) ) {
-			const spr = beep8.ECS.getComponent( id, 'Sprite' );
-			const loc = beep8.ECS.getComponent( id, 'Loc' );
-			const anim = beep8.ECS.getComponent( id, 'CharacterAnimation' );
+		for ( const id of b8.ECS.query( 'Sprite', 'Loc' ) ) {
+			const spr = b8.ECS.getComponent( id, 'Sprite' );
+			const loc = b8.ECS.getComponent( id, 'Loc' );
+			const anim = b8.ECS.getComponent( id, 'CharacterAnimation' );
 			list.push( { spr, loc, anim } );
 		}
 
@@ -202,13 +202,13 @@ const mapper = {
 
 			const pos = mapper.camera.getTilePosition( loc.col, loc.row );
 
-			beep8.locate( pos.col + offsetX, pos.row + offsetY );
-			beep8.color( spr.fg ?? 15, spr.bg ?? 0 );
+			b8.locate( pos.col + offsetX, pos.row + offsetY );
+			b8.color( spr.fg ?? 15, spr.bg ?? 0 );
 
 			if ( 'actor' === spr.type ) {
-				beep8.drawActor( parseInt( spr.tile ), anim.name );
+				b8.drawActor( parseInt( spr.tile ), anim.name );
 			} else {
-				beep8.printChar( parseInt( spr.tile ) );
+				b8.printChar( parseInt( spr.tile ) );
 			}
 
 		}
@@ -224,15 +224,15 @@ const mapper = {
 	drawScreen: function() {
 
 		if ( !mapper.currentMap ) {
-			beep8.Utilities.error( "No current map set." );
+			b8.Utilities.error( "No current map set." );
 			return;
 		}
 
-		const loc = beep8.ECS.getComponent( mapper.player, 'Loc' );
+		const loc = b8.ECS.getComponent( mapper.player, 'Loc' );
 		const screenPosition = mapper.camera.getScreenPosition( loc.col, loc.row );
 		const currentMap = mapper.currentMap;
 
-		beep8.Tilemap.draw(
+		b8.Tilemap.draw(
 			currentMap.map,
 			screenPosition.col,
 			screenPosition.row,
@@ -273,7 +273,7 @@ const mapper = {
 	setTile: function( x, y, tile ) {
 
 		if ( !mapper.currentMap ) {
-			beep8.Utilities.error( "No current map set." );
+			b8.Utilities.error( "No current map set." );
 			return;
 		}
 
@@ -283,7 +283,7 @@ const mapper = {
 			y >= mapper.currentMap.map.mapHeight ||
 			x >= mapper.currentMap.map.mapWidth
 		) {
-			beep8.Utilities.error( "Mapper.setTile, coordinates out of bounds." );
+			b8.Utilities.error( "Mapper.setTile, coordinates out of bounds." );
 			return;
 		}
 
@@ -300,7 +300,7 @@ const mapper = {
 	 */
 	getVerbForEntity: ( id ) => {
 
-		const a = beep8.ECS.getComponent( id, 'Action' );
+		const a = b8.ECS.getComponent( id, 'Action' );
 		return a?.verb ?? '';
 
 	},
@@ -332,8 +332,8 @@ const mapper = {
 	 */
 	ahead: ( playerId ) => {
 
-		const loc = beep8.ECS.getComponent( playerId, 'Loc' );
-		const dir = beep8.ECS.getComponent( playerId, 'Direction' ); // {dx,dy}
+		const loc = b8.ECS.getComponent( playerId, 'Loc' );
+		const dir = b8.ECS.getComponent( playerId, 'Direction' ); // {dx,dy}
 		const x = loc.col + ( dir.dx || 0 );
 		const y = loc.row + ( dir.dy || 0 );
 		return { x, y };
@@ -350,7 +350,7 @@ const mapper = {
 	entitiesAhead: ( playerId ) => {
 
 		const { x, y } = mapper.ahead( playerId );
-		return beep8.ECS.entitiesAt( x, y ) ?? [];
+		return b8.ECS.entitiesAt( x, y ) ?? [];
 
 	},
 
@@ -372,9 +372,9 @@ const mapper = {
 		if ( mapper.systems.tryPushing( x, y, dx, dy ) ) return true;
 
 		// every entity occupying the target tile
-		for ( const id of beep8.ECS.entitiesAt( newCol, newRow ) ) {
+		for ( const id of b8.ECS.entitiesAt( newCol, newRow ) ) {
 
-			const typeComp = beep8.ECS.getComponent( id, 'Type' );
+			const typeComp = b8.ECS.getComponent( id, 'Type' );
 			const handler = typeComp ? mapper.types[ typeComp.name ] : null;
 
 			if ( handler?.onCharacterCollision ) {
@@ -382,7 +382,7 @@ const mapper = {
 				if ( blocked ) return true;
 			}
 
-			const isSolid = beep8.ECS.hasComponent( id, 'Solid' );
+			const isSolid = b8.ECS.hasComponent( id, 'Solid' );
 			if ( isSolid ) return true;
 
 		}

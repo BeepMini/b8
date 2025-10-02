@@ -1,10 +1,10 @@
-( function( beep8 ) {
+( function( b8 ) {
 
-	beep8.Hooks = {};
+	b8.Hooks = {};
 
 	/**
 	 * Internal hook management for actions and filters.
-	 * This is used to manage the hooks for actions and filters in the beep8 framework.
+	 * This is used to manage the hooks for actions and filters in the b8 framework.
 	 * It allows you to add, execute, and remove hooks for various game events.
 	 */
 	const actions = {};
@@ -40,7 +40,7 @@
 	 * @param {number} [priority=10] - The priority of the action hook.
 	 * @returns {void}
 	 */
-	beep8.Hooks.addAction = function( hookName, callback, priority = 10 ) {
+	b8.Hooks.addAction = function( hookName, callback, priority = 10 ) {
 
 		_add( actions, hookName, callback, priority );
 
@@ -52,14 +52,14 @@
 	 * This will call each action's callback with the provided arguments.
 	 *
 	 * @example
-	 * beep8.Hooks.doAction( 'onPlayerMove', playerId, newX, newY, dx, dy );
+	 * b8.Hooks.doAction( 'onPlayerMove', playerId, newX, newY, dx, dy );
 	 *
 	 * @param {string} hookName - The name of the action hook to execute.
 	 * @param {...*} args - The arguments to pass to the action callbacks.
 	 * @returns {void}
 	 *
 	 */
-	beep8.Hooks.doAction = function( hookName, ...args ) {
+	b8.Hooks.doAction = function( hookName, ...args ) {
 
 		if ( !actions[ hookName ] ) return;
 		for ( const { callback } of actions[ hookName ] ) {
@@ -79,7 +79,7 @@
 	 * @param {number} [priority=10] - The priority of the filter hook.
 	 * @returns {void}
 	 */
-	beep8.Hooks.addFilter = function( hookName, callback, priority = 10 ) {
+	b8.Hooks.addFilter = function( hookName, callback, priority = 10 ) {
 
 		_add( filters, hookName, callback, priority );
 
@@ -92,14 +92,14 @@
 	 * returning the modified value.
 	 *
 	 * @example
-	 * const modifiedValue = beep8.Hooks.applyFilters( 'modifyPlayerSpeed', playerSpeed, playerId );
+	 * const modifiedValue = b8.Hooks.applyFilters( 'modifyPlayerSpeed', playerSpeed, playerId );
 	 *
 	 * @param {string} hookName - The name of the filter hook to apply.
 	 * @param {*} value - The initial value to filter.
 	 * @param {...*} args - Additional arguments to pass to the filter callbacks.
 	 * @return {*} The modified value after all filters have been applied.
 	 */
-	beep8.Hooks.applyFilters = function( hookName, value, ...args ) {
+	b8.Hooks.applyFilters = function( hookName, value, ...args ) {
 
 		if ( !filters[ hookName ] ) return value;
 
@@ -121,7 +121,7 @@
 	 * @param {Function} callback - The callback function to remove.
 	 * @returns {void}
 	 */
-	beep8.Hooks.removeAction = function( hookName, callback ) {
+	b8.Hooks.removeAction = function( hookName, callback ) {
 
 		actions[ hookName ] = ( actions[ hookName ] || [] ).filter( h => h.callback !== callback );
 
@@ -136,11 +136,11 @@
 	 * @param {Function} callback - The callback function to remove.
 	 * @returns {void}
 	 */
-	beep8.Hooks.removeFilter = function( hookName, callback ) {
+	b8.Hooks.removeFilter = function( hookName, callback ) {
 
 		filters[ hookName ] = ( filters[ hookName ] || [] ).filter( h => h.callback !== callback );
 
 	}
 
 
-} )( beep8 );
+} )( b8 );

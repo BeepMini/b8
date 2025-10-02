@@ -1,6 +1,6 @@
-( function( beep8 ) {
+( function( b8 ) {
 
-	beep8.Actors = {};
+	b8.Actors = {};
 
 
 	/**
@@ -9,7 +9,7 @@
 	 *
 	 * @type {Object}
 	 */
-	beep8.Actors.animations = {
+	b8.Actors.animations = {
 		'idle': {
 			frames: [ 0 ],
 			fps: 1,
@@ -82,10 +82,10 @@
 	 */
 	const drawActor = function( ch, animation, x, y, direction ) {
 
-		const font = beep8.TextRenderer.curActors_;
+		const font = b8.TextRenderer.curActors_;
 		const chrIndex = ( ch * font.getColCount() ) + Math.abs( animationFrame( animation ) );
 
-		beep8.TextRenderer.spr(
+		b8.TextRenderer.spr(
 			chrIndex,
 			x,
 			y,
@@ -104,18 +104,18 @@
 	 * @param {number} direction - The direction to draw the actor in. 0 = right, 1 = left.
 	 * @returns {void}
 	 */
-	beep8.Actors.draw = function( ch, animation ) {
+	b8.Actors.draw = function( ch, animation ) {
 
-		beep8.Utilities.checkInt( "ch", ch );
-		beep8.Utilities.checkString( "animation", animation );
+		b8.Utilities.checkInt( "ch", ch );
+		b8.Utilities.checkString( "animation", animation );
 
 		const frame = animationFrame( animation );
 		const direction = frame >= 0 ? 0 : 1;
 
 		drawActor(
 			ch, animation,
-			beep8.Core.drawState.cursorCol * beep8.CONFIG.CHR_WIDTH,
-			beep8.Core.drawState.cursorRow * beep8.CONFIG.CHR_HEIGHT,
+			b8.Core.drawState.cursorCol * b8.CONFIG.CHR_WIDTH,
+			b8.Core.drawState.cursorRow * b8.CONFIG.CHR_HEIGHT,
 			direction || 0
 		);
 
@@ -144,16 +144,16 @@
 	 * @param {number} [startTime=null] The time the animation started.
 	 * @returns {boolean} True if the animation is still playing, false if it has finished.
 	 */
-	beep8.Actors.spr = function( ch, animation, x, y, startTime = null ) {
+	b8.Actors.spr = function( ch, animation, x, y, startTime = null ) {
 
-		beep8.Utilities.checkInt( "ch", ch );
-		beep8.Utilities.checkString( "animation", animation );
-		beep8.Utilities.checkNumber( "x", x );
-		beep8.Utilities.checkNumber( "y", y );
-		if ( startTime !== null ) beep8.Utilities.checkNumber( "startTime", startTime );
+		b8.Utilities.checkInt( "ch", ch );
+		b8.Utilities.checkString( "animation", animation );
+		b8.Utilities.checkNumber( "x", x );
+		b8.Utilities.checkNumber( "y", y );
+		if ( startTime !== null ) b8.Utilities.checkNumber( "startTime", startTime );
 
 		const frame = animationFrame( animation, startTime );
-		const anim = beep8.Actors.animations[ animation ];
+		const anim = b8.Actors.animations[ animation ];
 		const direction = frame >= 0 ? 0 : 1;
 
 		if ( !shouldLoopAnimation( anim, startTime ) ) {
@@ -179,17 +179,17 @@
 	const animationFrame = function( animation, startTime = null ) {
 
 		// Does the animation exist.
-		if ( beep8.Actors.animations[ animation ] === undefined ) {
-			beep8.Utilities.fatal( "Invalid animation: " + animation );
+		if ( b8.Actors.animations[ animation ] === undefined ) {
+			b8.Utilities.fatal( "Invalid animation: " + animation );
 		}
 
 		// If the animation has a start time, use that.
 		if ( startTime === null ) {
-			startTime = beep8.Core.startTime;
+			startTime = b8.Core.startTime;
 		}
 
 		// Get the current animation properties.
-		const anim = beep8.Actors.animations[ animation ];
+		const anim = b8.Actors.animations[ animation ];
 		let frame = 0;
 
 		// If there's only one frame, return it.
@@ -200,7 +200,7 @@
 		// If there's more than one frame, calculate the frame to display.
 		if ( anim.frames.length > 1 ) {
 
-			const totalTime = beep8.Core.getNow() - startTime;
+			const totalTime = b8.Core.getNow() - startTime;
 			const frameCount = anim.frames.length;
 			const frameDuration = 1 / anim.fps;
 
@@ -236,7 +236,7 @@
 		const animationLength = anim.frames.length * ( 1000 / anim.fps );
 
 		// Check if the current time exceeds the animation length.
-		if ( beep8.Core.getNow() - startTime >= animationLength ) {
+		if ( b8.Core.getNow() - startTime >= animationLength ) {
 			return false;
 		}
 
@@ -244,4 +244,4 @@
 
 	}
 
-} )( beep8 );
+} )( b8 );

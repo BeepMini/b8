@@ -8,10 +8,10 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
 	<link rel="stylesheet" href="example.css">
-	<script src="../dist/beep8.js"></script>
+	<script src="../dist/b8.js"></script>
 
 	<script>
-		const MAX_COLORS = beep8.CONFIG.COLORS.length;
+		const MAX_COLORS = b8.CONFIG.COLORS.length;
 
 		let selFg = 7;
 		let selBg = 1;
@@ -22,7 +22,7 @@
 
 				demo_render();
 
-				const k = await beep8.Async.key();
+				const k = await b8.Async.key();
 
 				if ( k.includes( "ArrowLeft" ) ) selFg = Math.max( 0, selFg - 1 );
 				if ( k.includes( "ArrowRight" ) ) selFg = Math.min( MAX_COLORS - 1, selFg + 1 );
@@ -35,49 +35,49 @@
 
 		function demo_render() {
 
-			beep8.color( 15, 0 );
-			beep8.cls();
-			beep8.locate( 1, 1 );
-			beep8.print( "COLORS (Change with Arrows)" );
+			b8.color( 15, 0 );
+			b8.cls();
+			b8.locate( 1, 1 );
+			b8.print( "COLORS (Change with Arrows)" );
 
 			for ( let i = 0; i < MAX_COLORS; i++ ) {
 				const ch = "0123456789abcdef".substring( i, i + 1 );
-				beep8.color( 15, 0 );
-				beep8.locate( i + 2, 2 );
-				beep8.print( ch );
-				beep8.locate( 1, i + 3 );
-				beep8.print( ch );
+				b8.color( 15, 0 );
+				b8.locate( i + 2, 2 );
+				b8.print( ch );
+				b8.locate( 1, i + 3 );
+				b8.print( ch );
 			}
 
 			for ( let i = 0; i < MAX_COLORS; i++ ) {
 				for ( let j = 0; j < MAX_COLORS; j++ ) {
-					beep8.locate( i + 2, 3 + j );
-					beep8.color( i, j );
-					// beep8.print( i === selFg && j === selBg ? "*" : "•" );
+					b8.locate( i + 2, 3 + j );
+					b8.color( i, j );
+					// b8.print( i === selFg && j === selBg ? "*" : "•" );
 					if ( i === selFg && j === selBg ) {
 						// Current selection.
-						beep8.printChar( 119 );
+						b8.printChar( 119 );
 					} else {
-						beep8.printChar( 110 );
+						b8.printChar( 110 );
 					}
-					// beep8.printChar( i === selFg && j === selBg ? 128 : 110 );
+					// b8.printChar( i === selFg && j === selBg ? 128 : 110 );
 				}
 			}
 
-			beep8.locate( 1, 20 );
-			beep8.color( selFg, selBg );
-			beep8.printBox( beep8.CONFIG.SCREEN_COLS - 2, 5 );
+			b8.locate( 1, 20 );
+			b8.color( selFg, selBg );
+			b8.printBox( b8.CONFIG.SCREEN_COLS - 2, 5 );
 
-			beep8.locate( 2, 21 );
-			beep8.print( `color(${selFg},${selBg})
-FG: ${( selFg + '' ).padEnd( 2, ' ' )} ${beep8.CONFIG.COLORS[ selFg ]}
-BG: ${( selBg + '' ).padEnd( 2, ' ' )} ${beep8.CONFIG.COLORS[ selBg ]}` );
+			b8.locate( 2, 21 );
+			b8.print( `color(${selFg},${selBg})
+FG: ${( selFg + '' ).padEnd( 2, ' ' )} ${b8.CONFIG.COLORS[ selFg ]}
+BG: ${( selBg + '' ).padEnd( 2, ' ' )} ${b8.CONFIG.COLORS[ selBg ]}` );
 
 		}
 
 		window.addEventListener(
 			"load",
-			() => beep8.init( main, { NAME: 'Colors Test' } )
+			() => b8.init( main, { NAME: 'Colors Test' } )
 		);
 
 	</script>

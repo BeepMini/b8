@@ -1,8 +1,8 @@
-( function( beep8 ) {
+( function( b8 ) {
 
 	/**
 	 * A collection of functions for working with tilemaps.
-	 * The tilemaps are created with the beep8 Tilemap Editor.
+	 * The tilemaps are created with the b8 Tilemap Editor.
 	 *
 	 * The tilemap format is a multi-dimensional array of arrays.
 	 * The tile array is in the format:
@@ -12,13 +12,13 @@
 	 * [3] = collision flag.
 	 * [4] = additional data.
 	 */
-	beep8.Tilemap = {};
+	b8.Tilemap = {};
 
-	beep8.Tilemap.MAP_CHAR = 0;
-	beep8.Tilemap.MAP_FG = 1;
-	beep8.Tilemap.MAP_BG = 2;
-	beep8.Tilemap.MAP_COLLISION = 3;
-	beep8.Tilemap.MAP_DATA = 4;
+	b8.Tilemap.MAP_CHAR = 0;
+	b8.Tilemap.MAP_FG = 1;
+	b8.Tilemap.MAP_BG = 2;
+	b8.Tilemap.MAP_COLLISION = 3;
+	b8.Tilemap.MAP_DATA = 4;
 
 
 	// Define a mapping from bitmask value to your desired tile name or index.
@@ -137,16 +137,16 @@
 	/**
 	 * Convert a tilemap array to a string.
 	 *
-	 * This string can be loaded with beep8.Tilemap.load.
+	 * This string can be loaded with b8.Tilemap.load.
 	 *
 	 * @param {Array} tilemap - The tilemap array to save.
 	 * @returns {string} The encoded string
 	 */
-	beep8.Tilemap.save = function( tilemap ) {
+	b8.Tilemap.save = function( tilemap ) {
 
-		beep8.Utilities.checkArray( "tilemap", tilemap );
+		b8.Utilities.checkArray( "tilemap", tilemap );
 
-		return beep8.Utilities.encodeData( tilemap );
+		return b8.Utilities.encodeData( tilemap );
 
 	}
 
@@ -157,11 +157,11 @@
 	 * @param {string} data The encoded string
 	 * @returns {Array} The tilemap array
 	 */
-	beep8.Tilemap.load = function( data ) {
+	b8.Tilemap.load = function( data ) {
 
-		beep8.Utilities.checkString( "data", data );
+		b8.Utilities.checkString( "data", data );
 
-		return beep8.Utilities.decodeData( data );
+		return b8.Utilities.decodeData( data );
 
 	}
 
@@ -176,9 +176,9 @@
 	 * @param {number} [height=null] The height of the tilemap to draw.
 	 * @returns {void}
 	 */
-	beep8.Tilemap.draw = function( tilemap, tileXOffset = 0, tileYOffset = 0, width = null, height = null ) {
+	b8.Tilemap.draw = function( tilemap, tileXOffset = 0, tileYOffset = 0, width = null, height = null ) {
 
-		beep8.Utilities.checkArray( "tilemap", tilemap );
+		b8.Utilities.checkArray( "tilemap", tilemap );
 
 		if ( !width ) {
 			width = tilemap[ 0 ].length;
@@ -188,18 +188,18 @@
 			height = tilemap.length;
 		}
 
-		beep8.Utilities.checkInt( "width", width );
-		beep8.Utilities.checkInt( "height", height );
+		b8.Utilities.checkInt( "width", width );
+		b8.Utilities.checkInt( "height", height );
 
-		const startRow = beep8.Core.drawState.cursorRow;
-		const startCol = beep8.Core.drawState.cursorCol;
+		const startRow = b8.Core.drawState.cursorRow;
+		const startCol = b8.Core.drawState.cursorCol;
 
 		for ( let y = tileYOffset; y < tileYOffset + height; y++ ) {
 
 			// Position the cursor at the start of the row.
 			const lx = 0 + startCol;
 			const ly = y - tileYOffset + startRow;
-			beep8.locate( lx, ly );
+			b8.locate( lx, ly );
 
 			for ( let x = tileXOffset; x < tileXOffset + width; x++ ) {
 
@@ -208,12 +208,12 @@
 				const tile = tilemap[ y ][ x ];
 				if ( tile && tile.length >= 3 ) {
 
-					beep8.color(
-						tile[ beep8.Tilemap.MAP_FG ],
-						tile[ beep8.Tilemap.MAP_BG ]
+					b8.color(
+						tile[ b8.Tilemap.MAP_FG ],
+						tile[ b8.Tilemap.MAP_BG ]
 					);
 
-					beep8.printChar( tile[ beep8.Tilemap.MAP_CHAR ] );
+					b8.printChar( tile[ b8.Tilemap.MAP_CHAR ] );
 
 				}
 			}
@@ -229,7 +229,7 @@
 	 * @param {number} height The height of the tilemap.
 	 * @returns {Array} The empty tilemap array.
 	 */
-	beep8.Tilemap.createEmptyTilemap = function( width, height ) {
+	b8.Tilemap.createEmptyTilemap = function( width, height ) {
 
 		let layout = [];
 
@@ -237,7 +237,7 @@
 			layout[ y ] = [];
 			for ( let x = 0; x < width; x++ ) {
 
-				layout[ y ][ x ] = beep8.Tilemap.getDefaultTile();
+				layout[ y ][ x ] = b8.Tilemap.getDefaultTile();
 
 			}
 		}
@@ -255,16 +255,16 @@
 	 * @param {number} dy The amount to shift the tilemap in the y direction.
 	 * @returns {void}
 	 */
-	beep8.Tilemap.shift = function( tilemap, dx, dy ) {
+	b8.Tilemap.shift = function( tilemap, dx, dy ) {
 
-		beep8.Utilities.checkArray( "tilemap", tilemap );
-		beep8.Utilities.checkNumber( "dx", dx );
-		beep8.Utilities.checkNumber( "dy", dy );
+		b8.Utilities.checkArray( "tilemap", tilemap );
+		b8.Utilities.checkNumber( "dx", dx );
+		b8.Utilities.checkNumber( "dy", dy );
 
 		const width = tilemap[ 0 ].length;
 		const height = tilemap.length;
 
-		const newTilemap = beep8.Tilemap.createEmptyTilemap( width, height );
+		const newTilemap = b8.Tilemap.createEmptyTilemap( width, height );
 
 		for ( let y = 0; y < height; y++ ) {
 			for ( let x = 0; x < width; x++ ) {
@@ -289,13 +289,13 @@
 	 * @param {number} height The new height of the tilemap.
 	 * @returns {Array} The resized tilemap array.
 	 */
-	beep8.Tilemap.resize = function( tilemap, width, height ) {
+	b8.Tilemap.resize = function( tilemap, width, height ) {
 
-		beep8.Utilities.checkArray( "tilemap", tilemap );
-		beep8.Utilities.checkNumber( "width", width );
-		beep8.Utilities.checkNumber( "height", height );
+		b8.Utilities.checkArray( "tilemap", tilemap );
+		b8.Utilities.checkNumber( "width", width );
+		b8.Utilities.checkNumber( "height", height );
 
-		const newTilemap = beep8.Tilemap.createEmptyTilemap( width, height );
+		const newTilemap = b8.Tilemap.createEmptyTilemap( width, height );
 
 		for ( let y = 0; y < height; y++ ) {
 			for ( let x = 0; x < width; x++ ) {
@@ -317,7 +317,7 @@
 	 *
 	 * @returns {Array} The default tile.
 	 */
-	beep8.Tilemap.getDefaultTile = function() {
+	b8.Tilemap.getDefaultTile = function() {
 
 		return [
 			0, // Tile
@@ -346,9 +346,9 @@
 	 * @param {string} mapText The text map to convert.
 	 * @returns {Array} The converted tilemap array.
 	 */
-	beep8.Tilemap.convertFromText = function( mapText ) {
+	b8.Tilemap.convertFromText = function( mapText ) {
 
-		beep8.Utilities.checkString( "text", mapText );
+		b8.Utilities.checkString( "text", mapText );
 
 		// Don't trim the text as we want to preserve the whitespace.
 		// These may be empty tiles.
@@ -356,7 +356,7 @@
 
 		// Remove any lines that are just whitespace.
 		const filteredLines = lines.filter( line => line.trim() !== '' );
-		if ( filteredLines.length === 0 ) beep8.Utilities.fatal( "No valid lines found in the map text." );
+		if ( filteredLines.length === 0 ) b8.Utilities.fatal( "No valid lines found in the map text." );
 
 		const map = filteredLines.map( row => row.split( '' ) );
 
@@ -373,11 +373,11 @@
 	 * @param {string} mapText The encoded tilemap data.
 	 * @returns {boolean} True if the tilemap is valid, false otherwise.
 	 */
-	beep8.Tilemap.validateTilemap = function( mapText ) {
+	b8.Tilemap.validateTilemap = function( mapText ) {
 
-		beep8.Utilities.checkString( "text", mapText );
+		b8.Utilities.checkString( "text", mapText );
 
-		const map = beep8.Tilemap.load( mapText );
+		const map = b8.Tilemap.load( mapText );
 
 		// Check map is an array of arrays.
 		if ( !Array.isArray( map ) || !Array.isArray( map[ 0 ] ) ) {
@@ -402,17 +402,17 @@
 	 * @param {Object} tilePattern The tile pattern object.
 	 * @returns {Array} The created tilemap array.
 	 */
-	beep8.Tilemap.createFromArray = function( grid, tilePattern, defaultTilePattern = null ) {
+	b8.Tilemap.createFromArray = function( grid, tilePattern, defaultTilePattern = null ) {
 
-		beep8.Utilities.checkArray( "grid", grid );
-		beep8.Utilities.checkObject( "tilePattern", tilePattern );
+		b8.Utilities.checkArray( "grid", grid );
+		b8.Utilities.checkObject( "tilePattern", tilePattern );
 
 		if ( defaultTilePattern !== null ) {
-			beep8.Utilities.checkObject( "defaultTilePattern", defaultTilePattern );
+			b8.Utilities.checkObject( "defaultTilePattern", defaultTilePattern );
 		}
 
 		if ( null === defaultTilePattern ) {
-			defaultTilePattern = beep8.Tilemap.getDefaultTile();
+			defaultTilePattern = b8.Tilemap.getDefaultTile();
 		}
 
 		const tilemap = [];
@@ -426,7 +426,7 @@
 
 				// If tile pattern not defined assume tile is empty and continue.
 				if ( !tilePattern[ grid[ y ][ x ] ] ) {
-					// beep8.Utilities.log( "Tile pattern not found for: " + grid[ y ][ x ] );
+					// b8.Utilities.log( "Tile pattern not found for: " + grid[ y ][ x ] );
 					continue;
 				}
 
@@ -437,24 +437,24 @@
 
 				// If tileId is a string and begins with "wall_" then compute bitmask.
 				if ( typeof tileId === "string" && tileId.startsWith( "wall_" ) ) {
-					tileId = beep8.Tilemap.wallTile( x, y, grid, tileId );
+					tileId = b8.Tilemap.wallTile( x, y, grid, tileId );
 				}
 
 				// If is an array of ids then do a weighted pick from those.
 				if ( Array.isArray( tileId ) ) {
-					tileId = beep8.Random.pickWeighted( tileId );
+					tileId = b8.Random.pickWeighted( tileId );
 				}
 
 				// Foreground colour.
 				let fg = tile.fg || 15;
 				if ( Array.isArray( fg ) ) {
-					fg = beep8.Random.pickWeighted( fg );
+					fg = b8.Random.pickWeighted( fg );
 				}
 
 				// Background colour.
 				let bg = tile.bg || 0;
 				if ( Array.isArray( bg ) ) {
-					bg = beep8.Random.pickWeighted( bg );
+					bg = b8.Random.pickWeighted( bg );
 				}
 
 				tilemap[ y ][ x ] = [
@@ -484,22 +484,22 @@
 	 * @param {string} name The name of the wall tile to select. Picked from the default lists of wall patterns.
 	 * @returns {number} The selected wall tile id.
 	 */
-	beep8.Tilemap.wallTile = function( col, row, grid, name = null ) {
+	b8.Tilemap.wallTile = function( col, row, grid, name = null ) {
 
-		beep8.Utilities.checkNumber( "col", col );
-		beep8.Utilities.checkNumber( "row", row );
-		beep8.Utilities.checkArray( "grid", grid );
-		beep8.Utilities.checkString( "name", name );
+		b8.Utilities.checkNumber( "col", col );
+		b8.Utilities.checkNumber( "row", row );
+		b8.Utilities.checkArray( "grid", grid );
+		b8.Utilities.checkString( "name", name );
 
 		if ( null === name ) {
-			beep8.Utilities.fatal( "Wall tile name not given: " + name );
+			b8.Utilities.fatal( "Wall tile name not given: " + name );
 		}
 
 		// Remove wall_ prefix from name.
 		const tileType = name.substring( 5 );
 
 		if ( !wallTiles[ tileType ] ) {
-			beep8.Utilities.fatal( "Wall tile type not found: " + tileType );
+			b8.Utilities.fatal( "Wall tile type not found: " + tileType );
 		}
 
 		const mask = computeBitmask( grid, col, row );
@@ -529,4 +529,4 @@
 	}
 
 
-} )( beep8 );
+} )( b8 );

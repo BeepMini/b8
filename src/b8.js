@@ -1,5 +1,5 @@
 /*!
- * beep8.js - A Retro Game Library
+ * b8.js - A Retro Game Library
  *
  * ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
  * ░░░░       ░░        ░        ░       ░░░     ░░░░░        ░░      ░░░░░
@@ -9,17 +9,16 @@
  * ████       ██        █        █  ████████     ██  ██      ███      █████
  * ████████████████████████████████████████████████████████████████████████
  *
- * beep8.js is a retro game library designed to bring
+ * b8.js is a retro game library designed to bring
  * the charm and simplicity of classic games to modern
- * web development. A fork of qx82, beep8.js retains
+ * web development. A fork of qx82, b8.js retains
  * the original's elegance while enhancing its features
  * for today's developers.
  *
  * ---
  *
- * Website: https://beep8.com
- * Games: https://beepmini.com
- * Github: https://github.com/BinaryMoon/beep8
+ * Website: https://beepmini.com
+ * Github: https://github.com/BinaryMoon/beepmini
  * BlueSky: https://bsky.app/profile/binarymoon.bsky.social
  *
  * ---
@@ -59,10 +58,10 @@
  * }
  *
  * window.addEventListener( "load", () => {
- *   beep8.init( async () => {
+ *   b8.init( async () => {
  *     // A function to run after everything loads.
- *     beep8.Scene.add( 'game', playGame, 30 );
- *     beep8.Scene.set( 'game' );
+ *     b8.Scene.add( 'game', playGame, 30 );
+ *     b8.Scene.set( 'game' );
  *   } );
  * } );
  */
@@ -76,7 +75,7 @@
  * All text widths (maxWidth, widthCols, heightRows) are in columns/rows, not pixels.
  * Time: dt and durations are in seconds. Core.getNow() returns seconds.
  * Fonts: fontName is the name passed to TextRenderer.loadFontAsync.
- * Public API is beep8.* and beep8.Async.*; arguments are validated.
+ * Public API is b8.* and b8.Async.*; arguments are validated.
  * Actors have animations; tiles do not.
  * ECS locations and queries use tile coordinates (col, row).
  * setTile origin: locate(col,row) offsets draw*, and print* by tile origin.
@@ -85,8 +84,8 @@
  * Handy color ids: 0 = black, 5=blue, 8=red, 10=yellow, 12=green, 15 = white.
  * A and B buttons are mapped to ButtonA and ButtonB keys (eg keydown('ButtonA')).
  * Prefer the ECS over global variables where possible/ sensible.
- * ECS ids are ints returned from beep8.ECS.create.
+ * ECS ids are ints returned from b8.ECS.create.
  */
 
-const beep8 = {};
+const b8 = {};
 

@@ -63,13 +63,13 @@ mapper.menu = {
 	drawSplash: function() {
 
 		if ( mapper.bg.splash ) {
-			beep8.Tilemap.draw( mapper.bg.splash );
+			b8.Tilemap.draw( mapper.bg.splash );
 
-			// Beep8 Logo
-			console.log( 'Drawing Beep8 logo' );
-			beep8.locate( beep8.CONFIG.SCREEN_COLS - 1, beep8.CONFIG.SCREEN_ROWS - 1 );
-			beep8.color( 15, 0 );
-			beep8.printChar( 88 );
+			// b8 Logo
+			console.log( 'Drawing b8 logo' );
+			b8.locate( b8.CONFIG.SCREEN_COLS - 1, b8.CONFIG.SCREEN_ROWS - 1 );
+			b8.color( 15, 0 );
+			b8.printChar( 88 );
 		}
 
 	},
