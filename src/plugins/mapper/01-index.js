@@ -48,6 +48,11 @@ const mapper = {
 
 		b8.Utilities.checkObject( 'mapData', mapData );
 
+		// Reset state.
+		b8.ECS.reset();
+		mapper.maps = [];
+		mapper.currentMap = null;
+
 		// Combine map data into single string.
 		const mapDataString = mapData.map.join( '\n' );
 		b8.Utilities.checkString( 'mapDataString', mapDataString );
@@ -105,6 +110,12 @@ const mapper = {
 				shouldAdd = handler.spawn( obj.x, obj.y, obj.props );
 			}
 
+		}
+
+		// Check for player start position object.
+		const start = mapData.objects.find( obj => obj.type === 'start' );
+		if ( !start ) {
+			b8.Utilities.fatal( "Map data must include a 'start' object." );
 		}
 
 		// Count coin objects.
