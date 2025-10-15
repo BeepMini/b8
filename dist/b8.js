@@ -216,8 +216,12 @@ const b8 = {};
   };
   b82.cls = function(bg = void 0) {
     b82.Core.preflight("b8.Core.cls");
-    if (bg !== void 0) b82.Utilities.checkNumber("bg", bg);
-    b82.Core.cls(bg);
+    if (bg !== void 0) {
+      b82.Utilities.checkNumber("bg", bg);
+      b82.Core.cls(bg);
+      return;
+    }
+    b82.Core.cls();
   };
   b82.locate = function(col, row) {
     b82.Core.preflight("b8.locate");
@@ -592,6 +596,10 @@ const b8 = {};
     store[hookName].push({ callback, priority });
     store[hookName].sort((a, b) => a.priority - b.priority);
   }
+  b82.Hooks.reset = function() {
+    for (const key in actions) delete actions[key];
+    for (const key in filters) delete filters[key];
+  };
   b82.Hooks.addAction = function(hookName, callback, priority = 10) {
     _add(actions, hookName, callback, priority);
   };
@@ -1564,7 +1572,7 @@ const b8 = {};
   b82.Tilemap.convertFromText = function(mapText) {
     b82.Utilities.checkString("text", mapText);
     const lines = mapText.split("\n");
-    const filteredLines = lines.filter((line) => line.trim() !== "");
+    const filteredLines = lines.filter((line) => line !== "");
     if (filteredLines.length === 0) b82.Utilities.fatal("No valid lines found in the map text.");
     const map = filteredLines.map((row) => row.split(""));
     return map;
@@ -1605,11 +1613,13 @@ const b8 = {};
         if (Array.isArray(tileId)) {
           tileId = b82.Random.pickWeighted(tileId);
         }
-        let fg = tile.fg || 15;
+        if (typeof tile.fg === "undefined") tile.fg = 15;
+        let fg = tile.fg;
         if (Array.isArray(fg)) {
           fg = b82.Random.pickWeighted(fg);
         }
-        let bg = tile.bg || 0;
+        if (typeof tile.bg === "undefined") tile.bg = 0;
+        let bg = tile.bg;
         if (Array.isArray(bg)) {
           bg = b82.Random.pickWeighted(bg);
         }
@@ -2238,10 +2248,13 @@ const b8 = {};
   document.addEventListener(
     "b8.initComplete",
     function() {
-      STORAGE_KEY = `b8.${b82.Utilities.makeUrlPretty(b82.CONFIG.NAME)}.state`;
+      setStorageKey();
     },
     { once: true }
   );
+  function setStorageKey() {
+    STORAGE_KEY = `b8.${b82.Utilities.makeUrlPretty(b82.CONFIG.NAME)}.state`;
+  }
   function createProxy(target) {
     return new Proxy(
       target,
@@ -2288,6 +2301,11 @@ const b8 = {};
     localStorage.setItem(key, encoded);
     b82.State.lastSave = Date.now();
   };
+  b82.State.reset = function() {
+    setStorageKey();
+    b82.data = null;
+    b82.State.init({});
+  };
   b82.State.load = function(key = STORAGE_KEY) {
     const b64 = localStorage.getItem(key);
     if (!b64) {
@@ -2317,7 +2335,6 @@ const b8 = {};
     localStorage.removeItem(key);
     b82.data = createProxy({});
   };
-  b82.data = createProxy({});
 })(b8);
 (function(b82) {
   b82.Sfx = {};
@@ -2520,6 +2537,14 @@ const b8 = {};
     const update = gameObject.update || null;
     const render = gameObject.render || null;
     sceneList[name] = { init, update, render, frameRate };
+  };
+  b82.Scene.reset = function() {
+    for (const key in sceneList) {
+      if (Object.prototype.hasOwnProperty.call(sceneList, key)) {
+        delete sceneList[key];
+      }
+    }
+    activeScene = null;
   };
   b82.Scene.set = function(name) {
     b82.Utilities.checkString("name", name);
@@ -2775,7 +2800,11 @@ const b8 = {};
     const i2 = b82.Math.lerp(v01, v11, u);
     return b82.Math.lerp(i1, i2, v);
   };
-  b82.Random.setSeed();
+  b82.Random.reset = function() {
+    randomSeed = null;
+    weightedArrayCache.clear();
+    b82.Random.setSeed();
+  };
 })(b8);
 (function(b82) {
   b82.Passcodes = {};
@@ -2857,6 +2886,9 @@ const b8 = {};
       newParticle.size = b82.Random.pick(newParticle.size);
     }
     particles_.push(newParticle);
+  };
+  b82.Particles.reset = function() {
+    b82.Particles.clearAll();
   };
   b82.Particles.createExplosion = function(x, y, count = 10, props = {}) {
     b82.Utilities.checkNumber("x", x);
@@ -3452,8 +3484,12 @@ const b8 = {};
 })(b8);
 (function(b82) {
   b82.Input = {};
-  let keysHeld_ = null;
-  let keysJustPressed_ = null;
+  let keysHeld_ = /* @__PURE__ */ new Set();
+  let keysJustPressed_ = /* @__PURE__ */ new Set();
+  b82.Input.reset = function() {
+    keysHeld_ = /* @__PURE__ */ new Set();
+    keysJustPressed_ = /* @__PURE__ */ new Set();
+  };
   b82.Input.init = function() {
     keysHeld_ = /* @__PURE__ */ new Set();
     keysJustPressed_ = /* @__PURE__ */ new Set();
@@ -3823,6 +3859,8 @@ const b8 = {};
   let targetDt = 0;
   let timeToNextFrame = 0;
   let pendingAsync = null;
+  let running = false;
+  let animationFrameId = null;
   b82.Core.init = function(callback, options = {}) {
     b82.Utilities.checkFunction("callback", callback);
     if (options) {
@@ -3833,11 +3871,30 @@ const b8 = {};
       ...options
     };
     b82.Hooks.doAction("beforeInit");
+    b82.Core.resetAll();
+    b82.Core.setColor(0, 15);
     b82.Core.initScreenshot();
     b82.Core.asyncInit(callback);
     b82.Core.startTime = b82.Core.getNow();
     b82.Hooks.doAction("afterInit");
     b82.Utilities.event("initComplete");
+  };
+  b82.Core.resetAll = function() {
+    for (const ns in b82) {
+      if (b82[ns] && typeof b82[ns].reset === "function") {
+        b82[ns].reset();
+      }
+    }
+  };
+  b82.Core.reset = function() {
+    b82.Core.drawState.fgColor = 7;
+    b82.Core.drawState.bgColor = 0;
+    b82.Core.drawState.cursorCol = 0;
+    b82.Core.drawState.cursorRow = 0;
+    b82.Core.drawState.cursorVisible = false;
+    b82.Core.crashed = false;
+    pendingAsync = false;
+    lastFrameTime = null;
   };
   b82.Core.initialized = function() {
     return initDone;
@@ -3966,8 +4023,6 @@ const b8 = {};
   b82.Core.failAsync = function(asyncMethodName, error) {
     b82.Core.endAsyncImpl(asyncMethodName, true, error);
   };
-  let running = false;
-  let animationFrameId = null;
   b82.Core.setFrameHandlers = function(renderCallback = null, updateCallback = null, targetFps = 30) {
     updateHandler = updateCallback || (() => {
     });
@@ -3976,10 +4031,7 @@ const b8 = {};
     targetDt = 1 / targetFps;
     timeToNextFrame = 0;
     lastFrameTime = b82.Core.getNow();
-    if (animationFrameId) {
-      window.cancelAnimationFrame(animationFrameId);
-      animationFrameId = null;
-    }
+    b82.Core.stopFrame();
     running = true;
     animationFrameId = window.requestAnimationFrame(b82.Core.doFrame);
   };
@@ -4059,7 +4111,7 @@ const b8 = {};
       return "#f0f";
     }
     if (c2 < 0) {
-      return "#000";
+      return b82.CONFIG.COLORS[0];
     }
     c2 = b82.Utilities.clamp(Math.round(c2), 0, b82.CONFIG.COLORS.length - 1);
     return b82.CONFIG.COLORS[c2];

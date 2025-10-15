@@ -34,6 +34,9 @@ const mapper = {
    */
   load: function(mapData, mapName = "world", setCurrentMap = true) {
     b8.Utilities.checkObject("mapData", mapData);
+    b8.ECS.reset();
+    mapper.maps = [];
+    mapper.currentMap = null;
     const mapDataString = mapData.map.join("\n");
     b8.Utilities.checkString("mapDataString", mapDataString);
     mapper.settings = { ...mapData.settings };
@@ -79,6 +82,10 @@ const mapper = {
       if (handler?.spawn) {
         shouldAdd = handler.spawn(obj.x, obj.y, obj.props);
       }
+    }
+    const start = mapData.objects.find((obj) => obj.type === "start");
+    if (!start) {
+      b8.Utilities.fatal("Map data must include a 'start' object.");
     }
     const coinCount = mapData.objects.filter((obj) => obj.type === "coin").length;
     b8.data.totalCoins = coinCount;
@@ -382,7 +389,7 @@ mapper.collision = {
    * @returns {boolean}
    */
   isWalkable: function(col, row) {
-    if (col < 0 || row < 0 || col >= mapper.currentMap.map.mapHeight || row >= mapper.currentMap.map.mapWidth) {
+    if (col < 0 || row < 0 || col >= mapper.currentMap.mapWidth || row >= mapper.currentMap.mapHeight) {
       return false;
     }
     let mapCell = mapper.currentMap.map[row][col];
@@ -535,7 +542,7 @@ mapper.sceneGame = {
    * @returns {void}
    */
   render: function() {
-    b8.cls();
+    b8.cls(0);
     b8.locate(mapper.CONFIG.mapOffsetX, mapper.CONFIG.mapOffsetY);
     mapper.drawScreen();
     mapper.render(mapper.CONFIG.mapOffsetX, mapper.CONFIG.mapOffsetY);
@@ -570,7 +577,10 @@ mapper.sceneMenu = {
    * @returns {void}
    */
   init: function() {
-    if (!mapper.menu.hasSplash()) return;
+    if (!mapper.menu.hasSplash()) {
+      b8.Scene.set("game");
+      return;
+    }
     mapper.sceneMenu.main();
   },
   /**
