@@ -10,12 +10,23 @@
 		'b8.initComplete',
 		function() {
 
-			// Set the storage key based on the b8 configuration name.
-			STORAGE_KEY = `b8.${b8.Utilities.makeUrlPretty( b8.CONFIG.NAME )}.state`;
+			setStorageKey();
 
 		},
 		{ once: true }
 	);
+
+
+	/**
+	 * Sets the storage key from the b8 config or defaults to 'b8.state'.
+	 *
+	 * @returns {void}
+	 */
+	function setStorageKey() {
+
+		STORAGE_KEY = `b8.${b8.Utilities.makeUrlPretty( b8.CONFIG.NAME )}.state`;
+
+	}
 
 
 	/**
@@ -94,6 +105,23 @@
 
 
 	/**
+	 * Resets the state to an empty object and re-initializes it.
+	 * This does not clear localStorage.
+	 *
+	 * @returns {void}
+	 */
+	b8.State.reset = function() {
+
+		setStorageKey();
+
+		b8.data = null;
+
+		b8.State.init( {} );
+
+	};
+
+
+	/**
 	 * Loads state from localStorage, replacing State.data.
 	 *
 	 * @param {string} [key='b8.state'] - Optional localStorage key.
@@ -158,12 +186,6 @@
 		b8.data = createProxy( {} );
 
 	}
-
-
-	/**
-	 * The b8.State data object.
-	 */
-	b8.data = createProxy( {} );
 
 
 } )( b8 );

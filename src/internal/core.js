@@ -22,13 +22,23 @@
 		cursorVisible: false, // Don't change this directly, use cursorRenderer.setCursorVisible()
 	};
 
+	// Time for last frame.
 	let lastFrameTime = null;
+	// Whether initAsync() has been called.
 	let initDone = false;
+	// Current frame handlers.
 	let updateHandler = null;
 	let renderHandler = null;
+	// Target delta time between frames (in seconds).
 	let targetDt = 0;
+	// Accumulated time to next frame (in seconds).
 	let timeToNextFrame = 0;
+	// Pending asynchronous tasks.
 	let pendingAsync = null;
+	// Whether the engine is currently running.
+	let running = false;
+	// The ID of the current requestAnimationFrame.
+	let animationFrameId = null;
 
 
 	/**
@@ -55,6 +65,10 @@
 
 		b8.Hooks.doAction( 'beforeInit' );
 
+		b8.Core.resetAll();
+
+		b8.Core.setColor( 0, 15 );
+
 		// Setup screenshot taking.
 		b8.Core.initScreenshot();
 
@@ -67,6 +81,47 @@
 		b8.Hooks.doAction( 'afterInit' );
 
 		b8.Utilities.event( 'initComplete' );
+
+	}
+
+
+	/**
+	 * Resets the engine to its initial state.
+	 *
+	 * @returns {void}
+	 */
+	b8.Core.resetAll = function() {
+
+		// Loop through all b8 namespaces and reset them if they have a
+		// reset() method.
+		for ( const ns in b8 ) {
+			if ( b8[ ns ] && typeof b8[ ns ].reset === "function" ) {
+				b8[ ns ].reset();
+			}
+		}
+
+	}
+
+
+	/**
+	 * Resets the core state.
+	 *
+	 * @returns {void}
+	 */
+	b8.Core.reset = function() {
+
+		b8.Core.drawState.fgColor = 7;
+		b8.Core.drawState.bgColor = 0;
+
+		b8.Core.drawState.cursorCol = 0;
+		b8.Core.drawState.cursorRow = 0;
+
+		b8.Core.drawState.cursorVisible = false;
+		b8.Core.crashed = false;
+
+		pendingAsync = false;
+
+		lastFrameTime = null;
 
 	}
 
@@ -369,10 +424,6 @@
 	}
 
 
-	let running = false;
-	let animationFrameId = null;
-
-
 	/**
 	 * Set the update and render callbacks for the game loop.
 	 *
@@ -390,10 +441,7 @@
 		lastFrameTime = b8.Core.getNow();
 
 		// Cancel current animation frame if running.
-		if ( animationFrameId ) {
-			window.cancelAnimationFrame( animationFrameId );
-			animationFrameId = null;
-		}
+		b8.Core.stopFrame();
 
 		running = true;
 
@@ -1125,6 +1173,5 @@
 		return closestColor;
 
 	}
-
 
 } )( b8 );

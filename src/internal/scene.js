@@ -63,6 +63,24 @@
 
 
 	/**
+	 * Removes a scene by name.
+	 *
+	 * @returns {void}
+	 */
+	b8.Scene.reset = function() {
+
+		for ( const key in sceneList ) {
+			if ( Object.prototype.hasOwnProperty.call( sceneList, key ) ) {
+				delete sceneList[ key ];
+			}
+		}
+
+		activeScene = null;
+
+	}
+
+
+	/**
 	 * Switches to a specified scene by name.
 	 *
 	 * @param {string} name - The name of the scene to switch to.

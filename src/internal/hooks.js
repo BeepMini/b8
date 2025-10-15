@@ -31,6 +31,19 @@
 
 
 	/**
+	 * Resets all registered actions and filters.
+	 *
+	 * @returns {void}
+	 */
+	b8.Hooks.reset = function() {
+
+		for ( const key in actions ) delete actions[ key ];
+		for ( const key in filters ) delete filters[ key ];
+
+	}
+
+
+	/**
 	 * Registers an action hook.
 	 * This allows you to add a callback that will be executed when the action is triggered.
 	 * You can use this to modify game behavior or add custom functionality.

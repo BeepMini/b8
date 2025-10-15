@@ -2,6 +2,7 @@
 
 	b8.Textmode = {};
 
+
 	/**
 	 * Load a textmode tilemap from data.
 	 * This is a wrapper for b8.Tilemap.load to keep the API consistent.

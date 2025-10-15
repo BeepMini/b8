@@ -58,6 +58,18 @@
 
 
 	/**
+	 * Resets the particle system, removing all particles.
+	 *
+	 * @returns {void}
+	 */
+	b8.Particles.reset = function() {
+
+		b8.Particles.clearAll();
+
+	}
+
+
+	/**
 	 * Adds an explosion of particles to the system.
 	 *
 	 * The explosion is created at the x, y position with a number of particles.

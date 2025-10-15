@@ -10,14 +10,28 @@
 	 *
 	 * @type {Set<string>}
 	 */
-	let keysHeld_ = null;
+	let keysHeld_ = new Set();
 
 	/**
 	 * List of keys that were just pressed in the current frame.
 	 *
 	 * @type {Set<string>}
 	 */
-	let keysJustPressed_ = null;
+	let keysJustPressed_ = new Set();
+
+
+	/**
+	 * Resets the input state, clearing all held and just pressed keys.
+	 * This is useful when restarting a game or resetting input state.
+	 *
+	 * @returns {void}
+	 */
+	b8.Input.reset = function() {
+
+		keysHeld_ = new Set();
+		keysJustPressed_ = new Set();
+
+	}
 
 
 	/**

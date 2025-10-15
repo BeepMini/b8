@@ -291,7 +291,22 @@
 	}
 
 
-	b8.Random.setSeed();
+	/**
+	 * Resets the random number generator to its initial state.
+	 * This clears the seed and any cached weighted arrays.
+	 *
+	 * @returns {void}
+	 */
+	b8.Random.reset = function() {
+
+		randomSeed = null;
+		weightedArrayCache.clear();
+
+		b8.Random.setSeed();
+
+	}
+
+
 
 } )( b8 );
 
