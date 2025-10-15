@@ -39,8 +39,8 @@ mapper.collision = {
 		if (
 			col < 0 ||
 			row < 0 ||
-			col >= mapper.currentMap.map.mapHeight ||
-			row >= mapper.currentMap.map.mapWidth
+			col >= mapper.currentMap.mapWidth ||
+			row >= mapper.currentMap.mapHeight
 		) {
 			return false;
 		}
