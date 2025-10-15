@@ -22,32 +22,42 @@
 	const initCrt = () => {
 
 		if ( !b8.Core.realCtx ) {
+
 			setTimeout( initCrt, 10 );
 			return;
+
 		}
 
-		// A gradient for the vignette effect.
-		vignetteGradient = b8.Core.realCtx.createRadialGradient(
-			b8.Core.realCanvas.width / 2,
-			b8.Core.realCanvas.height / 2,
-			Math.max( b8.Core.realCanvas.width, b8.Core.realCanvas.height ) * 0.4,
+		if ( !vignetteGradient ) {
 
-			b8.Core.realCanvas.width / 2,
-			b8.Core.realCanvas.height / 2,
-			Math.max( b8.Core.realCanvas.width, b8.Core.realCanvas.height ) * 0.9
-		);
-		vignetteGradient.addColorStop( 0, 'rgba(255,255,255,0)' );
-		vignetteGradient.addColorStop( 0.7, 'rgba(0,0,0,0.5)' );
-		vignetteGradient.addColorStop( 1, 'rgba(0,0,0,1)' );
+			// A gradient for the vignette effect.
+			vignetteGradient = b8.Core.realCtx.createRadialGradient(
+				b8.Core.realCanvas.width / 2,
+				b8.Core.realCanvas.height / 2,
+				Math.max( b8.Core.realCanvas.width, b8.Core.realCanvas.height ) * 0.4,
 
-		// tiny 2px device-pixel scanline pattern
-		const pat = new OffscreenCanvas( 1, 2 );
-		const patCtx = pat.getContext( '2d' );
-		patCtx.fillStyle = 'rgba(0,0,0,0.15)';
-		patCtx.fillRect( 0, 1, 1, 1 );
-		patCtx.fillStyle = 'rgba(255,255,255,0.0)';
-		patCtx.fillRect( 0, 0, 1, 1 );
-		scanPattern = b8.Core.realCtx.createPattern( pat, 'repeat' );
+				b8.Core.realCanvas.width / 2,
+				b8.Core.realCanvas.height / 2,
+				Math.max( b8.Core.realCanvas.width, b8.Core.realCanvas.height ) * 0.9
+			);
+			vignetteGradient.addColorStop( 0, 'rgba(255,255,255,0)' );
+			vignetteGradient.addColorStop( 0.7, 'rgba(0,0,0,0.5)' );
+			vignetteGradient.addColorStop( 1, 'rgba(0,0,0,1)' );
+
+		}
+
+		if ( !scanPattern ) {
+
+			// tiny 2px device-pixel scanline pattern
+			const pat = new OffscreenCanvas( 1, 2 );
+			const patCtx = pat.getContext( '2d' );
+			patCtx.fillStyle = 'rgba(0,0,0,0.15)';
+			patCtx.fillRect( 0, 1, 1, 1 );
+			patCtx.fillStyle = 'rgba(255,255,255,0.0)';
+			patCtx.fillRect( 0, 0, 1, 1 );
+			scanPattern = b8.Core.realCtx.createPattern( pat, 'repeat' );
+
+		}
 
 	}
 
@@ -108,6 +118,19 @@
 
 		applyScanlines();
 		applyVignette();
+
+	}
+
+
+	/**
+	 * Resets the renderer state, stopping any ongoing effects.
+	 *
+	 * @returns {void}
+	 */
+	b8.Renderer.reset = function() {
+
+		dirty = false;
+		screenshakeDuration = 0;
 
 	}
 
