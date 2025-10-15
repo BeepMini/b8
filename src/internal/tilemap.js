@@ -355,7 +355,7 @@
 		const lines = mapText.split( '\n' );
 
 		// Remove any lines that are just whitespace.
-		const filteredLines = lines.filter( line => line.trim() !== '' );
+		const filteredLines = lines.filter( line => line !== '' );
 		if ( filteredLines.length === 0 ) b8.Utilities.fatal( "No valid lines found in the map text." );
 
 		const map = filteredLines.map( row => row.split( '' ) );
