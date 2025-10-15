@@ -136,9 +136,13 @@
 
 		b8.Core.preflight( "b8.Core.cls" );
 
-		if ( bg !== undefined ) b8.Utilities.checkNumber( "bg", bg );
+		if ( bg !== undefined ) {
+			b8.Utilities.checkNumber( "bg", bg );
+			b8.Core.cls( bg );
+			return;
+		}
 
-		b8.Core.cls( bg );
+		b8.Core.cls();
 
 	}
 

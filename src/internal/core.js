@@ -602,7 +602,7 @@
 		}
 
 		if ( c < 0 ) {
-			return "#000";
+			return b8.CONFIG.COLORS[ 0 ];
 		}
 
 		c = b8.Utilities.clamp( Math.round( c ), 0, b8.CONFIG.COLORS.length - 1 );

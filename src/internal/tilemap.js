@@ -446,13 +446,15 @@
 				}
 
 				// Foreground colour.
-				let fg = tile.fg || 15;
+				if ( typeof tile.fg === 'undefined' ) tile.fg = 15;
+				let fg = tile.fg;
 				if ( Array.isArray( fg ) ) {
 					fg = b8.Random.pickWeighted( fg );
 				}
 
 				// Background colour.
-				let bg = tile.bg || 0;
+				if ( typeof tile.bg === 'undefined' ) tile.bg = 0;
+				let bg = tile.bg;
 				if ( Array.isArray( bg ) ) {
 					bg = b8.Random.pickWeighted( bg );
 				}

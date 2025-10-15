@@ -13,7 +13,6 @@
 		// Colour count.
 		const prefix = "8> ";
 
-		// Loop through all colours.
 		b8.color( 0, 4 );
 		b8.cls();
 		b8.locate( 1, 1 );
