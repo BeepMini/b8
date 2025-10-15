@@ -81,7 +81,7 @@ mapper.sceneGame = {
 	 */
 	render: function() {
 
-		b8.cls();
+		b8.cls( 0 );
 
 		b8.locate( mapper.CONFIG.mapOffsetX, mapper.CONFIG.mapOffsetY );
 		mapper.drawScreen();

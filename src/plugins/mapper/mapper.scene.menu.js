@@ -10,7 +10,10 @@ mapper.sceneMenu = {
 	init: function() {
 
 		// No splash screen so skip the menu.
-		if ( !mapper.menu.hasSplash() ) return;
+		if ( !mapper.menu.hasSplash() ) {
+			b8.Scene.set( 'game' );
+			return;
+		}
 
 		mapper.sceneMenu.main();
 
