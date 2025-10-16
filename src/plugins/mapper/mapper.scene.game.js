@@ -10,8 +10,6 @@ mapper.sceneGame = {
 	 */
 	init: function() {
 
-		console.log( mapper.CONFIG );
-
 		mapper.sceneGame.UI = b8.Tilemap.load( mapper.CONFIG.gameUI );
 
 	},
