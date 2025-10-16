@@ -239,7 +239,8 @@ const mapper = {
 			return;
 		}
 
-		const loc = b8.ECS.getComponent( mapper.player, 'Loc' );
+		let loc = b8.ECS.getComponent( mapper.player, 'Loc' );
+		if ( !loc ) loc = { col: 0, row: 0 };
 		const screenPosition = mapper.camera.getScreenPosition( loc.col, loc.row );
 		const currentMap = mapper.currentMap;
 
