@@ -2600,24 +2600,28 @@ const b8 = {};
       setTimeout(initCrt, 10);
       return;
     }
-    vignetteGradient = b82.Core.realCtx.createRadialGradient(
-      b82.Core.realCanvas.width / 2,
-      b82.Core.realCanvas.height / 2,
-      Math.max(b82.Core.realCanvas.width, b82.Core.realCanvas.height) * 0.4,
-      b82.Core.realCanvas.width / 2,
-      b82.Core.realCanvas.height / 2,
-      Math.max(b82.Core.realCanvas.width, b82.Core.realCanvas.height) * 0.9
-    );
-    vignetteGradient.addColorStop(0, "rgba(255,255,255,0)");
-    vignetteGradient.addColorStop(0.7, "rgba(0,0,0,0.5)");
-    vignetteGradient.addColorStop(1, "rgba(0,0,0,1)");
-    const pat = new OffscreenCanvas(1, 2);
-    const patCtx = pat.getContext("2d");
-    patCtx.fillStyle = "rgba(0,0,0,0.15)";
-    patCtx.fillRect(0, 1, 1, 1);
-    patCtx.fillStyle = "rgba(255,255,255,0.0)";
-    patCtx.fillRect(0, 0, 1, 1);
-    scanPattern = b82.Core.realCtx.createPattern(pat, "repeat");
+    if (!vignetteGradient) {
+      vignetteGradient = b82.Core.realCtx.createRadialGradient(
+        b82.Core.realCanvas.width / 2,
+        b82.Core.realCanvas.height / 2,
+        Math.max(b82.Core.realCanvas.width, b82.Core.realCanvas.height) * 0.4,
+        b82.Core.realCanvas.width / 2,
+        b82.Core.realCanvas.height / 2,
+        Math.max(b82.Core.realCanvas.width, b82.Core.realCanvas.height) * 0.9
+      );
+      vignetteGradient.addColorStop(0, "rgba(255,255,255,0)");
+      vignetteGradient.addColorStop(0.7, "rgba(0,0,0,0.5)");
+      vignetteGradient.addColorStop(1, "rgba(0,0,0,1)");
+    }
+    if (!scanPattern) {
+      const pat = new OffscreenCanvas(1, 2);
+      const patCtx = pat.getContext("2d");
+      patCtx.fillStyle = "rgba(0,0,0,0.15)";
+      patCtx.fillRect(0, 1, 1, 1);
+      patCtx.fillStyle = "rgba(255,255,255,0.0)";
+      patCtx.fillRect(0, 0, 1, 1);
+      scanPattern = b82.Core.realCtx.createPattern(pat, "repeat");
+    }
   };
   document.addEventListener("b8.initComplete", initCrt);
   b82.Renderer.render = function() {
@@ -2651,6 +2655,10 @@ const b8 = {};
     b82.CursorRenderer.draw(b82.Core.realCtx);
     applyScanlines();
     applyVignette();
+  };
+  b82.Renderer.reset = function() {
+    dirty = false;
+    screenshakeDuration = 0;
   };
   const applyVignette = () => {
     if (!vignetteGradient) return;

@@ -41,6 +41,10 @@ const mapper = {
     b8.Utilities.checkString("mapDataString", mapDataString);
     mapper.settings = { ...mapData.settings };
     b8.Utilities.checkObject("mapper.settings", mapper.settings);
+    if (mapper.settings.gameName) {
+      console.log(`Starting game: ${mapper.settings.gameName}`);
+      b8.CONFIG.NAME = mapper.settings.gameName;
+    }
     mapper.player = b8.ECS.create(
       {
         Type: { name: "player" },
@@ -162,7 +166,8 @@ const mapper = {
       b8.Utilities.error("No current map set.");
       return;
     }
-    const loc = b8.ECS.getComponent(mapper.player, "Loc");
+    let loc = b8.ECS.getComponent(mapper.player, "Loc");
+    if (!loc) loc = { col: 0, row: 0 };
     const screenPosition = mapper.camera.getScreenPosition(loc.col, loc.row);
     const currentMap = mapper.currentMap;
     b8.Tilemap.draw(
@@ -492,7 +497,6 @@ mapper.sceneGame = {
    * @returns {void}
    */
   init: function() {
-    console.log(mapper.CONFIG);
     mapper.sceneGame.UI = b8.Tilemap.load(mapper.CONFIG.gameUI);
   },
   /**
