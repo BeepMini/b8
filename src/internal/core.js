@@ -735,58 +735,52 @@
 
 		b8.Utilities.log( 'load image', url );
 
+		const img = await b8.Utilities.loadImageAsync( url );
+
+		// Create a canvas to manipulate the image
+		const canvas = document.createElement( "canvas" );
+		const ctx = canvas.getContext( "2d" );
+
+		canvas.width = img.width;
+		canvas.height = img.height;
+		ctx.drawImage( img, 0, 0 );
+
+		// Get image data
+		const imageData = ctx.getImageData( 0, 0, canvas.width, canvas.height );
+		const data = imageData.data;
+
+		// Use the precomputed lookup table
+		const lookupTable = generateColorLookupTable( b8.CONFIG.COLORS );
+
+		for ( let i = 0; i < data.length; i += 4 ) {
+
+			const r = data[ i ];
+			const g = data[ i + 1 ];
+			const b = data[ i + 2 ];
+
+			// Find the closest color using the lookup table
+			const closestColor = findClosestColorUsingLookup( r, g, b, lookupTable );
+
+			// Convert the closest hex color to RGB
+			const { r: pr, g: pg, b: pb } = closestColor;
+
+			// Replace the pixel color with the closest palette color
+			data[ i ] = pr;
+			data[ i + 1 ] = pg;
+			data[ i + 2 ] = pb;
+
+		}
+
+		// Put the modified image data back on the canvas
+		ctx.putImageData( imageData, 0, 0 );
+
+		// Resolve with the modified image.
+		const modifiedImg = new Image();
+
 		return new Promise(
 			( resolve ) => {
-
-				const img = new Image();
-				img.crossOrigin = "Anonymous"; // Allow cross-origin images if needed
-
-				img.onload = () => {
-
-					// Create a canvas to manipulate the image
-					const canvas = document.createElement( "canvas" );
-					const ctx = canvas.getContext( "2d" );
-
-					canvas.width = img.width;
-					canvas.height = img.height;
-					ctx.drawImage( img, 0, 0 );
-
-					// Get image data
-					const imageData = ctx.getImageData( 0, 0, canvas.width, canvas.height );
-					const data = imageData.data;
-
-					// Use the precomputed lookup table
-					const lookupTable = generateColorLookupTable( b8.CONFIG.COLORS );
-
-					for ( let i = 0; i < data.length; i += 4 ) {
-
-						const r = data[ i ];
-						const g = data[ i + 1 ];
-						const b = data[ i + 2 ];
-
-						// Find the closest color using the lookup table
-						const closestColor = findClosestColorUsingLookup( r, g, b, lookupTable );
-
-						// Convert the closest hex color to RGB
-						const { r: pr, g: pg, b: pb } = closestColor;
-
-						// Replace the pixel color with the closest palette color
-						data[ i ] = pr;
-						data[ i + 1 ] = pg;
-						data[ i + 2 ] = pb;
-
-					}
-
-					// Put the modified image data back on the canvas
-					ctx.putImageData( imageData, 0, 0 );
-
-					// Resolve with the modified image
-					const modifiedImg = new Image();
-					modifiedImg.onload = () => resolve( modifiedImg );
-					modifiedImg.src = canvas.toDataURL();
-
-				};
-				img.src = url;
+				modifiedImg.onload = () => resolve( modifiedImg );
+				modifiedImg.src = canvas.toDataURL();
 			}
 		);
 
