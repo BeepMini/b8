@@ -47,7 +47,7 @@
 		 */
 		async initAsync() {
 
-			this.origImg_ = await b8.Utilities.loadImageAsync( this.fontImageFile_ );
+			this.origImg_ = await b8.Image.loadImageAsync( this.fontImageFile_ );
 
 			const imageCharWidth = b8.CONFIG.CHR_WIDTH * this.tileWidthMultiplier_;
 			const imageCharHeight = b8.CONFIG.CHR_HEIGHT * this.tileHeightMultiplier_;

@@ -322,26 +322,6 @@
 
 
 	/**
-	 * Loads an image asynchronously.
-	 *
-	 * @param {string} src - The source URL of the image.
-	 * @returns {Promise<HTMLImageElement>} A promise that resolves to the loaded image.
-	 */
-	b8.Utilities.loadImageAsync = async function( src ) {
-
-		return new Promise(
-			( resolver ) => {
-				const img = new Image();
-				img.crossOrigin = "anonymous";
-				img.src = src;
-				img.onload = () => resolver( img );
-			}
-		);
-
-	}
-
-
-	/**
 	 * Makes a color transparent in an image.
 	 *
 	 * This function is asynchronous because it uses an HTMLImageElement.

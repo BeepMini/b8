@@ -731,56 +731,53 @@
 	 * @param {string} url - The URL of the image to load.
 	 * @returns {Promise<HTMLImageElement>} The loaded image.
 	 */
-	b8.Core.loadImage = async function( url ) {
+	b8.Core.loadImage = async function( url, options = { dither: 'ordered' } ) {
+
+		const mode = options.dither || 'none';
 
 		b8.Utilities.log( 'load image', url );
 
-		const img = await b8.Utilities.loadImageAsync( url );
+		const img = await b8.Image.loadImageAsync( url );
 
-		// Create a canvas to manipulate the image
-		const canvas = document.createElement( "canvas" );
-		const ctx = canvas.getContext( "2d" );
-
+		const canvas = document.createElement( 'canvas' );
+		const ctx = canvas.getContext( '2d' );
 		canvas.width = img.width;
 		canvas.height = img.height;
 		ctx.drawImage( img, 0, 0 );
 
-		// Get image data
 		const imageData = ctx.getImageData( 0, 0, canvas.width, canvas.height );
-		const data = imageData.data;
 
-		// Use the precomputed lookup table
-		const lookupTable = generateColorLookupTable( b8.CONFIG.COLORS );
+		// Precompute once
+		const lookupTable = b8.Image.generateColorLookupTable( b8.CONFIG.COLORS );
 
-		for ( let i = 0; i < data.length; i += 4 ) {
+		const mapFn = ( r, g, b ) => b8.Image.findClosestColorUsingLookup( r, g, b, lookupTable );
 
-			const r = data[ i ];
-			const g = data[ i + 1 ];
-			const b = data[ i + 2 ];
+		if ( mode === 'ordered' ) {
 
-			// Find the closest color using the lookup table
-			const closestColor = findClosestColorUsingLookup( r, g, b, lookupTable );
+			b8.Image.ditherOrdered(
+				imageData,
+				mapFn,
+				{
+					size: options.size || 4,
+					strength: options.strength || 0.5,
+					amplitude: options.amplitude || 16
+				}
+			);
 
-			// Convert the closest hex color to RGB
-			const { r: pr, g: pg, b: pb } = closestColor;
+		} else {
 
-			// Replace the pixel color with the closest palette color
-			data[ i ] = pr;
-			data[ i + 1 ] = pg;
-			data[ i + 2 ] = pb;
+			b8.Image.quantiseImageData( imageData, lookupTable );
 
 		}
 
-		// Put the modified image data back on the canvas
 		ctx.putImageData( imageData, 0, 0 );
 
-		// Resolve with the modified image.
-		const modifiedImg = new Image();
+		const out = new Image();
 
 		return new Promise(
 			( resolve ) => {
-				modifiedImg.onload = () => resolve( modifiedImg );
-				modifiedImg.src = canvas.toDataURL();
+				out.onload = () => resolve( out );
+				out.src = canvas.toDataURL();
 			}
 		);
 
@@ -1076,96 +1073,5 @@
 
 	}
 
-
-	/**
-	 * Finds the closest color in the palette to the given RGB values.
-	 *
-	 * @param {number} r - The red component (0-255).
-	 * @param {number} g - The green component (0-255).
-	 * @param {number} b - The blue component (0-255).
-	 * @param {string[]} palette - The color palette (array of hex strings).
-	 * @returns {string} The closest color in hex format.
-	 */
-	function findClosestColorUsingLookup( r, g, b, lookupTable, bucketSize = 4 ) {
-
-		// Round RGB values to the nearest bucket
-		const roundedR = Math.floor( r / bucketSize ) * bucketSize;
-		const roundedG = Math.floor( g / bucketSize ) * bucketSize;
-		const roundedB = Math.floor( b / bucketSize ) * bucketSize;
-
-		const key = `${roundedR},${roundedG},${roundedB}`;
-		return lookupTable[ key ];
-
-	}
-
-
-	// Cache the color lookup table to avoid recomputing it.
-	// Only generated when an image is loaded externally.
-	// Font images are not loaded this way.
-	const colorLookupTable = {};
-
-
-	/**
-	 * Generates a color lookup table for the given palette.
-	 *
-	 * @param {string[]} palette - The color palette (array of hex strings).
-	 * @param {number} [bucketSize=4] - The size of the color buckets.
-	 * @returns {object} The color lookup table.
-	 */
-	function generateColorLookupTable( palette, bucketSize = 4 ) {
-
-		if ( Object.keys( colorLookupTable ).length !== 0 ) {
-			return colorLookupTable;
-		}
-
-		// Convert hex palette to rgb palette.
-		const rgbPalette = palette.map( color => b8.Utilities.hexToRgb( color ) );
-
-		for ( let r = 0; r < 256; r += bucketSize ) {
-			for ( let g = 0; g < 256; g += bucketSize ) {
-				for ( let b = 0; b < 256; b += bucketSize ) {
-					const key = `${r},${g},${b}`;
-					colorLookupTable[ key ] = findClosestColor( r, g, b, rgbPalette );
-				}
-			}
-		}
-
-		return colorLookupTable;
-
-	}
-
-
-	/**
-	 * Finds the closest color in the palette to the given RGB values.
-	 *
-	 * @param {number} r - The red component (0-255).
-	 * @param {number} g - The green component (0-255).
-	 * @param {number} b - The blue component (0-255).
-	 * @param {object[]} palette - The color palette (array of RGB objects).
-	 * @returns {object} The closest color in RGB format.
-	 */
-	function findClosestColor( r, g, b, palette ) {
-
-		let closestColor = null;
-		let closestDistance = Infinity;
-
-		for ( const color of palette ) {
-
-			const distance = (
-				Math.pow( color.r - r, 2 ) +
-				Math.pow( color.g - g, 2 ) +
-				Math.pow( color.b - b, 2 )
-			);
-
-			if ( distance < closestDistance ) {
-				closestDistance = distance;
-				closestColor = color;
-			}
-
-		}
-
-		return closestColor;
-
-	}
 
 } )( b8 );
