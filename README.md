@@ -66,6 +66,12 @@ Full documentation, examples, and tools are available at:
 
 ---
 
+## Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+---
+
 ## Inspired by QX82
 
 BeepMini is a fork of the [QX82](https://github.com/btco/qx82) engine by btco.
