@@ -60,6 +60,13 @@ const mapper = {
 		mapper.settings = { ...mapData.settings };
 		b8.Utilities.checkObject( 'mapper.settings', mapper.settings );
 
+		// Set game name.
+		// Some settings use this, for things like local storage keys.
+		if ( mapper.settings.gameName ) {
+			console.log( `Starting game: ${mapper.settings.gameName}` );
+			b8.CONFIG.NAME = mapper.settings.gameName;
+		}
+
 		// Setup player.
 		mapper.player = b8.ECS.create(
 			{
