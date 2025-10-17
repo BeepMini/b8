@@ -66,10 +66,10 @@
 		async function main() {
 			b8.cls();
 			b8.print( "Loading..." );
-			backgroundImg = await b8.Async.loadImage( "../assets/city.png" );
-			sfxLaser = await b8.Async.loadSound( "../assets/laser.wav" )
-			sfxHit = await b8.Async.loadSound( "../assets/hit.wav" )
-			sfxBlast = await b8.Async.loadSound( "../assets/blast.wav" )
+			backgroundImg = await b8.Async.loadImage( "assets/city.png" );
+			sfxLaser = await b8.Async.loadSound( "assets/laser.wav" )
+			sfxHit = await b8.Async.loadSound( "assets/hit.wav" )
+			sfxBlast = await b8.Async.loadSound( "assets/blast.wav" )
 			b8.drawImage( 0, 0, backgroundImg );
 			b8.locate( 4, 6 );
 			b8.color( 14, -1 );

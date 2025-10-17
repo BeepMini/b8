@@ -111,9 +111,9 @@
 		async function main() {
 			b8.cls();
 			b8.print( "Loading..." );
-			sfxStep = await b8.Async.loadSound( "../assets/step.wav" );
-			sfxPush = await b8.Async.loadSound( "../assets/push.wav" );
-			sfxLevelUp = await b8.Async.loadSound( "../assets/levelup.wav" );
+			sfxStep = await b8.Async.loadSound( "assets/step.wav" );
+			sfxPush = await b8.Async.loadSound( "assets/push.wav" );
+			sfxLevelUp = await b8.Async.loadSound( "assets/levelup.wav" );
 			setUpLevel( 0 );
 			while ( true ) {
 				drawEverything();
