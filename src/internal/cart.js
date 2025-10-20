@@ -4,7 +4,7 @@
 
 
 	// Magic string used to identify the custom trailer in the PNG file
-	const MAGIC_STR = "b8";
+	const MAGIC_STR = "B8CART";
 
 	// Encoded version of the magic string as a Uint8Array
 	const MAGIC = new TextEncoder().encode( MAGIC_STR );
