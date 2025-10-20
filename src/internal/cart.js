@@ -63,23 +63,25 @@
 		const offset = _findMagicFromEnd( bytes, MAGIC_STR );
 		if ( offset < 0 ) b8.Utilities.fatal( "Error Loading Cart: No b8 trailer found" );
 
+		// Layout:
+		// [ MAGIC (MAGIC.length) ][ VERSION (1) ][ LENGTH (4) ][ PAYLOAD (N) ][ CRC32 (4) ]
+		const versionOffset = offset + MAGIC.length;
+		const lengthOffset = versionOffset + 1;
+		const payloadStart = lengthOffset + 4;
+
 		// Read the version number
-		const version = bytes[ offset + 5 ];
+		const version = bytes[ versionOffset ];
 		if ( version !== VERSION ) b8.Utilities.fatal( `Error Loading Cart: Unsupported version ${version}` );
 
-		// Read the payload length
-		const payloadLength = _readU32BE( bytes, offset + 6 );
-
-		// Calculate the start and end of the payload
-		const payloadStart = offset + 10;
+		const payloadLength = _readU32BE( bytes, lengthOffset );
 		const payloadEnd = payloadStart + payloadLength;
 
-		// Ensure the payload length is within bounds
+		// Bounds check: payload plus CRC must be inside file
 		if ( payloadEnd + 4 > bytes.length ) {
 			b8.Utilities.fatal( "Error Loading Cart: Trailer length out of range" );
 		}
 
-		// Extract the payload data
+		// Extract payload and check CRC
 		const payload = bytes.subarray( payloadStart, payloadEnd );
 
 		// Verify the CRC32 checksum
