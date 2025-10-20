@@ -156,7 +156,9 @@
 
 	/**
 	 * Bayer matrices (normalised to [-0.5, +0.5])
+	 * Used for ordered dithering.
 	 *
+	 * @type {object}
 	 * @private
 	 */
 	const _bayer = {
@@ -223,11 +225,11 @@
 		const mat = _bayer[ size ];
 		if ( !mat ) throw new Error( 'Unsupported Bayer size. Use 2, 4, or 8.' );
 
+		// Put the data in local variables for simple access.
 		const data = imageData.data;
 		const w = imageData.width;
 		const h = imageData.height;
 
-		const clamp = ( v ) => v < 0 ? 0 : v > 255 ? 255 : v;
 		const idx = ( x, y ) => 4 * ( y * w + x );
 		const scale = amplitude * strength; // final scale in RGB units
 
@@ -238,9 +240,9 @@
 				const t = mat[ ( y % size ) * size + ( x % size ) ]; // [-0.5..0.5]
 
 				// Bias RGB before quantising
-				const r = clamp( data[ i ] + t * scale );
-				const g = clamp( data[ i + 1 ] + t * scale );
-				const b = clamp( data[ i + 2 ] + t * scale );
+				const r = b8.Utilities.clamp( data[ i ] + t * scale, 0, 255 );
+				const g = b8.Utilities.clamp( data[ i + 1 ] + t * scale, 0, 255 );
+				const b = b8.Utilities.clamp( data[ i + 2 ] + t * scale, 0, 255 );
 
 				const q = mapFn( r, g, b ); // nearest palette (or your custom)
 
