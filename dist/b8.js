@@ -1029,15 +1029,6 @@ const b8 = {};
   b82.Utilities.error = function(msg) {
     console.error(msg);
   };
-  b82.Utilities.loadImageAsync = async function(src) {
-    return new Promise(
-      (resolver) => {
-        const img = new Image();
-        img.src = src;
-        img.onload = () => resolver(img);
-      }
-    );
-  };
   b82.Utilities.makeColorTransparent = async function(img, color = [255, 0, 255], range = 5) {
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
@@ -2140,7 +2131,7 @@ const b8 = {};
      * @returns {Promise<void>}
      */
     async initAsync() {
-      this.origImg_ = await b82.Utilities.loadImageAsync(this.fontImageFile_);
+      this.origImg_ = await b82.Image.loadImageAsync(this.fontImageFile_);
       const imageCharWidth = b82.CONFIG.CHR_WIDTH * this.tileWidthMultiplier_;
       const imageCharHeight = b82.CONFIG.CHR_HEIGHT * this.tileHeightMultiplier_;
       b82.Utilities.assert(
@@ -3468,6 +3459,7 @@ const b8 = {};
 })(b8);
 (function(b82) {
   b82.Intro = {};
+  const bgIntro = `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`;
   b82.Intro.loading = async function() {
     const prefix = "8> ";
     b82.color(0, 4);
@@ -3477,7 +3469,7 @@ const b8 = {};
     await b82.Async.wait(0.4);
   };
   b82.Intro.splash = async function() {
-    const titleScreen = b82.Tilemap.load(`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gwEEAIMBBACDAQQAAA8AAA8AmB6DAA8EgwEEAIMBBACDAQQAgwEEAIMBBACDAQQAgwEEAIMBBACDAQQAgwADBIMYegMEgxiZAwSDAQQAgwEEAIMBBACDAQQAgwEEAIMBBACDAQQAgwEEAIMAAwSDAAMEgwADBAAPAAAPAJgegxgcCgSDGB0KBIMBBACDAQQAgwEEAIMBBACDAQQAgwEEAIMBBACDAQQAgwEEAIMBBACDAQQAgwEEAIMBBACDAQQAgxgpAwSDAQQAgwEEAIMBBACDAQQAgwEEAIMBBACDAQQAAA8AAA8AmB6DGC4KBIMYLwoEgwEEAIMBBACDAQQAgwEEAIMBBACDAQQAgxgpAwSDGCkDBIMBBACDAQQAgwEEAIMBBACDAQQAgxcDBIMBAwSDGBgDBIMAAwSDAQQAgxh0AwSDGIYDBIMABQSDAQQAAA8AAA8AmB6DAQQAgwEEAIMBBACDAA8EgwEEAIMBBACDAQQAgxcDBIMCAwSDAQMEgxgYAwSDAQQAgwEEAIMBBACDAQQAgwEEAIMBBACDAAMEgwADBIMYdAMEgxkBbAUEgwEEAIMZAUYFBIMBBAAADwAADwCYHoMWAwSDGCgDBIMBBACDAQQAgxh0AwSDEAMEgwEEAIMBBACDAQQAgwEEAIMBBACDAQQAgwEEAIMBBACDFgMEgxgoAwSDGHQDBIMYhgMEgxkBbAUEgwAFBIMABQWDAQUEgwEFBIMBBQQADwAADwCYHoMYKAUDgwAFA4MYKAMEgxh0AwSDAQQAgwEEAIMNBQSDAQQAgwEEAIMYdAMEgxiGAwSDFgMEgxgoAwSDFgMEgwEDBIMBAwSDEAMEgxi0BQSDAAEFgwMBBYMABQWDAQUEgwEFBIMBBQQADwAADwCYHoMBBQSDGCgFA4MABQODGCgDBIMYuAUEgwEEAIMBBACDGIYDBIMYdAMEgxi4BQSDDwMEgwsDBIMBAwSDAQMEgxkBagUDgwEDBIMYnAUDgwADBYMAAQWDAQUEgwAFBYMPAQWDAQUEgwEFBAAPAAAPAJgegwMBBYMBBQSDAQUEgwEFBIMBBQSDAQUEgwEFBIMBBQSDAQUEgwEFBIMBBQSDAQUEgwEFBIMBBQSDAQUEgwEFBIMBBQSDAQUEgw8BBYMRAQWDDwEFgwMFAYMBBQSDAQUEAA8AAA8AloMRAQWDEQEFgwMBBYMDAQWDAwEFgwMBBYMADwWDAwEFgwMBBYMADwWDAA8FgwAPBYMDAQWDAA8FgwAPBYMADwWDDwEFgwsBBYMRAQWDCwEFgxhYBQGDAA8BloMADwGDEAEFgwAPBYMADwWDAA8FgwAPBYMADwWDAQEFgxABBYMADwWDAA8FgwAPBYMADwWDAA8FgwkBBYMADwWDAA8FgwQBBYMADwGDAA8BgwAPAYMABQE=`);
+    const titleScreen = b82.Tilemap.load(bgIntro);
     b82.locate(0, 0);
     b82.Tilemap.draw(titleScreen);
     let message = "Click to start";
@@ -3654,6 +3646,141 @@ const b8 = {};
       valid = textInput.length > 0;
     } while (valid === false);
     return textInput;
+  };
+})(b8);
+(function(b82) {
+  b82.Image = b82.Image || {};
+  b82.Image.quantiseImageData = function(imageData, lookupTable) {
+    const data = imageData.data;
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      const { r: pr, g: pg, b: pb } = b82.Image.findClosestColorUsingLookup(r, g, b, lookupTable);
+      data[i] = pr;
+      data[i + 1] = pg;
+      data[i + 2] = pb;
+    }
+    return imageData;
+  };
+  b82.Image.loadImageAsync = async function(src) {
+    return new Promise(
+      (resolver) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.src = src;
+        img.onload = () => resolver(img);
+      }
+    );
+  };
+  b82.Image.findClosestColorUsingLookup = function(r, g, b, lookupTable, bucketSize = 4) {
+    const roundedR = Math.floor(r / bucketSize) * bucketSize;
+    const roundedG = Math.floor(g / bucketSize) * bucketSize;
+    const roundedB = Math.floor(b / bucketSize) * bucketSize;
+    const key = `${roundedR},${roundedG},${roundedB}`;
+    return lookupTable[key];
+  };
+  const colorLookupTable = {};
+  b82.Image.generateColorLookupTable = function(palette, bucketSize = 4) {
+    if (Object.keys(colorLookupTable).length !== 0) {
+      return colorLookupTable;
+    }
+    const rgbPalette = palette.map((color) => b82.Utilities.hexToRgb(color));
+    for (let r = 0; r < 256; r += bucketSize) {
+      for (let g = 0; g < 256; g += bucketSize) {
+        for (let b = 0; b < 256; b += bucketSize) {
+          const key = `${r},${g},${b}`;
+          colorLookupTable[key] = findClosestColor(r, g, b, rgbPalette);
+        }
+      }
+    }
+    return colorLookupTable;
+  };
+  function findClosestColor(r, g, b, palette) {
+    let closestColor = null;
+    let closestDistance = Infinity;
+    for (const color of palette) {
+      const distance = Math.pow(color.r - r, 2) + // Difference in red channel, squared
+      Math.pow(color.g - g, 2) + // Difference in green channel, squared
+      Math.pow(color.b - b, 2);
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestColor = color;
+      }
+    }
+    return closestColor;
+  }
+  const _bayer = {
+    2: [
+      -0.375,
+      0.125,
+      0.375,
+      -0.125
+    ],
+    4: [
+      -0.46875,
+      0.03125,
+      -0.34375,
+      0.15625,
+      0.28125,
+      -0.21875,
+      0.40625,
+      -0.09375,
+      -0.28125,
+      0.21875,
+      -0.40625,
+      0.09375,
+      0.46875,
+      -0.03125,
+      0.34375,
+      -0.15625
+    ],
+    8: (() => {
+      const base = [
+        [0, 48, 12, 60, 3, 51, 15, 63],
+        [32, 16, 44, 28, 35, 19, 47, 31],
+        [8, 56, 4, 52, 11, 59, 7, 55],
+        [40, 24, 36, 20, 43, 27, 39, 23],
+        [2, 50, 14, 62, 1, 49, 13, 61],
+        [34, 18, 46, 30, 33, 17, 45, 29],
+        [10, 58, 6, 54, 9, 57, 5, 53],
+        [42, 26, 38, 22, 41, 25, 37, 21]
+      ];
+      const nrm = [];
+      for (let y = 0; y < 8; y++) {
+        for (let x = 0; x < 8; x++) {
+          const v = base[y][x] / 64;
+          nrm.push(v - 0.5);
+        }
+      }
+      return nrm;
+    })()
+  };
+  b82.Image.ditherOrdered = function(imageData, mapFn, opts = {}) {
+    const size = opts.size || 4;
+    const strength = opts.strength ?? 0.5;
+    const amplitude = opts.amplitude ?? 24;
+    const mat = _bayer[size];
+    if (!mat) throw new Error("Unsupported Bayer size. Use 2, 4, or 8.");
+    const data = imageData.data;
+    const w = imageData.width;
+    const h = imageData.height;
+    const idx = (x, y) => 4 * (y * w + x);
+    const scale = amplitude * strength;
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const i = idx(x, y);
+        const t = mat[y % size * size + x % size];
+        const r = b82.Utilities.clamp(data[i] + t * scale, 0, 255);
+        const g = b82.Utilities.clamp(data[i + 1] + t * scale, 0, 255);
+        const b = b82.Utilities.clamp(data[i + 2] + t * scale, 0, 255);
+        const q = mapFn(r, g, b);
+        data[i] = q.r;
+        data[i + 1] = q.g;
+        data[i + 2] = q.b;
+      }
+    }
+    return imageData;
   };
 })(b8);
 (function(b82) {
@@ -4144,37 +4271,37 @@ const b8 = {};
       b82.Core.offCtx.drawImage(img, x, y);
     }
   };
-  b82.Core.loadImage = async function(url) {
+  b82.Core.loadImage = async function(url, options = { dither: "ordered" }) {
+    const mode = options.dither || "none";
     b82.Utilities.log("load image", url);
+    const img = await b82.Image.loadImageAsync(url);
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = img.width;
+    canvas.height = img.height;
+    ctx.drawImage(img, 0, 0);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const lookupTable = b82.Image.generateColorLookupTable(b82.CONFIG.COLORS);
+    const mapFn = (r, g, b) => b82.Image.findClosestColorUsingLookup(r, g, b, lookupTable);
+    if (mode === "ordered") {
+      b82.Image.ditherOrdered(
+        imageData,
+        mapFn,
+        {
+          size: options.size || 4,
+          strength: options.strength || 0.5,
+          amplitude: options.amplitude || 16
+        }
+      );
+    } else {
+      b82.Image.quantiseImageData(imageData, lookupTable);
+    }
+    ctx.putImageData(imageData, 0, 0);
+    const out = new Image();
     return new Promise(
       (resolve) => {
-        const img = new Image();
-        img.crossOrigin = "Anonymous";
-        img.onload = () => {
-          const canvas = document.createElement("canvas");
-          const ctx = canvas.getContext("2d");
-          canvas.width = img.width;
-          canvas.height = img.height;
-          ctx.drawImage(img, 0, 0);
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          const data = imageData.data;
-          const lookupTable = generateColorLookupTable(b82.CONFIG.COLORS);
-          for (let i = 0; i < data.length; i += 4) {
-            const r = data[i];
-            const g = data[i + 1];
-            const b = data[i + 2];
-            const closestColor = findClosestColorUsingLookup(r, g, b, lookupTable);
-            const { r: pr, g: pg, b: pb } = closestColor;
-            data[i] = pr;
-            data[i + 1] = pg;
-            data[i + 2] = pb;
-          }
-          ctx.putImageData(imageData, 0, 0);
-          const modifiedImg = new Image();
-          modifiedImg.onload = () => resolve(modifiedImg);
-          modifiedImg.src = canvas.toDataURL();
-        };
-        img.src = url;
+        out.onload = () => resolve(out);
+        out.src = canvas.toDataURL();
       }
     );
   };
@@ -4301,41 +4428,6 @@ const b8 = {};
   b82.Core.isAndroid = function() {
     return /android/i.test(navigator.userAgent);
   };
-  function findClosestColorUsingLookup(r, g, b, lookupTable, bucketSize = 4) {
-    const roundedR = Math.floor(r / bucketSize) * bucketSize;
-    const roundedG = Math.floor(g / bucketSize) * bucketSize;
-    const roundedB = Math.floor(b / bucketSize) * bucketSize;
-    const key = `${roundedR},${roundedG},${roundedB}`;
-    return lookupTable[key];
-  }
-  const colorLookupTable = {};
-  function generateColorLookupTable(palette, bucketSize = 4) {
-    if (Object.keys(colorLookupTable).length !== 0) {
-      return colorLookupTable;
-    }
-    const rgbPalette = palette.map((color) => b82.Utilities.hexToRgb(color));
-    for (let r = 0; r < 256; r += bucketSize) {
-      for (let g = 0; g < 256; g += bucketSize) {
-        for (let b = 0; b < 256; b += bucketSize) {
-          const key = `${r},${g},${b}`;
-          colorLookupTable[key] = findClosestColor(r, g, b, rgbPalette);
-        }
-      }
-    }
-    return colorLookupTable;
-  }
-  function findClosestColor(r, g, b, palette) {
-    let closestColor = null;
-    let closestDistance = Infinity;
-    for (const color of palette) {
-      const distance = Math.pow(color.r - r, 2) + Math.pow(color.g - g, 2) + Math.pow(color.b - b, 2);
-      if (distance < closestDistance) {
-        closestDistance = distance;
-        closestColor = color;
-      }
-    }
-    return closestColor;
-  }
 })(b8);
 (function(b82) {
   b82.Collision = {};
@@ -4358,7 +4450,7 @@ const b8 = {};
 })(b8);
 (function(b82) {
   b82.Cart = {};
-  const MAGIC_STR = "b8";
+  const MAGIC_STR = "B8CART";
   const MAGIC = new TextEncoder().encode(MAGIC_STR);
   const VERSION = 1;
   b82.Cart.save = async function(canvas, data, filename = "cart.png") {
@@ -4374,10 +4466,12 @@ const b8 = {};
     const bytes = new Uint8Array(buffer);
     const offset = _findMagicFromEnd(bytes, MAGIC_STR);
     if (offset < 0) b82.Utilities.fatal("Error Loading Cart: No b8 trailer found");
-    const version = bytes[offset + 5];
+    const versionOffset = offset + MAGIC.length;
+    const lengthOffset = versionOffset + 1;
+    const payloadStart = lengthOffset + 4;
+    const version = bytes[versionOffset];
     if (version !== VERSION) b82.Utilities.fatal(`Error Loading Cart: Unsupported version ${version}`);
-    const payloadLength = _readU32BE(bytes, offset + 6);
-    const payloadStart = offset + 10;
+    const payloadLength = _readU32BE(bytes, lengthOffset);
     const payloadEnd = payloadStart + payloadLength;
     if (payloadEnd + 4 > bytes.length) {
       b82.Utilities.fatal("Error Loading Cart: Trailer length out of range");
