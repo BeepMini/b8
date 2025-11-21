@@ -771,6 +771,9 @@
 	/**
 	 * Encodes data using CBOR and Base64.
 	 *
+	 * This only works for data types up to around 64k in size due to the use of
+	 * btoa().
+	 *
 	 * @param {any} data - The data to encode.
 	 * @returns {string} The encoded data as a Base64 string.
 	 */
