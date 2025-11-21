@@ -60,7 +60,7 @@ mapper.sceneGame = {
 				newRow = loc.row;
 			}
 
-			b8.ECS.set( mapper.player, 'Direction', { dx, dy } );
+			b8.ECS.setComponent( mapper.player, 'Direction', { dx, dy } );
 			b8.ECS.setLoc( mapper.player, newCol, newRow );
 
 			mapper.CONFIG.moveDelay = 0.15;

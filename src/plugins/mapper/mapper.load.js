@@ -1,0 +1,165 @@
+/**
+ * Load a map into the game.
+ *
+ * @param {Object} mapData - The map data object containing map layout, tiles, objects, and settings.
+ * @returns {void}
+ */
+mapper.load = function( mapData ) {
+
+	b8.Utilities.checkObject( 'mapData', mapData );
+
+	if ( mapData.version === 1 ) mapData = mapper.upgradeMapDataV1toV2( mapData );
+
+	console.log( 'map data', mapData );
+
+	// Reset state.
+	b8.ECS.reset();
+	mapper.maps = [];
+
+	mapper.settings = { ...mapData.settings };
+	b8.Utilities.checkObject( 'mapper.settings', mapper.settings );
+
+	// Loop through levels and set them up.
+	mapData.levels.forEach(
+		( level, index ) => {
+
+			const mapDataString = level.mapData.join( '\n' );
+			b8.Utilities.checkString( `mapDataString for level ${index}`, mapDataString );
+
+			const maze = b8.Tilemap.convertFromText( mapDataString );
+			const map = b8.Tilemap.createFromArray( maze, mapData.tiles );
+
+			mapper.maps.push(
+				{
+					"screenWidth": mapData.screenWidth,
+					"screenHeight": mapData.screenHeight,
+					"screenCountX": level.screenCountX,
+					"screenCountY": level.screenCountY,
+					"objects": level.objects || [],
+					"mapWidth": map[ 0 ].length,
+					"mapHeight": map.length,
+					"mapData": map,
+				}
+			);
+
+		}
+	);
+
+	// Set game name.
+	// Some settings use this, for things like local storage keys.
+	if ( mapper.settings.gameName ) {
+		console.log( `Starting game: ${mapper.settings.gameName}` );
+		b8.CONFIG.NAME = mapper.settings.gameName;
+	}
+
+	// Setup player.
+	mapper.player = b8.ECS.create(
+		{
+			Type: { name: 'player' },
+			Loc: { row: 0, col: 0 },
+			Direction: { dx: 0, dy: 0 },
+			Sprite: {
+				type: 'actor',
+				tile: parseInt( mapper.settings.character ) || 6,
+				fg: parseInt( mapper.settings.characterColor ) || 10,
+				bg: 0,
+				depth: 100,
+			},
+			CharacterAnimation: {
+				name: 'idle',
+				default: 'idle',
+				duration: 0,
+			}
+		}
+	);
+
+	mapper.setCurrentMap( 0 );
+
+	// Check for player start position object.
+	const start = mapper.getCurrentMap().objects.find( obj => obj.type === 'start' );
+	if ( !start ) {
+		b8.Utilities.fatal( "Initial map data must include a 'start' object." );
+	}
+
+	// Count all coin objects.
+	// Loop through all levels and count coins
+	let coinCount = 0;
+	for ( const level of mapper.maps ) {
+		coinCount += level.objects.filter( obj => obj.type === 'coin' ).length;
+	}
+	b8.data.totalCoins = coinCount;
+
+	// Add systems.
+	b8.ECS.addSystem( 'characterAnimation', mapper.systems.characterAnimation );
+
+	// Play music.
+	if ( mapper.settings.bgm ) b8.Music.play( world.settings.bgm );
+
+	// Validate map data.
+	if (
+		mapper.settings.splash &&
+		mapper.settings.splash.length > 10 &&
+		b8.Tilemap.validateTilemap( mapper.settings.splash )
+	) {
+
+		mapper.bg.splash = b8.Tilemap.load( mapper.settings.splash );
+
+	}
+
+};
+
+
+mapper.upgradeMapDataV1toV2 = function( mapData ) {
+
+	console.log( 'Upgrading map data from v1 to v2' );
+
+	const level = {
+		mapData: mapData.map,
+		objects: mapData.objects,
+		screenCountX: mapData.screenCountX,
+		screenCountY: mapData.screenCountY,
+	};
+
+	// Create a levels object.
+	mapData.levels = [ level ];
+
+	// Unset old properties.
+	delete mapData.map;
+	delete mapData.objects;
+	delete mapData.screenCountX;
+	delete mapData.screenCountY;
+
+	return mapData;
+
+};
+
+
+/**
+ * Set the current active map by name.
+ *
+ * @param {string} mapName - The name of the map to set as current.
+ * @returns {void}
+ */
+mapper.setCurrentMap = function( mapId ) {
+
+	let currentMap = mapper.maps[ mapId ];
+	if ( !currentMap ) {
+		console.error( `Map with ID "${mapId}" not found.` );
+		return;
+	}
+
+	console.log( currentMap );
+
+	// Add objects.
+	if ( !currentMap.objects ) currentMap.objects = [];
+
+	for ( const obj of currentMap.objects ) {
+
+		const handler = mapper.types[ obj.type ];
+		if ( handler?.spawn ) handler.spawn( obj.x, obj.y, obj.props );
+
+	}
+
+	mapper.currentMapId = mapId;
+
+};

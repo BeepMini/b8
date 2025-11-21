@@ -9,12 +9,12 @@ mapper.camera = {
 	 */
 	getScreenPosition: function( pCol, pRow ) {
 
-		if ( !mapper.currentMap ) {
+		if ( !mapper.isValidMapId( mapper.currentMapId ) ) {
 			b8.Utilities.error( "No current map set." );
 			return { col: 0, row: 0 };
 		}
 
-		const currentMap = mapper.currentMap;
+		const currentMap = mapper.getCurrentMap();
 
 		const screenWidth = currentMap.screenWidth;
 		const screenHeight = currentMap.screenHeight;

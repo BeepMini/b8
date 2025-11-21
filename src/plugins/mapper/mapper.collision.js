@@ -35,17 +35,19 @@ mapper.collision = {
 	 */
 	isWalkable: function( col, row ) {
 
+		const currentMap = mapper.getCurrentMap();
+
 		// Check bounds.
 		if (
 			col < 0 ||
 			row < 0 ||
-			col >= mapper.currentMap.mapWidth ||
-			row >= mapper.currentMap.mapHeight
+			col >= currentMap.mapWidth ||
+			row >= currentMap.mapHeight
 		) {
 			return false;
 		}
 
-		let mapCell = mapper.currentMap.map[ row ][ col ];
+		let mapCell = currentMap.mapData[ row ][ col ];
 
 		if ( true === mapCell[ 3 ] ) {
 			return false;
