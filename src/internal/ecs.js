@@ -154,7 +154,7 @@
 	 * @param {Object} [data={}] Component data (stored by reference)
 	 * @returns {void}
 	 */
-	b8.ECS.add = function( id, name = null, data = {} ) {
+	b8.ECS.addComponent = function( id, name = null, data = {} ) {
 
 		b8.Utilities.checkInt( 'id', id );
 		b8.Utilities.checkString( 'name', name );
@@ -178,9 +178,9 @@
 	 * @param {Object} data Component data (stored by reference)
 	 * @returns {void}
 	 */
-	b8.ECS.set = function( id, name, data ) {
+	b8.ECS.setComponent = function( id, name, data ) {
 
-		b8.ECS.add( id, name, data );
+		b8.ECS.addComponent( id, name, data );
 
 	}
 
@@ -350,7 +350,7 @@
 
 		const id = makeEntity();
 		for ( const [ name, data ] of Object.entries( bundle ) ) {
-			b8.ECS.add( id, name, data );
+			b8.ECS.addComponent( id, name, data );
 		}
 		return id;
 
