@@ -29,13 +29,19 @@ mapper.load = function( mapData ) {
 			const maze = b8.Tilemap.convertFromText( mapDataString );
 			const map = b8.Tilemap.createFromArray( maze, mapData.tiles );
 
+
+			// Add mapId to each object
+			const objects = ( level.objects || [] ).map(
+				obj => ( { ...obj, mapId: index } )
+			);
+
 			mapper.maps.push(
 				{
 					"screenWidth": mapData.screenWidth,
 					"screenHeight": mapData.screenHeight,
 					"screenCountX": level.screenCountX,
 					"screenCountY": level.screenCountY,
-					"objects": level.objects || [],
+					"objects": objects,
 					"mapWidth": map[ 0 ].length,
 					"mapHeight": map.length,
 					"mapData": map,
@@ -109,6 +115,12 @@ mapper.load = function( mapData ) {
 };
 
 
+/**
+ * Upgrade map data from version 1 to version 2.
+ *
+ * @param {Object} mapData - The map data object in version 1 format.
+ * @returns {Object} The upgraded map data object in version 2 format.
+ */
 mapper.upgradeMapDataV1toV2 = function( mapData ) {
 
 	console.log( 'Upgrading map data from v1 to v2' );
@@ -142,6 +154,11 @@ mapper.upgradeMapDataV1toV2 = function( mapData ) {
  */
 mapper.setCurrentMap = function( mapId ) {
 
+	b8.Utilities.checkInt( 'mapId', mapId );
+
+	// Check if already on this map.
+	if ( mapId === mapper.currentMapId ) return;
+
 	let currentMap = mapper.maps[ mapId ];
 	if ( !currentMap ) {
 		console.error( `Map with ID "${mapId}" not found.` );
@@ -153,6 +170,15 @@ mapper.setCurrentMap = function( mapId ) {
 	// Add objects.
 	if ( !currentMap.objects ) currentMap.objects = [];
 
+	// Delete all ecs entities except the player.
+	const allEntities = b8.ECS.getAllEntities();
+	for ( const entityId of allEntities ) {
+		const typeComp = b8.ECS.getComponent( entityId, 'Type' );
+		if ( typeComp?.name === 'player' ) continue;
+		b8.ECS.destroy( entityId );
+	}
+
+	// Spawn all objects for the current map.
 	for ( const obj of currentMap.objects ) {
 
 		const handler = mapper.types[ obj.type ];

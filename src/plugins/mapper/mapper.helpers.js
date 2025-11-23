@@ -34,4 +34,27 @@ mapper.helpers = {
 
 	},
 
+
+	/**
+	 * Get all map objects of a given type.
+	 *
+	 * @param {string} type The object type to search for.
+	 * @returns {Object[]} Array of matching objects.
+	 */
+	getObjectsByType: ( type ) => {
+
+		const objects = [];
+
+		for ( let l = 0; l < mapper.maps.length; l++ ) {
+			const map = mapper.maps[ l ];
+			for ( const obj of map.objects ) {
+				// Support type prefixes, e.g., "door" matches "doorway", "doorLarge", etc.
+				if ( obj.type.startsWith( type ) ) objects.push( obj );
+			}
+		}
+
+		return objects;
+
+	},
+
 }

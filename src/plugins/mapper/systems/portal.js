@@ -1,7 +1,22 @@
+/**
+ * Portal system
+ *
+ */
+
+/**
+ * Check for portal at given location.
+ * If found, handle teleportation.
+ *
+ * @param {number} col - The column to check.
+ * @param {number} row - The row to check.
+ * @returns {Promise<boolean>} True if portal handled, false otherwise.
+ */
 mapper.systems.tryPortal = async function( col, row ) {
 
 	const id = b8.ECS.entitiesAt( col, row );
+
 	console.log( 'Checking for portal at', col, row, id );
+
 	if ( !id ) return false;
 
 	for ( const entityId of id ) {
@@ -9,28 +24,36 @@ mapper.systems.tryPortal = async function( col, row ) {
 		return mapper.systems.handlePortal( portal );
 	}
 
+	return false;
+
 }
 
+
+/**
+ * Handle portal teleportation.
+ *
+ * @param {Object} portal - The portal component.
+ * @returns {Promise<boolean>} True if portal handled, false otherwise.
+ */
 mapper.systems.handlePortal = async function( portal ) {
 
 	if ( !portal ) return false;
-	if ( portal.target === '' ) return false;
+	if ( '' === portal.target ) return false;
 
 	// Find portal with the matching name.
-	const doorways = b8.ECS.query( 'Portal' );
+
+	const doorways = mapper.helpers.getObjectsByType( 'door' );
 	const targetDoorway = doorways.find(
-		( id ) => {
-			const targetPortal = b8.ECS.getComponent( id, 'Portal' );
-			return targetPortal.name === portal.target;
+		( door ) => {
+			return door.props.name === portal.target;
 		}
 	);
 
+	// Teleport player to target doorway.
 	if ( targetDoorway ) {
-		const targetLoc = b8.ECS.getComponent( targetDoorway, 'Loc' );
-		if ( targetLoc ) {
-			await b8.Async.wait( 0.1 );
-			b8.ECS.setLoc( mapper.player, targetLoc.col, targetLoc.row );
-		}
+		await b8.Async.wait( 0.1 );
+		mapper.setCurrentMap( targetDoorway.mapId );
+		b8.ECS.setLoc( mapper.player, targetDoorway.x, targetDoorway.y );
 	}
 
 	return false; // Allow stepping onto the portal

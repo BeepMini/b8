@@ -4,7 +4,7 @@ const mapper = {
 	maps: [],
 
 	// Currently active map.
-	currentMap: null,
+	currentMapId: null,
 
 	// Map of entity types to their handlers.
 	types: {},
@@ -37,121 +37,6 @@ const mapper = {
 
 
 	/**
-	 * Load a map into the game.
-	 *
-	 * @param {Object} mapData - The map data object containing map layout, tiles, objects, and settings.
-	 * @param {string} mapName - The name to assign to the loaded map.
-	 * @param {boolean} setCurrentMap - Whether to set this map as the current active map.
-	 * @returns {void}
-	 */
-	load: function( mapData, mapName = 'world', setCurrentMap = true ) {
-
-		b8.Utilities.checkObject( 'mapData', mapData );
-
-		// Reset state.
-		b8.ECS.reset();
-		mapper.maps = [];
-		mapper.currentMap = null;
-
-		// Combine map data into single string.
-		const mapDataString = mapData.map.join( '\n' );
-		b8.Utilities.checkString( 'mapDataString', mapDataString );
-
-		mapper.settings = { ...mapData.settings };
-		b8.Utilities.checkObject( 'mapper.settings', mapper.settings );
-
-		// Set game name.
-		// Some settings use this, for things like local storage keys.
-		if ( mapper.settings.gameName ) {
-			console.log( `Starting game: ${mapper.settings.gameName}` );
-			b8.CONFIG.NAME = mapper.settings.gameName;
-		}
-
-		// Setup player.
-		mapper.player = b8.ECS.create(
-			{
-				Type: { name: 'player' },
-				Loc: { row: 0, col: 0 },
-				Direction: { dx: 0, dy: 0 },
-				Sprite: {
-					type: 'actor',
-					tile: parseInt( mapper.settings.character ) || 6,
-					fg: parseInt( mapper.settings.characterColor ) || 10,
-					bg: 0,
-					depth: 100,
-				},
-				CharacterAnimation: {
-					name: 'idle',
-					default: 'idle',
-					duration: 0,
-				}
-			}
-		);
-
-		// Convert maze strings to 2D array of characters.
-		const maze = b8.Tilemap.convertFromText( mapDataString );
-		const map = b8.Tilemap.createFromArray( maze, mapData.tiles );
-
-		mapper.maps.push(
-			{
-				"name": mapName,
-				"screenWidth": mapData.screenWidth,
-				"screenHeight": mapData.screenHeight,
-				"screenCountX": mapData.screenCountX,
-				"screenCountY": mapData.screenCountY,
-				"mapWidth": map[ 0 ].length,
-				"mapHeight": map.length,
-				"map": map,
-			}
-		);
-
-		if ( setCurrentMap ) {
-			mapper.setCurrentMap( mapName );
-		}
-
-		// Add objects.
-		for ( const obj of mapData.objects ) {
-
-			const handler = mapper.types[ obj.type ];
-			if ( handler?.spawn ) {
-				shouldAdd = handler.spawn( obj.x, obj.y, obj.props );
-			}
-
-		}
-
-		// Check for player start position object.
-		const start = mapData.objects.find( obj => obj.type === 'start' );
-		if ( !start ) {
-			b8.Utilities.fatal( "Map data must include a 'start' object." );
-		}
-
-		// Count coin objects.
-		const coinCount = mapData.objects.filter( obj => obj.type === 'coin' ).length;
-		b8.data.totalCoins = coinCount;
-
-		// Add systems.
-		b8.ECS.addSystem( 'characterAnimation', mapper.systems.characterAnimation );
-
-		// Play music.
-		if ( mapper.settings.bgm ) {
-			b8.Music.play( world.settings.bgm );
-		}
-
-		// Validate map data.
-		if (
-			mapper.settings.splash &&
-			mapper.settings.splash.length > 10 &&
-			b8.Tilemap.validateTilemap( mapper.settings.splash )
-		) {
-
-			mapper.bg.splash = b8.Tilemap.load( mapper.settings.splash );
-
-		}
-
-	},
-
-
-	/**
 	 * Update the game state.
 	 *
 	 * @param {number} dt - The delta time since the last update call.
@@ -171,11 +56,6 @@ const mapper = {
 	 * @returns {void}
 	 */
 	drawActor: function( actor ) {
-
-		if ( !mapper.currentMap ) {
-			b8.Utilities.error( "No current map set." );
-			return;
-		}
 
 		const screenPosition = mapper.camera.getScreenPosition( actor.col, actor.row );
 
@@ -241,42 +121,23 @@ const mapper = {
 	 */
 	drawScreen: function() {
 
-		if ( !mapper.currentMap ) {
-			b8.Utilities.error( "No current map set." );
+		if ( !mapper.isValidMapId( mapper.currentMapId ) ) {
+			b8.Utilities.fatal( "No current map set." );
 			return;
 		}
 
 		let loc = b8.ECS.getComponent( mapper.player, 'Loc' );
 		if ( !loc ) loc = { col: 0, row: 0 };
 		const screenPosition = mapper.camera.getScreenPosition( loc.col, loc.row );
-		const currentMap = mapper.currentMap;
+		const currentMap = mapper.getCurrentMap();
 
 		b8.Tilemap.draw(
-			currentMap.map,
+			currentMap.mapData,
 			screenPosition.col,
 			screenPosition.row,
 			screenPosition.w,
 			screenPosition.h
 		);
-
-	},
-
-
-	/**
-	 * Set the current active map by name.
-	 *
-	 * @param {string} mapName - The name of the map to set as current.
-	 * @returns {void}
-	 */
-	setCurrentMap: function( mapName ) {
-
-		let currentMap = mapper.maps.find( map => map.name === mapName );
-		if ( !currentMap ) {
-			console.error( `Map "${mapName}" not found.` );
-			return;
-		}
-
-		mapper.currentMap = currentMap;
 
 	},
 
@@ -321,6 +182,18 @@ const mapper = {
 
 		const a = b8.ECS.getComponent( id, 'Action' );
 		return a?.verb ?? '';
+
+	},
+
+
+	/**
+	 * Get the currently active map.
+	 *
+	 * @returns {Object} The current map object.
+	 */
+	getCurrentMap: () => {
+
+		return mapper.maps[ mapper.currentMapId ];
 
 	},
 
@@ -426,6 +299,13 @@ const mapper = {
 		if ( action && mapper.actions[ action ] ) {
 			mapper.actions[ action ]( playerId );
 		}
+
+	},
+
+
+	isValidMapId: ( mapId ) => {
+
+		return typeof mapId === 'number' && mapId >= 0;
 
 	},
 

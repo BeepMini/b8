@@ -3,7 +3,9 @@ mapper.systems.teleportSystem = async function( dt ) {
 	const list = b8.ECS.query( 'Teleport' );
 
 	for ( const [ id, teleport ] of list ) {
+
 		const doorways = b8.ECS.query( 'Portal' );
+
 		const targetDoorway = doorways.find(
 			( [ targetId ] ) => {
 				const targetPortal = b8.ECS.getComponent( targetId, 'Portal' );
@@ -21,6 +23,7 @@ mapper.systems.teleportSystem = async function( dt ) {
 
 		// Remove teleport after executing
 		b8.ECS.removeComponent( id, 'Teleport' );
+
 	}
 
 }
