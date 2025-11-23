@@ -126,8 +126,8 @@ mapper.upgradeMapDataV1toV2 = function( mapData ) {
 	console.log( 'Upgrading map data from v1 to v2' );
 
 	const level = {
-		mapData: mapData.map,
-		objects: mapData.objects,
+		mapData: [ ...mapData.map ],
+		objects: [ ...mapData.objects ],
 		screenCountX: mapData.screenCountX,
 		screenCountY: mapData.screenCountY,
 	};
