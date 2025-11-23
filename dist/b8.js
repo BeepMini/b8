@@ -3824,15 +3824,15 @@ const b8 = {};
       }
     );
   };
-  b82.ECS.add = function(id, name = null, data = {}) {
+  b82.ECS.addComponent = function(id, name = null, data = {}) {
     b82.Utilities.checkInt("id", id);
     b82.Utilities.checkString("name", name);
     b82.Utilities.checkObject("data", data);
     bucket(name).set(id, data);
     if ("Loc" === name) b82.ECS.setLoc(id, data.col, data.row);
   };
-  b82.ECS.set = function(id, name, data) {
-    b82.ECS.add(id, name, data);
+  b82.ECS.setComponent = function(id, name, data) {
+    b82.ECS.addComponent(id, name, data);
   };
   b82.ECS.setLoc = function(id, col, row) {
     b82.Utilities.checkInt("id", id);
@@ -3864,6 +3864,15 @@ const b8 = {};
       if (map.has(id)) out.set(name, map.get(id));
     }
     return out;
+  };
+  b82.ECS.getAllEntities = function() {
+    const entitySet = /* @__PURE__ */ new Set();
+    for (const compMap of components.values()) {
+      for (const id of compMap.keys()) {
+        entitySet.add(id);
+      }
+    }
+    return [...entitySet];
   };
   b82.ECS.getComponent = function(id, name) {
     b82.Utilities.checkInt("id", id);
@@ -3899,7 +3908,7 @@ const b8 = {};
     b82.Utilities.checkObject("bundle", bundle);
     const id = makeEntity();
     for (const [name, data] of Object.entries(bundle)) {
-      b82.ECS.add(id, name, data);
+      b82.ECS.addComponent(id, name, data);
     }
     return id;
   };

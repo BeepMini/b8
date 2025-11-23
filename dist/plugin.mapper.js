@@ -2,7 +2,7 @@ const mapper = {
   // All loaded maps.
   maps: [],
   // Currently active map.
-  currentMap: null,
+  currentMapId: null,
   // Map of entity types to their handlers.
   types: {},
   systems: {},
@@ -25,83 +25,6 @@ const mapper = {
     b8.Scene.set("menu");
   },
   /**
-   * Load a map into the game.
-   *
-   * @param {Object} mapData - The map data object containing map layout, tiles, objects, and settings.
-   * @param {string} mapName - The name to assign to the loaded map.
-   * @param {boolean} setCurrentMap - Whether to set this map as the current active map.
-   * @returns {void}
-   */
-  load: function(mapData, mapName = "world", setCurrentMap = true) {
-    b8.Utilities.checkObject("mapData", mapData);
-    b8.ECS.reset();
-    mapper.maps = [];
-    mapper.currentMap = null;
-    const mapDataString = mapData.map.join("\n");
-    b8.Utilities.checkString("mapDataString", mapDataString);
-    mapper.settings = { ...mapData.settings };
-    b8.Utilities.checkObject("mapper.settings", mapper.settings);
-    if (mapper.settings.gameName) {
-      console.log(`Starting game: ${mapper.settings.gameName}`);
-      b8.CONFIG.NAME = mapper.settings.gameName;
-    }
-    mapper.player = b8.ECS.create(
-      {
-        Type: { name: "player" },
-        Loc: { row: 0, col: 0 },
-        Direction: { dx: 0, dy: 0 },
-        Sprite: {
-          type: "actor",
-          tile: parseInt(mapper.settings.character) || 6,
-          fg: parseInt(mapper.settings.characterColor) || 10,
-          bg: 0,
-          depth: 100
-        },
-        CharacterAnimation: {
-          name: "idle",
-          default: "idle",
-          duration: 0
-        }
-      }
-    );
-    const maze = b8.Tilemap.convertFromText(mapDataString);
-    const map = b8.Tilemap.createFromArray(maze, mapData.tiles);
-    mapper.maps.push(
-      {
-        "name": mapName,
-        "screenWidth": mapData.screenWidth,
-        "screenHeight": mapData.screenHeight,
-        "screenCountX": mapData.screenCountX,
-        "screenCountY": mapData.screenCountY,
-        "mapWidth": map[0].length,
-        "mapHeight": map.length,
-        "map": map
-      }
-    );
-    if (setCurrentMap) {
-      mapper.setCurrentMap(mapName);
-    }
-    for (const obj of mapData.objects) {
-      const handler = mapper.types[obj.type];
-      if (handler?.spawn) {
-        shouldAdd = handler.spawn(obj.x, obj.y, obj.props);
-      }
-    }
-    const start = mapData.objects.find((obj) => obj.type === "start");
-    if (!start) {
-      b8.Utilities.fatal("Map data must include a 'start' object.");
-    }
-    const coinCount = mapData.objects.filter((obj) => obj.type === "coin").length;
-    b8.data.totalCoins = coinCount;
-    b8.ECS.addSystem("characterAnimation", mapper.systems.characterAnimation);
-    if (mapper.settings.bgm) {
-      b8.Music.play(world.settings.bgm);
-    }
-    if (mapper.settings.splash && mapper.settings.splash.length > 10 && b8.Tilemap.validateTilemap(mapper.settings.splash)) {
-      mapper.bg.splash = b8.Tilemap.load(mapper.settings.splash);
-    }
-  },
-  /**
    * Update the game state.
    *
    * @param {number} dt - The delta time since the last update call.
@@ -117,10 +40,6 @@ const mapper = {
    * @returns {void}
    */
   drawActor: function(actor) {
-    if (!mapper.currentMap) {
-      b8.Utilities.error("No current map set.");
-      return;
-    }
     const screenPosition = mapper.camera.getScreenPosition(actor.col, actor.row);
     const actorX = actor.col - screenPosition.col;
     const actorY = actor.row - screenPosition.row;
@@ -162,35 +81,21 @@ const mapper = {
    * @returns {void}
    */
   drawScreen: function() {
-    if (!mapper.currentMap) {
-      b8.Utilities.error("No current map set.");
+    if (!mapper.isValidMapId(mapper.currentMapId)) {
+      b8.Utilities.fatal("No current map set.");
       return;
     }
     let loc = b8.ECS.getComponent(mapper.player, "Loc");
     if (!loc) loc = { col: 0, row: 0 };
     const screenPosition = mapper.camera.getScreenPosition(loc.col, loc.row);
-    const currentMap = mapper.currentMap;
+    const currentMap = mapper.getCurrentMap();
     b8.Tilemap.draw(
-      currentMap.map,
+      currentMap.mapData,
       screenPosition.col,
       screenPosition.row,
       screenPosition.w,
       screenPosition.h
     );
-  },
-  /**
-   * Set the current active map by name.
-   *
-   * @param {string} mapName - The name of the map to set as current.
-   * @returns {void}
-   */
-  setCurrentMap: function(mapName) {
-    let currentMap = mapper.maps.find((map) => map.name === mapName);
-    if (!currentMap) {
-      console.error(`Map "${mapName}" not found.`);
-      return;
-    }
-    mapper.currentMap = currentMap;
   },
   /**
    * Set a tile at the specified coordinates in the current map.
@@ -220,6 +125,14 @@ const mapper = {
   getVerbForEntity: (id) => {
     const a = b8.ECS.getComponent(id, "Action");
     return a?.verb ?? "";
+  },
+  /**
+   * Get the currently active map.
+   *
+   * @returns {Object} The current map object.
+   */
+  getCurrentMap: () => {
+    return mapper.maps[mapper.currentMapId];
   },
   /**
    * Get the action verb for the entity directly in front of the player.
@@ -295,6 +208,9 @@ const mapper = {
     if (action && mapper.actions[action]) {
       mapper.actions[action](playerId);
     }
+  },
+  isValidMapId: (mapId) => {
+    return typeof mapId === "number" && mapId >= 0;
   }
 };
 mapper.CONFIG = {
@@ -334,11 +250,11 @@ mapper.camera = {
    * @returns {Object} An object with col, row, w, and h properties representing the screen's top-left tile and dimensions.
    */
   getScreenPosition: function(pCol, pRow) {
-    if (!mapper.currentMap) {
+    if (!mapper.isValidMapId(mapper.currentMapId)) {
       b8.Utilities.error("No current map set.");
       return { col: 0, row: 0 };
     }
-    const currentMap = mapper.currentMap;
+    const currentMap = mapper.getCurrentMap();
     const screenWidth = currentMap.screenWidth;
     const screenHeight = currentMap.screenHeight;
     const screenX = Math.floor(pCol / screenWidth) * screenWidth;
@@ -394,10 +310,11 @@ mapper.collision = {
    * @returns {boolean}
    */
   isWalkable: function(col, row) {
-    if (col < 0 || row < 0 || col >= mapper.currentMap.mapWidth || row >= mapper.currentMap.mapHeight) {
+    const currentMap = mapper.getCurrentMap();
+    if (col < 0 || row < 0 || col >= currentMap.mapWidth || row >= currentMap.mapHeight) {
       return false;
     }
-    let mapCell = mapper.currentMap.map[row][col];
+    let mapCell = currentMap.mapData[row][col];
     if (true === mapCell[3]) {
       return false;
     }
@@ -425,7 +342,130 @@ mapper.helpers = {
     str = str.replace(/\[playerName\]/g, b8.data.playerName ?? "Player");
     str = str.replace(/\[totalCoins\]/g, b8.data.totalCoins ?? "0");
     return str;
+  },
+  /**
+   * Get all map objects of a given type.
+   *
+   * @param {string} type The object type to search for.
+   * @returns {Object[]} Array of matching objects.
+   */
+  getObjectsByType: (type) => {
+    const objects = [];
+    for (let l = 0; l < mapper.maps.length; l++) {
+      const map = mapper.maps[l];
+      for (const obj of map.objects) {
+        if (obj.type.startsWith(type)) objects.push(obj);
+      }
+    }
+    return objects;
   }
+};
+mapper.load = function(mapData) {
+  b8.Utilities.checkObject("mapData", mapData);
+  if (mapData.version === 1) mapData = mapper.upgradeMapDataV1toV2(mapData);
+  console.log("map data", mapData);
+  b8.ECS.reset();
+  mapper.maps = [];
+  mapper.settings = { ...mapData.settings };
+  b8.Utilities.checkObject("mapper.settings", mapper.settings);
+  mapData.levels.forEach(
+    (level, index) => {
+      const mapDataString = level.mapData.join("\n");
+      b8.Utilities.checkString(`mapDataString for level ${index}`, mapDataString);
+      const maze = b8.Tilemap.convertFromText(mapDataString);
+      const map = b8.Tilemap.createFromArray(maze, mapData.tiles);
+      const objects = (level.objects || []).map(
+        (obj) => ({ ...obj, mapId: index })
+      );
+      mapper.maps.push(
+        {
+          "screenWidth": mapData.screenWidth,
+          "screenHeight": mapData.screenHeight,
+          "screenCountX": level.screenCountX,
+          "screenCountY": level.screenCountY,
+          "objects": objects,
+          "mapWidth": map[0].length,
+          "mapHeight": map.length,
+          "mapData": map
+        }
+      );
+    }
+  );
+  if (mapper.settings.gameName) {
+    console.log(`Starting game: ${mapper.settings.gameName}`);
+    b8.CONFIG.NAME = mapper.settings.gameName;
+  }
+  mapper.player = b8.ECS.create(
+    {
+      Type: { name: "player" },
+      Loc: { row: 0, col: 0 },
+      Direction: { dx: 0, dy: 0 },
+      Sprite: {
+        type: "actor",
+        tile: parseInt(mapper.settings.character) || 6,
+        fg: parseInt(mapper.settings.characterColor) || 10,
+        bg: 0,
+        depth: 100
+      },
+      CharacterAnimation: {
+        name: "idle",
+        default: "idle",
+        duration: 0
+      }
+    }
+  );
+  mapper.setCurrentMap(0);
+  const start = mapper.getCurrentMap().objects.find((obj) => obj.type === "start");
+  if (!start) {
+    b8.Utilities.fatal("Initial map data must include a 'start' object.");
+  }
+  let coinCount = 0;
+  for (const level of mapper.maps) {
+    coinCount += level.objects.filter((obj) => obj.type === "coin").length;
+  }
+  b8.data.totalCoins = coinCount;
+  b8.ECS.addSystem("characterAnimation", mapper.systems.characterAnimation);
+  if (mapper.settings.bgm) b8.Music.play(world.settings.bgm);
+  if (mapper.settings.splash && mapper.settings.splash.length > 10 && b8.Tilemap.validateTilemap(mapper.settings.splash)) {
+    mapper.bg.splash = b8.Tilemap.load(mapper.settings.splash);
+  }
+};
+mapper.upgradeMapDataV1toV2 = function(mapData) {
+  console.log("Upgrading map data from v1 to v2");
+  const level = {
+    mapData: mapData.map,
+    objects: mapData.objects,
+    screenCountX: mapData.screenCountX,
+    screenCountY: mapData.screenCountY
+  };
+  mapData.levels = [level];
+  delete mapData.map;
+  delete mapData.objects;
+  delete mapData.screenCountX;
+  delete mapData.screenCountY;
+  return mapData;
+};
+mapper.setCurrentMap = function(mapId) {
+  b8.Utilities.checkInt("mapId", mapId);
+  if (mapId === mapper.currentMapId) return;
+  let currentMap = mapper.maps[mapId];
+  if (!currentMap) {
+    console.error(`Map with ID "${mapId}" not found.`);
+    return;
+  }
+  console.log(currentMap);
+  if (!currentMap.objects) currentMap.objects = [];
+  const allEntities = b8.ECS.getAllEntities();
+  for (const entityId of allEntities) {
+    const typeComp = b8.ECS.getComponent(entityId, "Type");
+    if (typeComp?.name === "player") continue;
+    b8.ECS.destroy(entityId);
+  }
+  for (const obj of currentMap.objects) {
+    const handler = mapper.types[obj.type];
+    if (handler?.spawn) handler.spawn(obj.x, obj.y, obj.props);
+  }
+  mapper.currentMapId = mapId;
 };
 mapper.menu = {
   /**
@@ -534,7 +574,7 @@ mapper.sceneGame = {
         newCol = loc.col;
         newRow = loc.row;
       }
-      b8.ECS.set(mapper.player, "Direction", { dx, dy });
+      b8.ECS.setComponent(mapper.player, "Direction", { dx, dy });
       b8.ECS.setLoc(mapper.player, newCol, newRow);
       mapper.CONFIG.moveDelay = 0.15;
     }
@@ -668,23 +708,21 @@ mapper.systems.tryPortal = async function(col, row) {
     const portal = b8.ECS.getComponent(entityId, "Portal");
     return mapper.systems.handlePortal(portal);
   }
+  return false;
 };
 mapper.systems.handlePortal = async function(portal) {
   if (!portal) return false;
-  if (portal.target === "") return false;
-  const doorways = b8.ECS.query("Portal");
+  if ("" === portal.target) return false;
+  const doorways = mapper.helpers.getObjectsByType("door");
   const targetDoorway = doorways.find(
-    (id) => {
-      const targetPortal = b8.ECS.getComponent(id, "Portal");
-      return targetPortal.name === portal.target;
+    (door) => {
+      return door.props.name === portal.target;
     }
   );
   if (targetDoorway) {
-    const targetLoc = b8.ECS.getComponent(targetDoorway, "Loc");
-    if (targetLoc) {
-      await b8.Async.wait(0.1);
-      b8.ECS.setLoc(mapper.player, targetLoc.col, targetLoc.row);
-    }
+    await b8.Async.wait(0.1);
+    mapper.setCurrentMap(targetDoorway.mapId);
+    b8.ECS.setLoc(mapper.player, targetDoorway.x, targetDoorway.y);
   }
   return false;
 };
@@ -756,6 +794,14 @@ mapper.types.skeleton = {
   }
 };
 mapper.types.coin = {
+  /**
+   * Spawn a coin entity.
+   *
+   * @param {number} col - The column to spawn the coin at.
+   * @param {number} row - The row to spawn the coin at.
+   * @param {Object} props - Additional properties for the coin.
+   * @returns {number} The entity ID of the spawned coin.
+   */
   spawn: function(col, row, props) {
     return b8.ECS.create(
       {
@@ -769,7 +815,15 @@ mapper.types.coin = {
       }
     );
   },
+  /**
+   * Handle character collision with coin.
+   *
+   * @param {number} id - The entity ID of the coin.
+   * @returns {boolean} False to allow stepping onto the coin tile.
+   */
   onCharacterCollision: function(id) {
+    const currentMap = mapper.getCurrentMap();
+    currentMap.objects = currentMap.objects.filter((obj) => obj.id !== id);
     b8.ECS.removeEntity(id);
     b8.Inventory.add("coin");
     b8.Sfx.play("game/coin/002");
@@ -880,6 +934,14 @@ mapper.types.door = {
   }
 };
 mapper.types.key = {
+  /**
+   * Spawn a key entity at the specified location.
+   *
+   * @param {number} col - The column to spawn the key at.
+   * @param {number} row - The row to spawn the key at.
+   * @param {Object} props - Additional properties for the key (e.g., fg, bg colors).
+   * @returns {number} The entity ID of the spawned key.
+   */
   spawn: function(col, row, props) {
     return b8.ECS.create(
       {
@@ -893,9 +955,21 @@ mapper.types.key = {
       }
     );
   },
+  /**
+   * Handle character collision with key.
+   *
+   * @param {number} id - The entity ID of the key.
+   * @param {number} newCol - The column the character is moving to.
+   * @param {number} newRow - The row the character is moving to.
+   * @param {number} dx - The change in column direction.
+   * @param {number} dy - The change in row direction.
+   * @returns {boolean} False to allow movement onto the key tile.
+   */
   onCharacterCollision: function(id, newCol, newRow, dx, dy) {
     const keyName = `key-${b8.ECS.getComponent(id, "Sprite").fg ?? "default"}`;
     b8.Inventory.add(keyName);
+    const currentMap = mapper.getCurrentMap();
+    currentMap.objects = currentMap.objects.filter((obj) => obj.id !== id);
     b8.ECS.removeEntity(id);
     b8.Sfx.play("tone/bloop/006");
     return false;
