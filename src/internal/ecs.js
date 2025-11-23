@@ -259,6 +259,26 @@
 
 
 	/**
+	 * Get all entity IDs.
+	 *
+	 * @returns {number[]}
+	 */
+	b8.ECS.getAllEntities = function() {
+
+		const entitySet = new Set();
+
+		for ( const compMap of components.values() ) {
+			for ( const id of compMap.keys() ) {
+				entitySet.add( id );
+			}
+		}
+
+		return [ ...entitySet ];
+
+	}
+
+
+	/**
 	 * Get one specific component for an entity.
 	 *
 	 * @param {number} id
