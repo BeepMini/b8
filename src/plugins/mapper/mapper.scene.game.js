@@ -41,7 +41,7 @@ mapper.sceneGame = {
 		else if ( b8.keyp( "ArrowDown" ) ) { dy = 1; }
 		else if ( b8.keyp( "ArrowLeft" ) ) { dx = -1; }
 		else if ( b8.keyp( "ArrowRight" ) ) { dx = 1; }
-		if ( b8.keyp( "ButtonB" ) ) mapper.doAction( mapper.player );
+		if ( b8.keyp( "ButtonB" ) && 0 === mapper.actionCooldown ) mapper.doAction( mapper.player );
 
 		if ( dx !== 0 || dy !== 0 ) {
 

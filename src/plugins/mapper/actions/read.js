@@ -10,8 +10,12 @@ mapper.actions.read = async function( playerId ) {
 		if ( !obj || !sprite ) continue;
 
 		b8.color( sprite.fg ?? 15, sprite.bg ?? 5 );
+
 		const message = mapper.helpers.processChatText( obj.message || '' );
 		await b8.Async.dialogTypewriter( message, [ "OK" ], 20 );
+
+		mapper.delayKeyPress();
+		return;
 
 	}
 

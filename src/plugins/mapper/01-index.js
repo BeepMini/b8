@@ -16,6 +16,8 @@ const mapper = {
 	// The player entity ID.
 	player: null,
 
+	actionCooldown: 0,
+
 
 	/**
 	 * Initialize and start the game with the provided map data.
@@ -46,6 +48,11 @@ const mapper = {
 
 		b8.ECS.run( dt );
 
+		mapper.actionCooldown -= dt;
+		if ( mapper.actionCooldown < 0 ) mapper.actionCooldown = 0;
+
+		console.log( 'mapper update dt', dt );
+
 	},
 
 
@@ -66,6 +73,18 @@ const mapper = {
 		b8.locate( actorX + offsetX, actorY + offsetY );
 		b8.color( actor.fg, actor.bg );
 		b8.drawActor( actor.id, actor.animation );
+
+	},
+
+
+	/**
+	 * Set a delay for key presses to prevent rapid actions.
+	 *
+	 * @returns {void}
+	 */
+	delayKeyPress: function() {
+
+		mapper.actionCooldown = mapper.CONFIG.keyPressDelay;
 
 	},
 
