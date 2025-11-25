@@ -245,6 +245,9 @@ const mapper = {
 
 		const loc = b8.ECS.getComponent( playerId, 'Loc' );
 		const dir = b8.ECS.getComponent( playerId, 'Direction' ); // {dx,dy}
+
+		if ( !loc || !dir ) return { x: 0, y: 0 };
+
 		const x = loc.col + ( dir.dx || 0 );
 		const y = loc.row + ( dir.dy || 0 );
 		return { x, y };

@@ -6,15 +6,17 @@
  */
 mapper.load = function( mapData ) {
 
+	// It's a new game so reset everything.
+	b8.ECS.reset();
+	mapper.maps = [];
+	mapper.settings = {};
+	mapper.currentMapId = null;
+
 	b8.Utilities.checkObject( 'mapData', mapData );
 
 	if ( mapData.version === 1 ) mapData = mapper.upgradeMapDataV1toV2( mapData );
 
 	console.log( 'map data', mapData );
-
-	// Reset state.
-	b8.ECS.reset();
-	mapper.maps = [];
 
 	mapper.settings = { ...mapData.settings };
 	b8.Utilities.checkObject( 'mapper.settings', mapper.settings );
@@ -79,13 +81,8 @@ mapper.load = function( mapData ) {
 		}
 	);
 
+	// This sets the map and then loads the objects.
 	mapper.setCurrentMap( 0 );
-
-	// Check for player start position object.
-	const start = mapper.getCurrentMap().objects.find( obj => obj.type === 'start' );
-	if ( !start ) {
-		b8.Utilities.fatal( "Initial map data must include a 'start' object." );
-	}
 
 	// Count all coin objects.
 	// Loop through all levels and count coins
@@ -156,14 +153,15 @@ mapper.setCurrentMap = function( mapId ) {
 
 	b8.Utilities.checkInt( 'mapId', mapId );
 
+	if ( mapId < 0 || mapId >= mapper.maps.length ) {
+		b8.Utilities.fatal( `Map ID "${mapId}" is out of bounds.` );
+		return;
+	}
+
 	// Check if already on this map.
 	if ( mapId === mapper.currentMapId ) return;
 
 	let currentMap = mapper.maps[ mapId ];
-	if ( !currentMap ) {
-		console.error( `Map with ID "${mapId}" not found.` );
-		return;
-	}
 
 	console.log( currentMap );
 
@@ -173,9 +171,11 @@ mapper.setCurrentMap = function( mapId ) {
 	// Delete all ecs entities except the player.
 	const allEntities = b8.ECS.getAllEntities();
 	for ( const entityId of allEntities ) {
+
 		const typeComp = b8.ECS.getComponent( entityId, 'Type' );
 		if ( typeComp?.name === 'player' ) continue;
 		b8.ECS.destroy( entityId );
+
 	}
 
 	// Spawn all objects for the current map.
@@ -186,6 +186,13 @@ mapper.setCurrentMap = function( mapId ) {
 
 	}
 
+	// Set current map id.
 	mapper.currentMapId = mapId;
+
+	// Delete any start objects from the current map.
+	// It's no longer needed.
+	mapper.maps[ mapper.currentMapId ].objects = mapper.maps[ mapper.currentMapId ].objects.filter(
+		obj => obj.type !== 'start'
+	);
 
 };
