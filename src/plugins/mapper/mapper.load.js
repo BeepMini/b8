@@ -99,7 +99,7 @@ mapper.load = function( mapData ) {
 	b8.ECS.addSystem( 'characterAnimation', mapper.systems.characterAnimation );
 
 	// Play music.
-	if ( mapper.settings.bgm ) b8.Music.play( world.settings.bgm );
+	if ( mapper.settings.bgm ) b8.Music.play( mapper.settings.bgm );
 
 	// Validate map data.
 	if (
