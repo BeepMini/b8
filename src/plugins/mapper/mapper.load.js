@@ -174,7 +174,7 @@ mapper.setCurrentMap = function( mapId ) {
 
 		const typeComp = b8.ECS.getComponent( entityId, 'Type' );
 		if ( typeComp?.name === 'player' ) continue;
-		b8.ECS.destroy( entityId );
+		b8.ECS.removeEntity( entityId );
 
 	}
 
