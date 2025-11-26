@@ -478,6 +478,9 @@ const b8 = {};
     utterance.volume = options.volume ?? 1;
     speechSynthesis.speak(utterance);
   };
+  b82.reset = function() {
+    b82.Core.resetAll();
+  };
 })(b8);
 (function(b82) {
   b82._asyncActive = false;
@@ -3489,13 +3492,15 @@ const b8 = {};
   b82.Input.reset = function() {
     keysHeld_ = /* @__PURE__ */ new Set();
     keysJustPressed_ = /* @__PURE__ */ new Set();
+    window.removeEventListener("keydown", b82.Input.onKeyDown);
+    window.removeEventListener("keyup", b82.Input.onKeyUp);
+    window.removeEventListener("pointerdown", b82.Input.onPointerDown);
   };
   b82.Input.init = function() {
-    keysHeld_ = /* @__PURE__ */ new Set();
-    keysJustPressed_ = /* @__PURE__ */ new Set();
-    window.addEventListener("keydown", (e) => b82.Input.onKeyDown(e));
-    window.addEventListener("keyup", (e) => b82.Input.onKeyUp(e));
-    window.addEventListener("pointerdown", (e) => b82.Input.onPointerDown(e));
+    b82.Input.reset();
+    window.addEventListener("keydown", b82.Input.onKeyDown);
+    window.addEventListener("keyup", b82.Input.onKeyUp);
+    window.addEventListener("pointerdown", b82.Input.onPointerDown);
   };
   b82.Input.keyHeld = function(keyName) {
     return keysHeld_.has(keyName.toUpperCase());
@@ -4039,6 +4044,9 @@ const b8 = {};
     b82.Core.crashed = false;
     pendingAsync = false;
     lastFrameTime = null;
+    window.removeEventListener("resize", b82.Core.updateLayout);
+    document.removeEventListener("pointerup", _takeScreenshot);
+    document.removeEventListener("keyup", _takeScreenshot);
   };
   b82.Core.initialized = function() {
     return initDone;
@@ -4081,10 +4089,7 @@ const b8 = {};
     await b82.TextRenderer.initAsync();
     b82.Input.init();
     b82.Core.updateLayout(false);
-    window.addEventListener(
-      "resize",
-      () => b82.Core.updateLayout(true)
-    );
+    window.addEventListener("resize", _resizeHandler);
     if (b82.Core.isMobile()) {
       b82.Joystick.setup();
     }
@@ -4350,13 +4355,8 @@ const b8 = {};
     if (b82.Core.initialized()) {
       return;
     }
-    const takeScreenshot = (e) => {
-      if (e.key === "0") {
-        b82.Core.downloadScreenshot();
-      }
-    };
-    document.addEventListener("pointerup", takeScreenshot);
-    document.addEventListener("keyup", takeScreenshot);
+    document.addEventListener("pointerup", _takeScreenshot);
+    document.addEventListener("keyup", _takeScreenshot);
   };
   b82.Core.saveScreen = function() {
     return b82.Core.offCtx.getImageData(
@@ -4437,6 +4437,14 @@ const b8 = {};
   b82.Core.isAndroid = function() {
     return /android/i.test(navigator.userAgent);
   };
+  function _resizeHandler() {
+    b82.Core.updateLayout(true);
+  }
+  function _takeScreenshot(e) {
+    if (e.key === "0") {
+      b82.Core.downloadScreenshot();
+    }
+  }
 })(b8);
 (function(b82) {
   b82.Collision = {};

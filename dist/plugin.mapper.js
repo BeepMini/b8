@@ -454,6 +454,7 @@ mapper.upgradeMapDataV1toV2 = function(mapData) {
     screenCountY: mapData.screenCountY
   };
   mapData.levels = [level];
+  mapData.version = 2;
   delete mapData.map;
   delete mapData.objects;
   delete mapData.screenCountX;
