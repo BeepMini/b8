@@ -132,6 +132,9 @@ mapper.upgradeMapDataV1toV2 = function( mapData ) {
 	// Create a levels object.
 	mapData.levels = [ level ];
 
+	// Update version.
+	mapData.version = 2;
+
 	// Unset old properties.
 	delete mapData.map;
 	delete mapData.objects;
