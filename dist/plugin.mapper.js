@@ -11,6 +11,7 @@ const mapper = {
   bg: {},
   // The player entity ID.
   player: null,
+  actionCooldown: 0,
   /**
    * Initialize and start the game with the provided map data.
    *
@@ -32,6 +33,9 @@ const mapper = {
    */
   update: function(dt) {
     b8.ECS.run(dt);
+    mapper.actionCooldown -= dt;
+    if (mapper.actionCooldown < 0) mapper.actionCooldown = 0;
+    console.log("mapper update dt", dt);
   },
   /**
    * Draw an actor at its location with optional offsets.
@@ -46,6 +50,14 @@ const mapper = {
     b8.locate(actorX + offsetX, actorY + offsetY);
     b8.color(actor.fg, actor.bg);
     b8.drawActor(actor.id, actor.animation);
+  },
+  /**
+   * Set a delay for key presses to prevent rapid actions.
+   *
+   * @returns {void}
+   */
+  delayKeyPress: function() {
+    mapper.actionCooldown = mapper.CONFIG.keyPressDelay;
   },
   /**
    * Render all entities on the screen with optional offsets.
@@ -157,6 +169,7 @@ const mapper = {
   ahead: (playerId) => {
     const loc = b8.ECS.getComponent(playerId, "Loc");
     const dir = b8.ECS.getComponent(playerId, "Direction");
+    if (!loc || !dir) return { x: 0, y: 0 };
     const x = loc.col + (dir.dx || 0);
     const y = loc.row + (dir.dy || 0);
     return { x, y };
@@ -216,6 +229,8 @@ const mapper = {
 mapper.CONFIG = {
   // Time in seconds for player movement delay.
   moveDelay: 0.15,
+  // Key press delay.
+  keyPressDelay: 0.15,
   /**
    * Offset to apply when drawing the map and actors.
    * This is to account for any borders or UI elements.
@@ -239,6 +254,8 @@ mapper.actions.read = async function(playerId) {
     b8.color(sprite.fg ?? 15, sprite.bg ?? 5);
     const message = mapper.helpers.processChatText(obj.message || "");
     await b8.Async.dialogTypewriter(message, ["OK"], 20);
+    mapper.delayKeyPress();
+    return;
   }
 };
 mapper.camera = {
@@ -361,11 +378,13 @@ mapper.helpers = {
   }
 };
 mapper.load = function(mapData) {
+  b8.ECS.reset();
+  mapper.maps = [];
+  mapper.settings = {};
+  mapper.currentMapId = null;
   b8.Utilities.checkObject("mapData", mapData);
   if (mapData.version === 1) mapData = mapper.upgradeMapDataV1toV2(mapData);
   console.log("map data", mapData);
-  b8.ECS.reset();
-  mapper.maps = [];
   mapper.settings = { ...mapData.settings };
   b8.Utilities.checkObject("mapper.settings", mapper.settings);
   mapData.levels.forEach(
@@ -415,17 +434,13 @@ mapper.load = function(mapData) {
     }
   );
   mapper.setCurrentMap(0);
-  const start = mapper.getCurrentMap().objects.find((obj) => obj.type === "start");
-  if (!start) {
-    b8.Utilities.fatal("Initial map data must include a 'start' object.");
-  }
   let coinCount = 0;
   for (const level of mapper.maps) {
     coinCount += level.objects.filter((obj) => obj.type === "coin").length;
   }
   b8.data.totalCoins = coinCount;
   b8.ECS.addSystem("characterAnimation", mapper.systems.characterAnimation);
-  if (mapper.settings.bgm) b8.Music.play(world.settings.bgm);
+  if (mapper.settings.bgm) b8.Music.play(mapper.settings.bgm);
   if (mapper.settings.splash && mapper.settings.splash.length > 10 && b8.Tilemap.validateTilemap(mapper.settings.splash)) {
     mapper.bg.splash = b8.Tilemap.load(mapper.settings.splash);
   }
@@ -433,8 +448,8 @@ mapper.load = function(mapData) {
 mapper.upgradeMapDataV1toV2 = function(mapData) {
   console.log("Upgrading map data from v1 to v2");
   const level = {
-    mapData: mapData.map,
-    objects: mapData.objects,
+    mapData: [...mapData.map],
+    objects: [...mapData.objects],
     screenCountX: mapData.screenCountX,
     screenCountY: mapData.screenCountY
   };
@@ -447,25 +462,28 @@ mapper.upgradeMapDataV1toV2 = function(mapData) {
 };
 mapper.setCurrentMap = function(mapId) {
   b8.Utilities.checkInt("mapId", mapId);
-  if (mapId === mapper.currentMapId) return;
-  let currentMap = mapper.maps[mapId];
-  if (!currentMap) {
-    console.error(`Map with ID "${mapId}" not found.`);
+  if (mapId < 0 || mapId >= mapper.maps.length) {
+    b8.Utilities.fatal(`Map ID "${mapId}" is out of bounds.`);
     return;
   }
+  if (mapId === mapper.currentMapId) return;
+  let currentMap = mapper.maps[mapId];
   console.log(currentMap);
   if (!currentMap.objects) currentMap.objects = [];
   const allEntities = b8.ECS.getAllEntities();
   for (const entityId of allEntities) {
     const typeComp = b8.ECS.getComponent(entityId, "Type");
     if (typeComp?.name === "player") continue;
-    b8.ECS.destroy(entityId);
+    b8.ECS.removeEntity(entityId);
   }
   for (const obj of currentMap.objects) {
     const handler = mapper.types[obj.type];
     if (handler?.spawn) handler.spawn(obj.x, obj.y, obj.props);
   }
   mapper.currentMapId = mapId;
+  mapper.maps[mapper.currentMapId].objects = mapper.maps[mapper.currentMapId].objects.filter(
+    (obj) => obj.type !== "start"
+  );
 };
 mapper.menu = {
   /**
@@ -561,7 +579,7 @@ mapper.sceneGame = {
     } else if (b8.keyp("ArrowRight")) {
       dx = 1;
     }
-    if (b8.keyp("ButtonB")) mapper.doAction(mapper.player);
+    if (b8.keyp("ButtonB") && 0 === mapper.actionCooldown) mapper.doAction(mapper.player);
     if (dx !== 0 || dy !== 0) {
       let newCol = loc.col + dx;
       let newRow = loc.row + dy;
