@@ -31,6 +31,11 @@
 		keysHeld_ = new Set();
 		keysJustPressed_ = new Set();
 
+		// Remove existing event listeners.
+		window.removeEventListener( "keydown", b8.Input.onKeyDown );
+		window.removeEventListener( "keyup", b8.Input.onKeyUp );
+		window.removeEventListener( "pointerdown", b8.Input.onPointerDown );
+
 	}
 
 
@@ -41,15 +46,12 @@
 	 */
 	b8.Input.init = function() {
 
-		// Keys currently held down (set of strings).
-		keysHeld_ = new Set();
-		// Keys that were just pressed in the current frame.
-		keysJustPressed_ = new Set();
+		b8.Input.reset();
 
 		// Bind event listeners to handle keydown and keyup events.
-		window.addEventListener( "keydown", e => b8.Input.onKeyDown( e ) );
-		window.addEventListener( "keyup", e => b8.Input.onKeyUp( e ) );
-		window.addEventListener( "pointerdown", e => b8.Input.onPointerDown( e ) );
+		window.addEventListener( "keydown", b8.Input.onKeyDown );
+		window.addEventListener( "keyup", b8.Input.onKeyUp );
+		window.addEventListener( "pointerdown", b8.Input.onPointerDown );
 
 	}
 

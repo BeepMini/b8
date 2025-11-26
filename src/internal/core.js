@@ -123,6 +123,13 @@
 
 		lastFrameTime = null;
 
+		// Remove event listeners.
+		window.removeEventListener( "resize", b8.Core.updateLayout );
+		document.removeEventListener( 'pointerup', _takeScreenshot );
+		document.removeEventListener( 'keyup', _takeScreenshot );
+
+
+
 	}
 
 
@@ -209,10 +216,7 @@
 
 		// Update the positioning and size of the canvas.
 		b8.Core.updateLayout( false );
-		window.addEventListener(
-			"resize",
-			() => b8.Core.updateLayout( true )
-		);
+		window.addEventListener( "resize", _resizeHandler );
 
 		if ( b8.Core.isMobile() ) {
 			b8.Joystick.setup();
@@ -860,15 +864,9 @@
 			return;
 		}
 
-		const takeScreenshot = ( e ) => {
-			if ( e.key === '0' ) {
-				b8.Core.downloadScreenshot();
-			}
-		};
-
 		// Take a screenshot when the 0 key is pressed.
-		document.addEventListener( 'pointerup', takeScreenshot );
-		document.addEventListener( 'keyup', takeScreenshot );
+		document.addEventListener( 'pointerup', _takeScreenshot );
+		document.addEventListener( 'keyup', _takeScreenshot );
 
 	}
 
@@ -1070,6 +1068,33 @@
 	b8.Core.isAndroid = function() {
 
 		return /android/i.test( navigator.userAgent );
+
+	}
+
+
+	/**
+	 * Handles window resize events.
+	 *
+	 * @return {void}
+	 */
+	function _resizeHandler() {
+
+		b8.Core.updateLayout( true );
+
+	}
+
+
+	/**
+	 * Handles screenshot taking events.
+	 *
+	 * @param {KeyboardEvent|PointerEvent} e - The event object.
+	 * @return {void}
+	 */
+	function _takeScreenshot( e ) {
+
+		if ( e.key === '0' ) {
+			b8.Core.downloadScreenshot();
+		}
 
 	}
 

@@ -943,4 +943,17 @@
 
 	};
 
+
+	/**
+	 * Resets the entire b8 state, as if it was just initialized.
+	 * This can be useful for restarting a game.
+	 *
+	 * @returns {void}
+	 */
+	b8.reset = function() {
+
+		b8.Core.resetAll();
+
+	};
+
 } )( b8 );
