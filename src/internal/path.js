@@ -123,6 +123,46 @@
 
 
 	/**
+	 * Validates the syntax of a path string.
+	 *
+	 * @param {string} path - The path string to validate.
+	 * @returns {boolean} - True if the path syntax is valid, false otherwise.
+	 */
+	b8.Path.validPathSyntax = ( path ) => {
+
+		// Define valid characters and starting letters as constants for easy modification
+		const VALID_CHARACTERS = 'UDLRFP'; // Valid movement and command letters
+
+		if ( typeof path !== 'string' ) {
+			return false;
+		}
+
+		// Reject empty or whitespace-only strings
+		if ( path.trim().length === 0 ) {
+			return false;
+		}
+
+		// Check if the path contains only valid characters
+		if ( !new RegExp( `^[\\d\\s${VALID_CHARACTERS}]+$` ).test( path ) ) {
+			return false;
+		}
+
+		// Check if the path contains at least one letter from the valid character set
+		if ( !new RegExp( `[${VALID_CHARACTERS}]` ).test( path ) ) {
+			return false;
+		}
+
+		// Check if the path starts with one of the valid starting letters
+		if ( !new RegExp( `^[${VALID_CHARACTERS}]` ).test( path ) ) {
+			return false;
+		}
+
+		return true;
+
+	}
+
+
+	/**
 	 * Parse a number from the cleaned string starting at index i.
 	 * If no number is found, defaults to 1.
 	 *
