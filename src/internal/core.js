@@ -128,7 +128,7 @@
 		document.removeEventListener( 'pointerup', _takeScreenshot );
 		document.removeEventListener( 'keyup', _takeScreenshot );
 
-
+		b8.Core.stopFrame();
 
 	}
 
