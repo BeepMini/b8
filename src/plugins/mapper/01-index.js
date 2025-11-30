@@ -325,6 +325,12 @@ const mapper = {
 	},
 
 
+	/**
+	 * Check if the provided map ID is valid.
+	 *
+	 * @param {number} mapId - The map ID to validate.
+	 * @returns {boolean} True if the map ID is valid, false otherwise.
+	 */
 	isValidMapId: ( mapId ) => {
 
 		return typeof mapId === 'number' && mapId >= 0;
