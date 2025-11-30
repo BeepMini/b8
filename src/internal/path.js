@@ -3,10 +3,10 @@
 	b8.Path = {};
 
 	const movementMap = {
-		U: { dx: 0, dy: -1 },
-		D: { dx: 0, dy: 1 },
-		L: { dx: -1, dy: 0 },
-		R: { dx: 1, dy: 0 },
+		U: { dy: 0, dx: -1 },
+		D: { dy: 0, dx: 1 },
+		L: { dy: -1, dx: 0 },
+		R: { dy: 1, dx: 0 },
 	};
 
 
@@ -60,8 +60,6 @@
 
 			const cmd = cleaned[ i ];
 
-			console.log( `At index ${i}, command: ${cmd}` );
-
 			// simple movement command
 			if ( 'UDLR'.includes( cmd ) ) {
 
@@ -69,7 +67,6 @@
 
 				const { count, index } = _parseNumber( cleaned, i );
 				i = index;
-				console.log( `Command: ${cmd}, Count: ${count}` );
 
 				for ( let n = 0; n < count; n++ ) {
 					x += movementMap[ cmd ].dx;
