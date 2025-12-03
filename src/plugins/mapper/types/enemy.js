@@ -2,6 +2,11 @@ mapper.types.enemy = {
 
 	spawn: function( col, row, props ) {
 
+		const initialDirection = 'D';
+
+		/**
+		 * Create enemy character entity.
+		 */
 		const characterProperties = {
 			Type: { name: 'enemy' },
 			Loc: { col, row },
@@ -20,20 +25,20 @@ mapper.types.enemy = {
 			},
 		};
 
+		// Add PathFollower component if a path is defined
 		if ( props.path && b8.Path.validPathSyntax( props.path ) ) {
 
 			characterProperties.PathFollower = {
-				mode: props.pathMode || 'loop', // "loop" | "pingpong" | "once"
 				steps: b8.Path.parseCode(
 					props.path,
 					row,                               // startRow
 					col,                               // startCol
-					'D'                                // initialDir
-				), // filled on first update
+					initialDirection                   // initialDir
+				),
 				index: 0,
 				dirStep: 1,                     // for pingpong: 1 or -1
 				timer: 0,                       // accumulates dt
-				startDir: props.startDir || 'D',
+				startDir: props.startDir || initialDirection,
 			}
 
 		};
