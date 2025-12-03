@@ -25,6 +25,9 @@ mapper.sceneGame = {
 	 */
 	update: function( dt ) {
 
+		// Update systems.
+		mapper.update( dt );
+
 		mapper.sceneGame.moveDelay -= dt;
 		if ( mapper.sceneGame.moveDelay > 0 ) return;
 
@@ -37,11 +40,11 @@ mapper.sceneGame = {
 		// Calculate direction of movement.
 		// Use else if so we can only move in one direction at a time and not jump
 		// over collision walls diagonally.
-		if ( b8.keyp( "ArrowUp" ) ) { dy = -1; }
-		else if ( b8.keyp( "ArrowDown" ) ) { dy = 1; }
-		else if ( b8.keyp( "ArrowLeft" ) ) { dx = -1; }
-		else if ( b8.keyp( "ArrowRight" ) ) { dx = 1; }
-		if ( b8.keyp( "ButtonB" ) && 0 === mapper.actionCooldown ) mapper.doAction( mapper.player );
+		if ( b8.key( "ArrowUp" ) ) { dy = -1; }
+		else if ( b8.key( "ArrowDown" ) ) { dy = 1; }
+		else if ( b8.key( "ArrowLeft" ) ) { dx = -1; }
+		else if ( b8.key( "ArrowRight" ) ) { dx = 1; }
+		if ( b8.key( "ButtonB" ) && 0 === mapper.actionCooldown ) mapper.doAction( mapper.player );
 
 		if ( dx !== 0 || dy !== 0 ) {
 
@@ -66,8 +69,6 @@ mapper.sceneGame = {
 			mapper.sceneGame.moveDelay = mapper.CONFIG.moveDelay;
 
 		}
-
-		mapper.update( dt );
 
 	},
 

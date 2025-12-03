@@ -1,7 +1,7 @@
 mapper.CONFIG = {
 
 	// Time in seconds for player movement delay.
-	moveDelay: 0.15,
+	moveDelay: 0.2,
 
 	// Key press delay.
 	keyPressDelay: 0.15,
