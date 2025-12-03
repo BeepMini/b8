@@ -47,6 +47,7 @@ mapper.collision = {
 			return false;
 		}
 
+		// Check current tile collision properties.
 		let mapCell = currentMap.mapData[ row ][ col ];
 		if ( true === mapCell[ 3 ] ) return false;
 
