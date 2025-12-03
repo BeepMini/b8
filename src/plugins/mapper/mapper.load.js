@@ -94,6 +94,7 @@ mapper.load = function( mapData ) {
 
 	// Add systems.
 	b8.ECS.addSystem( 'characterAnimation', mapper.systems.characterAnimation );
+	b8.ECS.addSystem( 'pathFollower', mapper.systems.pathFollower );
 
 	// Play music.
 	if ( mapper.settings.bgm ) b8.Music.play( mapper.settings.bgm );
