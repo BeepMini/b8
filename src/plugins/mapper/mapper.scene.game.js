@@ -2,6 +2,8 @@ mapper.sceneGame = {
 
 	UI: null,
 
+	moveDelay: 0.15,
+
 
 	/**
 	 * Initialize the game scene.
@@ -23,14 +25,12 @@ mapper.sceneGame = {
 	 */
 	update: function( dt ) {
 
-		mapper.CONFIG.moveDelay -= dt;
-		if ( mapper.CONFIG.moveDelay > 0 ) return;
+		mapper.sceneGame.moveDelay -= dt;
+		if ( mapper.sceneGame.moveDelay > 0 ) return;
 
 		// Get player components
 		const loc = b8.ECS.getComponent( mapper.player, 'Loc' );
 		const anim = b8.ECS.getComponent( mapper.player, 'CharacterAnimation' );
-
-		if ( mapper.CONFIG.moveDelay > 0 ) return;
 
 		let dx = 0, dy = 0;
 
@@ -63,7 +63,7 @@ mapper.sceneGame = {
 			b8.ECS.setComponent( mapper.player, 'Direction', { dx, dy } );
 			b8.ECS.setLoc( mapper.player, newCol, newRow );
 
-			mapper.CONFIG.moveDelay = 0.15;
+			mapper.sceneGame.moveDelay = mapper.CONFIG.moveDelay;
 
 		}
 
