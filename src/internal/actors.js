@@ -14,6 +14,10 @@
 			frames: [ 0 ],
 			fps: 1,
 		},
+		'idle-down': {
+			frames: [ 0 ],
+			fps: 1,
+		},
 		'idle-right': {
 			frames: [ 1 ],
 			fps: 1,
