@@ -3,10 +3,10 @@
 	b8.Path = {};
 
 	const movementMap = {
-		U: { dy: 0, dx: -1 },
-		D: { dy: 0, dx: 1 },
-		L: { dy: -1, dx: 0 },
-		R: { dy: 1, dx: 0 },
+		U: { dx: 0, dy: -1 },
+		D: { dx: 0, dy: 1 },
+		L: { dx: -1, dy: 0 },
+		R: { dx: 1, dy: 0 },
 	};
 
 
@@ -31,12 +31,12 @@
 	 * "R5P" - right 5, pause 1
 	 *
 	 * @param {string} code - The path code string.
-	 * @param {number} startRow - The starting row position.
 	 * @param {number} startCol - The starting column position.
+	 * @param {number} startRow - The starting row position.
 	 * @param {string} initialDir - The initial facing direction ('U', 'D', 'L', 'R').
 	 * @returns {Array} Array of steps with x, y, and dir properties.
 	 */
-	b8.Path.parseCode = ( code, startRow = 0, startCol = 0, initialDir = 'D' ) => {
+	b8.Path.parseCode = ( code, startCol = 0, startRow = 0, initialDir = 'D' ) => {
 
 		b8.Utilities.checkString( 'code', code );
 		b8.Utilities.checkNumber( 'startRow', startRow );
@@ -46,8 +46,8 @@
 			b8.Utilities.fatal( 'Path.parseCode: initialDir must be one of U, D, L, R' );
 		}
 
-		let x = startRow;
-		let y = startCol;
+		let x = startCol;
+		let y = startRow;
 		let currentDir = initialDir;
 		const steps = [];
 
