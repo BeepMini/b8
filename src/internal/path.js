@@ -104,7 +104,7 @@
 				const { count, index } = _parseNumber( cleaned, i );
 				i = index;
 
-				_pushStep( steps, x, y, faceDir, count );
+				_pushStep( steps, x, y, cmd + faceDir, count );
 
 				continue;
 

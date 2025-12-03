@@ -1,4 +1,20 @@
+/**
+ * Path Follower System
+ *
+ * Moves entities along predefined paths based on their PathFollower component.
+ */
 mapper.systems.pathFollower = async function( dt ) {
+
+	const animationMap = {
+		'U': 'move-up',
+		'D': 'move-down',
+		'L': 'move-left',
+		'R': 'move-right',
+		'FU': 'idle-up',
+		'FD': 'idle-down',
+		'FL': 'idle-left',
+		'FR': 'idle-right',
+	};
 
 	const ids = b8.ECS.query( 'Loc', 'PathFollower' );
 
@@ -18,21 +34,43 @@ mapper.systems.pathFollower = async function( dt ) {
 
 		const step = pf.steps[ pf.index ];
 
-		// Check if step is possible (not blocked by collision)
+		// const loc = b8.ECS.getComponent( id, 'Loc' );
+
+		let canMove = false;
+
+		// Face command - always allowed.
+		if ( step.dir && step.dir[ 0 ] === 'F' ) canMove = true;
+
+		// Check if step is not blocked by collision.
 		if (
 			mapper.collision.isWalkable( step.x, step.y ) &&
 			!mapper.collision.isSolidAt( step.x, step.y )
-		) {
-			b8.ECS.setLoc( id, step.x, step.y );
-			_advancePathIndex( pf );
-		}
+		) { canMove = true; }
 
-		// if ( facing && step.dir ) {
-		// 	facing.dir = step.dir;
-		// }
+		// If movement is blocked, skip to next character.
+		// ---
+		if ( !canMove ) continue;
+
+		// Move to next step
+		b8.ECS.setLoc( id, step.x, step.y );
+
+		// Advance to next step index based on mode
+		_advancePathIndex( pf );
+
+		// Update animation based on direction
+		const anim = b8.ECS.getComponent( id, 'CharacterAnimation' );
+		anim.duration = 0.5;
+		if ( animationMap[ step.dir ] ) anim.name = animationMap[ step.dir ];
 
 	}
 
+
+	/**
+	 * Advance the path index based on the PathFollower mode.
+	 *
+	 * @param {object} pf - The PathFollower component.
+	 * @returns {void}
+	 */
 	function _advancePathIndex( pf ) {
 
 		const last = pf.steps.length - 1;
