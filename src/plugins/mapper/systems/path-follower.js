@@ -6,31 +6,29 @@ mapper.systems.pathFollower = async function( dt ) {
 
 	for ( const id of ids ) {
 
-		const loc = b8.ECS.getComponent( id, 'Loc' );
 		const pf = b8.ECS.getComponent( id, 'PathFollower' );
 
-		if ( !pf || !loc ) continue;
-
-		// No code? Nothing to do.
+		if ( !pf ) continue;
 		if ( !pf.steps.length ) continue;
 
 		pf.timer -= dt;
 
 		if ( pf.timer > 0 ) continue;
-
-		// Reset timer
 		pf.timer = mapper.CONFIG.moveDelay * 2;
 
 		const step = pf.steps[ pf.index ];
 
-		loc.row = step.x;
-		loc.col = step.y;
+		if (
+			mapper.collision.isWalkable( step.x, step.y ) &&
+			!mapper.collision.isSolidAt( step.x, step.y )
+		) {
+			b8.ECS.setLoc( id, step.x, step.y );
+			_advancePathIndex( pf );
+		}
 
 		// if ( facing && step.dir ) {
 		// 	facing.dir = step.dir;
 		// }
-
-		_advancePathIndex( pf );
 
 	}
 }

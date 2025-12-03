@@ -48,10 +48,7 @@ mapper.collision = {
 		}
 
 		let mapCell = currentMap.mapData[ row ][ col ];
-
-		if ( true === mapCell[ 3 ] ) {
-			return false;
-		}
+		if ( true === mapCell[ 3 ] ) return false;
 
 		// Check for spikes.
 		// if ( cell === '^' ) {

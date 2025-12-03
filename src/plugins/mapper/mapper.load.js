@@ -73,6 +73,7 @@ mapper.load = function( mapData ) {
 				bg: 0,
 				depth: 100,
 			},
+			Solid: {},
 			CharacterAnimation: {
 				name: 'idle',
 				default: 'idle',
