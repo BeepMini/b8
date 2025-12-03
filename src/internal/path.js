@@ -97,7 +97,7 @@
 				i++;
 				const faceDir = cleaned[ i ];
 				if ( !'UDLR'.includes( faceDir ) ) {
-					throw new Error( 'F must be followed by U/D/L/R, got: ' + faceDir );
+					b8.Utilities.fatal( 'F must be followed by U/D/L/R, got: ' + faceDir );
 				}
 				i++;
 
@@ -110,7 +110,7 @@
 
 			}
 
-			throw new Error( 'Invalid command: ' + cmd );
+			b8.Utilities.fatal( 'Invalid command: ' + cmd );
 
 		}
 
