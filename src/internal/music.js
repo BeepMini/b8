@@ -659,6 +659,20 @@
 
 	}
 
+
+	/**
+	 * Resets the music module, stopping any playback and clearing the current song.
+	 *
+	 * @returns {void}
+	 */
+	b8.Music.reset = function() {
+
+		b8.Music.stop();
+		currentSong = null;
+
+	}
+
+	// Handle page visibility changes to pause/resume music.
 	document.addEventListener( 'b8.pageVisibility.wake', b8.Music.resume );
 	document.addEventListener( 'b8.pageVisibility.sleep', b8.Music.pause );
 
