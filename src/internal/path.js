@@ -36,7 +36,7 @@
 	 * @param {string} initialDir - The initial facing direction ('U', 'D', 'L', 'R').
 	 * @returns {Array} Array of steps with x, y, and dir properties.
 	 */
-	b8.Path.parseCode = ( code, startCol = 0, startRow = 0, initialDir = 'D' ) => {
+	b8.Path.parseCode = function( code, startCol = 0, startRow = 0, initialDir = 'D' ) {
 
 		b8.Utilities.checkString( 'code', code );
 		b8.Utilities.checkNumber( 'startRow', startRow );
@@ -120,12 +120,12 @@
 
 
 	/**
-	 * Validates the syntax of a path string.
+	 * Validates the syntax of a beepmini path string.
 	 *
 	 * @param {string} path - The path string to validate.
 	 * @returns {boolean} - True if the path syntax is valid, false otherwise.
 	 */
-	b8.Path.validPathSyntax = ( path ) => {
+	b8.Path.validPathSyntax = function( path ) {
 
 		// Define valid characters and starting letters as constants for easy modification
 		const VALID_CHARACTERS = 'UDLRFP'; // Valid movement and command letters
