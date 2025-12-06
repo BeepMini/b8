@@ -435,6 +435,8 @@
 	 * @param {number} ch - The character to print.
 	 * @param {number} x - The x-coordinate.
 	 * @param {number} y - The y-coordinate.
+	 * @param {b8.TextRendererFont} [font=null] - The font to use.
+	 * @param {number} [direction=0] - The direction to face (0=up, 1=right, 2=down, 3=left).
 	 * @returns {void}
 	 */
 	b8.TextRenderer.spr = function( ch, x, y, font = null, direction = 0 ) {

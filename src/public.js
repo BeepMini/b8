@@ -584,16 +584,18 @@
 	 * @param {number} ch - The character code of the actor.
 	 * @param {number} frame - The frame to draw.
 	 * @param {number} [direction=0] - The direction to draw the actor in. 0 = right, 1 = left.
+	 * @param {number} [offsetCol=0] - The x offset to apply to the drawing position as a fraction of the tile width.
+	 * @param {number} [offsetRow=0] - The y offset to apply to the drawing position as a fraction of the tile height.
 	 * @returns {void}
 	 */
-	b8.drawActor = function( ch, animation ) {
+	b8.drawActor = function( ch, animation, offsetCol = 0, offsetRow = 0 ) {
 
 		ch = b8.convChar( ch );
 
 		b8.Utilities.checkInt( "ch", ch );
 		b8.Utilities.checkString( "animation", animation );
 
-		b8.Actors.draw( ch, animation );
+		b8.Actors.draw( ch, animation, offsetCol, offsetRow );
 
 	}
 

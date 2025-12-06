@@ -91,8 +91,7 @@
 
 		b8.TextRenderer.spr(
 			chrIndex,
-			x,
-			y,
+			x, y,
 			font,
 			direction || 0
 		);
@@ -104,11 +103,12 @@
 	 * Draw an actor at the current cursor position.
 	 *
 	 * @param {number} ch - The character to draw.
-	 * @param {number} frame - The frame to draw.
-	 * @param {number} direction - The direction to draw the actor in. 0 = right, 1 = left.
+	 * @param {string} animation - The animation to draw.
+	 * @param {number} [offsetCol=0] - The x offset to apply to the drawing position.
+	 * @param {number} [offsetRow=0] - The y offset to apply to the drawing position.
 	 * @returns {void}
 	 */
-	b8.Actors.draw = function( ch, animation ) {
+	b8.Actors.draw = function( ch, animation, offsetCol = 0, offsetRow = 0 ) {
 
 		b8.Utilities.checkInt( "ch", ch );
 		b8.Utilities.checkString( "animation", animation );
@@ -118,8 +118,8 @@
 
 		drawActor(
 			ch, animation,
-			b8.Core.drawState.cursorCol * b8.CONFIG.CHR_WIDTH,
-			b8.Core.drawState.cursorRow * b8.CONFIG.CHR_HEIGHT,
+			( b8.Core.drawState.cursorCol + offsetCol ) * b8.CONFIG.CHR_WIDTH,
+			( b8.Core.drawState.cursorRow + offsetRow ) * b8.CONFIG.CHR_HEIGHT,
 			direction || 0
 		);
 
