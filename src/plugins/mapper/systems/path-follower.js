@@ -16,6 +16,17 @@ mapper.systems.pathFollower = async function( dt ) {
 		'FR': 'idle-right',
 	};
 
+	const animationInverse = {
+		'U': 'D',
+		'D': 'U',
+		'L': 'R',
+		'R': 'L',
+		'FU': 'FD',
+		'FD': 'FU',
+		'FL': 'FR',
+		'FR': 'FL',
+	};
+
 	const ids = b8.ECS.query( 'Loc', 'PathFollower' );
 
 	for ( const id of ids ) {
@@ -34,8 +45,6 @@ mapper.systems.pathFollower = async function( dt ) {
 
 		const step = pf.steps[ pf.index ];
 
-		// const loc = b8.ECS.getComponent( id, 'Loc' );
-
 		let canMove = false;
 
 		// Face command - always allowed.
@@ -48,7 +57,6 @@ mapper.systems.pathFollower = async function( dt ) {
 		) { canMove = true; }
 
 		// If movement is blocked, skip to next character.
-		// ---
 		if ( !canMove ) continue;
 
 		// Move to next step
@@ -60,7 +68,12 @@ mapper.systems.pathFollower = async function( dt ) {
 		// Update animation based on direction
 		const anim = b8.ECS.getComponent( id, 'CharacterAnimation' );
 		anim.duration = 0.5;
-		if ( animationMap[ step.dir ] ) anim.name = animationMap[ step.dir ];
+		if ( animationMap[ step.dir ] ) {
+			let direction = step.dir;
+			// Invert the direction for reverse movement.
+			if ( pf.dirStep === -1 ) { direction = animationInverse[ step.dir ] || step.dir; }
+			anim.name = animationMap[ direction ];
+		}
 
 	}
 
