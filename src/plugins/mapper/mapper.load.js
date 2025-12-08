@@ -78,7 +78,14 @@ mapper.load = function( mapData ) {
 				name: 'idle',
 				default: 'idle',
 				duration: 0,
-			}
+			},
+			Health: {
+				value: 12,
+				maxHp: 12
+			},
+			Attack: {
+				value: 1
+			},
 		}
 	);
 
@@ -96,6 +103,8 @@ mapper.load = function( mapData ) {
 	// Add systems.
 	b8.ECS.addSystem( 'characterAnimation', mapper.systems.characterAnimation );
 	b8.ECS.addSystem( 'pathFollower', mapper.systems.pathFollower );
+	b8.ECS.addSystem( 'sprite', mapper.systems.sprite );
+	b8.ECS.addSystem( 'bumpAttack', mapper.systems.bumpAttack );
 
 	// Play music.
 	if ( mapper.settings.bgm ) b8.Music.play( mapper.settings.bgm );

@@ -23,6 +23,14 @@ mapper.types.enemy = {
 				default: 'idle',
 				duration: 0,
 			},
+			BumpTarget: {},
+			Health: {
+				value: 3,
+				maxHp: 3
+			},
+			Attack: {
+				value: 1
+			},
 		};
 
 		// Add PathFollower component if a path is defined
@@ -55,6 +63,6 @@ mapper.types.enemy = {
 
 		return b8.ECS.create( characterProperties );
 
-	}
+	},
 
 };

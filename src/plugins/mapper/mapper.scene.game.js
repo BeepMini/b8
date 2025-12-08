@@ -57,6 +57,20 @@ mapper.sceneGame = {
 			if ( dx < 0 ) anim.name = 'move-left';
 			anim.duration = 0.3;
 
+			// If newCol, newRow has BumpTarget component and is Solid then fight it.
+			const entitiesAtTarget = b8.ECS.entitiesAt( newCol, newRow );
+			for ( const id of entitiesAtTarget ) {
+				if (
+					b8.ECS.hasComponent( id, 'BumpTarget' ) &&
+					b8.ECS.hasComponent( id, 'Solid' )
+				) {
+					b8.ECS.setComponent( mapper.player, 'BumpAttack', { targetId: id } );
+					newCol = loc.col;
+					newRow = loc.row;
+					console.log( 'Bump attack initiated against entity ID:', id );
+				}
+			}
+
 			// Now check for regular collision (walls etc).
 			if ( !mapper.collision.isWalkable( newCol, newRow ) || mapper.doCollision( loc.col, loc.row, newCol, newRow, dx, dy ) ) {
 				newCol = loc.col;
@@ -97,6 +111,30 @@ mapper.sceneGame = {
 
 		b8.color( 15, 0 );
 		b8.print( ' ' + parseInt( b8.Inventory.getCount( 'coin' ) ).toString().padStart( 4, '0' ) );
+
+		// Draw heart containers.
+		const health = b8.ECS.getComponent( mapper.player, 'Health' );
+		const maxHp = health.maxHp;
+		const hp = health.value;
+
+		for ( let i = 0; i < Math.floor( maxHp / 2 ); i++ ) {
+			const x = 2 + i;
+			const y = b8.CONFIG.SCREEN_ROWS - 3;
+			b8.locate( x, y );
+			if ( hp >= ( i * 2 ) + 2 ) {
+				// Full heart.
+				b8.color( 8, 0 );
+				b8.printChar( 415 );
+			} else if ( hp === ( i * 2 ) + 1 ) {
+				// Half heart.
+				b8.color( 8, 0 );
+				b8.printChar( 416 );
+			} else {
+				// Empty heart.
+				b8.color( 6, 0 );
+				b8.printChar( 417 );
+			}
+		}
 
 		// Draw keys.
 		const keys = b8.Inventory.filter( /^key/ );
