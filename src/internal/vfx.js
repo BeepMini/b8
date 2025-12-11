@@ -4,24 +4,29 @@
 
 
 	b8.Vfx.animations = {
-		'explosion': {
-			frames: [ 5, 6, 7, 8, 9 ],
-			fps: 8,
-		},
 		'fire': {
 			frames: [ 0, 1, 2, 3 ],
 			loop: true,
 		},
+		'explosion': {
+			frames: [ 6, 7, 8, 9, 10 ],
+			fps: 8,
+		},
 		'portal': {
-			frames: [ 10, 11 ],
+			frames: [ 12, 13 ],
 			loop: true,
 		},
+		'cursor': {
+			frames: [ 14, 15, 16, 15 ],
+			loop: true,
+			fps: 6,
+		},
 		'swipe': {
-			frames: [ 15, 16, 17, 17, 17, 18, 19 ],
+			frames: [ 18, 19, 20, 20, 20, 21, 22 ],
 			fps: 12,
 		},
 		'skull': {
-			frames: [ 20, 20, 21, 22, 23, 24, 24, 24 ],
+			frames: [ 24, 24, 25, 26, 27, 28, 28, 29 ],
 			fps: 12,
 		}
 	};
@@ -30,12 +35,8 @@
 	// Loop through Vfx animations and set default fps and loop values.
 	for ( const key in b8.Vfx.animations ) {
 		const anim = b8.Vfx.animations[ key ];
-		if ( anim.fps === undefined ) {
-			anim.fps = 4;
-		}
-		if ( anim.loop === undefined ) {
-			anim.loop = false;
-		}
+		if ( anim.fps === undefined ) anim.fps = 4;
+		if ( anim.loop === undefined ) anim.loop = false;
 	}
 
 
