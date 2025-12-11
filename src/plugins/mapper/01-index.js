@@ -51,8 +51,6 @@ const mapper = {
 		mapper.actionCooldown -= dt;
 		if ( mapper.actionCooldown < 0 ) mapper.actionCooldown = 0;
 
-		console.log( 'mapper update dt', dt );
-
 	},
 
 
@@ -122,10 +120,24 @@ const mapper = {
 			b8.locate( pos.col + offsetX, pos.row + offsetY );
 			b8.color( spr.fg ?? 15, spr.bg ?? 0 );
 
-			if ( 'actor' === spr.type ) {
-				b8.drawActor( parseInt( spr.tile ), anim.name );
-			} else {
-				b8.printChar( parseInt( spr.tile ) );
+			switch ( spr.type ) {
+
+				case 'actor':
+
+					let nudgeCol = 0;
+					let nudgeRow = 0;
+					if ( spr.nudgeCol ) nudgeCol = spr.nudgeCol;
+					if ( spr.nudgeRow ) nudgeRow = spr.nudgeRow;
+
+					b8.drawActor( parseInt( spr.tile ), anim.name, nudgeCol, nudgeRow );
+
+					break;
+
+				default:
+
+					b8.printChar( parseInt( spr.tile ) );
+					break;
+
 			}
 
 		}
