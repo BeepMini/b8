@@ -87,7 +87,7 @@
 	const drawActor = function( ch, animation, x, y, direction ) {
 
 		const font = b8.TextRenderer.curActors_;
-		const chrIndex = ( ch * font.getColCount() ) + Math.abs( animationFrame( animation ) );
+		const chrIndex = ( ch * font.getColCount() ) + Math.abs( b8.Animation.frame( animation ) );
 
 		b8.TextRenderer.spr(
 			chrIndex,
@@ -112,12 +112,18 @@
 
 		b8.Utilities.checkInt( "ch", ch );
 		b8.Utilities.checkString( "animation", animation );
+		if ( b8.Actors.animations[ animation ] === undefined ) {
+			b8.Utilities.fatal( "Invalid actor animation: " + animation );
+		}
+		b8.Utilities.checkNumber( "offsetCol", offsetCol );
+		b8.Utilities.checkNumber( "offsetRow", offsetRow );
 
-		const frame = animationFrame( animation );
+		const anim = b8.Actors.animations[ animation ];
+		const frame = b8.Animation.frame( anim );
 		const direction = frame >= 0 ? 0 : 1;
 
 		drawActor(
-			ch, animation,
+			ch, anim,
 			( b8.Core.drawState.cursorCol + offsetCol ) * b8.CONFIG.CHR_WIDTH,
 			( b8.Core.drawState.cursorRow + offsetRow ) * b8.CONFIG.CHR_HEIGHT,
 			direction || 0
@@ -152,100 +158,24 @@
 
 		b8.Utilities.checkInt( "ch", ch );
 		b8.Utilities.checkString( "animation", animation );
+		if ( b8.Actors.animations[ animation ] === undefined ) {
+			b8.Utilities.fatal( "Invalid actor animation: " + animation );
+		}
 		b8.Utilities.checkNumber( "x", x );
 		b8.Utilities.checkNumber( "y", y );
 		if ( startTime !== null ) b8.Utilities.checkNumber( "startTime", startTime );
 
-		const frame = animationFrame( animation, startTime );
 		const anim = b8.Actors.animations[ animation ];
+		const frame = b8.Animation.frame( anim, startTime );
 		const direction = frame >= 0 ? 0 : 1;
 
-		if ( !shouldLoopAnimation( anim, startTime ) ) {
-			return false;
-		}
+		if ( !b8.Animation.shouldLoop( anim, startTime ) ) return false;
 
-		drawActor( ch, animation, x, y, direction || 0 );
+		drawActor( ch, anim, x, y, direction || 0 );
 
 		// The animation is still playing.
 		return true;
 
-	}
-
-
-	/**
-	 * Get the current frame of an animation.
-	 * This is used internally to automatically determine what frame to draw.
-	 * This uses delta time to determine the current frame.
-	 *
-	 * @param {string} animation The animation to get the frame for.
-	 * @returns {number} The frame to draw for the animation.
-	 */
-	const animationFrame = function( animation, startTime = null ) {
-
-		// Does the animation exist.
-		if ( b8.Actors.animations[ animation ] === undefined ) {
-			b8.Utilities.fatal( "Invalid animation: " + animation );
-		}
-
-		// If the animation has a start time, use that.
-		if ( startTime === null ) {
-			startTime = b8.Core.startTime;
-		}
-
-		// Get the current animation properties.
-		const anim = b8.Actors.animations[ animation ];
-		let frame = 0;
-
-		// If there's only one frame, return it.
-		if ( anim.frames.length === 1 ) {
-			frame = anim.frames[ 0 ];
-		}
-
-		// If there's more than one frame, calculate the frame to display.
-		if ( anim.frames.length > 1 ) {
-
-			const totalTime = b8.Core.getNow() - startTime;
-			const frameCount = anim.frames.length;
-			const frameDuration = 1 / anim.fps;
-
-			// Dividing totalTime by 1000 to convert ms to seconds.
-			// Dividing by frameDuration to get the current frame.
-			// Modulo frameCount to loop the animation.
-			const frameIndex = Math.floor( ( totalTime / 1000 ) / frameDuration % frameCount );
-
-			frame = anim.frames[ frameIndex ];
-
-		}
-
-		return frame;
-
-	}
-
-
-	/**
-	 * Checks if the animation has finished looping.
-	 *
-	 * @param {Object} anim - The animation object.
-	 * @param {number} startTime - The start time of the animation.
-	 * @returns {boolean} - Returns true if the animation should continue, false if it has finished looping.
-	 */
-	const shouldLoopAnimation = function( anim, startTime ) {
-
-		// If the animation has not started or is set to loop, continue the animation.
-		if ( startTime === null || anim.loop === true ) {
-			return true;
-		}
-
-		// Calculate the total length of the animation in milliseconds.
-		const animationLength = anim.frames.length * ( 1000 / anim.fps );
-
-		// Check if the current time exceeds the animation length.
-		if ( b8.Core.getNow() - startTime >= animationLength ) {
-			return false;
-		}
-
-		return true;
-
-	}
+	};
 
 } )( b8 );

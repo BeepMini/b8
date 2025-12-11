@@ -33,7 +33,8 @@
 		FONT_DEFAULT: "../assets/font-default-thin.png",
 		FONT_TILES: "../assets/font-tiles.png",
 		FONT_ACTORS: "../assets/font-actors.png",
-		// The characters in the font file.
+		FONT_VFX: "../assets/font-vfx.png",
+		// The characters in the text font file.
 		// These are for the default font(s). If you use a different list you
 		// will need to upate the font file to match.
 		CHRS: `ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789*+=-<>_#&@%^~$£€¥¢!?:;'"/\\()[]{}.,©®™•…| `,

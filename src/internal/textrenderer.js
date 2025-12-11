@@ -20,8 +20,10 @@
 	b8.TextRenderer.curFont_ = null;
 
 	// Current tiles. This is a reference to a b8.TextRendererFont object.
-	// This is used for the tiles font.
 	b8.TextRenderer.curTiles_ = null;
+
+	// Current visual effects font. This is a reference to a b8.TextRendererFont object.
+	b8.TextRenderer.curVfx_ = null;
 
 
 	/**
@@ -60,6 +62,9 @@
 
 		// Prepare the actors/ player characters.
 		b8.TextRenderer.curActors_ = await b8.TextRenderer.loadFontAsync( "actors", b8.CONFIG.FONT_ACTORS );
+
+		// Prepare the visual effects font.
+		b8.TextRenderer.curVfx_ = await b8.TextRenderer.loadFontAsync( "vfx", b8.CONFIG.FONT_VFX );
 
 		// Prepare the charMap array.
 		b8.TextRenderer.prepareCharMap();
