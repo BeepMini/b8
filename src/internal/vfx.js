@@ -40,6 +40,15 @@
 	}
 
 
+	/**
+	 * Draw Vfx at a specific position.
+	 *
+	 * @param {Object} animation - The animation to draw.
+	 * @param {number} x - The x position to draw the Vfx.
+	 * @param {number} y - The y position to draw the Vfx.
+	 * @param {number} startTime - The start time of the animation.
+	 * @returns {void}
+	 */
 	const drawVfx = function( animation, x, y, startTime ) {
 
 		const font = b8.TextRenderer.curVfx_;
@@ -56,7 +65,6 @@
 	};
 
 
-
 	/**
 	 * Draw Vfx at the current cursor position.
 	 *
@@ -64,17 +72,41 @@
 	 * @param {number} startTime - The start time of the animation.
 	 * @param {number} [offsetCol=0] - The x offset to apply to the drawing position.
 	 * @param {number} [offsetRow=0] - The y offset to apply to the drawing position.
-	 * @returns {void}
+	 * @return {boolean} - Returns true if the animation is still playing, false if it has finished.
 	 */
 	b8.Vfx.draw = function( animation, startTime, offsetCol = 0, offsetRow = 0 ) {
+
+		b8.Utilities.checkNumber( "offsetCol", offsetCol );
+		b8.Utilities.checkNumber( "offsetRow", offsetRow );
+
+		return b8.Vfx.spr(
+			animation,
+			startTime,
+			( b8.Core.drawState.cursorCol + offsetCol ) * b8.CONFIG.CHR_WIDTH,
+			( b8.Core.drawState.cursorRow + offsetRow ) * b8.CONFIG.CHR_HEIGHT,
+		);
+
+	};
+
+
+	/**
+	 * Draw Vfx at a specific position.
+	 *
+	 * @param {string} animation The animation to draw.
+	 * @param {number|null} startTime The start time of the animation. If null, uses the core start time.
+	 * @param {number} x The x position to draw the Vfx.
+	 * @param {number} y The y position to draw the Vfx.
+	 * @returns {boolean} Returns true if the animation is still playing, false if it has finished.
+	 */
+	b8.Vfx.spr = function( animation, startTime, x, y ) {
 
 		b8.Utilities.checkString( "animation", animation );
 		if ( b8.Vfx.animations[ animation ] === undefined ) {
 			b8.Utilities.fatal( "Invalid Vfx animation: " + animation );
 		}
 		if ( startTime !== null ) b8.Utilities.checkNumber( "startTime", startTime );
-		b8.Utilities.checkNumber( "offsetCol", offsetCol );
-		b8.Utilities.checkNumber( "offsetRow", offsetRow );
+		b8.Utilities.checkNumber( "x", x );
+		b8.Utilities.checkNumber( "y", y );
 
 		const anim = b8.Vfx.animations[ animation ];
 
@@ -82,12 +114,10 @@
 
 		drawVfx(
 			anim,
-			( b8.Core.drawState.cursorCol + offsetCol ) * b8.CONFIG.CHR_WIDTH,
-			( b8.Core.drawState.cursorRow + offsetRow ) * b8.CONFIG.CHR_HEIGHT,
+			x, y,
 			startTime
 		);
 
-		// The animation is still playing.
 		return true;
 
 	};
