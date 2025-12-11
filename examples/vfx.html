@@ -3,8 +3,8 @@
 
 <head>
 	<meta charset="utf-8">
-	<title>Actors</title>
-	<meta name="description" content="Preview the bundled actors and their animations.">
+	<title>Vfx</title>
+	<meta name="description" content="Visual Effects Preview.">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
 	<link rel="stylesheet" href="example.css">
@@ -44,7 +44,7 @@
 
 		const addVfx = () => {
 
-			if ( vfxList.length >= 20 ) return;
+			if ( vfxList.length >= 40 ) return;
 
 			vfxList.push(
 				{
@@ -53,7 +53,7 @@
 						Math.round( b8.Random.range( 0, b8.CONFIG.SCREEN_ROWS - 1 ) )
 					],
 					name: b8.Random.pick( Object.keys( b8.Vfx.animations ) ),
-					// name: 'swipe',
+					// name: 'explosion',
 					startTime: b8.Core.getNow(),
 					maxLife: b8.Core.getNow() + 3000,
 				}

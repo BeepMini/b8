@@ -5,7 +5,8 @@
 
 	b8.Vfx.animations = {
 		'explosion': {
-			frames: [ 5, 6, 7, 8 ],
+			frames: [ 5, 6, 7, 8, 9 ],
+			fps: 8,
 		},
 		'fire': {
 			frames: [ 0, 1, 2, 3 ],
@@ -16,8 +17,12 @@
 			loop: true,
 		},
 		'swipe': {
-			frames: [ 15, 15, 16, 17, 18, 19 ],
-			fps: 8,
+			frames: [ 15, 16, 17, 17, 17, 18, 19 ],
+			fps: 12,
+		},
+		'skull': {
+			frames: [ 20, 20, 21, 22, 23, 24, 24, 24 ],
+			fps: 12,
 		}
 	};
 
