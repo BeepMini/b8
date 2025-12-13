@@ -72,7 +72,10 @@ mapper.sceneGame = {
 			}
 
 			// Now check for regular collision (walls etc).
-			if ( !mapper.collision.isWalkable( newCol, newRow ) || mapper.doCollision( loc.col, loc.row, newCol, newRow, dx, dy ) ) {
+			if (
+				!mapper.collision.isWalkable( newCol, newRow ) ||
+				mapper.doCollision( loc.col, loc.row, newCol, newRow, dx, dy )
+			) {
 				newCol = loc.col;
 				newRow = loc.row;
 			}

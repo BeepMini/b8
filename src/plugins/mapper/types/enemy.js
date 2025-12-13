@@ -1,8 +1,18 @@
 mapper.types.enemy = {
 
+	// Properties [ health, attack, color ]
+	difficulties: {
+		'Easy': [ 3, 1, 11 ],
+		'Medium': [ 5, 2, 9 ],
+		'Hard': [ 8, 3, 8 ],
+	},
+
 	spawn: function( col, row, props ) {
 
 		const initialDirection = 'D';
+
+		const difficulty = props.health || 'Easy';
+		const [ health, attack, color ] = mapper.types.enemy.difficulties[ difficulty ] || mapper.types.enemy.difficulties[ 'Easy' ];
 
 		/**
 		 * Create enemy character entity.
@@ -13,8 +23,8 @@ mapper.types.enemy = {
 			Sprite: {
 				type: 'actor',
 				tile: parseInt( props.actor ) || 6,
-				fg: props.fg || 15,
-				bg: props.bg || 0,
+				fg: color || 15,
+				bg: 0,
 				depth: 50,
 			},
 			Solid: {},
@@ -25,11 +35,11 @@ mapper.types.enemy = {
 			},
 			BumpTarget: {},
 			Health: {
-				value: 3,
-				maxHp: 3
+				value: health || 3,
+				maxHp: health || 3
 			},
 			Attack: {
-				value: 1
+				value: attack || 1
 			},
 		};
 
