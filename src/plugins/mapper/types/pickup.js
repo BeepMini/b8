@@ -33,8 +33,6 @@ mapper.pickupHandlers = {
 
 	health: function( playerId, pickup ) {
 
-		console.log( 'Picked up health:', pickup );
-
 		const health = b8.ECS.getComponent( playerId, 'Health' );
 		health.value = Math.min( health.max, health.value + ( pickup.atts.amount || 1 ) );
 
@@ -42,8 +40,8 @@ mapper.pickupHandlers = {
 
 	coin: function( playerId, pickup ) {
 
-		const inv = b8.ECS.get( playerId, 'Inventory' );
-		inv.coins = ( inv.coins || 0 ) + pickup.amount;
+		b8.Inventory.add( 'coin' );
+		b8.Sfx.play( 'game/coin/002' );
 
 	},
 
