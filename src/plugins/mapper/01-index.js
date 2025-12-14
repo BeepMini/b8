@@ -16,6 +16,7 @@ const mapper = {
 	// The player entity ID.
 	player: null,
 
+	// Cooldown timer for actions such as key presses.
 	actionCooldown: 0,
 
 
@@ -346,6 +347,28 @@ const mapper = {
 	isValidMapId: ( mapId ) => {
 
 		return typeof mapId === 'number' && mapId >= 0;
+
+	},
+
+
+	/**
+	 * Remove an object of a specific type at the given coordinates from the current map.
+	 *
+	 * @param {number} col - The column coordinate of the object to remove.
+	 * @param {number} row - The row coordinate of the object to remove.
+	 * @param {string} type - The type of the object to remove.
+	 * @returns {void}
+	 */
+	removeObjectAt: function( col, row, type ) {
+
+		const currentMap = mapper.getCurrentMap();
+
+		// console.log( `Removing object of type '${type}' at (${col}, ${row})`, currentMap.objects );
+
+		// Filter out the object matching the specified coordinates and type.
+		currentMap.objects = currentMap.objects.filter(
+			( obj ) => !( obj.x === col && obj.y === row && obj.type.startsWith( type ) )
+		);
 
 	},
 

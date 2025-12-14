@@ -80,8 +80,8 @@ mapper.load = function( mapData ) {
 				duration: 0,
 			},
 			Health: {
-				value: 12,
-				maxHp: 12
+				value: 2,
+				max: 12
 			},
 			Attack: {
 				value: 1
@@ -105,6 +105,7 @@ mapper.load = function( mapData ) {
 	b8.ECS.addSystem( 'pathFollower', mapper.systems.pathFollower );
 	b8.ECS.addSystem( 'sprite', mapper.systems.sprite );
 	b8.ECS.addSystem( 'bumpAttack', mapper.systems.bumpAttack );
+	b8.ECS.addSystem( 'pickup', mapper.systems.pickup );
 
 	// Play music.
 	if ( mapper.settings.bgm ) b8.Music.play( mapper.settings.bgm );

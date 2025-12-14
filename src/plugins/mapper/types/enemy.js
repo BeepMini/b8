@@ -36,7 +36,7 @@ mapper.types.enemy = {
 			BumpTarget: {},
 			Health: {
 				value: health || 3,
-				maxHp: health || 3
+				max: health || 3
 			},
 			Attack: {
 				value: attack || 1
