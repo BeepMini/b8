@@ -17,7 +17,7 @@ mapper.types.coin = {
 				type: 'coin',
 				Sprite: {
 					tile: parseInt( mapper.settings.coin ) || 266,
-					fg: props.fg || 14,
+					fg: mapper.settings.coinColor || 14,
 					bg: props.bg || 0
 				},
 			}
