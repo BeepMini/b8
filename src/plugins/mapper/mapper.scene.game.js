@@ -36,7 +36,6 @@ mapper.sceneGame = {
 
 		// Get player components
 		const loc = b8.ECS.getComponent( mapper.player, 'Loc' );
-		const anim = b8.ECS.getComponent( mapper.player, 'CharacterAnimation' );
 
 		let dx = 0, dy = 0, keyPressed = false;
 
@@ -58,11 +57,7 @@ mapper.sceneGame = {
 			let newCol = loc.col + dx;
 			let newRow = loc.row + dy;
 
-			if ( dy > 0 ) anim.name = 'move-down';
-			if ( dy < 0 ) anim.name = 'move-up';
-			if ( dx > 0 ) anim.name = 'move-right';
-			if ( dx < 0 ) anim.name = 'move-left';
-			anim.duration = 0.3;
+			mapper.setPlayerWalkAnimation( mapper.player, dx, dy );
 
 			// If newCol, newRow has BumpTarget component and is Solid then fight it.
 			const entitiesAtTarget = b8.ECS.entitiesAt( newCol, newRow );

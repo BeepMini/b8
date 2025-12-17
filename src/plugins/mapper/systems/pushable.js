@@ -57,6 +57,8 @@ mapper.systems.tryPulling = ( col, row, dx, dy, playerId ) => {
 		b8.ECS.setLoc( id, col, row );
 		b8.ECS.setLoc( playerId, backCol, backRow );
 
+		mapper.setPlayerWalkAnimation( playerId, dx, dy );
+
 		b8.Sfx.play( 'fx/action/drag' );
 
 		return true;

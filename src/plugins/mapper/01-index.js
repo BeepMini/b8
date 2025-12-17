@@ -89,6 +89,28 @@ const mapper = {
 
 
 	/**
+	 * Set the player's walking animation based on movement direction.
+	 *
+	 * @param {number} playerId - The entity ID of the player.
+	 * @param {number} dx - The change in x (column) direction.
+	 * @param {number} dy - The change in y (row) direction.
+	 * @returns {void}
+	 */
+	setPlayerWalkAnimation: function( playerId, dx, dy ) {
+
+		const anim = b8.ECS.getComponent( playerId, 'CharacterAnimation' );
+
+		if ( dy > 0 ) anim.name = 'move-down';
+		if ( dy < 0 ) anim.name = 'move-up';
+		if ( dx > 0 ) anim.name = 'move-right';
+		if ( dx < 0 ) anim.name = 'move-left';
+
+		anim.duration = 0.3;
+
+	},
+
+
+	/**
 	 * Render all entities on the screen with optional offsets.
 	 *
 	 * @param {number} offsetX - Horizontal offset for rendering.
