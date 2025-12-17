@@ -3,7 +3,12 @@
 	/**
 	 * Initializes the API. This must be called before other functions and must
 	 * finish executing before other API functions are called.
+	 *
 	 * Once the supplied callback is called, you can start using b8 functions.
+	 *
+	 * The options object uses the same format as b8.CONFIG and allows you to override
+	 * any default configuration option. View b8.CONFIG for the list of options,
+	 * their default values, and information about how the options are used.
 	 *
 	 * @param {Function} callback - The callback to call when initialization is done.
 	 * @param {Object} [options] - Optional options object.

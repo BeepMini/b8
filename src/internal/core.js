@@ -48,6 +48,7 @@
 	 * prepare assets.
 	 *
 	 * @param {Function} callback - The function to call when the engine is initialized.
+	 * @param {Object} [options={}] - Optional configuration overrides.
 	 * @return {void}
 	 */
 	b8.Core.init = function( callback, options = {} ) {
