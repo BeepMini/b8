@@ -28,6 +28,9 @@ mapper.sceneGame = {
 		// Update systems.
 		mapper.update( dt );
 
+		// console.log( 'Move delay:', mapper.sceneGame.moveDelay );
+		console.log( 'Action cooldown:', mapper.actionCooldown );
+
 		mapper.sceneGame.moveDelay -= dt;
 		if ( mapper.sceneGame.moveDelay > 0 ) return;
 
@@ -35,17 +38,21 @@ mapper.sceneGame = {
 		const loc = b8.ECS.getComponent( mapper.player, 'Loc' );
 		const anim = b8.ECS.getComponent( mapper.player, 'CharacterAnimation' );
 
-		let dx = 0, dy = 0;
+		let dx = 0, dy = 0, keyPressed = false;
 
 		// Calculate direction of movement.
 		// Use else if so we can only move in one direction at a time and not jump
 		// over collision walls diagonally.
-		if ( b8.key( "ArrowUp" ) ) { dy = -1; }
-		else if ( b8.key( "ArrowDown" ) ) { dy = 1; }
-		else if ( b8.key( "ArrowLeft" ) ) { dx = -1; }
-		else if ( b8.key( "ArrowRight" ) ) { dx = 1; }
-		if ( b8.key( "ButtonB" ) && 0 === mapper.actionCooldown ) mapper.doAction( mapper.player );
+		if ( b8.key( "ArrowUp" ) ) { dy = -1; keyPressed = true; }
+		else if ( b8.key( "ArrowDown" ) ) { dy = 1; keyPressed = true; }
+		else if ( b8.key( "ArrowLeft" ) ) { dx = -1; keyPressed = true; }
+		else if ( b8.key( "ArrowRight" ) ) { dx = 1; keyPressed = true; }
+		if ( b8.key( "ButtonB" ) ) { mapper.doAction( mapper.player ); keyPressed = true; }
 
+		// Update move delay when a key is pressed.
+		if ( keyPressed ) mapper.sceneGame.moveDelay = mapper.CONFIG.moveDelay;
+
+		// Move player.
 		if ( dx !== 0 || dy !== 0 ) {
 
 			let newCol = loc.col + dx;
@@ -82,8 +89,6 @@ mapper.sceneGame = {
 
 			b8.ECS.setComponent( mapper.player, 'Direction', { dx, dy } );
 			b8.ECS.setLoc( mapper.player, newCol, newRow );
-
-			mapper.sceneGame.moveDelay = mapper.CONFIG.moveDelay;
 
 		}
 

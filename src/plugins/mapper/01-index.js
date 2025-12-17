@@ -327,9 +327,9 @@ const mapper = {
 	 */
 	doAction: ( playerId ) => {
 
-		const action = mapper.promptAhead( playerId );
+		if ( mapper.actionCooldown > 0 ) return;
 
-		console.log( 'do action ', action );
+		const action = mapper.promptAhead( playerId );
 
 		if ( action && mapper.actions[ action ] ) {
 			mapper.actions[ action ]( playerId );
@@ -362,8 +362,6 @@ const mapper = {
 	removeObjectAt: function( col, row, type ) {
 
 		const currentMap = mapper.getCurrentMap();
-
-		// console.log( `Removing object of type '${type}' at (${col}, ${row})`, currentMap.objects );
 
 		// Filter out the object matching the specified coordinates and type.
 		currentMap.objects = currentMap.objects.filter(

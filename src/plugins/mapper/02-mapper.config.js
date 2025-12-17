@@ -4,7 +4,7 @@ mapper.CONFIG = {
 	moveDelay: 0.2,
 
 	// Key press delay.
-	keyPressDelay: 0.15,
+	keyPressDelay: 0.25,
 
 	/**
 	 * Offset to apply when drawing the map and actors.
