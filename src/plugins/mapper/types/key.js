@@ -10,10 +10,14 @@ mapper.types.key = {
 	 */
 	spawn: function( col, row, props ) {
 
-		return b8.ECS.create(
+		const color = props.fg || 14;
+
+		return mapper.types.pickup.spawn(
+			col,
+			row,
 			{
-				Type: { name: 'key' },
-				Loc: { col, row },
+				type: 'key',
+				atts: { name: `key-${color}` },
 				Sprite: {
 					tile: 255,
 					fg: props.fg || 14,
@@ -26,29 +30,16 @@ mapper.types.key = {
 
 
 	/**
-	 * Handle character collision with key.
+	 * Handle the player picking up the key.
 	 *
-	 * @param {number} id - The entity ID of the key.
-	 * @param {number} newCol - The column the character is moving to.
-	 * @param {number} newRow - The row the character is moving to.
-	 * @param {number} dx - The change in column direction.
-	 * @param {number} dy - The change in row direction.
-	 * @returns {boolean} False to allow movement onto the key tile.
+	 * @param {number} playerId - The entity ID of the player.
+	 * @param {Object} pickup - The Pickup component of the key.
+	 * @returns {void}
 	 */
-	onCharacterCollision: function( id, newCol, newRow, dx, dy ) {
+	pickupHandler: function( playerId, pickup ) {
 
-		const keyName = `key-${b8.ECS.getComponent( id, 'Sprite' ).fg ?? "default"}`;
-		b8.Inventory.add( keyName );
-
-		// Remove key object from level data.
-		const currentMap = mapper.getCurrentMap();
-		currentMap.objects = currentMap.objects.filter( obj => obj.id !== id );
-
-		// Remove entity, play sound.
-		b8.ECS.removeEntity( id );
+		b8.Inventory.add( pickup.atts.name );
 		b8.Sfx.play( 'tone/bloop/006' );
-
-		return false;
 
 	},
 

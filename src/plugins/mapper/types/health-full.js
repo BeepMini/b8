@@ -21,4 +21,8 @@ mapper.types.healthFull = {
 
 	},
 
+
+	// pickupHandler()
+	// Handled by mapper.types.health.pickupHandler
+
 };

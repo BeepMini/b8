@@ -22,7 +22,7 @@ mapper.systems.pickup = function() {
 			// Handle the pickup.
 			const pickup = b8.ECS.getComponent( id, 'Pickup' );
 
-			const fn = mapper.pickupHandlers[ pickup.kind ];
+			const fn = mapper.types[ pickup.kind ]?.pickupHandler;
 			if ( fn ) fn( playerId, pickup );
 
 			// Consume (remove from world).

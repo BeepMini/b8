@@ -25,4 +25,19 @@ mapper.types.coin = {
 
 	},
 
+
+	/**
+	 * Handle the player picking up the coin.
+	 *
+	 * @param {number} playerId - The entity ID of the player.
+	 * @param {Object} pickup - The Pickup component of the coin.
+	 * @returns {void}
+	 */
+	pickupHandler: function( playerId, pickup ) {
+
+		b8.Inventory.add( 'coin' );
+		b8.Sfx.play( 'game/coin/002' );
+
+	},
+
 };

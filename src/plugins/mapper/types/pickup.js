@@ -27,29 +27,3 @@ mapper.types.pickup = {
 	},
 
 };
-
-
-mapper.pickupHandlers = {
-
-	health: function( playerId, pickup ) {
-
-		const health = b8.ECS.getComponent( playerId, 'Health' );
-		health.value = Math.min( health.max, health.value + ( pickup.atts.amount || 1 ) );
-
-	},
-
-	coin: function( playerId, pickup ) {
-
-		b8.Inventory.add( 'coin' );
-		b8.Sfx.play( 'game/coin/002' );
-
-	},
-
-	key: function( playerId, pickup ) {
-
-		const inv = b8.ECS.get( playerId, 'Inventory' );
-		( inv.keys ||= new Set() ).add( pickup.keyId );
-
-	},
-
-};

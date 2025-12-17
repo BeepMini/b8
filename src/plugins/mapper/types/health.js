@@ -18,4 +18,20 @@ mapper.types.health = {
 
 	},
 
+
+	/**
+	 * Handle the player picking up the health pickup.
+	 *
+	 * @param {number} playerId - The entity ID of the player.
+	 * @param {Object} pickup - The Pickup component of the health item.
+	 * @returns {void}
+	 */
+	pickupHandler: function( playerId, pickup ) {
+
+		const health = b8.ECS.getComponent( playerId, 'Health' );
+		health.value = Math.min( health.max, health.value + ( pickup.atts.amount || 1 ) );
+
+	},
+
+
 };
