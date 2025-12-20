@@ -28,9 +28,6 @@ mapper.sceneGame = {
 		// Update systems.
 		mapper.update( dt );
 
-		// console.log( 'Move delay:', mapper.sceneGame.moveDelay );
-		console.log( 'Action cooldown:', mapper.actionCooldown );
-
 		mapper.sceneGame.moveDelay -= dt;
 		if ( mapper.sceneGame.moveDelay > 0 ) return;
 
@@ -69,7 +66,6 @@ mapper.sceneGame = {
 					b8.ECS.setComponent( mapper.player, 'BumpAttack', { targetId: id } );
 					newCol = loc.col;
 					newRow = loc.row;
-					console.log( 'Bump attack initiated against entity ID:', id );
 				}
 			}
 

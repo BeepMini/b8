@@ -15,8 +15,6 @@ mapper.systems.tryPortal = async function( col, row ) {
 
 	const id = b8.ECS.entitiesAt( col, row );
 
-	console.log( 'Checking for portal at', col, row, id );
-
 	if ( !id ) return false;
 
 	for ( const entityId of id ) {

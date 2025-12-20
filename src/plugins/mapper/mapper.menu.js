@@ -66,7 +66,6 @@ mapper.menu = {
 			b8.Tilemap.draw( mapper.bg.splash );
 
 			// b8 Logo
-			console.log( 'Drawing b8 logo' );
 			b8.locate( b8.CONFIG.SCREEN_COLS - 1, b8.CONFIG.SCREEN_ROWS - 1 );
 			b8.color( 15, 0 );
 			b8.printChar( 88 );

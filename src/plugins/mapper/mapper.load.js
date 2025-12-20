@@ -16,8 +16,6 @@ mapper.load = function( mapData ) {
 
 	if ( mapData.version === 1 ) mapData = mapper.upgradeMapDataV1toV2( mapData );
 
-	console.log( 'map data', mapData );
-
 	mapper.settings = { ...mapData.settings };
 	b8.Utilities.checkObject( 'mapper.settings', mapper.settings );
 
@@ -56,7 +54,6 @@ mapper.load = function( mapData ) {
 	// Set game name.
 	// Some settings use this, for things like local storage keys.
 	if ( mapper.settings.gameName ) {
-		console.log( `Starting game: ${mapper.settings.gameName}` );
 		b8.CONFIG.NAME = mapper.settings.gameName;
 	}
 
@@ -132,8 +129,6 @@ mapper.load = function( mapData ) {
  */
 mapper.upgradeMapDataV1toV2 = function( mapData ) {
 
-	console.log( 'Upgrading map data from v1 to v2' );
-
 	const level = {
 		mapData: [ ...mapData.map ],
 		objects: [ ...mapData.objects ],
@@ -177,8 +172,6 @@ mapper.setCurrentMap = function( mapId ) {
 	if ( mapId === mapper.currentMapId ) return;
 
 	let currentMap = mapper.maps[ mapId ];
-
-	console.log( currentMap );
 
 	// Add objects.
 	if ( !currentMap.objects ) currentMap.objects = [];
