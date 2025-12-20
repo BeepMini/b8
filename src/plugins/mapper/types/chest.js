@@ -1,13 +1,14 @@
 mapper.types.chest = {
 
 	items: {
-		0: 'Key',
-		1: 'Coin',
-		2: '10 Coins',
-		3: '50 Coins',
-		4: 'Half Heart',
-		5: 'Heart',
-		6: 'Full Heart',
+		0: 'Empty',
+		1: 'Key',
+		2: 'Coin',
+		3: '10 Coins',
+		4: '50 Coins',
+		5: 'Half Heart',
+		6: 'Heart',
+		7: 'Full Heart',
 		// 4: '1 Bomb',
 		// 5: '5 Bombs',
 	},
@@ -91,6 +92,7 @@ mapper.types.chest = {
 				Openable: {
 					closedTile: 253,
 					openedTile: 271,
+					newType: 'chestOpen',
 				},
 				Message: { message: props.message || "" },
 				Reward: { items },

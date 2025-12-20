@@ -394,6 +394,32 @@ const mapper = {
 
 
 	/**
+	 * Change the type of an object at the given coordinates in the current map.
+	 *
+	 * @param {number} col - The column coordinate of the object to change.
+	 * @param {number} row - The row coordinate of the object to change.
+	 * @param {string} type - The current type of the object to change.
+	 * @param {string} newType - The new type to set for the object.
+	 * @returns {void}
+	 */
+	changeObjectTypeAt: function( col, row, type, newType ) {
+
+		console.log( 'changeObjectTypeAt', col, row, type, newType );
+
+		const currentMap = mapper.getCurrentMap();
+
+		// Find the object matching the specified coordinates and type.
+		for ( const obj of currentMap.objects ) {
+			if ( obj.x === col && obj.y === row && obj.type.startsWith( type ) ) {
+				obj.type = newType;
+				return;
+			}
+		}
+
+	},
+
+
+	/**
 	 * Give rewards to the player.
 	 *
 	 * @param {number} playerId - The entity ID of the player.

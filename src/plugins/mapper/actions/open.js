@@ -12,6 +12,14 @@ mapper.actions.open = async function( playerId ) {
 		// Change the tile.
 		if ( obj.openedTile ) sprite.tile = obj.openedTile;
 
+		// Change the master map object type if specified.
+		// This prevents re-opening the chest on when reloading the map.
+		if ( obj.newType ) {
+			const loc = b8.ECS.getComponent( id, 'Loc' );
+			const type = b8.ECS.getComponent( id, 'Type' );
+			mapper.changeObjectTypeAt( loc.col, loc.row, type.name, obj.newType );
+		}
+
 		// Play sound effect.
 		b8.Sfx.play( 'tone/jingle/017' );
 
