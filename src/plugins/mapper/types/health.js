@@ -7,7 +7,7 @@ mapper.types.health = {
 			row,
 			{
 				type: 'health',
-				atts: { amount: 2 },
+				props: { amount: 2 },
 				Sprite: {
 					tile: 415,
 					fg: 8,
@@ -29,7 +29,7 @@ mapper.types.health = {
 	pickupHandler: function( playerId, pickup ) {
 
 		const health = b8.ECS.getComponent( playerId, 'Health' );
-		health.value = Math.min( health.max, health.value + ( pickup.atts.amount || 1 ) );
+		health.value = Math.min( health.max, health.value + ( pickup.props.amount || 1 ) );
 
 	},
 

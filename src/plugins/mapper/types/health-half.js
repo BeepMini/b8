@@ -7,7 +7,7 @@ mapper.types.healthHalf = {
 			row,
 			{
 				type: 'health',
-				atts: { amount: 1 },
+				props: { amount: 1 },
 				Sprite: {
 					tile: 416,
 					fg: 8,

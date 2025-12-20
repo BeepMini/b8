@@ -17,7 +17,7 @@ mapper.types.key = {
 			row,
 			{
 				type: 'key',
-				atts: { name: `key-${color}` },
+				props: { name: `key-${color}` },
 				Sprite: {
 					tile: 255,
 					fg: props.fg || 14,
@@ -38,7 +38,7 @@ mapper.types.key = {
 	 */
 	pickupHandler: function( playerId, pickup ) {
 
-		b8.Inventory.add( pickup.atts.name );
+		b8.Inventory.add( pickup.props.name );
 		b8.Sfx.play( 'tone/bloop/006' );
 
 	},

@@ -15,11 +15,11 @@ mapper.types.pickup = {
 				},
 				Pickup: {
 					// 'health', 'coin', 'key', etc
-					kind: props.type,
+					type: props.type,
 					// remove after pickup
 					consume: props.consume ?? true,
 					// Custom attributes for handler function
-					atts: props.atts || {}
+					props: props.props || {}
 				},
 			}
 		);
