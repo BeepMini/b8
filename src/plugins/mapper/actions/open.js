@@ -17,7 +17,7 @@ mapper.actions.open = async function( playerId ) {
 
 		// Rewards.
 		const rewards = b8.ECS.getComponent( id, 'Reward' );
-		mapper.giveRewards( playerId, rewards.items || [] );
+		mapper.giveRewards( playerId, rewards?.items || [] );
 
 		// Clean up components.
 		b8.ECS.removeComponent( id, 'Reward' );
@@ -26,9 +26,8 @@ mapper.actions.open = async function( playerId ) {
 
 		// If message then change the entity to a Signpost entity and change the
 		// action verb to read.
-		const messageComp = b8.ECS.getComponent( id, 'Message' );
-		if ( messageComp && messageComp.message.length > 0 ) {
-			b8.ECS.addComponent( id, 'Type', { name: 'signpost' } );
+		const messageComponent = b8.ECS.getComponent( id, 'Message' );
+		if ( messageComponent?.message?.length > 0 ) {
 			b8.ECS.addComponent( id, 'Action', { verb: 'read' } );
 		}
 
