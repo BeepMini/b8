@@ -22,8 +22,10 @@ mapper.systems.pickup = function() {
 			// Handle the pickup.
 			const pickup = b8.ECS.getComponent( id, 'Pickup' );
 
-			const fn = mapper.types[ pickup.kind ]?.pickupHandler;
-			if ( fn ) fn( playerId, pickup );
+			mapper.giveRewards(
+				playerId,
+				[ { type: pickup.type, props: pickup.props } ]
+			);
 
 			// Consume (remove from world).
 			if ( pickup.consume ) {
@@ -32,7 +34,7 @@ mapper.systems.pickup = function() {
 				b8.ECS.removeEntity( id );
 
 				// Remove map object.
-				mapper.removeObjectAt( loc.col, loc.row, pickup.kind );
+				mapper.removeObjectAt( loc.col, loc.row, pickup.type );
 
 			}
 

@@ -393,5 +393,33 @@ const mapper = {
 	},
 
 
+	/**
+	 * Give rewards to the player.
+	 *
+	 * @param {number} playerId - The entity ID of the player.
+	 * @param {Array} rewards - An array of reward objects to give to the player.
+	 * @returns {void}
+	 */
+	giveRewards: function( playerId, rewards = [] ) {
+
+		if ( !rewards || rewards.length === 0 ) return;
+
+		rewards.forEach(
+			( reward ) => {
+
+				if ( !reward.type ) return;
+				if ( !reward.props ) reward.props = {};
+
+				const fn = mapper.types[ reward.type ]?.pickupHandler;
+				if ( fn ) fn( playerId, reward );
+
+			}
+		);
+
+	},
+
+
+
+
 };
 
