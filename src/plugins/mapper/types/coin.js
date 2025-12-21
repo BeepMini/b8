@@ -35,7 +35,7 @@ mapper.types.coin = {
 	 */
 	pickupHandler: function( playerId, pickup ) {
 
-		b8.Inventory.add( 'coin' );
+		b8.Inventory.add( 'coin', pickup?.props?.amount || 1 );
 		b8.Sfx.play( 'game/coin/002' );
 
 	},
