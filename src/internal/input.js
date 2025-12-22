@@ -7,17 +7,64 @@
 
 	/**
 	 * List of keys currently held down.
+	 * This is a raw list of keys without any context applied.
 	 *
 	 * @type {Set<string>}
 	 */
-	let keysHeld_ = new Set();
+	let keysHeldRaw_ = new Set();
+
 
 	/**
 	 * List of keys that were just pressed in the current frame.
+	 * These are real time game key presses, not asynchronous reads.
 	 *
 	 * @type {Set<string>}
 	 */
-	let keysJustPressed_ = new Set();
+	let gameJustPressed_ = new Set();
+
+
+	/**
+	 * Retrieves the currently active input context.
+	 * The active context is the last one added to the `contexts_` stack.
+	 *
+	 * @returns {Object} The currently active input context.
+	 */
+	const active_ = () => contexts_[ contexts_.length - 1 ];
+
+
+	/**
+	 * List of input contexts.
+	 * Each context defines its name, whether it captures input, allows passthrough,
+	 * and maintains a queue of input events.
+	 *
+	 * @type {Array<{name: string, capture: boolean, passthrough: boolean, queue: Array}>}
+	 */
+	let contexts_ = [
+		{ name: "game", capture: false, passthrough: true, queue: [] }
+	];
+
+
+	b8.Input.pushContext = function( name, opts = {} ) {
+		contexts_.push( {
+			name,
+			capture: !!opts.capture, // if true, gameplay polling should be blocked
+			passthrough: opts.passthrough ?? false, // if true, still allow gameplay justPressed
+			queue: [],
+		} );
+	};
+
+	b8.Input.popContext = function() {
+		if ( contexts_.length > 1 ) contexts_.pop();
+	};
+
+	b8.Input.withContext = async function( name, opts, fn ) {
+		b8.Input.pushContext( name, opts );
+		try {
+			return await fn();
+		} finally {
+			b8.Input.popContext();
+		}
+	};
 
 
 	/**
@@ -28,8 +75,8 @@
 	 */
 	b8.Input.reset = function() {
 
-		keysHeld_ = new Set();
-		keysJustPressed_ = new Set();
+		keysHeldRaw_ = new Set();
+		gameJustPressed_ = new Set();
 
 		// Remove existing event listeners.
 		window.removeEventListener( "keydown", b8.Input.onKeyDown );
@@ -59,12 +106,12 @@
 	/**
 	 * Checks if a key is currently held down.
 	 *
-	 * @param {string} keyName - The name of the key to check.
+	 * @param {string} keyName The name of the key to check.
 	 * @returns {boolean} Whether the key is currently held down.
 	 */
 	b8.Input.keyHeld = function( keyName ) {
 
-		return keysHeld_.has( keyName.toUpperCase() );
+		return keysHeldRaw_.has( keyName.toUpperCase() );
 
 	}
 
@@ -72,12 +119,17 @@
 	/**
 	 * Checks if a key was just pressed in the current frame.
 	 *
-	 * @param {string} keyName - The name of the key to check.
+	 * @param {string} keyName The name of the key to check.
 	 * @returns {boolean} Whether the key was just pressed.
 	 */
 	b8.Input.keyJustPressed = function( keyName ) {
 
-		return keysJustPressed_.has( keyName.toUpperCase() );
+		const ctx = active_();
+		const key = keyName.toUpperCase();
+
+		if ( ctx.capture && !ctx.passthrough ) return false;
+
+		return gameJustPressed_.has( key );
 
 	}
 
@@ -90,7 +142,7 @@
 	 */
 	b8.Input.onEndFrame = function() {
 
-		keysJustPressed_.clear();
+		gameJustPressed_.clear();
 
 	}
 
@@ -99,7 +151,7 @@
 	 * Handles keydown events, adding the key to the just pressed and held sets.
 	 * Resolves any pending asynchronous key events.
 	 *
-	 * @param {KeyboardEvent} e - The event object.
+	 * @param {KeyboardEvent} e The event object.
 	 * @returns {void}
 	 */
 	b8.Input.onKeyDown = function( e ) {
@@ -107,18 +159,41 @@
 		const key = e.key;
 		const keys = b8.Input.getKeys( key );
 
-		// Stop page from scrolling when the arrows/ space are pressed.
 		if ( [ "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " " ].includes( key ) ) {
 			e.preventDefault();
 		}
 
-		// Add to currently held keys.
+		// Update raw held always
 		for ( const k of keys ) {
-			keysJustPressed_.add( k.toUpperCase() );
-			keysHeld_.add( k.toUpperCase() );
+			keysHeldRaw_.add( k.toUpperCase() );
 		}
 
-		// Return any pending key events.
+		const ctx = active_();
+
+		// If not capturing, or capture allows passthrough, also update gameplay pressed
+		if ( !ctx.capture || ctx.passthrough ) {
+			for ( const k of keys ) {
+				gameJustPressed_.add( k.toUpperCase() );
+			}
+		}
+
+		// If context is capturing, feed async reads first-class
+		if ( ctx.capture ) {
+
+			ctx.queue.push( keys );
+
+			// If something is awaiting, resolve it
+			if ( b8.Core.hasPendingAsync( "b8.Async.key" ) ) {
+				// Prefer draining from queue, not current event, so ordering is consistent
+				const next = ctx.queue.shift();
+				b8.Core.resolveAsync( "b8.Async.key", next );
+			}
+
+			return;
+
+		}
+
+		// Resolve pending async in non-capture mode too (optional)
 		if ( b8.Core.hasPendingAsync( "b8.Async.key" ) ) {
 			b8.Core.resolveAsync( "b8.Async.key", keys );
 		}
@@ -129,7 +204,7 @@
 	/**
 	 * Handles pointerdown events, resolving any pending asynchronous pointer events.
 	 *
-	 * @param {PointerEvent} e - The event object.
+	 * @param {PointerEvent} e The event object.
 	 * @returns {void}
 	 */
 	b8.Input.onPointerDown = function( e ) {
@@ -144,18 +219,16 @@
 	/**
 	 * Handles keyup events, removing the key from the held set.
 	 *
-	 * @param {KeyboardEvent} e - The event object.
+	 * @param {KeyboardEvent} e The event object.
 	 * @returns {void}
 	 */
 	b8.Input.onKeyUp = function( e ) {
 
 		if ( !e.key ) return;
 
-		const key = e.key.toUpperCase();
-		const keys = b8.Input.getKeys( key );
-
+		const keys = b8.Input.getKeys( e.key );
 		for ( const k of keys ) {
-			keysHeld_.delete( k.toUpperCase() );
+			keysHeldRaw_.delete( k.toUpperCase() );
 		}
 
 	}
@@ -167,6 +240,13 @@
 	 * @returns {Promise<string>} A promise that resolves to the key that was pressed.
 	 */
 	b8.Input.readKeyAsync = function() {
+
+		const ctx = active_();
+
+		// If we are in a capture context and already have queued events, return immediately
+		if ( ctx.capture && ctx.queue.length > 0 ) {
+			return Promise.resolve( ctx.queue.shift() );
+		}
 
 		return new Promise(
 			( resolve, reject ) => {
@@ -198,7 +278,7 @@
 	 * Gets an array of keys that correspond to a given key.
 	 * This is used to handle key aliases (e.g. "W" and "ArrowUp").
 	 *
-	 * @param {string} key - The key to get aliases for.
+	 * @param {string} key The key to get aliases for.
 	 * @returns {string[]} An array of key names.
 	 */
 	b8.Input.getKeys = function( key ) {
@@ -246,28 +326,60 @@
 	 * Reads a line of text asynchronously.
 	 * Handles user input to build a string until the Enter key is pressed.
 	 *
-	 * @param {string} initString - The initial string to display.
-	 * @param {string} [prompt=''] - An optional prompt to display before the input.
-	 * @param {number} [maxLen=100] - The maximum length of the string to read.
-	 * @param {number} [maxWidth=-1] - The maximum width of the line.
+	 * @param {string} initString The initial string to display.
+	 * @param {string} [prompt=''] An optional prompt to display before the input.
+	 * @param {number} [maxLen=100] The maximum length of the string to read.
+	 * @param {number} [maxWidth=-1] The maximum width of the line.
 	 * @returns {Promise<string>} A promise that resolves to the string that was read.
 	 */
 	b8.Input.readLine = async function( prompt = 'Enter text:', initString = '', maxLen = 100, maxWidth = -1 ) {
 
-		// If a prompt is specified, print it first.
-		if ( prompt && prompt.length > 0 ) {
-			b8.print( prompt + "\n> " );
-		}
+		return b8.Input.withContext( "text", { capture: true }, async () => {
+			// If a prompt is specified, print it first.
+			if ( prompt && prompt.length > 0 ) {
+				b8.print( prompt + "\n> " );
+			}
 
-		// On mobile we use a prompt dialog since they don't have a keyboard for typing things in.
-		if ( b8.Core.isMobile() ) {
-			const textInput = await readPrompt( prompt, initString, maxLen, maxWidth );
-			b8.print( textInput + "\n" );
-			await b8.Async.wait( 0.2 );
-			return textInput;
-		}
+			// On mobile we use a prompt dialog since they don't have a keyboard for typing things in.
+			if ( b8.Core.isMobile() ) {
+				return await handleMobileInput( prompt, initString, maxLen, maxWidth );
+			}
 
-		// On desktop we handle the input ourselves.
+			// On desktop we handle the input ourselves.
+			return await handleDesktopInput( initString, maxLen, maxWidth );
+		} );
+	};
+
+
+	/**
+	 * Handles text input on mobile devices using a prompt dialog.
+	 *
+	 * @param {string} prompt The prompt to display.
+	 * @param {string} initString The initial string to display.
+	 * @param {number} maxLen The maximum length of the string to read.
+	 * @param {number} maxWidth The maximum width of the line.
+	 * @returns {Promise<string>} A promise that resolves to the input string.
+	 */
+	async function handleMobileInput( prompt, initString, maxLen, maxWidth ) {
+
+		const textInput = await readPrompt( prompt, initString, maxLen, maxWidth );
+		b8.print( textInput + "\n" );
+		await b8.Async.wait( 0.2 );
+		return textInput;
+
+	}
+
+
+	/**
+	 * Handles text input on desktop devices by capturing key presses.
+	 *
+	 * @param {string} initString The initial string to display.
+	 * @param {number} maxLen The maximum length of the string to read.
+	 * @param {number} maxWidth The maximum width of the line.
+	 * @returns {Promise<string>} A promise that resolves to the input string.
+	 */
+	async function handleDesktopInput( initString, maxLen, maxWidth ) {
+
 		const startCol = b8.Core.drawState.cursorCol;
 		const startRow = b8.Core.drawState.cursorRow;
 
@@ -352,10 +464,10 @@
 	 * Helper function to show a prompt dialog on mobile devices.
 	 * This is used because mobile devices don't have a physical keyboard.
 	 *
-	 * @param {string} [promptString='Enter text:'] - The prompt to display.
-	 * @param {string} [initString=''] - The initial string to display.
-	 * @param {number} [maxLen=100] - The maximum length of the string to read.
-	 * @param {number} [maxWidth=-1] - The maximum width of the line.
+	 * @param {string} [promptString='Enter text:'] The prompt to display.
+	 * @param {string} [initString=''] The initial string to display.
+	 * @param {number} [maxLen=100] The maximum length of the string to read.
+	 * @param {number} [maxWidth=-1] The maximum width of the line.
 	 * @returns {Promise<string>} A promise that resolves to the string that was read.
 	 */
 	const readPrompt = async function( promptString = 'Enter text:', initString = '', maxLen = 100, maxWidth = -1 ) {
