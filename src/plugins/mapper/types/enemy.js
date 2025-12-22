@@ -33,7 +33,7 @@ mapper.types.enemy = {
 				default: 'idle',
 				duration: 0,
 			},
-			BumpTarget: {},
+			AttackTarget: {},
 			Health: {
 				value: health || 3,
 				max: health || 3

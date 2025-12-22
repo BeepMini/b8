@@ -29,7 +29,6 @@ mapper.load = function( mapData ) {
 			const maze = b8.Tilemap.convertFromText( mapDataString );
 			const map = b8.Tilemap.createFromArray( maze, mapData.tiles );
 
-
 			// Add mapId to each object
 			const objects = ( level.objects || [] ).map(
 				obj => ( { ...obj, mapId: index } )
@@ -103,6 +102,7 @@ mapper.load = function( mapData ) {
 	b8.ECS.addSystem( 'sprite', mapper.systems.sprite );
 	b8.ECS.addSystem( 'bumpAttack', mapper.systems.bumpAttack );
 	b8.ECS.addSystem( 'pickup', mapper.systems.pickup );
+	b8.ECS.addSystem( 'vfx', mapper.systems.vfx );
 
 	// Play music.
 	if ( mapper.settings.bgm ) b8.Music.play( mapper.settings.bgm );

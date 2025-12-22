@@ -368,6 +368,58 @@ const mapper = {
 
 
 	/**
+	 * Perform an attack action for the specified player.
+	 *
+	 * @param {number} playerId - The entity ID of the player.
+	 * @returns {void}
+	 */
+	doAttack: ( playerId ) => {
+
+		const ahead = mapper.ahead( playerId );
+
+		console.log( 'doAttack' );
+
+		const ids = mapper.entitiesAhead( playerId );
+		for ( const targetId of ids ) {
+			// Don't attack self.
+			if ( targetId === playerId ) continue;
+
+			// Only attack entities that can be attacked.
+			if ( b8.ECS.hasComponent( targetId, 'AttackTarget' ) ) {
+
+				const targetHealth = b8.ECS.getComponent( targetId, 'Health' );
+
+				// Simple attack logic: reduce target health by attacker's attack value.
+				const playerAttack = b8.ECS.getComponent( playerId, 'Attack' ) || { value: 1 };
+				targetHealth.value -= playerAttack.value;
+
+				// Check if target is defeated.
+				if ( targetHealth.value <= 0 ) {
+					b8.ECS.removeEntity( targetId );
+					mapper.types.vfx.spawn(
+						ahead.x, ahead.y,
+						{ id: 'skull', fg: 2, bg: 0 }
+					);
+					return;
+				}
+
+				// Only attack one target at a time.
+				break;
+
+			}
+		}
+
+		// Do this last. We might have attacked and defeated an enemy above.
+		mapper.types.vfx.spawn(
+			ahead.x, ahead.y,
+			{ id: 'swipe', fg: 15, bg: 0 }
+		);
+
+
+	},
+
+
+	/**
 	 * Check if the provided map ID is valid.
 	 *
 	 * @param {number} mapId - The map ID to validate.

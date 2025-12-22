@@ -44,6 +44,7 @@ mapper.sceneGame = {
 		else if ( b8.key( "ArrowLeft" ) ) { dx = -1; keyPressed = true; }
 		else if ( b8.key( "ArrowRight" ) ) { dx = 1; keyPressed = true; }
 		if ( b8.key( "ButtonB" ) ) { mapper.doAction( mapper.player ); keyPressed = true; }
+		if ( b8.key( "ButtonA" ) ) { mapper.doAttack( mapper.player ); keyPressed = true; }
 
 		// Update move delay when a key is pressed.
 		if ( keyPressed ) mapper.sceneGame.moveDelay = mapper.CONFIG.moveDelay;
@@ -55,19 +56,6 @@ mapper.sceneGame = {
 			let newRow = loc.row + dy;
 
 			mapper.setPlayerWalkAnimation( mapper.player, dx, dy );
-
-			// If newCol, newRow has BumpTarget component and is Solid then fight it.
-			const entitiesAtTarget = b8.ECS.entitiesAt( newCol, newRow );
-			for ( const id of entitiesAtTarget ) {
-				if (
-					b8.ECS.hasComponent( id, 'BumpTarget' ) &&
-					b8.ECS.hasComponent( id, 'Solid' )
-				) {
-					b8.ECS.setComponent( mapper.player, 'BumpAttack', { targetId: id } );
-					newCol = loc.col;
-					newRow = loc.row;
-				}
-			}
 
 			// Now check for regular collision (walls etc).
 			if (
