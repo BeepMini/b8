@@ -14,8 +14,10 @@
 
 		const CH_SPACESHIP = 22;
 		const CH_LASER = 72;
-		const MIN_Y = 24, MAX_Y = 168;
-		const MIN_X = 16, MAX_X = 248;
+		const MIN_Y = 24;
+		const MAX_Y = 168;
+		const MIN_X = 16;
+		const MAX_X = ( b8.CONFIG.SCREEN_COLS * b8.CONFIG.CHR_WIDTH ) - MIN_X;
 
 		const ACCEL = 3;
 		const FRICTION = 2;
@@ -71,13 +73,13 @@
 			sfxHit = await b8.Async.loadSound( "assets/hit.wav" )
 			sfxBlast = await b8.Async.loadSound( "assets/blast.wav" )
 			b8.drawImage( 0, 0, backgroundImg );
-			b8.locate( 4, 6 );
+			b8.locate( 3, 6 );
 			b8.color( 14, -1 );
-			b8.print( "\u00d7  SPACESHIP EXAMPLE \u00d8 \u00d9" );
-			b8.locate( 3, 8 );
-			b8.color( 7, -1 );
+			b8.print( "SPACESHIP EXAMPLE" );
+			b8.locate( 3, 12 );
+			b8.color( 7, 0 );
 			b8.print( "Press any button to start.\n\n" );
-			b8.print( "Controls:\n  SPACE or 'A' button\n  to shoot." );
+			b8.print( "Controls:\nSPACE or 'A' button to shoot." );
 			await b8.Async.key();
 			b8.cls();
 			b8.frame( doFrame, render );
@@ -119,6 +121,7 @@
 		}
 
 		function updateAndDrawPlayer() {
+
 			// Apply acceleration based on up/down keys.
 			playerSpeed += ( b8.key( "ArrowRight" ) ? 1 : b8.key( "ArrowLeft" ) ? -1 : 0 ) * ACCEL;
 			// Apply friction (reduce speed).
@@ -128,11 +131,13 @@
 			playerSpeed = b8.Utilities.clamp( playerSpeed, -MAX_SPEED, MAX_SPEED );
 			// Apply speed to position.
 			playerX = b8.Utilities.clamp( playerX + playerSpeed, MIN_X, MAX_X );
+
 			// Draw the spaceship.
-			b8.color( 15 );
+			b8.color( 15, -1 );
 			b8.sprActor( CH_SPACESHIP, 'idle', playerX, playerY );
 			// If there is no laser and the player presses Space (or the A button on mobile), shoot.
 			if ( !laser && ( b8.key( " " ) || b8.key( "ButtonA" ) ) ) shootLaser();
+
 		}
 
 		function updateAndDrawLaser() {
@@ -202,13 +207,13 @@
 			}
 
 			// Draw.
-			b8.color( e.color );
+			b8.color( e.color, -1 );
 
 			let animation = 'move-right';
-			if ( e.dir < 0 ) {
-				animation = 'move-left';
-			}
+			if ( e.dir < 0 ) animation = 'move-left';
+
 			b8.sprActor( 21, animation, e.x, e.y );
+
 		}
 
 		function updateAndDrawPartFx() {
