@@ -61,7 +61,7 @@ mapper.load = function( mapData ) {
 		{
 			Type: { name: 'player' },
 			Loc: { row: 0, col: 0 },
-			Direction: { dx: 0, dy: 0 },
+			Direction: { dx: 0, dy: 1 },
 			Sprite: {
 				type: 'actor',
 				tile: parseInt( mapper.settings.character ) || 6,

@@ -43,8 +43,8 @@ mapper.sceneGame = {
 		else if ( b8.key( "ArrowDown" ) ) { dy = 1; keyPressed = true; }
 		else if ( b8.key( "ArrowLeft" ) ) { dx = -1; keyPressed = true; }
 		else if ( b8.key( "ArrowRight" ) ) { dx = 1; keyPressed = true; }
-		if ( b8.key( "ButtonB" ) ) { mapper.doAction( mapper.player ); keyPressed = true; }
 		if ( b8.key( "ButtonA" ) ) { mapper.doAttack( mapper.player ); keyPressed = true; }
+		if ( b8.key( "ButtonB" ) ) { mapper.doAction( mapper.player ); keyPressed = true; }
 
 		// Update move delay when a key is pressed.
 		if ( keyPressed ) mapper.updateMoveDelay();
@@ -93,8 +93,8 @@ mapper.sceneGame = {
 
 		// Draw currency value.
 		b8.locate( 2, b8.CONFIG.SCREEN_ROWS - 2 );
-		b8.color( mapper.settings.coinColor, 0 );
-		b8.printChar( mapper.settings.coin || 266 );
+		b8.color( parseInt( mapper.settings.coinColor ) || 10, 0 );
+		b8.printChar( parseInt( mapper.settings.coin ) || 266 );
 
 		b8.color( 15, 0 );
 		b8.print( ' ' + parseInt( b8.Inventory.getCount( 'coin' ) ).toString().padStart( 4, '0' ) );
