@@ -403,6 +403,10 @@ const mapper = {
 					ahead.x, ahead.y,
 					{ id: 'skull', fg: 2, bg: 0, offsetTime: 200 }
 				);
+
+				// Small pause on defeat.
+				mapper.updateMoveDelay( 0.6 );
+
 				return;
 			}
 
@@ -410,6 +414,20 @@ const mapper = {
 			break;
 
 		}
+
+	},
+
+
+	/**
+	 * Update the move delay to control player movement speed.
+	 *
+	 * @param {number} amount - The amount of delay to set (in seconds).
+	 * @returns {void}
+	 */
+	updateMoveDelay: function( amount = mapper.CONFIG.moveDelay ) {
+
+		// We use Math.max to ensure we don't reduce an existing longer delay.
+		mapper.sceneGame.moveDelay = Math.max( amount, mapper.sceneGame.moveDelay );
 
 	},
 

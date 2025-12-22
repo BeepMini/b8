@@ -47,7 +47,7 @@ mapper.sceneGame = {
 		if ( b8.key( "ButtonA" ) ) { mapper.doAttack( mapper.player ); keyPressed = true; }
 
 		// Update move delay when a key is pressed.
-		if ( keyPressed ) mapper.sceneGame.moveDelay = mapper.CONFIG.moveDelay;
+		if ( keyPressed ) mapper.updateMoveDelay();
 
 		// Move player.
 		if ( dx !== 0 || dy !== 0 ) {
@@ -141,7 +141,7 @@ mapper.sceneGame = {
 
 		// A button.
 		b8.locate( 11, b8.CONFIG.SCREEN_ROWS - 4 );
-		b8.print( ' ' );
+		b8.print( ' Hit' );
 
 		// B button.
 		b8.locate( 15, b8.CONFIG.SCREEN_ROWS - 4 );
