@@ -44,10 +44,10 @@
 	/**
 	 * Draw Vfx at a specific position.
 	 *
-	 * @param {Object} animation - The animation to draw.
-	 * @param {number} x - The x position to draw the Vfx.
-	 * @param {number} y - The y position to draw the Vfx.
-	 * @param {number} startTime - The start time of the animation.
+	 * @param {Object} animation The animation to draw.
+	 * @param {number} x The x position to draw the Vfx.
+	 * @param {number} y The y position to draw the Vfx.
+	 * @param {number} startTime The start time of the animation.
 	 * @returns {void}
 	 */
 	const drawVfx = function( animation, x, y, startTime ) {
@@ -69,11 +69,11 @@
 	/**
 	 * Draw Vfx at the current cursor position.
 	 *
-	 * @param {string} animation - The animation to draw.
-	 * @param {number} startTime - The start time of the animation.
-	 * @param {number} [offsetCol=0] - The x offset to apply to the drawing position.
-	 * @param {number} [offsetRow=0] - The y offset to apply to the drawing position.
-	 * @return {boolean} - Returns true if the animation is still playing, false if it has finished.
+	 * @param {string} animation The animation to draw.
+	 * @param {number} startTime The start time of the animation. If null, uses the core start time. If startTime is in the future, the animation will delayed until startTime.
+	 * @param {number} [offsetCol=0] The x offset to apply to the drawing position.
+	 * @param {number} [offsetRow=0] The y offset to apply to the drawing position.
+	 * @return {boolean} Returns true if the animation is still playing, false if it has finished.
 	 */
 	b8.Vfx.draw = function( animation, startTime, offsetCol = 0, offsetRow = 0 ) {
 
@@ -95,7 +95,7 @@
 	 * Draw Vfx at a specific position.
 	 *
 	 * @param {string} animation The animation to draw.
-	 * @param {number|null} startTime The start time of the animation. If null, uses the core start time.
+	 * @param {number|null} startTime The start time of the animation. If null, uses the core start time. If startTime is in the future, the animation will delayed until startTime.
 	 * @param {number} x The x position to draw the Vfx.
 	 * @param {number} y The y position to draw the Vfx.
 	 * @returns {boolean} Returns true if the animation is still playing, false if it has finished.
