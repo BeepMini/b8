@@ -23,12 +23,12 @@
 		},
 		'swipe': {
 			frames: [ 18, 19, 20, 20, 20, 21, 22 ],
-			fps: 12,
+			fps: 18,
 		},
 		'skull': {
 			frames: [ 24, 24, 25, 26, 27, 28, 28, 29 ],
 			fps: 12,
-		}
+		},
 	};
 
 
@@ -100,15 +100,11 @@
 	 */
 	b8.Vfx.spr = function( animation, startTime, x, y ) {
 
-		b8.Utilities.checkString( "animation", animation );
-		if ( b8.Vfx.animations[ animation ] === undefined ) {
-			b8.Utilities.fatal( "Invalid Vfx animation: " + animation );
-		}
 		if ( startTime !== null ) b8.Utilities.checkNumber( "startTime", startTime );
 		b8.Utilities.checkNumber( "x", x );
 		b8.Utilities.checkNumber( "y", y );
 
-		const anim = b8.Vfx.animations[ animation ];
+		const anim = b8.Vfx.get( animation );
 
 		if ( !b8.Animation.shouldLoop( anim, startTime ) ) return false;
 
@@ -123,5 +119,21 @@
 	};
 
 
+	/**
+	 * Get Vfx animation by id.
+	 *
+	 * @param {string} animation The animation id.
+	 * @returns {Object|undefined} The Vfx animation object, or undefined if not found.
+	 */
+	b8.Vfx.get = function( animation ) {
+
+		b8.Utilities.checkString( "animation", animation );
+		if ( b8.Vfx.animations[ animation ] === undefined ) {
+			b8.Utilities.fatal( "Invalid Vfx animation: " + animation );
+		}
+
+		return b8.Vfx.animations[ animation ];
+
+	};
 
 } )( b8 );
