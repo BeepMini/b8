@@ -156,9 +156,16 @@ const mapper = {
 
 					break;
 
+				case 'vfx':
+
+					b8.Vfx.draw( spr.id, spr.startTime );
+
+					break;
+
 				default:
 
 					b8.printChar( parseInt( spr.tile ) );
+
 					break;
 
 			}
