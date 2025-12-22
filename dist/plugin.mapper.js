@@ -11,6 +11,7 @@ const mapper = {
   bg: {},
   // The player entity ID.
   player: null,
+  // Cooldown timer for actions such as key presses.
   actionCooldown: 0,
   /**
    * Initialize and start the game with the provided map data.
@@ -35,7 +36,6 @@ const mapper = {
     b8.ECS.run(dt);
     mapper.actionCooldown -= dt;
     if (mapper.actionCooldown < 0) mapper.actionCooldown = 0;
-    console.log("mapper update dt", dt);
   },
   /**
    * Draw an actor at its location with optional offsets.
@@ -60,6 +60,22 @@ const mapper = {
     mapper.actionCooldown = mapper.CONFIG.keyPressDelay;
   },
   /**
+   * Set the player's walking animation based on movement direction.
+   *
+   * @param {number} playerId - The entity ID of the player.
+   * @param {number} dx - The change in x (column) direction.
+   * @param {number} dy - The change in y (row) direction.
+   * @returns {void}
+   */
+  setPlayerWalkAnimation: function(playerId, dx, dy) {
+    const anim = b8.ECS.getComponent(playerId, "CharacterAnimation");
+    if (dy > 0) anim.name = "move-down";
+    if (dy < 0) anim.name = "move-up";
+    if (dx > 0) anim.name = "move-right";
+    if (dx < 0) anim.name = "move-left";
+    anim.duration = 0.3;
+  },
+  /**
    * Render all entities on the screen with optional offsets.
    *
    * @param {number} offsetX - Horizontal offset for rendering.
@@ -80,10 +96,20 @@ const mapper = {
       const pos = mapper.camera.getTilePosition(loc.col, loc.row);
       b8.locate(pos.col + offsetX2, pos.row + offsetY2);
       b8.color(spr.fg ?? 15, spr.bg ?? 0);
-      if ("actor" === spr.type) {
-        b8.drawActor(parseInt(spr.tile), anim.name);
-      } else {
-        b8.printChar(parseInt(spr.tile));
+      switch (spr.type) {
+        case "actor":
+          let nudgeCol = 0;
+          let nudgeRow = 0;
+          if (spr.nudgeCol) nudgeCol = spr.nudgeCol;
+          if (spr.nudgeRow) nudgeRow = spr.nudgeRow;
+          b8.drawActor(parseInt(spr.tile), anim.name, nudgeCol, nudgeRow);
+          break;
+        case "vfx":
+          b8.Vfx.draw(spr.id, spr.startTime);
+          break;
+        default:
+          b8.printChar(parseInt(spr.tile));
+          break;
       }
     }
   },
@@ -216,21 +242,112 @@ const mapper = {
    * @returns {void}
    */
   doAction: (playerId) => {
+    if (mapper.actionCooldown > 0) return;
     const action = mapper.promptAhead(playerId);
-    console.log("do action ", action);
     if (action && mapper.actions[action]) {
       mapper.actions[action](playerId);
     }
   },
+  /**
+   * Perform an attack action for the specified player.
+   *
+   * @param {number} playerId - The entity ID of the player.
+   * @returns {void}
+   */
+  doAttack: (playerId) => {
+    const ahead = mapper.ahead(playerId);
+    console.log("doAttack");
+    const ids = mapper.entitiesAhead(playerId);
+    for (const targetId of ids) {
+      if (targetId === playerId) continue;
+      if (b8.ECS.hasComponent(targetId, "AttackTarget")) {
+        const targetHealth = b8.ECS.getComponent(targetId, "Health");
+        const playerAttack = b8.ECS.getComponent(playerId, "Attack") || { value: 1 };
+        targetHealth.value -= playerAttack.value;
+        if (targetHealth.value <= 0) {
+          b8.ECS.removeEntity(targetId);
+          mapper.types.vfx.spawn(
+            ahead.x,
+            ahead.y,
+            { id: "skull", fg: 2, bg: 0 }
+          );
+          return;
+        }
+        break;
+      }
+    }
+    mapper.types.vfx.spawn(
+      ahead.x,
+      ahead.y,
+      { id: "swipe", fg: 15, bg: 0 }
+    );
+  },
+  /**
+   * Check if the provided map ID is valid.
+   *
+   * @param {number} mapId - The map ID to validate.
+   * @returns {boolean} True if the map ID is valid, false otherwise.
+   */
   isValidMapId: (mapId) => {
     return typeof mapId === "number" && mapId >= 0;
+  },
+  /**
+   * Remove an object of a specific type at the given coordinates from the current map.
+   *
+   * @param {number} col - The column coordinate of the object to remove.
+   * @param {number} row - The row coordinate of the object to remove.
+   * @param {string} type - The type of the object to remove.
+   * @returns {void}
+   */
+  removeObjectAt: function(col, row, type) {
+    const currentMap = mapper.getCurrentMap();
+    currentMap.objects = currentMap.objects.filter(
+      (obj) => !(obj.x === col && obj.y === row && obj.type.startsWith(type))
+    );
+  },
+  /**
+   * Change the type of an object at the given coordinates in the current map.
+   *
+   * @param {number} col - The column coordinate of the object to change.
+   * @param {number} row - The row coordinate of the object to change.
+   * @param {string} type - The current type of the object to change.
+   * @param {string} newType - The new type to set for the object.
+   * @returns {void}
+   */
+  changeObjectTypeAt: function(col, row, type, newType) {
+    console.log("changeObjectTypeAt", col, row, type, newType);
+    const currentMap = mapper.getCurrentMap();
+    for (const obj of currentMap.objects) {
+      if (obj.x === col && obj.y === row && obj.type.startsWith(type)) {
+        obj.type = newType;
+        return;
+      }
+    }
+  },
+  /**
+   * Give rewards to the player.
+   *
+   * @param {number} playerId - The entity ID of the player.
+   * @param {Array} rewards - An array of reward objects to give to the player.
+   * @returns {void}
+   */
+  giveRewards: function(playerId, rewards = []) {
+    if (!rewards || rewards.length === 0) return;
+    rewards.forEach(
+      (reward) => {
+        if (!reward.type) return;
+        if (!reward.props) reward.props = {};
+        const fn = mapper.types[reward.type]?.pickupHandler;
+        if (fn) fn(playerId, reward);
+      }
+    );
   }
 };
 mapper.CONFIG = {
   // Time in seconds for player movement delay.
-  moveDelay: 0.15,
+  moveDelay: 0.2,
   // Key press delay.
-  keyPressDelay: 0.15,
+  keyPressDelay: 0.25,
   /**
    * Offset to apply when drawing the map and actors.
    * This is to account for any borders or UI elements.
@@ -239,6 +356,32 @@ mapper.CONFIG = {
   mapOffsetY: 1,
   // UI graphics.
   gameUI: `hpgYhRhhCAAAoIUYYQgAAKCFGGEIAACghRhhCAAAoIUYYQgAAKCFGGEIAACghRhhCAAAoIUYYQgAAKCFGGEIAACghRhhCAAAoIUYYQgAAKCFGGEIAACghRhhCAAAoIUYYQgAAKCFGGEIAACghRhhCAAAoIUYYQgAAKCFGGEIAACghRhhCAAAoIUYYQgAAKCFGJUHAACghRiVBwAAoIUYlQcAAKCFGJUKAACgmBiFGBwHBgCghRgZBwYAoIUYGQcGAKCFGBkHBgCghRgZBwYAoIUYGQcGAKCFDAYHAKCFGBkHBgCghRgZBwYAoIUYGQcGAKCFGBkHBgCghRgZBwYAoIUYGQcGAKCFGBkHBgCghRgZBwYAoIUYGQcGAKCFGBkHBgCghRgZBwYAoIUYGQcGAKCFGB0HBgCghRgZBwgAoIUYIAgHAKCFGCsHBgCghRkBXAoAAKCYGIUYKwYHAKCFEgAHAKCFAAgAAKCFAAgAAKCFAAgAAKCFAwEAAKCFAAgAAKCFAA8AAKCFEwAHAKCFAQcGAKCFGQG0CgcAoIUBBwYAoIUBBwYAoIUBBwYAoIUZAbUKBwCghQEHBgCghQEHBgCghQEHBgCghQEHBgCghREGBwCghQAAAACghRMABwCghRgrBwYAoIUZAV4KAACgmBiFGCsGBwCghQEABwCghRkBnwgAAKCFGQGfCAAAoIUZAZ8IAACghRkBnwgAAKCFGQGfCAAAoIUZAZ8IAACghQEABwCghRg9AAEAoIUYPQABAKCFGD0AAQCghRg9AAEAoIUYPQABAKCFGD0AAQCghRg9AAEAoIUYPQABAKCFGD4AAQCghQEHBgCghRgrBwYAoIUAAAAAoIUAAAAAoIUYKwcGAKCFGQFdCgAAoJgYhRgrBgcAoIUBAAcAoIUBAAEAoIUADgAAoIUADwAAoIUADwAAoIUADwAAoIUADwAAoIUAAQAAoIUABQEAoIUBAQcAoIUBAQcAoIUBAQcAoIUBAQcAoIUBAQcAoIUBAQcAoIUBAQcAoIUYUAABAKCFAAYHAKCFGCsHBgCghQAAAACghRglAAcAoIUYKwcGAKCFGQFeCgAAoJgYhRguBwYAoIUBAAEAoIUAAQAAoIUAAQAAoIUAAQAAoIUAAQAAoIURAQAAoIURAQAAoIUBAAEAoIUYYQABAKCFGGEAAQCghRhhAAEAoIUYYQABAKCFGGEAAQCghRhhAAEAoIURBgEAoIURBgEAoIUYYgABAKCFEQYHAKCFGC8HBgCghRgZBgcAoIUYGQYHAKCFGDEHBgCghRkBXQoAAKA=`
+};
+mapper.actions.open = async function(playerId) {
+  const entities = mapper.entitiesAhead(playerId);
+  for (const id of entities) {
+    const obj = b8.ECS.getComponent(id, "Openable");
+    const sprite = b8.ECS.getComponent(id, "Sprite");
+    if (!obj || !sprite) continue;
+    if (obj.openedTile) sprite.tile = obj.openedTile;
+    if (obj.newType) {
+      const loc = b8.ECS.getComponent(id, "Loc");
+      const type = b8.ECS.getComponent(id, "Type");
+      mapper.changeObjectTypeAt(loc.col, loc.row, type.name, obj.newType);
+    }
+    b8.Sfx.play("tone/jingle/017");
+    const rewards = b8.ECS.getComponent(id, "Reward");
+    mapper.giveRewards(playerId, rewards?.items || []);
+    b8.ECS.removeComponent(id, "Reward");
+    b8.ECS.removeComponent(id, "Action");
+    b8.ECS.removeComponent(id, "Openable");
+    const messageComponent = b8.ECS.getComponent(id, "Message");
+    if (messageComponent?.message?.length > 0) {
+      b8.ECS.addComponent(id, "Action", { verb: "read" });
+    }
+    mapper.delayKeyPress();
+    return;
+  }
 };
 mapper.actions.pull = function(playerId) {
   const loc = b8.ECS.getComponent(playerId, "Loc");
@@ -251,7 +394,10 @@ mapper.actions.read = async function(playerId) {
     const obj = b8.ECS.getComponent(id, "Message");
     const sprite = b8.ECS.getComponent(id, "Sprite");
     if (!obj || !sprite) continue;
-    b8.color(sprite.fg ?? 15, sprite.bg ?? 5);
+    b8.color(
+      sprite.fg ?? 15,
+      sprite.bg ?? 5
+    );
     const message = mapper.helpers.processChatText(obj.message || "");
     await b8.Async.dialogTypewriter(message, ["OK"], 20);
     mapper.delayKeyPress();
@@ -332,9 +478,7 @@ mapper.collision = {
       return false;
     }
     let mapCell = currentMap.mapData[row][col];
-    if (true === mapCell[3]) {
-      return false;
-    }
+    if (true === mapCell[3]) return false;
     return true;
   }
 };
@@ -384,7 +528,6 @@ mapper.load = function(mapData) {
   mapper.currentMapId = null;
   b8.Utilities.checkObject("mapData", mapData);
   if (mapData.version === 1) mapData = mapper.upgradeMapDataV1toV2(mapData);
-  console.log("map data", mapData);
   mapper.settings = { ...mapData.settings };
   b8.Utilities.checkObject("mapper.settings", mapper.settings);
   mapData.levels.forEach(
@@ -411,7 +554,6 @@ mapper.load = function(mapData) {
     }
   );
   if (mapper.settings.gameName) {
-    console.log(`Starting game: ${mapper.settings.gameName}`);
     b8.CONFIG.NAME = mapper.settings.gameName;
   }
   mapper.player = b8.ECS.create(
@@ -426,10 +568,18 @@ mapper.load = function(mapData) {
         bg: 0,
         depth: 100
       },
+      Solid: {},
       CharacterAnimation: {
         name: "idle",
         default: "idle",
         duration: 0
+      },
+      Health: {
+        value: 2,
+        max: 12
+      },
+      Attack: {
+        value: 1
       }
     }
   );
@@ -440,13 +590,17 @@ mapper.load = function(mapData) {
   }
   b8.data.totalCoins = coinCount;
   b8.ECS.addSystem("characterAnimation", mapper.systems.characterAnimation);
+  b8.ECS.addSystem("pathFollower", mapper.systems.pathFollower);
+  b8.ECS.addSystem("sprite", mapper.systems.sprite);
+  b8.ECS.addSystem("bumpAttack", mapper.systems.bumpAttack);
+  b8.ECS.addSystem("pickup", mapper.systems.pickup);
+  b8.ECS.addSystem("vfx", mapper.systems.vfx);
   if (mapper.settings.bgm) b8.Music.play(mapper.settings.bgm);
   if (mapper.settings.splash && mapper.settings.splash.length > 10 && b8.Tilemap.validateTilemap(mapper.settings.splash)) {
     mapper.bg.splash = b8.Tilemap.load(mapper.settings.splash);
   }
 };
 mapper.upgradeMapDataV1toV2 = function(mapData) {
-  console.log("Upgrading map data from v1 to v2");
   const level = {
     mapData: [...mapData.map],
     objects: [...mapData.objects],
@@ -469,7 +623,6 @@ mapper.setCurrentMap = function(mapId) {
   }
   if (mapId === mapper.currentMapId) return;
   let currentMap = mapper.maps[mapId];
-  console.log(currentMap);
   if (!currentMap.objects) currentMap.objects = [];
   const allEntities = b8.ECS.getAllEntities();
   for (const entityId of allEntities) {
@@ -533,7 +686,6 @@ mapper.menu = {
   drawSplash: function() {
     if (mapper.bg.splash) {
       b8.Tilemap.draw(mapper.bg.splash);
-      console.log("Drawing b8 logo");
       b8.locate(b8.CONFIG.SCREEN_COLS - 1, b8.CONFIG.SCREEN_ROWS - 1);
       b8.color(15, 0);
       b8.printChar(88);
@@ -550,6 +702,7 @@ mapper.menu = {
 };
 mapper.sceneGame = {
   UI: null,
+  moveDelay: 0.15,
   /**
    * Initialize the game scene.
    *
@@ -565,39 +718,44 @@ mapper.sceneGame = {
    * @returns {void}
    */
   update: function(dt) {
-    mapper.CONFIG.moveDelay -= dt;
-    if (mapper.CONFIG.moveDelay > 0) return;
+    mapper.update(dt);
+    mapper.sceneGame.moveDelay -= dt;
+    if (mapper.sceneGame.moveDelay > 0) return;
     const loc = b8.ECS.getComponent(mapper.player, "Loc");
-    const anim = b8.ECS.getComponent(mapper.player, "CharacterAnimation");
-    if (mapper.CONFIG.moveDelay > 0) return;
-    let dx = 0, dy = 0;
-    if (b8.keyp("ArrowUp")) {
+    let dx = 0, dy = 0, keyPressed = false;
+    if (b8.key("ArrowUp")) {
       dy = -1;
-    } else if (b8.keyp("ArrowDown")) {
+      keyPressed = true;
+    } else if (b8.key("ArrowDown")) {
       dy = 1;
-    } else if (b8.keyp("ArrowLeft")) {
+      keyPressed = true;
+    } else if (b8.key("ArrowLeft")) {
       dx = -1;
-    } else if (b8.keyp("ArrowRight")) {
+      keyPressed = true;
+    } else if (b8.key("ArrowRight")) {
       dx = 1;
+      keyPressed = true;
     }
-    if (b8.keyp("ButtonB") && 0 === mapper.actionCooldown) mapper.doAction(mapper.player);
+    if (b8.key("ButtonB")) {
+      mapper.doAction(mapper.player);
+      keyPressed = true;
+    }
+    if (b8.key("ButtonA")) {
+      mapper.doAttack(mapper.player);
+      keyPressed = true;
+    }
+    if (keyPressed) mapper.sceneGame.moveDelay = mapper.CONFIG.moveDelay;
     if (dx !== 0 || dy !== 0) {
       let newCol = loc.col + dx;
       let newRow = loc.row + dy;
-      if (dy > 0) anim.name = "move-down";
-      if (dy < 0) anim.name = "move-up";
-      if (dx > 0) anim.name = "move-right";
-      if (dx < 0) anim.name = "move-left";
-      anim.duration = 0.3;
+      mapper.setPlayerWalkAnimation(mapper.player, dx, dy);
       if (!mapper.collision.isWalkable(newCol, newRow) || mapper.doCollision(loc.col, loc.row, newCol, newRow, dx, dy)) {
         newCol = loc.col;
         newRow = loc.row;
       }
       b8.ECS.setComponent(mapper.player, "Direction", { dx, dy });
       b8.ECS.setLoc(mapper.player, newCol, newRow);
-      mapper.CONFIG.moveDelay = 0.15;
     }
-    mapper.update(dt);
   },
   /**
    * Render the game scene.
@@ -616,6 +774,24 @@ mapper.sceneGame = {
     b8.printChar(mapper.settings.coin || 266);
     b8.color(15, 0);
     b8.print(" " + parseInt(b8.Inventory.getCount("coin")).toString().padStart(4, "0"));
+    const health = b8.ECS.getComponent(mapper.player, "Health");
+    const max = health.max;
+    const hp = health.value;
+    for (let i = 0; i < Math.floor(max / 2); i++) {
+      const x = 2 + i;
+      const y = b8.CONFIG.SCREEN_ROWS - 3;
+      b8.locate(x, y);
+      if (hp >= i * 2 + 2) {
+        b8.color(8, 0);
+        b8.printChar(415);
+      } else if (hp === i * 2 + 1) {
+        b8.color(8, 0);
+        b8.printChar(416);
+      } else {
+        b8.color(6, 0);
+        b8.printChar(417);
+      }
+    }
     const keys = b8.Inventory.filter(/^key/);
     keys.forEach(
       (item, index) => {
@@ -693,6 +869,24 @@ mapper.sceneMenu = {
     setTimeout(mapper.sceneMenu.main, 10);
   }
 };
+mapper.systems.bumpAttack = function(dt) {
+  const ids = b8.ECS.query("BumpAttack");
+  for (const id of ids) {
+    const bump = b8.ECS.getComponent(id, "BumpAttack");
+    const targetId = bump.targetId;
+    if (!b8.ECS.hasComponent(targetId, "Health")) {
+      b8.ECS.removeComponent(id, "BumpAttack");
+      continue;
+    }
+    const targetHealth = b8.ECS.getComponent(targetId, "Health");
+    const attackerAttack = b8.ECS.getComponent(id, "Attack") || { value: 1 };
+    targetHealth.value -= attackerAttack.value;
+    if (targetHealth.value <= 0) {
+      b8.ECS.removeEntity(targetId);
+    }
+    b8.ECS.removeComponent(id, "BumpAttack");
+  }
+};
 mapper.systems.characterAnimation = function(dt) {
   const anims = b8.ECS.query("CharacterAnimation");
   if (!anims) return;
@@ -719,9 +913,100 @@ mapper.systems.characterAnimation = function(dt) {
     }
   }
 };
+mapper.systems.pathFollower = async function(dt) {
+  const animationMap = {
+    "U": "move-up",
+    "D": "move-down",
+    "L": "move-left",
+    "R": "move-right",
+    "FU": "idle-up",
+    "FD": "idle-down",
+    "FL": "idle-left",
+    "FR": "idle-right"
+  };
+  const animationInverse = {
+    "U": "D",
+    "D": "U",
+    "L": "R",
+    "R": "L",
+    "FU": "FD",
+    "FD": "FU",
+    "FL": "FR",
+    "FR": "FL"
+  };
+  const ids = b8.ECS.query("Loc", "PathFollower");
+  for (const id of ids) {
+    const pf = b8.ECS.getComponent(id, "PathFollower");
+    if (!pf) continue;
+    if (!pf.steps.length) continue;
+    pf.timer -= dt;
+    if (pf.timer > 0) continue;
+    pf.timer = mapper.CONFIG.moveDelay * 2;
+    const step = pf.steps[pf.index];
+    let canMove = false;
+    if (step.dir && step.dir[0] === "F") canMove = true;
+    if (mapper.collision.isWalkable(step.x, step.y) && !mapper.collision.isSolidAt(step.x, step.y)) {
+      canMove = true;
+    }
+    if (!canMove) continue;
+    b8.ECS.setLoc(id, step.x, step.y);
+    _advancePathIndex(pf);
+    const anim = b8.ECS.getComponent(id, "CharacterAnimation");
+    anim.duration = 0.5;
+    if (animationMap[step.dir]) {
+      let direction = step.dir;
+      if (pf.dirStep === -1) {
+        direction = animationInverse[step.dir] || step.dir;
+      }
+      anim.name = animationMap[direction];
+    }
+  }
+  function _advancePathIndex(pf) {
+    const last = pf.steps.length - 1;
+    switch (pf.mode) {
+      // Advance index until the last step, then stop.
+      case "once":
+        if (pf.index < last) pf.index++;
+        break;
+      // Advance index and loop back to start after last step.
+      case "loop":
+        pf.index = (pf.index + 1) % pf.steps.length;
+        break;
+      // Advance index back and forth between first and last step.
+      case "pingpong":
+      default:
+        if (pf.index === 0) {
+          pf.dirStep = 1;
+        } else if (pf.index === last) {
+          pf.dirStep = -1;
+        }
+        pf.index += pf.dirStep;
+        break;
+    }
+  }
+};
+mapper.systems.pickup = function() {
+  const playerId = mapper.player;
+  const pLoc = b8.ECS.getComponent(playerId, "Loc");
+  const pickupIds = b8.ECS.query("Pickup", "Loc");
+  pickupIds.forEach(
+    (id) => {
+      const loc = b8.ECS.getComponent(id, "Loc");
+      if (loc.col !== pLoc.col || loc.row !== pLoc.row) return;
+      const pickup = b8.ECS.getComponent(id, "Pickup");
+      mapper.giveRewards(
+        playerId,
+        [{ type: pickup.type, props: pickup.props }]
+      );
+      if (pickup.consume) {
+        b8.ECS.removeEntity(id);
+        mapper.removeObjectAt(loc.col, loc.row, pickup.type);
+      }
+    }
+  );
+};
 mapper.systems.tryPortal = async function(col, row) {
   const id = b8.ECS.entitiesAt(col, row);
-  console.log("Checking for portal at", col, row, id);
   if (!id) return false;
   for (const entityId of id) {
     const portal = b8.ECS.getComponent(entityId, "Portal");
@@ -777,10 +1062,23 @@ mapper.systems.tryPulling = (col, row, dx, dy, playerId) => {
     }
     b8.ECS.setLoc(id, col, row);
     b8.ECS.setLoc(playerId, backCol, backRow);
+    mapper.setPlayerWalkAnimation(playerId, dx, dy);
     b8.Sfx.play("fx/action/drag");
     return true;
   }
   return false;
+};
+mapper.systems.sprite = function(dt) {
+  const ids = b8.ECS.query("Sprite");
+  for (const id of ids) {
+    const spr = b8.ECS.getComponent(id, "Sprite");
+    if (spr.nudgeCol) {
+      spr.nudgeCol = spr.nudgeCol * 0.75;
+    }
+    if (spr.nudgeRow) {
+      spr.nudgeRow = spr.nudgeRow * 0.75;
+    }
+  }
 };
 mapper.systems.teleportSystem = async function(dt) {
   const list = b8.ECS.query("Teleport");
@@ -802,14 +1100,129 @@ mapper.systems.teleportSystem = async function(dt) {
     b8.ECS.removeComponent(id, "Teleport");
   }
 };
-mapper.types.skeleton = {
-  init: function(obj) {
+mapper.systems.vfx = async function(dt) {
+  const list = b8.ECS.query("Vfx", "Sprite");
+  for (const id of list) {
+    const sprite = b8.ECS.getComponent(id, "Sprite");
+    const animation = b8.Vfx.get(sprite.id);
+    if (animation) {
+      if (b8.Animation.shouldLoop(animation, sprite.startTime)) continue;
+    }
+    b8.ECS.removeEntity(id);
+  }
+};
+mapper.types.skeleton = {};
+mapper.types.chestOpen = {
+  spawn: function(col, row, props) {
+    const entitySettings = {
+      Type: { name: "chest" },
+      Loc: { col, row },
+      Sprite: {
+        tile: 271,
+        fg: props.fg || 15,
+        bg: props.bg || 0,
+        depth: 10
+      },
+      Solid: {}
+    };
+    if (props.message) {
+      entitySettings.Message = { text: props.message };
+      entitySettings.Action = { verb: "read" };
+    }
+    return b8.ECS.create(entitySettings);
+  }
+};
+mapper.types.chest = {
+  items: {
+    0: "Empty",
+    1: "Key",
+    2: "Coin",
+    3: "10 Coins",
+    4: "50 Coins",
+    5: "Half Heart",
+    6: "Heart",
+    7: "Full Heart"
+    // 4: '1 Bomb',
+    // 5: '5 Bombs',
   },
-  onCharacterCollision: async function(obj, newCol, newRow, dx, dy) {
-  },
-  update: function(obj) {
-  },
-  render: function(obj, offsetX2 = 0, offsetY2 = 0) {
+  spawn: function(col, row, props) {
+    let items = [];
+    let foregroundColor = props.fg || 15;
+    let containsType = "";
+    if (mapper.types.chest.items[props.contains]) {
+      containsType = mapper.types.chest.items[props.contains];
+    }
+    if (containsType === "Key") {
+      items.push(
+        {
+          type: "key",
+          props: { name: `key-${foregroundColor}` }
+        }
+      );
+    }
+    if (containsType.endsWith("Coins")) {
+      items.push(
+        {
+          type: "coin",
+          props: { amount: parseInt(containsType.split(" ")[0], 10) }
+        }
+      );
+    }
+    if (containsType === "Coin") {
+      items.push(
+        {
+          type: "coin",
+          props: { amount: 1 }
+        }
+      );
+    }
+    if (containsType === "Half Heart") {
+      items.push(
+        {
+          type: "health",
+          props: { amount: 1 }
+        }
+      );
+    }
+    if (containsType === "Heart") {
+      items.push(
+        {
+          type: "health",
+          props: { amount: 2 }
+        }
+      );
+    }
+    if (containsType === "Full Heart") {
+      items.push(
+        {
+          type: "health",
+          props: { amount: 9999 }
+        }
+      );
+    }
+    return b8.ECS.create(
+      {
+        Type: { name: "chest" },
+        Loc: { col, row },
+        Sprite: {
+          tile: 253,
+          fg: foregroundColor,
+          bg: props.bg || 0,
+          depth: 10
+        },
+        Solid: {},
+        Openable: {
+          closedTile: 253,
+          openedTile: 271,
+          newType: "chestOpen"
+        },
+        Message: { message: props.message || "" },
+        Reward: { items },
+        Action: {
+          verb: "open"
+        }
+      }
+    );
   }
 };
 mapper.types.coin = {
@@ -822,31 +1235,29 @@ mapper.types.coin = {
    * @returns {number} The entity ID of the spawned coin.
    */
   spawn: function(col, row, props) {
-    return b8.ECS.create(
+    return mapper.types.pickup.spawn(
+      col,
+      row,
       {
-        Type: { name: "coin" },
-        Loc: { col, row },
+        type: "coin",
         Sprite: {
           tile: parseInt(mapper.settings.coin) || 266,
-          fg: props.fg || 14,
+          fg: mapper.settings.coinColor || 14,
           bg: props.bg || 0
         }
       }
     );
   },
   /**
-   * Handle character collision with coin.
+   * Handle the player picking up the coin.
    *
-   * @param {number} id - The entity ID of the coin.
-   * @returns {boolean} False to allow stepping onto the coin tile.
+   * @param {number} playerId - The entity ID of the player.
+   * @param {Object} pickup - The Pickup component of the coin.
+   * @returns {void}
    */
-  onCharacterCollision: function(id) {
-    const currentMap = mapper.getCurrentMap();
-    currentMap.objects = currentMap.objects.filter((obj) => obj.id !== id);
-    b8.ECS.removeEntity(id);
-    b8.Inventory.add("coin");
+  pickupHandler: function(playerId, pickup) {
+    b8.Inventory.add("coin", pickup?.props?.amount || 1);
     b8.Sfx.play("game/coin/002");
-    return false;
   }
 };
 mapper.types.crate = {
@@ -952,6 +1363,141 @@ mapper.types.door = {
     return true;
   }
 };
+mapper.types.enemy = {
+  // Properties [ health, attack, color ]
+  difficulties: {
+    "Easy": [3, 1, 11],
+    "Medium": [5, 2, 9],
+    "Hard": [8, 3, 8]
+  },
+  spawn: function(col, row, props) {
+    const initialDirection = "D";
+    const difficulty = props.health || "Easy";
+    const [health, attack, color] = mapper.types.enemy.difficulties[difficulty] || mapper.types.enemy.difficulties["Easy"];
+    const characterProperties = {
+      Type: { name: "enemy" },
+      Loc: { col, row },
+      Sprite: {
+        type: "actor",
+        tile: parseInt(props.actor) || 6,
+        fg: color || 15,
+        bg: 0,
+        depth: 50
+      },
+      Solid: {},
+      CharacterAnimation: {
+        name: "idle",
+        default: "idle",
+        duration: 0
+      },
+      AttackTarget: {},
+      Health: {
+        value: health || 3,
+        max: health || 3
+      },
+      Attack: {
+        value: attack || 1
+      }
+    };
+    if (props.path && b8.Path.validPathSyntax(props.path)) {
+      let mode = props.mode || "pingpong";
+      const steps = b8.Path.parseCode(
+        props.path,
+        col,
+        // startCol
+        row,
+        // startRow
+        initialDirection
+        // initialDir
+      );
+      const lastStep = steps.length - 1;
+      if (steps[lastStep].x === col && steps[lastStep].y === row) {
+        mode = "loop";
+      }
+      characterProperties.PathFollower = {
+        steps,
+        index: 0,
+        mode,
+        dirStep: 1,
+        // for pingpong direction: 1 or -1
+        timer: 0,
+        // accumulates dt
+        startDir: props.startDir || initialDirection
+      };
+    }
+    ;
+    return b8.ECS.create(characterProperties);
+  }
+};
+mapper.types.healthFull = {
+  spawn: function(col, row, props) {
+    return mapper.types.pickup.spawn(
+      col,
+      row,
+      {
+        type: "health",
+        // Set this health pickup to a large amount,
+        // It will fully heal the player.
+        // The value will be capped at max health in the handler.
+        props: { amount: 1e3 },
+        Sprite: {
+          tile: 414,
+          fg: 10,
+          bg: 0
+        }
+      }
+    );
+  }
+  // pickupHandler()
+  // Handled by mapper.types.health.pickupHandler
+};
+mapper.types.healthHalf = {
+  spawn: function(col, row, props) {
+    return mapper.types.pickup.spawn(
+      col,
+      row,
+      {
+        type: "health",
+        props: { amount: 1 },
+        Sprite: {
+          tile: 416,
+          fg: 8,
+          bg: 0
+        }
+      }
+    );
+  }
+  // pickupHandler()
+  // Handled by mapper.types.health.pickupHandler
+};
+mapper.types.health = {
+  spawn: function(col, row, props) {
+    return mapper.types.pickup.spawn(
+      col,
+      row,
+      {
+        type: "health",
+        props: { amount: 2 },
+        Sprite: {
+          tile: 415,
+          fg: 8,
+          bg: 0
+        }
+      }
+    );
+  },
+  /**
+   * Handle the player picking up the health pickup.
+   *
+   * @param {number} playerId - The entity ID of the player.
+   * @param {Object} pickup - The Pickup component of the health item.
+   * @returns {void}
+   */
+  pickupHandler: function(playerId, pickup) {
+    const health = b8.ECS.getComponent(playerId, "Health");
+    health.value = Math.min(health.max, health.value + (pickup.props.amount || 1));
+  }
+};
 mapper.types.key = {
   /**
    * Spawn a key entity at the specified location.
@@ -962,10 +1508,13 @@ mapper.types.key = {
    * @returns {number} The entity ID of the spawned key.
    */
   spawn: function(col, row, props) {
-    return b8.ECS.create(
+    const color = props.fg || 14;
+    return mapper.types.pickup.spawn(
+      col,
+      row,
       {
-        Type: { name: "key" },
-        Loc: { col, row },
+        type: "key",
+        props: { name: `key-${color}` },
         Sprite: {
           tile: 255,
           fg: props.fg || 14,
@@ -975,23 +1524,39 @@ mapper.types.key = {
     );
   },
   /**
-   * Handle character collision with key.
+   * Handle the player picking up the key.
    *
-   * @param {number} id - The entity ID of the key.
-   * @param {number} newCol - The column the character is moving to.
-   * @param {number} newRow - The row the character is moving to.
-   * @param {number} dx - The change in column direction.
-   * @param {number} dy - The change in row direction.
-   * @returns {boolean} False to allow movement onto the key tile.
+   * @param {number} playerId - The entity ID of the player.
+   * @param {Object} pickup - The Pickup component of the key.
+   * @returns {void}
    */
-  onCharacterCollision: function(id, newCol, newRow, dx, dy) {
-    const keyName = `key-${b8.ECS.getComponent(id, "Sprite").fg ?? "default"}`;
-    b8.Inventory.add(keyName);
-    const currentMap = mapper.getCurrentMap();
-    currentMap.objects = currentMap.objects.filter((obj) => obj.id !== id);
-    b8.ECS.removeEntity(id);
+  pickupHandler: function(playerId, pickup) {
+    b8.Inventory.add(pickup.props.name);
     b8.Sfx.play("tone/bloop/006");
-    return false;
+  }
+};
+mapper.types.pickup = {
+  spawn: function(col, row, props = {}) {
+    if (!props.type) return;
+    return b8.ECS.create(
+      {
+        Type: { name: "pickup" },
+        Loc: { col, row },
+        Sprite: {
+          tile: props.Sprite.tile ?? 415,
+          fg: props.Sprite.fg ?? 8,
+          bg: props.Sprite.bg ?? 0
+        },
+        Pickup: {
+          // 'health', 'coin', 'key', etc
+          type: props.type,
+          // remove after pickup
+          consume: props.consume ?? true,
+          // Custom attributes for handler function
+          props: props.props || {}
+        }
+      }
+    );
   }
 };
 mapper.types.signpost = {
@@ -1015,6 +1580,26 @@ mapper.types.signpost = {
 mapper.types.start = {
   spawn: function(col, row, props) {
     b8.ECS.setLoc(mapper.player, col, row);
+  }
+};
+mapper.types.vfx = {
+  spawn: function(col, row, props) {
+    if (!props.id) return {};
+    return b8.ECS.create(
+      {
+        Type: { name: "vfx" },
+        Loc: { col, row },
+        Vfx: {},
+        Sprite: {
+          type: "vfx",
+          id: props.id,
+          startTime: b8.Core.getNow(),
+          fg: props.fg || 15,
+          bg: props.bg || 0,
+          depth: 50
+        }
+      }
+    );
   }
 };
 //# sourceMappingURL=plugin.mapper.js.map

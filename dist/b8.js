@@ -82,7 +82,8 @@ const b8 = {};
     FONT_DEFAULT: "../assets/font-default-thin.png",
     FONT_TILES: "../assets/font-tiles.png",
     FONT_ACTORS: "../assets/font-actors.png",
-    // The characters in the font file.
+    FONT_VFX: "../assets/font-vfx.png",
+    // The characters in the text font file.
     // These are for the default font(s). If you use a different list you
     // will need to upate the font file to match.
     CHRS: `ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789*+=-<>_#&@%^~$\xA3\u20AC\xA5\xA2!?:;'"/\\()[]{}.,\xA9\xAE\u2122\u2022\u2026| `,
@@ -372,11 +373,11 @@ const b8 = {};
     b82.Utilities.checkNumber("y", y);
     b82.TextRenderer.spr(ch, x, y);
   };
-  b82.drawActor = function(ch, animation) {
+  b82.drawActor = function(ch, animation, offsetCol = 0, offsetRow = 0) {
     ch = b82.convChar(ch);
     b82.Utilities.checkInt("ch", ch);
     b82.Utilities.checkString("animation", animation);
-    b82.Actors.draw(ch, animation);
+    b82.Actors.draw(ch, animation, offsetCol, offsetRow);
   };
   b82.sprActor = function(ch, animation, x, y, startTime = null) {
     ch = b82.convChar(ch);
@@ -918,6 +919,84 @@ const b8 = {};
       b82.Input.onKeyUp(evt);
     }
     evt.preventDefault();
+  };
+})(b8);
+(function(b82) {
+  b82.Vfx = {};
+  b82.Vfx.animations = {
+    "fire": {
+      frames: [0, 1, 2, 3],
+      loop: true
+    },
+    "explosion": {
+      frames: [6, 7, 8, 9, 10],
+      fps: 8
+    },
+    "portal": {
+      frames: [12, 13],
+      loop: true
+    },
+    "cursor": {
+      frames: [14, 15, 16, 15],
+      loop: true,
+      fps: 6
+    },
+    "swipe": {
+      frames: [18, 19, 20, 20, 20, 21, 22],
+      fps: 18
+    },
+    "skull": {
+      frames: [24, 24, 25, 26, 27, 28, 28, 29],
+      fps: 12
+    }
+  };
+  for (const key in b82.Vfx.animations) {
+    const anim = b82.Vfx.animations[key];
+    if (anim.fps === void 0) anim.fps = 4;
+    if (anim.loop === void 0) anim.loop = false;
+  }
+  const drawVfx = function(animation, x, y, startTime) {
+    const font = b82.TextRenderer.curVfx_;
+    const frame = Math.abs(b82.Animation.frame(animation, startTime));
+    const direction = frame >= 0 ? 0 : 1;
+    b82.TextRenderer.spr(
+      frame,
+      x,
+      y,
+      font,
+      direction || 0
+    );
+  };
+  b82.Vfx.draw = function(animation, startTime, offsetCol = 0, offsetRow = 0) {
+    b82.Utilities.checkNumber("offsetCol", offsetCol);
+    b82.Utilities.checkNumber("offsetRow", offsetRow);
+    return b82.Vfx.spr(
+      animation,
+      startTime,
+      (b82.Core.drawState.cursorCol + offsetCol) * b82.CONFIG.CHR_WIDTH,
+      (b82.Core.drawState.cursorRow + offsetRow) * b82.CONFIG.CHR_HEIGHT
+    );
+  };
+  b82.Vfx.spr = function(animation, startTime, x, y) {
+    if (startTime !== null) b82.Utilities.checkNumber("startTime", startTime);
+    b82.Utilities.checkNumber("x", x);
+    b82.Utilities.checkNumber("y", y);
+    const anim = b82.Vfx.get(animation);
+    if (!b82.Animation.shouldLoop(anim, startTime)) return false;
+    drawVfx(
+      anim,
+      x,
+      y,
+      startTime
+    );
+    return true;
+  };
+  b82.Vfx.get = function(animation) {
+    b82.Utilities.checkString("animation", animation);
+    if (b82.Vfx.animations[animation] === void 0) {
+      b82.Utilities.fatal("Invalid Vfx animation: " + animation);
+    }
+    return b82.Vfx.animations[animation];
   };
 })(b8);
 (function(b82) {
@@ -1659,6 +1738,7 @@ const b8 = {};
   b82.TextRenderer.fonts_ = {};
   b82.TextRenderer.curFont_ = null;
   b82.TextRenderer.curTiles_ = null;
+  b82.TextRenderer.curVfx_ = null;
   b82.TextRenderer.prepareCharMap = function() {
     let charString = [...b82.CONFIG.CHRS];
     for (let i = 0; i < charString.length; i++) {
@@ -1670,6 +1750,7 @@ const b8 = {};
     b82.TextRenderer.curFont_ = await b82.TextRenderer.loadFontAsync("default-thin", b82.CONFIG.FONT_DEFAULT, 0.5, 1);
     b82.TextRenderer.curTiles_ = await b82.TextRenderer.loadFontAsync("tiles", b82.CONFIG.FONT_TILES);
     b82.TextRenderer.curActors_ = await b82.TextRenderer.loadFontAsync("actors", b82.CONFIG.FONT_ACTORS);
+    b82.TextRenderer.curVfx_ = await b82.TextRenderer.loadFontAsync("vfx", b82.CONFIG.FONT_VFX);
     b82.TextRenderer.prepareCharMap();
   };
   b82.TextRenderer.loadFontAsync = async function(fontName, fontImageFile, tileSizeWidthMultiplier = 1, tileSizeHeightMultiplier = 1) {
@@ -2809,6 +2890,103 @@ const b8 = {};
   };
 })(b8);
 (function(b82) {
+  b82.Path = {};
+  const movementMap = {
+    U: { dx: 0, dy: -1 },
+    D: { dx: 0, dy: 1 },
+    L: { dx: -1, dy: 0 },
+    R: { dx: 1, dy: 0 }
+  };
+  b82.Path.parseCode = function(code, startCol = 0, startRow = 0, initialDir = "D") {
+    b82.Utilities.checkString("code", code);
+    b82.Utilities.checkNumber("startRow", startRow);
+    b82.Utilities.checkNumber("startCol", startCol);
+    b82.Utilities.checkString("initialDir", initialDir);
+    if (!"UDLR".includes(initialDir)) {
+      b82.Utilities.fatal("Path.parseCode: initialDir must be one of U, D, L, R");
+    }
+    let x = startCol;
+    let y = startRow;
+    let currentDir = initialDir;
+    const steps = [];
+    const cleaned = code.replace(/\s+/g, "").toUpperCase();
+    let i = 0;
+    console.log("Parsing path code:", cleaned);
+    while (i < cleaned.length) {
+      const cmd = cleaned[i];
+      if ("UDLR".includes(cmd)) {
+        i++;
+        const { count, index } = _parseNumber(cleaned, i);
+        i = index;
+        for (let n = 0; n < count; n++) {
+          x += movementMap[cmd].dx;
+          y += movementMap[cmd].dy;
+          _pushStep(steps, x, y, cmd);
+        }
+        continue;
+      }
+      if (cmd === "P") {
+        i++;
+        const { count, index } = _parseNumber(cleaned, i);
+        i = index;
+        _pushStep(steps, x, y, currentDir, count);
+        continue;
+      }
+      if (cmd === "F") {
+        i++;
+        const faceDir = cleaned[i];
+        if (!"UDLR".includes(faceDir)) {
+          b82.Utilities.fatal("F must be followed by U/D/L/R, got: " + faceDir);
+        }
+        i++;
+        const { count, index } = _parseNumber(cleaned, i);
+        i = index;
+        _pushStep(steps, x, y, cmd + faceDir, count);
+        continue;
+      }
+      b82.Utilities.fatal("Invalid command: " + cmd);
+    }
+    return steps;
+  };
+  b82.Path.validPathSyntax = function(path) {
+    const VALID_CHARACTERS = "UDLRFP";
+    if (typeof path !== "string") {
+      return false;
+    }
+    if (path.trim().length === 0) {
+      return false;
+    }
+    if (!new RegExp(`^[\\d\\s${VALID_CHARACTERS}]+$`).test(path)) {
+      return false;
+    }
+    if (!new RegExp(`[${VALID_CHARACTERS}]`).test(path)) {
+      return false;
+    }
+    if (!new RegExp(`^[${VALID_CHARACTERS}]`).test(path)) {
+      return false;
+    }
+    return true;
+  };
+  function _parseNumber(cleaned, i) {
+    let numStr = "";
+    while (i < cleaned.length && /[0-9]/.test(cleaned[i])) {
+      numStr += cleaned[i++];
+    }
+    return { count: numStr ? parseInt(numStr, 10) : 1, index: i };
+  }
+  function _pushStep(steps, x, y, dir = null, count = 1) {
+    for (let n = 0; n < count; n++) {
+      steps.push(
+        {
+          x,
+          y,
+          dir
+        }
+      );
+    }
+  }
+})(b8);
+(function(b82) {
   b82.Passcodes = {};
   b82.Passcodes.codeLength = 4;
   b82.Passcodes.getCode = function(id) {
@@ -3287,6 +3465,10 @@ const b8 = {};
   };
   b82.Music.isPlaying = function() {
     return p1.isPlaying();
+  };
+  b82.Music.reset = function() {
+    b82.Music.stop();
+    currentSong = null;
   };
   document.addEventListener("b8.pageVisibility.wake", b82.Music.resume);
   document.addEventListener("b8.pageVisibility.sleep", b82.Music.pause);
@@ -4047,6 +4229,7 @@ const b8 = {};
     window.removeEventListener("resize", b82.Core.updateLayout);
     document.removeEventListener("pointerup", _takeScreenshot);
     document.removeEventListener("keyup", _takeScreenshot);
+    b82.Core.stopFrame();
   };
   b82.Core.initialized = function() {
     return initDone;
@@ -4560,9 +4743,49 @@ const b8 = {};
   }
 })(b8);
 (function(b82) {
+  b82.Animation = {};
+  b82.Animation.frame = function(anim, startTime = null) {
+    if (anim === void 0) {
+      b82.Utilities.fatal("Animation not found");
+    }
+    if (startTime === null) {
+      startTime = b82.Core.startTime;
+    }
+    let frame = 0;
+    if (!anim.frames || anim.frames.length === 0) {
+      b82.Utilities.fatal("Animation has no frames");
+    }
+    if (anim.frames.length === 1) {
+      frame = anim.frames[0];
+    }
+    if (anim.frames.length > 1) {
+      const elapsedTime = b82.Core.getNow() - startTime;
+      const frameCount = anim.frames.length;
+      const FPS = anim.fps || 1;
+      const frameDuration = 1e3 / FPS;
+      const frameIndex = Math.floor(elapsedTime / frameDuration) % frameCount;
+      frame = anim.frames[frameIndex];
+    }
+    return frame;
+  };
+  b82.Animation.shouldLoop = function(anim, startTime) {
+    if (startTime === null || anim.loop === true) {
+      return true;
+    }
+    const FPS = anim.fps || 1;
+    const animationLength = anim.frames.length * (1e3 / FPS);
+    if (b82.Core.getNow() - startTime >= animationLength) return false;
+    return true;
+  };
+})(b8);
+(function(b82) {
   b82.Actors = {};
   b82.Actors.animations = {
     "idle": {
+      frames: [0],
+      fps: 1
+    },
+    "idle-down": {
       frames: [0],
       fps: 1
     },
@@ -4621,7 +4844,7 @@ const b8 = {};
   };
   const drawActor = function(ch, animation, x, y, direction) {
     const font = b82.TextRenderer.curActors_;
-    const chrIndex = ch * font.getColCount() + Math.abs(animationFrame(animation));
+    const chrIndex = ch * font.getColCount() + Math.abs(b82.Animation.frame(animation));
     b82.TextRenderer.spr(
       chrIndex,
       x,
@@ -4630,63 +4853,39 @@ const b8 = {};
       direction || 0
     );
   };
-  b82.Actors.draw = function(ch, animation) {
+  b82.Actors.draw = function(ch, animation, offsetCol = 0, offsetRow = 0) {
     b82.Utilities.checkInt("ch", ch);
     b82.Utilities.checkString("animation", animation);
-    const frame = animationFrame(animation);
+    if (b82.Actors.animations[animation] === void 0) {
+      b82.Utilities.fatal("Invalid actor animation: " + animation);
+    }
+    b82.Utilities.checkNumber("offsetCol", offsetCol);
+    b82.Utilities.checkNumber("offsetRow", offsetRow);
+    const anim = b82.Actors.animations[animation];
+    const frame = b82.Animation.frame(anim);
     const direction = frame >= 0 ? 0 : 1;
     drawActor(
       ch,
-      animation,
-      b82.Core.drawState.cursorCol * b82.CONFIG.CHR_WIDTH,
-      b82.Core.drawState.cursorRow * b82.CONFIG.CHR_HEIGHT,
+      anim,
+      (b82.Core.drawState.cursorCol + offsetCol) * b82.CONFIG.CHR_WIDTH,
+      (b82.Core.drawState.cursorRow + offsetRow) * b82.CONFIG.CHR_HEIGHT,
       direction || 0
     );
   };
   b82.Actors.spr = function(ch, animation, x, y, startTime = null) {
     b82.Utilities.checkInt("ch", ch);
     b82.Utilities.checkString("animation", animation);
+    if (b82.Actors.animations[animation] === void 0) {
+      b82.Utilities.fatal("Invalid actor animation: " + animation);
+    }
     b82.Utilities.checkNumber("x", x);
     b82.Utilities.checkNumber("y", y);
     if (startTime !== null) b82.Utilities.checkNumber("startTime", startTime);
-    const frame = animationFrame(animation, startTime);
     const anim = b82.Actors.animations[animation];
+    const frame = b82.Animation.frame(anim, startTime);
     const direction = frame >= 0 ? 0 : 1;
-    if (!shouldLoopAnimation(anim, startTime)) {
-      return false;
-    }
-    drawActor(ch, animation, x, y, direction || 0);
-    return true;
-  };
-  const animationFrame = function(animation, startTime = null) {
-    if (b82.Actors.animations[animation] === void 0) {
-      b82.Utilities.fatal("Invalid animation: " + animation);
-    }
-    if (startTime === null) {
-      startTime = b82.Core.startTime;
-    }
-    const anim = b82.Actors.animations[animation];
-    let frame = 0;
-    if (anim.frames.length === 1) {
-      frame = anim.frames[0];
-    }
-    if (anim.frames.length > 1) {
-      const totalTime = b82.Core.getNow() - startTime;
-      const frameCount = anim.frames.length;
-      const frameDuration = 1 / anim.fps;
-      const frameIndex = Math.floor(totalTime / 1e3 / frameDuration % frameCount);
-      frame = anim.frames[frameIndex];
-    }
-    return frame;
-  };
-  const shouldLoopAnimation = function(anim, startTime) {
-    if (startTime === null || anim.loop === true) {
-      return true;
-    }
-    const animationLength = anim.frames.length * (1e3 / anim.fps);
-    if (b82.Core.getNow() - startTime >= animationLength) {
-      return false;
-    }
+    if (!b82.Animation.shouldLoop(anim, startTime)) return false;
+    drawActor(ch, anim, x, y, direction || 0);
     return true;
   };
 })(b8);
@@ -5000,6 +5199,70 @@ const zzfxG = (
   };
   window.p1 = p12;
 })();
+class MinHeap {
+  /**
+   * Initializes an empty heap.
+   */
+  constructor() {
+    this.heap = [];
+  }
+  /**
+   * Inserts a new node into the heap.
+   * @param {Object} node - The node to insert. Must have a property `f` for priority comparison.
+   */
+  push(node) {
+    this.heap.push(node);
+    this.bubbleUp(this.heap.length - 1);
+  }
+  /**
+   * Removes and returns the smallest node (root) from the heap.
+   * @returns {Object} The node with the smallest `f` value.
+   */
+  pop() {
+    if (this.heap.length === 1) return this.heap.pop();
+    const min = this.heap[0];
+    this.heap[0] = this.heap.pop();
+    this.bubbleDown(0);
+    return min;
+  }
+  /**
+   * Returns the number of elements in the heap.
+   * @returns {number} The size of the heap.
+   */
+  get length() {
+    return this.heap.length;
+  }
+  /**
+   * Moves the element at the given index up to restore the heap property.
+   * @param {number} index - The index of the element to bubble up.
+   */
+  bubbleUp(index) {
+    const parent = Math.floor((index - 1) / 2);
+    if (parent >= 0 && this.heap[index].f < this.heap[parent].f) {
+      [this.heap[index], this.heap[parent]] = [this.heap[parent], this.heap[index]];
+      this.bubbleUp(parent);
+    }
+  }
+  /**
+   * Moves the element at the given index down to restore the heap property.
+   * @param {number} index - The index of the element to bubble down.
+   */
+  bubbleDown(index) {
+    const left = 2 * index + 1;
+    const right = 2 * index + 2;
+    let smallest = index;
+    if (left < this.heap.length && this.heap[left].f < this.heap[smallest].f) {
+      smallest = left;
+    }
+    if (right < this.heap.length && this.heap[right].f < this.heap[smallest].f) {
+      smallest = right;
+    }
+    if (smallest !== index) {
+      [this.heap[index], this.heap[smallest]] = [this.heap[smallest], this.heap[index]];
+      this.bubbleDown(smallest);
+    }
+  }
+}
 (function(global, undefined2) {
   "use strict";
   var POW_2_24 = Math.pow(2, -24), POW_2_32 = Math.pow(2, 32), POW_2_53 = Math.pow(2, 53);
@@ -5348,4 +5611,76 @@ const zzfxG = (
   else if (!global.CBOR)
     global.CBOR = obj;
 })(this);
+function aStarPathfind(start, goal, isWalkable, gridWidth, gridHeight) {
+  function nodeKey(x, y) {
+    return `${x},${y}`;
+  }
+  function heuristic(x, y) {
+    return Math.abs(x - goal.x) + Math.abs(y - goal.y);
+  }
+  const openList = [];
+  const closedList = /* @__PURE__ */ new Set();
+  const nodes = {};
+  const startNode = {
+    x: start.x,
+    y: start.y,
+    g: 0,
+    // Cost from start to this node
+    h: heuristic(start.x, start.y),
+    // Heuristic cost to goal
+    f: heuristic(start.x, start.y),
+    // Total cost (g + h)
+    parent: null
+    // Parent node for path reconstruction
+  };
+  openList.push(startNode);
+  nodes[nodeKey(start.x, start.y)] = startNode;
+  while (openList.length > 0) {
+    openList.sort((a, b) => a.f - b.f);
+    const current = openList.shift();
+    const currentKey = nodeKey(current.x, current.y);
+    closedList.add(currentKey);
+    if (current.x === goal.x && current.y === goal.y) {
+      const path = [];
+      let node = current;
+      while (node) {
+        path.push({ x: node.x, y: node.y });
+        node = node.parent;
+      }
+      return path.reverse();
+    }
+    const neighbors = [
+      { x: current.x - 1, y: current.y },
+      { x: current.x + 1, y: current.y },
+      { x: current.x, y: current.y - 1 },
+      { x: current.x, y: current.y + 1 }
+    ];
+    for (let neighbor of neighbors) {
+      if (neighbor.x < 0 || neighbor.x >= gridWidth || neighbor.y < 0 || neighbor.y >= gridHeight)
+        continue;
+      if (!isWalkable(neighbor.x, neighbor.y)) continue;
+      const neighborKey = nodeKey(neighbor.x, neighbor.y);
+      if (closedList.has(neighborKey)) continue;
+      const tentativeG = current.g + 1;
+      let neighborNode = nodes[neighborKey];
+      if (!neighborNode) {
+        neighborNode = {
+          x: neighbor.x,
+          y: neighbor.y,
+          g: tentativeG,
+          h: heuristic(neighbor.x, neighbor.y),
+          f: tentativeG + heuristic(neighbor.x, neighbor.y),
+          parent: current
+        };
+        nodes[neighborKey] = neighborNode;
+        openList.push(neighborNode);
+      } else if (tentativeG < neighborNode.g) {
+        neighborNode.g = tentativeG;
+        neighborNode.f = tentativeG + neighborNode.h;
+        neighborNode.parent = current;
+      }
+    }
+  }
+  return null;
+}
 //# sourceMappingURL=b8.js.map
