@@ -3,6 +3,7 @@
 	b8.Vfx = {};
 
 
+	// List of animations and properties.
 	b8.Vfx.animations = {
 		'fire': {
 			frames: [ 0, 1, 2, 3 ],
@@ -76,6 +77,7 @@
 	 */
 	b8.Vfx.draw = function( animation, startTime, offsetCol = 0, offsetRow = 0 ) {
 
+		if ( startTime !== null ) b8.Utilities.checkNumber( "startTime", startTime );
 		b8.Utilities.checkNumber( "offsetCol", offsetCol );
 		b8.Utilities.checkNumber( "offsetRow", offsetRow );
 
@@ -103,6 +105,8 @@
 		if ( startTime !== null ) b8.Utilities.checkNumber( "startTime", startTime );
 		b8.Utilities.checkNumber( "x", x );
 		b8.Utilities.checkNumber( "y", y );
+
+		if ( startTime > b8.Core.getNow() ) return true;
 
 		const anim = b8.Vfx.get( animation );
 

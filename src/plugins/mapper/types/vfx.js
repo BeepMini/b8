@@ -12,7 +12,7 @@ mapper.types.vfx = {
 				Sprite: {
 					type: 'vfx',
 					id: props.id,
-					startTime: b8.Core.getNow(),
+					startTime: b8.Core.getNow() + ( props.offsetTime || 0 ),
 					fg: props.fg || 15,
 					bg: props.bg || 0,
 					depth: 50,

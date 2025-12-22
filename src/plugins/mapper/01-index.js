@@ -378,6 +378,11 @@ const mapper = {
 		const ahead = mapper.ahead( playerId );
 		const ids = mapper.entitiesAhead( playerId );
 
+		mapper.types.vfx.spawn(
+			ahead.x, ahead.y,
+			{ id: 'swipe', fg: 15, bg: 0 }
+		);
+
 		for ( const targetId of ids ) {
 
 			// Don't attack self.
@@ -396,7 +401,7 @@ const mapper = {
 				b8.ECS.removeEntity( targetId );
 				mapper.types.vfx.spawn(
 					ahead.x, ahead.y,
-					{ id: 'skull', fg: 2, bg: 0 }
+					{ id: 'skull', fg: 2, bg: 0, offsetTime: 200 }
 				);
 				return;
 			}
@@ -405,13 +410,6 @@ const mapper = {
 			break;
 
 		}
-
-		// Do this last. We might have attacked and defeated an enemy above.
-		mapper.types.vfx.spawn(
-			ahead.x, ahead.y,
-			{ id: 'swipe', fg: 15, bg: 0 }
-		);
-
 
 	},
 
