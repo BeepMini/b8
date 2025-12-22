@@ -376,37 +376,34 @@ const mapper = {
 	doAttack: ( playerId ) => {
 
 		const ahead = mapper.ahead( playerId );
-
-		console.log( 'doAttack' );
-
 		const ids = mapper.entitiesAhead( playerId );
+
 		for ( const targetId of ids ) {
+
 			// Don't attack self.
 			if ( targetId === playerId ) continue;
 
 			// Only attack entities that can be attacked.
-			if ( b8.ECS.hasComponent( targetId, 'AttackTarget' ) ) {
+			if ( !b8.ECS.hasComponent( targetId, 'AttackTarget' ) ) continue;
 
-				const targetHealth = b8.ECS.getComponent( targetId, 'Health' );
+			// Apply damage to the target.
+			const targetHealth = b8.ECS.getComponent( targetId, 'Health' );
+			const playerAttack = b8.ECS.getComponent( playerId, 'Attack' ) || { value: 1 };
+			targetHealth.value -= playerAttack.value;
 
-				// Simple attack logic: reduce target health by attacker's attack value.
-				const playerAttack = b8.ECS.getComponent( playerId, 'Attack' ) || { value: 1 };
-				targetHealth.value -= playerAttack.value;
-
-				// Check if target is defeated.
-				if ( targetHealth.value <= 0 ) {
-					b8.ECS.removeEntity( targetId );
-					mapper.types.vfx.spawn(
-						ahead.x, ahead.y,
-						{ id: 'skull', fg: 2, bg: 0 }
-					);
-					return;
-				}
-
-				// Only attack one target at a time.
-				break;
-
+			// Check if target is defeated.
+			if ( targetHealth.value <= 0 ) {
+				b8.ECS.removeEntity( targetId );
+				mapper.types.vfx.spawn(
+					ahead.x, ahead.y,
+					{ id: 'skull', fg: 2, bg: 0 }
+				);
+				return;
 			}
+
+			// Only attack one target at a time.
+			break;
+
 		}
 
 		// Do this last. We might have attacked and defeated an enemy above.
