@@ -5,9 +5,88 @@
 	 */
 	b8.Input = {};
 
+
+	/**
+	 * ─────────────────────────────────────────────────────────────
+	 * Input Modes & Contexts
+	 * ─────────────────────────────────────────────────────────────
+	 *
+	 * BeepMini supports two styles of input:
+	 *
+	 * 1) Polled input (gameplay)
+	 *    - keyHeld()
+	 *    - keyJustPressed()
+	 *
+	 * 2) Captured input (modal / async)
+	 *    - readKeyAsync()
+	 *    - readLine()
+	 *
+	 * These two styles MUST NOT interfere with each other.
+	 *
+	 * To guarantee this, input is routed through a stack of
+	 * "input contexts".
+	 *
+	 * ─────────────────────────────────────────────────────────────
+	 * Core Concepts
+	 * ─────────────────────────────────────────────────────────────
+	 *
+	 * • Raw input state is always tracked.
+	 *   - heldRaw_ reflects the physical keyboard state.
+	 *   - It is never paused, cleared, or restored.
+	 *
+	 * • Gameplay input is contextual.
+	 *   - gameJustPressed_ is only populated when the active
+	 *     context allows gameplay input.
+	 *
+	 * • Modal input captures key events.
+	 *   - When a context has { capture: true }, key events are
+	 *     routed to async readers instead of gameplay polling.
+	 *
+	 * • Contexts are stacked.
+	 *   - Opening a menu, prompt, or dialog pushes a context.
+	 *   - Closing it pops the context.
+	 *   - Nested modals are fully supported.
+	 *
+	 * ─────────────────────────────────────────────────────────────
+	 * Context Behaviour
+	 * ─────────────────────────────────────────────────────────────
+	 *
+	 * capture: true
+	 *   - Gameplay keyJustPressed() returns false.
+	 *   - Key events are queued for readKeyAsync().
+	 *
+	 * capture: false
+	 *   - Gameplay polling behaves normally.
+	 *
+	 * passthrough: true
+	 *   - Gameplay keyJustPressed() still fires even when capturing.
+	 *   - Useful for overlays or non-blocking UI.
+	 *
+	 * ─────────────────────────────────────────────────────────────
+	 * Why this exists
+	 * ─────────────────────────────────────────────────────────────
+	 *
+	 * Mixing polled input with async input is error-prone if both
+	 * listen to the same key events.
+	 *
+	 * Input contexts ensure:
+	 *   - Async input never steals gameplay input accidentally.
+	 *   - Gameplay never triggers while awaiting text or prompts.
+	 *   - Key order does not depend on frame timing or code order.
+	 *
+	 * This design avoids:
+	 *   - Saving/restoring key state
+	 *   - Frame-order bugs
+	 *   - Re-entrancy issues with async input
+	 *
+	 * ─────────────────────────────────────────────────────────────
+	 */
+
+
 	/**
 	 * List of keys currently held down.
 	 * This is a raw list of keys without any context applied.
+	 * This is not gated by input contexts.
 	 *
 	 * @type {Set<string>}
 	 */
@@ -237,6 +316,8 @@
 	/**
 	 * Reads a key asynchronously. Returns a promise that resolves to the key that was pressed.
 	 *
+	 * Async key reads always pull from the active context. This prevents async input from racing gameplay polling.
+	 *
 	 * @returns {Promise<string>} A promise that resolves to the key that was pressed.
 	 */
 	b8.Input.readKeyAsync = function() {
@@ -325,6 +406,8 @@
 	/**
 	 * Reads a line of text asynchronously.
 	 * Handles user input to build a string until the Enter key is pressed.
+	 *
+	 * readLine runs inside a capture context so that gameplay input is fully suspended while typing.
 	 *
 	 * @param {string} initString The initial string to display.
 	 * @param {string} [prompt=''] An optional prompt to display before the input.
