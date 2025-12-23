@@ -334,11 +334,11 @@
 	 * Get a text map and convert it to an array of arrays.
 	 *
 	 * An example text map might look like:
-	 * #######
-	 * #  1  #
-	 * # ### #
-	 * # 2 2 #
-	 * #######
+	 *    #######
+	 *    #  1  #
+	 *    # ### #
+	 *    # 2 2 #
+	 *    #######
 	 *
 	 * The tilemap array will include the tile character code, foreground color,
 	 * background color, collision flag, and additional data.
@@ -417,6 +417,8 @@
 
 		const tilemap = [];
 
+		b8.Random.setSeed( grid[ 0 ].join( '' ) );
+
 		for ( let y = 0; y < grid.length; y++ ) {
 			tilemap[ y ] = [];
 			for ( let x = 0; x < grid[ y ].length; x++ ) {
@@ -425,10 +427,7 @@
 				tilemap[ y ][ x ] = [ ...defaultTilePattern ];
 
 				// If tile pattern not defined assume tile is empty and continue.
-				if ( !tilePattern[ grid[ y ][ x ] ] ) {
-					// b8.Utilities.log( "Tile pattern not found for: " + grid[ y ][ x ] );
-					continue;
-				}
+				if ( !tilePattern[ grid[ y ][ x ] ] ) continue;
 
 				const tile = tilePattern[ grid[ y ][ x ] ];
 
