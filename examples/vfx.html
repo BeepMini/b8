@@ -12,6 +12,8 @@
 
 	<script>
 
+		const MAX_VFX = 60;
+
 		const vfxList = [];
 
 		async function main() {
@@ -44,7 +46,7 @@
 
 		const addVfx = () => {
 
-			if ( vfxList.length >= 40 ) return;
+			if ( vfxList.length >= MAX_VFX ) return;
 
 			vfxList.push(
 				{
