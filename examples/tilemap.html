@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>Tilemap Creation Sample</title>
+	<meta name="description" content="See how to create and render a tilemap.">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+	<link rel="stylesheet" href="example.css">
+	<script src="../dist/b8.min.js"></script>
+
+	<script>
+
+		const MAP = [
+			"~~~~~~ ^^^  ~~  ^^  ",
+			"~~~~|, ^^   ~~ ^^|| ",
+			"~~||   ^^   ~,^^||  ",
+			"|||  ^^,    ~~  ||  ",
+			"||, ||, ^^  ~~ ,   ^",
+			"    ||||^^   ~~||^^^",
+			"^^   ,||||^|  ~~||^^",
+			"^^^^|   ,   , ==  ^^",
+			"^^|| ,    |^^,~~,,^ ",
+			" ^^^^^|   ^^^~~  ,^ ",
+			"  ^^^^     ^^~~  ~  ",
+			"    ^  ,     ~~  ~~ ",
+			",        ,  ~~  |~~ ",
+			",, ,    ,  ~~  ,|~~ ",
+			",,, |      ~~  ,,  ^",
+			"||,,|||T|^~~~ ,, ^^^",
+			"||||  ^^^~~~   ^^^^^",
+			" ^^^||  ~~~   ^^^^^^",
+		];
+
+		const TILES = {
+			"~": { fg: 3, bg: 5, t: [ 188, 0 ] },	// water.
+			"|": { fg: 12, t: [ 185, 184, 202 ] },			// tree.
+			"^": { fg: 2, t: 187 },			// mountain.
+			"=": { fg: 1, t: 248 },			// bridge.
+			",": { fg: 13, t: [ 289, 288, 307 ] },		// grass.
+			" ": { fg: 1, bg: 0, t: [ 0, 3, 17 ] },			// empty.
+			"T": { fg: 15, t: 362 },		// town.
+			"O": { fg: 0, t: 0 },		//
+			"#": { fg: 7, t: 334 },			// wall.
+			".": { fg: 1, t: 346 },			// stone path.
+			"+": { fg: 6, t: 234 },			// doorway.
+			"]": { fg: 10, t: 74 },			// force field.
+		};
+
+		function load() {
+
+			const mapDataString = MAP.join( '\n' );
+			const mapArray = b8.Tilemap.convertFromText( mapDataString );
+			const map = b8.Tilemap.createFromArray( mapArray, TILES );
+
+			b8.Tilemap.draw( map );
+
+		}
+
+		window.addEventListener(
+			"load",
+			() => b8.init( load )
+		);
+	</script>
+</head>
+
+<body>
+</body>
+
+</html>
