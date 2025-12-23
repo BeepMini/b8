@@ -256,31 +256,39 @@ const mapper = {
    */
   doAttack: (playerId) => {
     const ahead = mapper.ahead(playerId);
-    console.log("doAttack");
     const ids = mapper.entitiesAhead(playerId);
-    for (const targetId of ids) {
-      if (targetId === playerId) continue;
-      if (b8.ECS.hasComponent(targetId, "AttackTarget")) {
-        const targetHealth = b8.ECS.getComponent(targetId, "Health");
-        const playerAttack = b8.ECS.getComponent(playerId, "Attack") || { value: 1 };
-        targetHealth.value -= playerAttack.value;
-        if (targetHealth.value <= 0) {
-          b8.ECS.removeEntity(targetId);
-          mapper.types.vfx.spawn(
-            ahead.x,
-            ahead.y,
-            { id: "skull", fg: 2, bg: 0 }
-          );
-          return;
-        }
-        break;
-      }
-    }
     mapper.types.vfx.spawn(
       ahead.x,
       ahead.y,
       { id: "swipe", fg: 15, bg: 0 }
     );
+    for (const targetId of ids) {
+      if (targetId === playerId) continue;
+      if (!b8.ECS.hasComponent(targetId, "AttackTarget")) continue;
+      const targetHealth = b8.ECS.getComponent(targetId, "Health");
+      const playerAttack = b8.ECS.getComponent(playerId, "Attack") || { value: 1 };
+      targetHealth.value -= playerAttack.value;
+      if (targetHealth.value <= 0) {
+        b8.ECS.removeEntity(targetId);
+        mapper.types.vfx.spawn(
+          ahead.x,
+          ahead.y,
+          { id: "skull", fg: 2, bg: 0, offsetTime: 200 }
+        );
+        mapper.updateMoveDelay(0.6);
+        return;
+      }
+      break;
+    }
+  },
+  /**
+   * Update the move delay to control player movement speed.
+   *
+   * @param {number} amount - The amount of delay to set (in seconds).
+   * @returns {void}
+   */
+  updateMoveDelay: function(amount = mapper.CONFIG.moveDelay) {
+    mapper.sceneGame.moveDelay = Math.max(amount, mapper.sceneGame.moveDelay);
   },
   /**
    * Check if the provided map ID is valid.
@@ -560,7 +568,7 @@ mapper.load = function(mapData) {
     {
       Type: { name: "player" },
       Loc: { row: 0, col: 0 },
-      Direction: { dx: 0, dy: 0 },
+      Direction: { dx: 0, dy: 1 },
       Sprite: {
         type: "actor",
         tile: parseInt(mapper.settings.character) || 6,
@@ -736,15 +744,15 @@ mapper.sceneGame = {
       dx = 1;
       keyPressed = true;
     }
-    if (b8.key("ButtonB")) {
-      mapper.doAction(mapper.player);
-      keyPressed = true;
-    }
     if (b8.key("ButtonA")) {
       mapper.doAttack(mapper.player);
       keyPressed = true;
     }
-    if (keyPressed) mapper.sceneGame.moveDelay = mapper.CONFIG.moveDelay;
+    if (b8.key("ButtonB")) {
+      mapper.doAction(mapper.player);
+      keyPressed = true;
+    }
+    if (keyPressed) mapper.updateMoveDelay();
     if (dx !== 0 || dy !== 0) {
       let newCol = loc.col + dx;
       let newRow = loc.row + dy;
@@ -770,8 +778,8 @@ mapper.sceneGame = {
     b8.locate(0, b8.CONFIG.SCREEN_ROWS - mapper.sceneGame.UI.length);
     b8.Tilemap.draw(mapper.sceneGame.UI);
     b8.locate(2, b8.CONFIG.SCREEN_ROWS - 2);
-    b8.color(mapper.settings.coinColor, 0);
-    b8.printChar(mapper.settings.coin || 266);
+    b8.color(parseInt(mapper.settings.coinColor) || 10, 0);
+    b8.printChar(parseInt(mapper.settings.coin) || 266);
     b8.color(15, 0);
     b8.print(" " + parseInt(b8.Inventory.getCount("coin")).toString().padStart(4, "0"));
     const health = b8.ECS.getComponent(mapper.player, "Health");
@@ -803,7 +811,7 @@ mapper.sceneGame = {
     );
     b8.color(15, -1);
     b8.locate(11, b8.CONFIG.SCREEN_ROWS - 4);
-    b8.print(" ");
+    b8.print(" Hit");
     b8.locate(15, b8.CONFIG.SCREEN_ROWS - 4);
     b8.print(mapper.helpers.capitalizeWords(" " + mapper.promptAhead(mapper.player)));
     return;
@@ -1125,8 +1133,9 @@ mapper.types.chestOpen = {
       },
       Solid: {}
     };
+    console.log("chest open props", props);
     if (props.message) {
-      entitySettings.Message = { text: props.message };
+      entitySettings.Message = { message: props.message };
       entitySettings.Action = { verb: "read" };
     }
     return b8.ECS.create(entitySettings);
@@ -1593,7 +1602,7 @@ mapper.types.vfx = {
         Sprite: {
           type: "vfx",
           id: props.id,
-          startTime: b8.Core.getNow(),
+          startTime: b8.Core.getNow() + (props.offsetTime || 0),
           fg: props.fg || 15,
           bg: props.bg || 0,
           depth: 50

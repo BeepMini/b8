@@ -968,6 +968,7 @@ const b8 = {};
     );
   };
   b82.Vfx.draw = function(animation, startTime, offsetCol = 0, offsetRow = 0) {
+    if (startTime !== null) b82.Utilities.checkNumber("startTime", startTime);
     b82.Utilities.checkNumber("offsetCol", offsetCol);
     b82.Utilities.checkNumber("offsetRow", offsetRow);
     return b82.Vfx.spr(
@@ -981,6 +982,7 @@ const b8 = {};
     if (startTime !== null) b82.Utilities.checkNumber("startTime", startTime);
     b82.Utilities.checkNumber("x", x);
     b82.Utilities.checkNumber("y", y);
+    if (startTime > b82.Core.getNow()) return true;
     const anim = b82.Vfx.get(animation);
     if (!b82.Animation.shouldLoop(anim, startTime)) return false;
     drawVfx(
@@ -3669,11 +3671,36 @@ const b8 = {};
 })(b8);
 (function(b82) {
   b82.Input = {};
-  let keysHeld_ = /* @__PURE__ */ new Set();
-  let keysJustPressed_ = /* @__PURE__ */ new Set();
+  let keysHeldRaw_ = /* @__PURE__ */ new Set();
+  let gameJustPressed_ = /* @__PURE__ */ new Set();
+  const active_ = () => contexts_[contexts_.length - 1];
+  let contexts_ = [
+    { name: "game", capture: false, passthrough: true, queue: [] }
+  ];
+  b82.Input.pushContext = function(name, opts = {}) {
+    contexts_.push({
+      name,
+      capture: !!opts.capture,
+      // if true, gameplay polling should be blocked
+      passthrough: opts.passthrough ?? false,
+      // if true, still allow gameplay justPressed
+      queue: []
+    });
+  };
+  b82.Input.popContext = function() {
+    if (contexts_.length > 1) contexts_.pop();
+  };
+  b82.Input.withContext = async function(name, opts, fn) {
+    b82.Input.pushContext(name, opts);
+    try {
+      return await fn();
+    } finally {
+      b82.Input.popContext();
+    }
+  };
   b82.Input.reset = function() {
-    keysHeld_ = /* @__PURE__ */ new Set();
-    keysJustPressed_ = /* @__PURE__ */ new Set();
+    keysHeldRaw_ = /* @__PURE__ */ new Set();
+    gameJustPressed_ = /* @__PURE__ */ new Set();
     window.removeEventListener("keydown", b82.Input.onKeyDown);
     window.removeEventListener("keyup", b82.Input.onKeyUp);
     window.removeEventListener("pointerdown", b82.Input.onPointerDown);
@@ -3685,13 +3712,16 @@ const b8 = {};
     window.addEventListener("pointerdown", b82.Input.onPointerDown);
   };
   b82.Input.keyHeld = function(keyName) {
-    return keysHeld_.has(keyName.toUpperCase());
+    return keysHeldRaw_.has(keyName.toUpperCase());
   };
   b82.Input.keyJustPressed = function(keyName) {
-    return keysJustPressed_.has(keyName.toUpperCase());
+    const ctx = active_();
+    const key = keyName.toUpperCase();
+    if (ctx.capture && !ctx.passthrough) return false;
+    return gameJustPressed_.has(key);
   };
   b82.Input.onEndFrame = function() {
-    keysJustPressed_.clear();
+    gameJustPressed_.clear();
   };
   b82.Input.onKeyDown = function(e) {
     const key = e.key;
@@ -3700,8 +3730,21 @@ const b8 = {};
       e.preventDefault();
     }
     for (const k of keys) {
-      keysJustPressed_.add(k.toUpperCase());
-      keysHeld_.add(k.toUpperCase());
+      keysHeldRaw_.add(k.toUpperCase());
+    }
+    const ctx = active_();
+    if (!ctx.capture || ctx.passthrough) {
+      for (const k of keys) {
+        gameJustPressed_.add(k.toUpperCase());
+      }
+    }
+    if (ctx.capture) {
+      ctx.queue.push(keys);
+      if (b82.Core.hasPendingAsync("b8.Async.key")) {
+        const next = ctx.queue.shift();
+        b82.Core.resolveAsync("b8.Async.key", next);
+      }
+      return;
     }
     if (b82.Core.hasPendingAsync("b8.Async.key")) {
       b82.Core.resolveAsync("b8.Async.key", keys);
@@ -3714,13 +3757,16 @@ const b8 = {};
   };
   b82.Input.onKeyUp = function(e) {
     if (!e.key) return;
-    const key = e.key.toUpperCase();
-    const keys = b82.Input.getKeys(key);
+    const keys = b82.Input.getKeys(e.key);
     for (const k of keys) {
-      keysHeld_.delete(k.toUpperCase());
+      keysHeldRaw_.delete(k.toUpperCase());
     }
   };
   b82.Input.readKeyAsync = function() {
+    const ctx = active_();
+    if (ctx.capture && ctx.queue.length > 0) {
+      return Promise.resolve(ctx.queue.shift());
+    }
     return new Promise(
       (resolve, reject) => {
         b82.Core.startAsync("b8.Async.key", resolve, reject);
@@ -3764,15 +3810,23 @@ const b8 = {};
     return keys;
   };
   b82.Input.readLine = async function(prompt2 = "Enter text:", initString = "", maxLen = 100, maxWidth = -1) {
-    if (prompt2 && prompt2.length > 0) {
-      b82.print(prompt2 + "\n> ");
-    }
-    if (b82.Core.isMobile()) {
-      const textInput = await readPrompt(prompt2, initString, maxLen, maxWidth);
-      b82.print(textInput + "\n");
-      await b82.Async.wait(0.2);
-      return textInput;
-    }
+    return b82.Input.withContext("text", { capture: true }, async () => {
+      if (prompt2 && prompt2.length > 0) {
+        b82.print(prompt2 + "\n> ");
+      }
+      if (b82.Core.isMobile()) {
+        return await handleMobileInput(prompt2, initString, maxLen, maxWidth);
+      }
+      return await handleDesktopInput(initString, maxLen, maxWidth);
+    });
+  };
+  async function handleMobileInput(prompt2, initString, maxLen, maxWidth) {
+    const textInput = await readPrompt(prompt2, initString, maxLen, maxWidth);
+    b82.print(textInput + "\n");
+    await b82.Async.wait(0.2);
+    return textInput;
+  }
+  async function handleDesktopInput(initString, maxLen, maxWidth) {
     const startCol = b82.Core.drawState.cursorCol;
     const startRow = b82.Core.drawState.cursorRow;
     let curCol = startCol;
@@ -3817,7 +3871,7 @@ const b8 = {};
         }
       }
     }
-  };
+  }
   const readPrompt = async function(promptString = "Enter text:", initString = "", maxLen = 100, maxWidth = -1) {
     let valid = false;
     let textInput = "";
