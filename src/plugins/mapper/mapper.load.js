@@ -26,8 +26,8 @@ mapper.load = function( mapData ) {
 			const mapDataString = level.mapData.join( '\n' );
 			b8.Utilities.checkString( `mapDataString for level ${index}`, mapDataString );
 
-			const maze = b8.Tilemap.convertFromText( mapDataString );
-			const map = b8.Tilemap.createFromArray( maze, mapData.tiles );
+			const mapArray = b8.Tilemap.convertFromText( mapDataString );
+			const map = b8.Tilemap.createFromArray( mapArray, mapData.tiles );
 
 			// Add mapId to each object
 			const objects = ( level.objects || [] ).map(
