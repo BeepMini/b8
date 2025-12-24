@@ -406,7 +406,7 @@
 	b8.ECS.countByType = function( typeName ) {
 
 		// get all entities with a Type component
-		const typeMap = this.get( 'Type' );
+		const typeMap = components.get( 'Type' );
 		if ( !typeMap ) return 0;
 
 		let count = 0;
