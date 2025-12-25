@@ -14,14 +14,14 @@
 
 		const CH_SPACESHIP = 22;
 		const CH_LASER = 72;
+
 		const MIN_Y = 24;
 		const MAX_Y = 168;
 		const MIN_X = 16;
 		const MAX_X = ( b8.CONFIG.SCREEN_COLS * b8.CONFIG.CHR_WIDTH ) - MIN_X;
 
-		const ACCEL = 3;
-		const FRICTION = 2;
-		const MAX_SPEED = 4;
+		const ACCEL = 4;
+		const FRICTION = 0.99;
 
 		// Ship's collision rectangle
 		const PLAYER_COLL_RECT = { x: 1, y: 1, w: 6, h: 6 };
@@ -44,35 +44,26 @@
 		let playerSpeed = 0;
 		// If a laser exists, laser.x, laser.y are its coordinates. Otherwise this is null.
 		let laser = null;
+		const laserDelay = 150; // milliseconds
+		// Variable to track the last time the laser was fired.
+		let lastLaserTime = 0;
 		// Array of enemies.
 		const enemies = [];
 		// Countdown to spawn next enemy.
 		let spawnCountdown = 0;
-		// If partFx != null, then we're doing a particle effect at partFx.x, partFx.y
-		// partFx.ticks indicates for how many ticks we have been playing it.
-		let partFx = null;
 		let score = 0;
 		let gameOver = false;
 		let backgroundImg = null;
-		// Sound effects.
-		let sfxLaser = null;
-		let sfxHit = null;
-		let sfxBlast = null;
 
-		b8.Actors.animations.explode = {
-			frames: [ 0, 1, 2, 3 ],
-			fps: 16,
-			loop: false
-		};
 
 		async function main() {
+
 			b8.cls();
 			b8.print( "Loading..." );
 			backgroundImg = await b8.Async.loadImage( "assets/city.png" );
-			sfxLaser = await b8.Async.loadSound( "assets/laser.wav" )
-			sfxHit = await b8.Async.loadSound( "assets/hit.wav" )
-			sfxBlast = await b8.Async.loadSound( "assets/blast.wav" )
+
 			b8.drawImage( 0, 0, backgroundImg );
+
 			b8.locate( 3, 6 );
 			b8.color( 14, -1 );
 			b8.print( "SPACESHIP EXAMPLE" );
@@ -82,23 +73,28 @@
 			b8.print( "Controls:\nSPACE or 'A' button to shoot." );
 			await b8.Async.key();
 			b8.cls();
-			b8.frame( doFrame, render );
+			b8.frame( render, doFrame );
+
 		}
 
-		async function doFrame() {
+
+		/**
+		 * Game update function, called once per frame.
+		 *
+		 * @param {number} dt Delta time since last frame in milliseconds.
+		 */
+		async function doFrame( dt ) {
+
+			spawnCountdown -= dt;
 
 			// Spawn enemy, if it's time. Or if we are below the minimum number of enemies.
-			if ( --spawnCountdown < 0 || enemies.length < calcParam( MIN_ENEMIES ) ) spawnEnemy();
+			if ( spawnCountdown < 0 || b8.ECS.countByType( 'enemy' ) < calcParam( MIN_ENEMIES ) ) spawnEnemy();
 
-			// Remove dead enemies.
-			for ( let i = enemies.length - 1; i >= 0; i-- ) {
-				if ( enemies[ i ].dead ) enemies.splice( i, 1 );
-			}
-
-			// Draw score
-			b8.color( 7 );
-			b8.locate( 25, 1 );
-			b8.print( ( score < 10 ? "000" : score < 100 ? "00" : score < 1000 ? "0" : "" ) + score );
+			updateEnemies( dt );
+			updatePlayer( dt );
+			updateLaser( dt );
+			updateVfx( dt );
+			checkCollisions();
 
 			// Game over?
 			if ( gameOver ) {
@@ -108,134 +104,248 @@
 
 		}
 
-		function render() {
+
+
+		function render( dt ) {
 
 			b8.cls();
+
+			// Background
 			b8.drawImage( 0, 0, backgroundImg );
-			// Update and draw everything.
-			updateAndDrawPlayer();
-			if ( laser ) updateAndDrawLaser();
-			enemies.forEach( updateAndDrawEnemy );
-			updateAndDrawPartFx();
 
-		}
+			// Draw score
+			b8.color( 7 );
+			b8.locate( 1, 1 );
+			b8.print( `${score}` );
 
-		function updateAndDrawPlayer() {
+			// Sprites (enemies, lasers, VFX etc)
+			const sprites = b8.ECS.query( 'Sprite' );
+			for ( const id of sprites ) {
+				const sprite = b8.ECS.getComponent( id, 'Sprite' );
+				b8.color( sprite.color );
 
-			// Apply acceleration based on up/down keys.
-			playerSpeed += ( b8.key( "ArrowRight" ) ? 1 : b8.key( "ArrowLeft" ) ? -1 : 0 ) * ACCEL;
-			// Apply friction (reduce speed).
-			playerSpeed = playerSpeed > 0 ?
-				Math.max( 0, playerSpeed - FRICTION ) : Math.min( 0, playerSpeed + FRICTION );
-			// Cap speed to maximum.
-			playerSpeed = b8.Utilities.clamp( playerSpeed, -MAX_SPEED, MAX_SPEED );
-			// Apply speed to position.
-			playerX = b8.Utilities.clamp( playerX + playerSpeed, MIN_X, MAX_X );
+				if ( sprite.animation ) {
+					b8.sprActor( sprite.chr, sprite.animation, sprite.x, sprite.y );
+				} else if ( sprite.fx ) {
+					b8.Vfx.spr( sprite.fx, sprite.startTime, sprite.x, sprite.y );
+				} else {
+					b8.spr( sprite.chr, sprite.x, sprite.y );
+				}
+			}
 
 			// Draw the spaceship.
 			b8.color( 15, -1 );
 			b8.sprActor( CH_SPACESHIP, 'idle', playerX, playerY );
-			// If there is no laser and the player presses Space (or the A button on mobile), shoot.
-			if ( !laser && ( b8.key( " " ) || b8.key( "ButtonA" ) ) ) shootLaser();
 
 		}
 
-		function updateAndDrawLaser() {
-			laser.y -= 16;
-			// Draw the laser. It's a double sprite (16 pixels tall).
-			b8.color( 11 );
-			b8.spr( CH_LASER, laser.x, laser.y );
-			b8.spr( CH_LASER, laser.x, laser.y + 8 );
-			// Remove laser if it went off-screen.
-			if ( laser.y < -16 ) laser = null;
+		function updatePlayer( dt ) {
+
+			// Control ship with left/right arrows or D-pad.
+			playerSpeed += ( b8.key( "ArrowRight" ) ? 1 : b8.key( "ArrowLeft" ) ? -1 : 0 ) * ACCEL;
+			// Shoot laser with space or A button.
+			if ( ( b8.key( " " ) || b8.key( "ButtonA" ) ) ) shootLaser();
+
+			// Apply friction (reduce speed).
+			playerSpeed = playerSpeed * FRICTION * dt * 20;
+			// Apply speed to position.
+			playerX = b8.Utilities.clamp( playerX + playerSpeed, MIN_X, MAX_X );
+
 		}
+
+		function updateLaser( dt ) {
+
+			const ids = b8.ECS.query( 'Laser' );
+			for ( const id of ids ) {
+
+				const sprite = b8.ECS.getComponent( id, 'Sprite' );
+				sprite.y -= 125 * dt;
+				// Off screen?
+				if ( sprite.y < 0 - 16 ) b8.ECS.removeEntity( id );
+
+			}
+
+		}
+
+
+		function updateVfx( dt ) {
+
+			const vfxIds = b8.ECS.query( 'VFX' );
+			for ( const id of vfxIds ) {
+
+				const sprite = b8.ECS.getComponent( id, 'Sprite' );
+				const animating = b8.Vfx.shouldLoop( sprite.fx, sprite.startTime, sprite.x, sprite.y );
+				if ( !animating ) b8.ECS.removeEntity( id );
+
+			}
+
+		}
+
 
 		function shootLaser() {
-			laser = { x: playerX, y: playerY };
-			b8.playSound( sfxLaser );
+
+			// Get the current time in milliseconds.
+			const now = b8.Core.getNow();
+			// Check if enough time has passed since the last laser shot.
+			if ( now - lastLaserTime < laserDelay ) return;
+
+			// Create the laser entity.
+			b8.ECS.create(
+				{
+					Sprite: {
+						chr: CH_LASER,
+						color: 11,
+						x: playerX,
+						y: playerY - 6,
+					},
+					Type: { name: 'laser' },
+					Laser: {},
+				}
+			);
+
+			// Play the laser sound.
+			b8.playSfx( 'weapon/lazer/005' );
+
+			// Update the last laser time.
+			lastLaserTime = now;
+
 		}
 
 		function spawnEnemy() {
+
 			const maxEnemies = calcParam( MAX_ENEMIES );
 			if ( enemies.length >= maxEnemies ) return;
-			const e = {
-				y: MIN_Y,
-				x: Math.round( MIN_X + Math.random() * ( MAX_X - MIN_X ) ), ticks: 0,
-				speed: calcParam( ENEMY_SPEED ),
-				color: calcParam( ENEMY_COLOR ),
-				// If 1, we're moving right, if -1 we're moving left.
-				dir: Math.random() > 0.5 ? 1 : -1,
-				// If > 0, we are sliding vertically against a wall.
-				sliding: 0,
-			};
-			enemies.push( e );
+
+			const dir = b8.Random.pick( [ -1, 1 ] );
+			const animation = dir === 1 ? 'move-right' : 'move-left';
+
+			b8.ECS.create(
+				{
+					Sprite: {
+						chr: 21,
+						animation,
+						color: calcParam( ENEMY_COLOR ),
+						x: b8.Random.int( MIN_X, MAX_X ),
+						y: MIN_Y,
+					},
+					Type: { name: 'enemy' },
+					Enemy: {
+						speed: calcParam( ENEMY_SPEED ),
+						dir,
+					},
+				}
+			);
+
 			spawnCountdown = calcParam( SPAWN_INTERVAL );
-		}
-
-		function updateAndDrawEnemy( e ) {
-
-			++e.ticks;
-
-			if ( e.sliding > 0 ) {
-				// Sliding vertically against wall.
-				e.y += e.speed;
-				--e.sliding;
-			} else {
-				// Moving horizontally.
-				e.x += e.dir * e.speed;
-				// Hit a wall? If so, start a slide.
-				if ( e.x <= MIN_X ) { e.x = MIN_X; e.dir = 1; e.sliding = 8; }
-				if ( e.x >= MAX_X ) { e.x = MAX_X; e.dir = -1; e.sliding = 8; }
-			}
-
-			// Don't go past player
-			e.y = Math.min( e.y, playerY );
-
-			// Hit by laser?
-			if ( laser && b8.Utilities.intersectRects( LASER_COLL_RECT, ENEMY_COLL_RECT, laser.x, laser.y, e.x, e.y ) ) {
-				e.dead = true;
-				laser = null;
-				partFx = { x: e.x, y: e.y, startTime: b8.Core.getNow() };
-				score += 50;
-				b8.playSound( sfxHit );
-			}
-
-			// Hit player?
-			if ( b8.Utilities.intersectRects( ENEMY_COLL_RECT, PLAYER_COLL_RECT, e.x, e.y, playerX, playerY ) ) {
-				if ( !gameOver ) b8.playSound( sfxBlast );
-				gameOver = true;
-			}
-
-			// Draw.
-			b8.color( e.color, -1 );
-
-			let animation = 'move-right';
-			if ( e.dir < 0 ) animation = 'move-left';
-
-			b8.sprActor( 21, animation, e.x, e.y );
 
 		}
 
-		function updateAndDrawPartFx() {
-			if ( !partFx ) return;
-			b8.color( 15 );
-			const animating = b8.sprActor( 39, 'explode', partFx.x, partFx.y, partFx.startTime );
-			if ( !animating ) partFx = null;
+		function updateEnemies( dt ) {
+
+			const enemies = b8.ECS.query( 'Enemy' );
+
+			for ( const id of enemies ) {
+
+				const sprite = b8.ECS.getComponent( id, 'Sprite' );
+				const enemy = b8.ECS.getComponent( id, 'Enemy' );
+
+				// Update enemy position
+				sprite.x += ( enemy.dir * enemy.speed * dt * 20 );
+
+				// Bounce off sides
+				const ENEMY_ROW_HEIGHT = 16;
+				if ( sprite.x <= MIN_X ) { sprite.x = MIN_X; enemy.dir = 1; sprite.y += ENEMY_ROW_HEIGHT; sprite.animation = 'move-right'; }
+				if ( sprite.x >= MAX_X ) { sprite.x = MAX_X; enemy.dir = -1; sprite.y += ENEMY_ROW_HEIGHT; sprite.animation = 'move-left'; }
+
+				// Don't go past player
+				sprite.y = Math.min( sprite.y, playerY );
+
+			}
+
 		}
+
 
 		function showGameOver() {
+
 			b8.color( 15, 2 );
 			b8.locate( 2, 10 );
 			b8.printBox( b8.CONFIG.SCREEN_COLS - 4, 3 );
 			b8.locate( 0, 11 );
 			b8.printCentered( "GAME OVER", b8.CONFIG.SCREEN_COLS );
+
 		}
 
 		function calcParam( paramSpec ) {
-			return paramSpec[ Math.min( Math.max( Math.floor( score / 500 ), 0 ), paramSpec.length - 1 ) ];
+
+			// This function calculates a parameter value based on the player's score.
+			// The parameter is chosen from an array (paramSpec) where each index corresponds to a score range.
+			// The score is divided by 500 to determine the range index.
+			// Math.floor ensures the index is an integer, and Math.min/Math.max clamp it within valid bounds.
+			const value = paramSpec[ Math.min( Math.max( Math.floor( score / 500 ), 0 ), paramSpec.length - 1 ) ];
+			// console.log( 'calcParam', value );
+			return value;
+
 		}
 
-		window.addEventListener( "load", () => b8.init( main, { NAME: 'Spaceshop Shooter' } ) );
+		function checkCollisions() {
+
+			// Query all enemies and lasers.
+			const enemies = b8.ECS.query( 'Sprite', 'Enemy' );
+			const lasers = b8.ECS.query( 'Sprite', 'Laser' );
+
+			// Check each enemy against each laser.
+			enemies.forEach( ( enemyId ) => {
+				const enemyPos = b8.ECS.getComponent( enemyId, 'Sprite' );
+
+				// Check collision with player.
+				if ( b8.Utilities.intersectRects( ENEMY_COLL_RECT, PLAYER_COLL_RECT, enemyPos.x, enemyPos.y, playerX, playerY ) ) {
+					if ( !gameOver ) b8.playSfx( 'tone/jingle/015' );
+					gameOver = true;
+				}
+
+				// Check collision with lasers.
+				lasers.forEach( ( laserId ) => {
+					const laserPos = b8.ECS.getComponent( laserId, 'Sprite' );
+
+					if ( b8.Utilities.intersectRects( LASER_COLL_RECT, ENEMY_COLL_RECT, laserPos.x, laserPos.y, enemyPos.x, enemyPos.y ) ) {
+						// Remove both entities on collision.
+						b8.ECS.removeEntity( laserId );
+						b8.ECS.removeEntity( enemyId );
+
+						// Remove ids.
+						enemies.splice( enemies.indexOf( enemyId ), 1 );
+						lasers.splice( lasers.indexOf( laserId ), 1 );
+
+						// Add VFX.
+						b8.ECS.create( {
+							Sprite: {
+								chr: 39,
+								fx: 'explosion',
+								color: 10,
+								x: enemyPos.x,
+								y: enemyPos.y,
+								startTime: b8.Core.getNow(),
+							},
+							VFX: {},
+						} );
+
+						b8.Renderer.shakeScreen();
+
+						// Update the score.
+						score += 50;
+						b8.playSfx( 'weapon/explode/003' );
+					}
+				} );
+			} );
+		}
+
+		window.addEventListener(
+			"load",
+			() => b8.init(
+				main,
+				{ NAME: 'Spaceship Shooter' }
+			)
+		);
 	</script>
 </head>
 
