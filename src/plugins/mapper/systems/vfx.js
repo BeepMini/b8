@@ -5,12 +5,7 @@ mapper.systems.vfx = async function( dt ) {
 	for ( const id of list ) {
 
 		const sprite = b8.ECS.getComponent( id, 'Sprite' );
-
-		const animation = b8.Vfx.get( sprite.id );
-
-		if ( animation ) {
-			if ( b8.Animation.shouldLoop( animation, sprite.startTime ) ) continue;
-		}
+		if ( b8.Vfx.shouldLoop( sprite.id, sprite.startTime ) ) continue;
 
 		b8.ECS.removeEntity( id );
 
