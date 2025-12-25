@@ -89,7 +89,6 @@
 		}
 
 		b8.Utilities.checkObject( "anim", anim );
-		b8.Utilities.checkNumber( "startTime", startTime );
 
 		if ( anim === undefined ) {
 			b8.Utilities.fatal( "Animation not found" );

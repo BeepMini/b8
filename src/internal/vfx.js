@@ -162,7 +162,7 @@
 		b8.Utilities.checkObject( "anim", anim );
 		b8.Utilities.checkNumber( "startTime", startTime );
 
-		return b8.Animation.shouldLoop( animation, startTime );
+		return b8.Animation.shouldLoop( anim, startTime );
 
 	};
 
