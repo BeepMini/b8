@@ -58,6 +58,24 @@
 
 
 	/**
+	 * Get animation by id.
+	 *
+	 * @param {string} animation The animation id.
+	 * @returns {Object|undefined} The animation object, or undefined if not found.
+	 */
+	b8.Animation.get = function( animation ) {
+
+		b8.Utilities.checkString( "animation", animation );
+		if ( b8.Animation.animations[ animation ] === undefined ) {
+			b8.Utilities.fatal( "Invalid Animation: " + animation );
+		}
+
+		return b8.Animation.animations[ animation ];
+
+	};
+
+
+	/**
 	 * Checks if the animation has finished looping.
 	 *
 	 * @param {Object} anim - The animation object.
@@ -66,10 +84,19 @@
 	 */
 	b8.Animation.shouldLoop = function( anim, startTime ) {
 
-		// If the animation has not started or is set to loop, continue the animation.
-		if ( startTime === null || anim.loop === true ) {
-			return true;
+		if ( typeof anim === 'string' ) {
+			anim = b8.Animation.get( anim );
 		}
+
+		b8.Utilities.checkObject( "anim", anim );
+		b8.Utilities.checkNumber( "startTime", startTime );
+
+		if ( anim === undefined ) {
+			b8.Utilities.fatal( "Animation not found" );
+		}
+
+		// If the animation has not started or is set to loop, continue the animation.
+		if ( startTime === null || anim.loop === true ) return true;
 
 		// Calculate the total length of the animation in milliseconds.
 		const FPS = anim.fps || 1;

@@ -145,4 +145,25 @@
 
 	};
 
+
+	/**
+	 * Checks if the Vfx animation has finished looping.
+	 *
+	 * @param {string|Object} animation The animation to check.
+	 * @param {number} startTime The start time of the animation.
+	 * @returns {boolean} Returns true if the animation should continue, false if it has finished looping.
+	 */
+	b8.Vfx.shouldLoop = function( anim, startTime ) {
+
+		if ( typeof anim === 'string' ) {
+			anim = b8.Vfx.get( anim );
+		}
+
+		b8.Utilities.checkObject( "anim", anim );
+		b8.Utilities.checkNumber( "startTime", startTime );
+
+		return b8.Animation.shouldLoop( animation, startTime );
+
+	};
+
 } )( b8 );
