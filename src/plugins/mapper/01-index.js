@@ -237,12 +237,18 @@ const mapper = {
 	 * Get the action verb for a given entity ID.
 	 *
 	 * @param {number} id - The entity ID to get the verb for.
+	 * @param {string} propertyName - The name of the property to retrieve.
 	 * @returns {string} The action verb associated with the entity, or an empty string if none exists.
 	 */
-	getVerbForEntity: ( id ) => {
+	getPropForEntity: ( id, propertyName = null ) => {
 
 		const a = b8.ECS.getComponent( id, 'Action' );
-		return a?.verb ?? '';
+
+		if ( !a ) return '';
+		if ( !propertyName ) return '';
+		if ( !( propertyName in a ) ) return '';
+
+		return a[ propertyName ] ?? '';
 
 	},
 
@@ -263,13 +269,17 @@ const mapper = {
 	 * Get the action verb for the entity directly in front of the player.
 	 *
 	 * @param {number} playerId - The player entity ID.
+	 * @param {string|null} propertyName - The name of the property to retrieve.
 	 * @returns {string} The action verb of the entity ahead, or an empty string if none exists.
 	 */
-	promptAhead: ( playerId ) => {
+	promptAhead: ( playerId, propertyName = null ) => {
+
+		if ( !propertyName ) return '';
 
 		const ids = mapper.entitiesAhead( playerId );
+
 		for ( const id of ids ) {
-			const verb = mapper.getVerbForEntity( id );
+			const verb = mapper.getPropForEntity( id, propertyName );
 			if ( verb ) return verb;
 		}
 		return '';
@@ -352,13 +362,15 @@ const mapper = {
 	 * Perform the action associated with the entity directly in front of the player.
 	 *
 	 * @param {number} playerId - The player entity ID.
+	 * @param {string} propertyName - The name of the property to check for an action.
 	 * @returns {void}
 	 */
-	doAction: ( playerId ) => {
+	doAction: ( playerId, propertyName ) => {
 
+		if ( !propertyName ) return;
 		if ( mapper.actionCooldown > 0 ) return;
 
-		const action = mapper.promptAhead( playerId );
+		const action = mapper.promptAhead( playerId, propertyName );
 
 		if ( action && mapper.actions[ action ] ) {
 			mapper.actions[ action ]( playerId );
@@ -367,53 +379,18 @@ const mapper = {
 	},
 
 
-	/**
-	 * Perform an attack action for the specified player.
-	 *
-	 * @param {number} playerId - The entity ID of the player.
-	 * @returns {void}
-	 */
-	doAttack: ( playerId ) => {
+
+	doAttack: ( playerId, propertyName ) => {
 
 		const ahead = mapper.ahead( playerId );
-		const ids = mapper.entitiesAhead( playerId );
 
+		// Do swipe VFX.
 		mapper.types.vfx.spawn(
 			ahead.x, ahead.y,
 			{ id: 'swipe', fg: 15, bg: 0 }
 		);
 
-		for ( const targetId of ids ) {
-
-			// Don't attack self.
-			if ( targetId === playerId ) continue;
-
-			// Only attack entities that can be attacked.
-			if ( !b8.ECS.hasComponent( targetId, 'AttackTarget' ) ) continue;
-
-			// Apply damage to the target.
-			const targetHealth = b8.ECS.getComponent( targetId, 'Health' );
-			const playerAttack = b8.ECS.getComponent( playerId, 'Attack' ) || { value: 1 };
-			targetHealth.value -= playerAttack.value;
-
-			// Check if target is defeated.
-			if ( targetHealth.value <= 0 ) {
-				b8.ECS.removeEntity( targetId );
-				mapper.types.vfx.spawn(
-					ahead.x, ahead.y,
-					{ id: 'skull', fg: 2, bg: 0, offsetTime: 200 }
-				);
-
-				// Small pause on defeat.
-				mapper.updateMoveDelay( 0.6 );
-
-				return;
-			}
-
-			// Only attack one target at a time.
-			break;
-
-		}
+		mapper.doAction( playerId, propertyName );
 
 	},
 

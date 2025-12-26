@@ -14,7 +14,7 @@ mapper.types.crate = {
 				},
 				Solid: {},
 				Pushable: {},
-				Action: { verb: 'pull' },
+				Action: { ButtonB: 'pull' },
 			}
 		);
 

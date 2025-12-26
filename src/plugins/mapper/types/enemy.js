@@ -33,7 +33,6 @@ mapper.types.enemy = {
 				default: 'idle',
 				duration: 0,
 			},
-			AttackTarget: {},
 			Health: {
 				value: health || 3,
 				max: health || 3
@@ -41,6 +40,8 @@ mapper.types.enemy = {
 			Attack: {
 				value: attack || 1
 			},
+			AttackTarget: {},
+			Action: { ButtonA: 'attack' }
 		};
 
 		// Add PathFollower component if a path is defined

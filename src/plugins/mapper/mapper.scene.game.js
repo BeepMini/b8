@@ -43,8 +43,8 @@ mapper.sceneGame = {
 		else if ( b8.key( "ArrowDown" ) ) { dy = 1; keyPressed = true; }
 		else if ( b8.key( "ArrowLeft" ) ) { dx = -1; keyPressed = true; }
 		else if ( b8.key( "ArrowRight" ) ) { dx = 1; keyPressed = true; }
-		if ( b8.key( "ButtonA" ) ) { mapper.doAttack( mapper.player ); keyPressed = true; }
-		if ( b8.key( "ButtonB" ) ) { mapper.doAction( mapper.player ); keyPressed = true; }
+		if ( b8.key( "ButtonA" ) ) { mapper.doAttack( mapper.player, 'ButtonA' ); keyPressed = true; }
+		if ( b8.key( "ButtonB" ) ) { mapper.doAction( mapper.player, 'ButtonB' ); keyPressed = true; }
 
 		// Update move delay when a key is pressed.
 		if ( keyPressed ) mapper.updateMoveDelay();
@@ -139,13 +139,16 @@ mapper.sceneGame = {
 		// -------------
 		b8.color( 15, -1 );
 
+		// I add a space before the text to add a gap between the icon and the text.
+		// The gap is a half tile which is harder to add directly.
+
 		// A button.
 		b8.locate( 11, b8.CONFIG.SCREEN_ROWS - 4 );
 		b8.print( ' Hit' );
 
 		// B button.
 		b8.locate( 15, b8.CONFIG.SCREEN_ROWS - 4 );
-		b8.print( mapper.helpers.capitalizeWords( ' ' + mapper.promptAhead( mapper.player ) ) );
+		b8.print( mapper.helpers.capitalizeWords( ' ' + mapper.promptAhead( mapper.player, 'ButtonB' ) ) );
 
 		return;
 

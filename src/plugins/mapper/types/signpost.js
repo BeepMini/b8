@@ -13,7 +13,7 @@ mapper.types.signpost = {
 				},
 				Solid: {},
 				Message: { message: props.message || "" },
-				Action: { verb: 'read' },
+				Action: { ButtonB: 'read' },
 			}
 		);
 
