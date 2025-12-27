@@ -51,14 +51,6 @@ mapper.collision = {
 		let mapCell = currentMap.mapData[ row ][ col ];
 		if ( true === mapCell[ 3 ] ) return false;
 
-		// Check for spikes.
-		// if ( cell === '^' ) {
-		// 	let spike = Tile.spikes.list.find( s => s.x === x && s.y === y );
-		// 	if ( spike && spike.up ) {
-		// 		return false;
-		// 	}
-		// }
-
 		return true;
 
 	},

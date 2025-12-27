@@ -1,7 +1,5 @@
 mapper.actions.attack = ( playerId ) => {
 
-	console.log( 'attack action triggered' );
-
 	const ahead = mapper.ahead( playerId );
 	const ids = mapper.entitiesAhead( playerId );
 
