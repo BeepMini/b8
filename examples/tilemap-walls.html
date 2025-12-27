@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>Tilemap Walls Sample</title>
+	<meta name="description" content="See how to create and render a tilemap.">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+	<link rel="stylesheet" href="example.css">
+	<script src="../dist/b8.min.js"></script>
+
+	<script>
+
+		const MAP = [
+			"               TTTTT",
+			"  ############   TTT",
+			"  #^        ^# *  TT",
+			"  #          # *  TT",
+			"  #          #      ",
+			"TT#          # TT   ",
+			"TT##D######D######  ",
+			" T#    #         #  ",
+			"  #    # ^     ^ #  ",
+			"* #    #         #  ",
+			"  ##D#############  ",
+			"  # % TTTTT   ***   ",
+			"  # % TTTTT %%%%%%%%",
+			"### %       % * * * ",
+			"    %%%%%%%%%       ",
+			"$$$$$    %     $$$$$",
+			" *  $    %  T  $  * ",
+			"   $$$$$ %  T  $ *  ",
+			"TT $   $ %  T  $    ",
+			" T $   $ %  T  $$$$$",
+			"  *$$$$$ %% T  *    ",
+			"   $   $  % T  $$$$$",
+			"*  $$$$$  % T  $    ",
+		];
+
+		const TILES = {
+			"#": { fg: 3, t: 'wall:solid' },
+			"$": { fg: 12, t: 'wall:pipe' },
+			"%": { fg: 7, t: 'wall:half' },
+			"D": { fg: 4, t: 221 }, // Door.
+			"T": { fg: 12, t: [ 184, 185 ] }, // Tree
+			"*": { fg: 14, t: [ 312, 294 ] }, // Flowers.
+			"^": {
+				fg: 9, t: 'vfx:fire-stand'
+			}
+		};
+
+		function load() {
+
+			const mapDataString = MAP.join( '\n' );
+			const mapArray = b8.Tilemap.convertFromText( mapDataString );
+			const map = b8.Tilemap.createFromArray( mapArray, TILES );
+
+			b8.Tilemap.draw( map );
+
+		}
+
+		window.addEventListener(
+			"load",
+			() => b8.init( load )
+		);
+	</script>
+</head>
+
+<body>
+</body>
+
+</html>
