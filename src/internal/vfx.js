@@ -34,6 +34,10 @@
 			frames: [ 30, 31, 32, 33 ],
 			loop: true,
 		},
+		'fire-stand': {
+			frames: [ 36, 37, 38, 39 ],
+			loop: true,
+		},
 
 	};
 
@@ -67,6 +71,8 @@
 			font,
 			direction || 0
 		);
+
+		b8.Core.drawState.cursorCol++;
 
 	};
 

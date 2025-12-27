@@ -213,7 +213,15 @@
 						tile[ b8.Tilemap.MAP_BG ]
 					);
 
-					b8.printChar( tile[ b8.Tilemap.MAP_CHAR ] );
+					const tileChar = tile[ b8.Tilemap.MAP_CHAR ];
+
+					if ( typeof tileChar === 'string' && tileChar.startsWith( 'vfx:' ) ) {
+						const animationName = tileChar.substring( 4 );
+						b8.Vfx.draw( animationName, b8.Core.startTime );
+						continue;
+					}
+
+					b8.printChar( tileChar );
 
 				}
 			}
@@ -434,8 +442,8 @@
 				// Tile character code.
 				let tileId = tile.t;
 
-				// If tileId is a string and begins with "wall_" then compute bitmask.
-				if ( typeof tileId === "string" && tileId.startsWith( "wall_" ) ) {
+				// If tileId is a string and begins with "wall:" then compute bitmask.
+				if ( typeof tileId === "string" && tileId.startsWith( "wall:" ) ) {
 					tileId = b8.Tilemap.wallTile( x, y, grid, tileId );
 				}
 
@@ -496,7 +504,7 @@
 			b8.Utilities.fatal( "Wall tile name not given: " + name );
 		}
 
-		// Remove wall_ prefix from name.
+		// Remove wall: prefix from name.
 		const tileType = name.substring( 5 );
 
 		if ( !wallTiles[ tileType ] ) {
