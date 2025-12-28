@@ -139,6 +139,8 @@ const mapper = {
 		for ( const { spr, loc, anim } of list ) {
 
 			const pos = mapper.camera.getTilePosition( loc.col, loc.row );
+			const nudgeCol = spr.nudgeCol || 0;
+			const nudgeRow = spr.nudgeRow || 0;
 
 			b8.locate( pos.col + offsetX, pos.row + offsetY );
 			b8.color( spr.fg ?? 15, spr.bg ?? 0 );
@@ -147,18 +149,13 @@ const mapper = {
 
 				case 'actor':
 
-					let nudgeCol = 0;
-					let nudgeRow = 0;
-					if ( spr.nudgeCol ) nudgeCol = spr.nudgeCol;
-					if ( spr.nudgeRow ) nudgeRow = spr.nudgeRow;
-
 					b8.drawActor( parseInt( spr.tile ), anim.name, nudgeCol, nudgeRow );
 
 					break;
 
 				case 'vfx':
 
-					b8.Vfx.draw( spr.id, spr.startTime );
+					b8.Vfx.draw( spr.id, spr.startTime, nudgeCol, nudgeRow );
 
 					break;
 
@@ -322,6 +319,40 @@ const mapper = {
 
 
 	/**
+	 * Get all entities located next to the player (up, down, left, right).
+	 *
+	 * @param {number} playerId - The player entity ID.
+	 * @returns {Array} An array of entity IDs located next to the player.
+	 */
+	entitiesNextTo: ( playerId ) => {
+
+		const loc = b8.ECS.getComponent( playerId, 'Loc' );
+		if ( !loc ) return [];
+
+		const adjacentEntities = new Set();
+
+		const directions = [
+			{ dx: -1, dy: 0 }, // left
+			{ dx: 1, dy: 0 },  // right
+			{ dx: 0, dy: -1 }, // up
+			{ dx: 0, dy: 1 }   // down
+		];
+
+		for ( const dir of directions ) {
+			const x = loc.col + dir.dx;
+			const y = loc.row + dir.dy;
+			const entities = b8.ECS.entitiesAt( x, y );
+			if ( entities ) {
+				entities.forEach( id => adjacentEntities.add( id ) );
+			}
+		}
+
+		return Array.from( adjacentEntities );
+
+	},
+
+
+	/**
 	 * Handle collision when the player attempts to move to a new tile.
 	 *
 	 * @param {number} x - The current x-coordinate (column) of the player.
@@ -379,7 +410,13 @@ const mapper = {
 	},
 
 
-
+	/**
+	 * Perform an attack action by the player.
+	 *
+	 * @param {number} playerId - The player entity ID.
+	 * @param {string} propertyName - The name of the property to check for an attack action.
+	 * @returns {void}
+	 */
 	doAttack: ( playerId, propertyName ) => {
 
 		const ahead = mapper.ahead( playerId );
