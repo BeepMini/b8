@@ -1,6 +1,6 @@
 mapper.types.vfx = {
 
-	spawn: function( col, row, props ) {
+	spawn: function( col, row, props = {} ) {
 
 		if ( !props.id ) return {};
 

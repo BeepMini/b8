@@ -8,7 +8,7 @@ mapper.types.coin = {
 	 * @param {Object} props - Additional properties for the coin.
 	 * @returns {number} The entity ID of the spawned coin.
 	 */
-	spawn: function( col, row, props ) {
+	spawn: function( col, row, props = {} ) {
 
 		return mapper.types.pickup.spawn(
 			col,

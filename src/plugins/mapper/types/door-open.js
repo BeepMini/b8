@@ -1,6 +1,6 @@
 mapper.types.doorOpen = {
 
-	spawn: function( col, row, props ) {
+	spawn: function( col, row, props = {} ) {
 
 		const doorProps = {
 			Type: { name: 'door' },

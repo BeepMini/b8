@@ -1,6 +1,6 @@
 mapper.types.chestOpen = {
 
-	spawn: function( col, row, props ) {
+	spawn: function( col, row, props = {} ) {
 
 		const entitySettings = {
 			Type: { name: 'chest' },

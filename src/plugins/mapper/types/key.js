@@ -8,7 +8,7 @@ mapper.types.key = {
 	 * @param {Object} props - Additional properties for the key (e.g., fg, bg colors).
 	 * @returns {number} The entity ID of the spawned key.
 	 */
-	spawn: function( col, row, props ) {
+	spawn: function( col, row, props = {} ) {
 
 		const color = props.fg || 14;
 

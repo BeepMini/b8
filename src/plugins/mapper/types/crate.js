@@ -1,6 +1,6 @@
 mapper.types.crate = {
 
-	spawn: function( col, row, props ) {
+	spawn: function( col, row, props = {} ) {
 
 		return b8.ECS.create(
 			{

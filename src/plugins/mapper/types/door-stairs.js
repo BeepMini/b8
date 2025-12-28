@@ -1,6 +1,6 @@
 mapper.types.doorStairs = {
 
-	spawn: function( col, row, props ) {
+	spawn: function( col, row, props = {} ) {
 
 		const icon = props.icon || 197;
 

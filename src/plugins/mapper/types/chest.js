@@ -14,7 +14,7 @@ mapper.types.chest = {
 	},
 
 
-	spawn: function( col, row, props ) {
+	spawn: function( col, row, props = {} ) {
 
 		let items = [];
 		let foregroundColor = props.fg || 15;

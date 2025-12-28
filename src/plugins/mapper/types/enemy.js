@@ -7,7 +7,7 @@ mapper.types.enemy = {
 		'Hard': [ 8, 3, 8 ],
 	},
 
-	spawn: function( col, row, props ) {
+	spawn: function( col, row, props = {} ) {
 
 		const initialDirection = 'D';
 

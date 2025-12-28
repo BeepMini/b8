@@ -3,7 +3,7 @@ mapper.types.door = {
 	TILE_DOOR_OPEN: 216,
 	TILE_DOOR_DEFAULT: 219,
 
-	spawn: function( col, row, props ) {
+	spawn: function( col, row, props = {} ) {
 
 		const icon = props.icon || mapper.types.door.TILE_DOOR_DEFAULT;
 
