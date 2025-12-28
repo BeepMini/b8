@@ -103,6 +103,9 @@ mapper.load = function( mapData ) {
 	b8.ECS.addSystem( 'bumpAttack', mapper.systems.bumpAttack );
 	b8.ECS.addSystem( 'pickup', mapper.systems.pickup );
 	b8.ECS.addSystem( 'vfx', mapper.systems.vfx );
+	b8.ECS.addSystem( 'bomb', mapper.systems.bomb );
+	b8.ECS.addSystem( 'fire', mapper.systems.fire );
+	b8.ECS.addSystem( 'flammable', mapper.systems.flammable );
 
 	// Play music.
 	if ( mapper.settings.bgm ) b8.Music.play( mapper.settings.bgm );

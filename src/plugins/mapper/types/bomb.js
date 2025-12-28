@@ -1,6 +1,9 @@
 mapper.types.bomb = {
 
-	spawn: function( col, row, props ) {
+	color: 8,
+	flickerColor: 15,
+
+	spawn: function( col, row, props = {} ) {
 
 		return b8.ECS.create(
 			{
@@ -8,17 +11,20 @@ mapper.types.bomb = {
 				Loc: { col, row },
 				Sprite: {
 					tile: 283,
-					fg: 5,
+					fg: mapper.types.bomb.color,
 					bg: 0,
 					depth: 10
 				},
 				Solid: {},
 				Pushable: {},
-				Action: { ButtonB: 'pull', ButtonA: 'ignite' },
+				Action: {
+					ButtonB: 'pull',
+					ButtonA: 'ignite'
+				},
 				Bomb: {
-					timer: parseInt( props.timer ) || 3,
+					fuseTime: false,
 					radius: parseInt( props.radius ) || 1,
-					damage: parseInt( props.damage ) || 5,
+					damage: 2,
 				},
 			}
 		);
@@ -36,9 +42,21 @@ mapper.types.bomb = {
 		// Also allow damage to entities in the blast radius
 		// Also set fire to anything flammable in the blast radius
 
-		// Play sound effect
-		b8.Sfx.play( 'explosion/large/001' );
+		// Loop through tiles in radius.
+		for ( let dx = -bombComp.radius; dx <= bombComp.radius; dx++ ) {
+			for ( let dy = -bombComp.radius; dy <= bombComp.radius; dy++ ) {
 
-	},
+				console.log( 'Spawn fire', dx, dy );
+				const row = bombLoc.row + dy;
+				const col = bombLoc.col + dx;
+
+				if ( !mapper.collision.isWalkable( col, row ) ) continue;
+
+				mapper.types.fire.spawn( col, row );
+
+			}
+		}
+
+	}
 
 };

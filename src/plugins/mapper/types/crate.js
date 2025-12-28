@@ -15,6 +15,9 @@ mapper.types.crate = {
 				Solid: {},
 				Pushable: {},
 				Action: { ButtonB: 'pull' },
+				Flammable: {
+					temperature: 20,
+				}
 			}
 		);
 
