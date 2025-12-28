@@ -1,5 +1,7 @@
 mapper.types.fire = {
 
+	damagePerSecond: 2,
+
 	spawn: function( col, row, props = {} ) {
 
 		let duration = parseInt( props.duration ) || 5;
@@ -18,7 +20,6 @@ mapper.types.fire = {
 				},
 				Fire: {
 					duration,
-					damagePerSecond: parseInt( props.damagePerSecond ) || 1,
 				},
 			}
 		);

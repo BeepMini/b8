@@ -97,6 +97,7 @@ mapper.types.chest = {
 				Message: { message: props.message || "" },
 				Reward: { items },
 				Action: {
+					ButtonA: 'open',
 					ButtonB: 'open'
 				},
 			}

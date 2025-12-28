@@ -26,6 +26,9 @@ mapper.types.bomb = {
 					radius: parseInt( props.radius ) || 1,
 					damage: 2,
 				},
+				Flammable: {
+					temperature: 20,
+				},
 			}
 		);
 
