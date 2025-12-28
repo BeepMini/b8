@@ -38,7 +38,10 @@
 			frames: [ 36, 37, 38, 39 ],
 			loop: true,
 		},
-
+		'shrink': {
+			frames: [ 34, 35, 40, 41 ],
+			fps: 18,
+		}
 	};
 
 
