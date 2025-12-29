@@ -1,11 +1,25 @@
 mapper.types.skeleton = {
 
-	init: function( obj ) { },
+	spawn: function( col, row, props = {} ) {
 
-	onCharacterCollision: async function( obj, newCol, newRow, dx, dy ) { },
+		return b8.ECS.create(
+			{
 
-	update: function( obj ) { },
 
-	render: function( obj, offsetX = 0, offsetY = 0 ) { },
+			}
+		);
+
+	},
+
+	pickupHandler: function( playerId, pickup ) {
+	},
+
+	triggerHandler: function( playerId, id ) {
+	},
+
+	onCharacterCollision: function( id, newCol, newRow, dx, dy ) {
+	},
+
+
 
 };
