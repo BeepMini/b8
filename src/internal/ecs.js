@@ -385,11 +385,19 @@
 	 */
 	b8.ECS.query = function( ...names ) {
 
+		// If no component names given, return empty array.
 		if ( names.length === 0 ) return [];
+
+		// Start with the first component's entities.
 		const base = components.get( names[ 0 ] );
 
+		// If no entities have the first component, return empty array.
 		if ( !base ) return [];
 
+		// If only one component name, return all its entities.
+		if ( names.length === 1 ) return [ ...base.keys() ];
+
+		// Filter the base set by checking other components.
 		return [ ...base.keys() ].filter( id =>
 			names.every( n => components.get( n )?.has( id ) )
 		);
