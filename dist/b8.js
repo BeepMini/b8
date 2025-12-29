@@ -946,8 +946,20 @@ const b8 = {};
       fps: 18
     },
     "skull": {
-      frames: [24, 24, 25, 26, 27, 28, 28, 29],
+      frames: [24, 24, 24, 25, 26, 27, 28, 28, 29],
       fps: 12
+    },
+    "fire-small": {
+      frames: [30, 31, 32, 33],
+      loop: true
+    },
+    "fire-stand": {
+      frames: [36, 37, 38, 39],
+      loop: true
+    },
+    "shrink": {
+      frames: [34, 35, 40, 41],
+      fps: 18
     }
   };
   for (const key in b82.Vfx.animations) {
@@ -966,6 +978,7 @@ const b8 = {};
       font,
       direction || 0
     );
+    b82.Core.drawState.cursorCol++;
   };
   b82.Vfx.draw = function(animation, startTime, offsetCol = 0, offsetRow = 0) {
     if (startTime !== null) b82.Utilities.checkNumber("startTime", startTime);
@@ -999,6 +1012,14 @@ const b8 = {};
       b82.Utilities.fatal("Invalid Vfx animation: " + animation);
     }
     return b82.Vfx.animations[animation];
+  };
+  b82.Vfx.shouldLoop = function(anim, startTime) {
+    if (typeof anim === "string") {
+      anim = b82.Vfx.get(anim);
+    }
+    b82.Utilities.checkObject("anim", anim);
+    b82.Utilities.checkNumber("startTime", startTime);
+    return b82.Animation.shouldLoop(anim, startTime);
   };
 })(b8);
 (function(b82) {
@@ -1585,7 +1606,13 @@ const b8 = {};
             tile[b82.Tilemap.MAP_FG],
             tile[b82.Tilemap.MAP_BG]
           );
-          b82.printChar(tile[b82.Tilemap.MAP_CHAR]);
+          const tileChar = tile[b82.Tilemap.MAP_CHAR];
+          if (typeof tileChar === "string" && tileChar.startsWith("vfx:")) {
+            const animationName = tileChar.substring(4);
+            b82.Vfx.draw(animationName, b82.Core.startTime);
+            continue;
+          }
+          b82.printChar(tileChar);
         }
       }
     }
@@ -1673,16 +1700,15 @@ const b8 = {};
       defaultTilePattern = b82.Tilemap.getDefaultTile();
     }
     const tilemap = [];
+    b82.Random.setSeed(grid[0].join(""));
     for (let y = 0; y < grid.length; y++) {
       tilemap[y] = [];
       for (let x = 0; x < grid[y].length; x++) {
         tilemap[y][x] = [...defaultTilePattern];
-        if (!tilePattern[grid[y][x]]) {
-          continue;
-        }
+        if (!tilePattern[grid[y][x]]) continue;
         const tile = tilePattern[grid[y][x]];
         let tileId = tile.t;
-        if (typeof tileId === "string" && tileId.startsWith("wall_")) {
+        if (typeof tileId === "string" && tileId.startsWith("wall:")) {
           tileId = b82.Tilemap.wallTile(x, y, grid, tileId);
         }
         if (Array.isArray(tileId)) {
@@ -4157,12 +4183,13 @@ const b8 = {};
     if (names.length === 0) return [];
     const base = components.get(names[0]);
     if (!base) return [];
+    if (names.length === 1) return [...base.keys()];
     return [...base.keys()].filter(
       (id) => names.every((n) => components.get(n)?.has(id))
     );
   };
   b82.ECS.countByType = function(typeName) {
-    const typeMap = this.get("Type");
+    const typeMap = components.get("Type");
     if (!typeMap) return 0;
     let count = 0;
     for (const comp of typeMap.values()) {
@@ -4822,10 +4849,22 @@ const b8 = {};
     }
     return frame;
   };
-  b82.Animation.shouldLoop = function(anim, startTime) {
-    if (startTime === null || anim.loop === true) {
-      return true;
+  b82.Animation.get = function(animation) {
+    b82.Utilities.checkString("animation", animation);
+    if (b82.Animation.animations[animation] === void 0) {
+      b82.Utilities.fatal("Invalid Animation: " + animation);
     }
+    return b82.Animation.animations[animation];
+  };
+  b82.Animation.shouldLoop = function(anim, startTime) {
+    if (typeof anim === "string") {
+      anim = b82.Animation.get(anim);
+    }
+    b82.Utilities.checkObject("anim", anim);
+    if (anim === void 0) {
+      b82.Utilities.fatal("Animation not found");
+    }
+    if (startTime === null || anim.loop === true) return true;
     const FPS = anim.fps || 1;
     const animationLength = anim.frames.length * (1e3 / FPS);
     if (b82.Core.getNow() - startTime >= animationLength) return false;

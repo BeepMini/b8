@@ -94,18 +94,16 @@ const mapper = {
     list.sort((a, b) => (a.spr.depth ?? 0) - (b.spr.depth ?? 0));
     for (const { spr, loc, anim } of list) {
       const pos = mapper.camera.getTilePosition(loc.col, loc.row);
+      const nudgeCol = spr.nudgeCol || 0;
+      const nudgeRow = spr.nudgeRow || 0;
       b8.locate(pos.col + offsetX2, pos.row + offsetY2);
       b8.color(spr.fg ?? 15, spr.bg ?? 0);
       switch (spr.type) {
         case "actor":
-          let nudgeCol = 0;
-          let nudgeRow = 0;
-          if (spr.nudgeCol) nudgeCol = spr.nudgeCol;
-          if (spr.nudgeRow) nudgeRow = spr.nudgeRow;
           b8.drawActor(parseInt(spr.tile), anim.name, nudgeCol, nudgeRow);
           break;
         case "vfx":
-          b8.Vfx.draw(spr.id, spr.startTime);
+          b8.Vfx.draw(spr.id, spr.startTime, nudgeCol, nudgeRow);
           break;
         default:
           b8.printChar(parseInt(spr.tile));
@@ -158,11 +156,15 @@ const mapper = {
    * Get the action verb for a given entity ID.
    *
    * @param {number} id - The entity ID to get the verb for.
+   * @param {string} propertyName - The name of the property to retrieve.
    * @returns {string} The action verb associated with the entity, or an empty string if none exists.
    */
-  getVerbForEntity: (id) => {
+  getPropForEntity: (id, propertyName = null) => {
     const a = b8.ECS.getComponent(id, "Action");
-    return a?.verb ?? "";
+    if (!a) return "";
+    if (!propertyName) return "";
+    if (!(propertyName in a)) return "";
+    return a[propertyName] ?? "";
   },
   /**
    * Get the currently active map.
@@ -176,12 +178,14 @@ const mapper = {
    * Get the action verb for the entity directly in front of the player.
    *
    * @param {number} playerId - The player entity ID.
+   * @param {string|null} propertyName - The name of the property to retrieve.
    * @returns {string} The action verb of the entity ahead, or an empty string if none exists.
    */
-  promptAhead: (playerId) => {
+  promptAhead: (playerId, propertyName = null) => {
+    if (!propertyName) return "";
     const ids = mapper.entitiesAhead(playerId);
     for (const id of ids) {
-      const verb = mapper.getVerbForEntity(id);
+      const verb = mapper.getPropForEntity(id, propertyName);
       if (verb) return verb;
     }
     return "";
@@ -209,6 +213,36 @@ const mapper = {
   entitiesAhead: (playerId) => {
     const { x, y } = mapper.ahead(playerId);
     return b8.ECS.entitiesAt(x, y) ?? [];
+  },
+  /**
+   * Get all entities located next to the player (up, down, left, right).
+   *
+   * @param {number} playerId - The player entity ID.
+   * @returns {Array} An array of entity IDs located next to the player.
+   */
+  entitiesNextTo: (playerId) => {
+    const loc = b8.ECS.getComponent(playerId, "Loc");
+    if (!loc) return [];
+    const adjacentEntities = /* @__PURE__ */ new Set();
+    const directions = [
+      { dx: -1, dy: 0 },
+      // left
+      { dx: 1, dy: 0 },
+      // right
+      { dx: 0, dy: -1 },
+      // up
+      { dx: 0, dy: 1 }
+      // down
+    ];
+    for (const dir of directions) {
+      const x = loc.col + dir.dx;
+      const y = loc.row + dir.dy;
+      const entities = b8.ECS.entitiesAt(x, y);
+      if (entities) {
+        entities.forEach((id) => adjacentEntities.add(id));
+      }
+    }
+    return Array.from(adjacentEntities);
   },
   /**
    * Handle collision when the player attempts to move to a new tile.
@@ -239,47 +273,32 @@ const mapper = {
    * Perform the action associated with the entity directly in front of the player.
    *
    * @param {number} playerId - The player entity ID.
+   * @param {string} propertyName - The name of the property to check for an action.
    * @returns {void}
    */
-  doAction: (playerId) => {
+  doAction: (playerId, propertyName) => {
+    if (!propertyName) return;
     if (mapper.actionCooldown > 0) return;
-    const action = mapper.promptAhead(playerId);
+    const action = mapper.promptAhead(playerId, propertyName);
     if (action && mapper.actions[action]) {
       mapper.actions[action](playerId);
     }
   },
   /**
-   * Perform an attack action for the specified player.
+   * Perform an attack action by the player.
    *
-   * @param {number} playerId - The entity ID of the player.
+   * @param {number} playerId - The player entity ID.
+   * @param {string} propertyName - The name of the property to check for an attack action.
    * @returns {void}
    */
-  doAttack: (playerId) => {
+  doAttack: (playerId, propertyName) => {
     const ahead = mapper.ahead(playerId);
-    const ids = mapper.entitiesAhead(playerId);
     mapper.types.vfx.spawn(
       ahead.x,
       ahead.y,
       { id: "swipe", fg: 15, bg: 0 }
     );
-    for (const targetId of ids) {
-      if (targetId === playerId) continue;
-      if (!b8.ECS.hasComponent(targetId, "AttackTarget")) continue;
-      const targetHealth = b8.ECS.getComponent(targetId, "Health");
-      const playerAttack = b8.ECS.getComponent(playerId, "Attack") || { value: 1 };
-      targetHealth.value -= playerAttack.value;
-      if (targetHealth.value <= 0) {
-        b8.ECS.removeEntity(targetId);
-        mapper.types.vfx.spawn(
-          ahead.x,
-          ahead.y,
-          { id: "skull", fg: 2, bg: 0, offsetTime: 200 }
-        );
-        mapper.updateMoveDelay(0.6);
-        return;
-      }
-      break;
-    }
+    mapper.doAction(playerId, propertyName);
   },
   /**
    * Update the move delay to control player movement speed.
@@ -365,6 +384,26 @@ mapper.CONFIG = {
   // UI graphics.
   gameUI: `hpgYhRhhCAAAoIUYYQgAAKCFGGEIAACghRhhCAAAoIUYYQgAAKCFGGEIAACghRhhCAAAoIUYYQgAAKCFGGEIAACghRhhCAAAoIUYYQgAAKCFGGEIAACghRhhCAAAoIUYYQgAAKCFGGEIAACghRhhCAAAoIUYYQgAAKCFGGEIAACghRhhCAAAoIUYYQgAAKCFGJUHAACghRiVBwAAoIUYlQcAAKCFGJUKAACgmBiFGBwHBgCghRgZBwYAoIUYGQcGAKCFGBkHBgCghRgZBwYAoIUYGQcGAKCFDAYHAKCFGBkHBgCghRgZBwYAoIUYGQcGAKCFGBkHBgCghRgZBwYAoIUYGQcGAKCFGBkHBgCghRgZBwYAoIUYGQcGAKCFGBkHBgCghRgZBwYAoIUYGQcGAKCFGB0HBgCghRgZBwgAoIUYIAgHAKCFGCsHBgCghRkBXAoAAKCYGIUYKwYHAKCFEgAHAKCFAAgAAKCFAAgAAKCFAAgAAKCFAwEAAKCFAAgAAKCFAA8AAKCFEwAHAKCFAQcGAKCFGQG0CgcAoIUBBwYAoIUBBwYAoIUBBwYAoIUZAbUKBwCghQEHBgCghQEHBgCghQEHBgCghQEHBgCghREGBwCghQAAAACghRMABwCghRgrBwYAoIUZAV4KAACgmBiFGCsGBwCghQEABwCghRkBnwgAAKCFGQGfCAAAoIUZAZ8IAACghRkBnwgAAKCFGQGfCAAAoIUZAZ8IAACghQEABwCghRg9AAEAoIUYPQABAKCFGD0AAQCghRg9AAEAoIUYPQABAKCFGD0AAQCghRg9AAEAoIUYPQABAKCFGD4AAQCghQEHBgCghRgrBwYAoIUAAAAAoIUAAAAAoIUYKwcGAKCFGQFdCgAAoJgYhRgrBgcAoIUBAAcAoIUBAAEAoIUADgAAoIUADwAAoIUADwAAoIUADwAAoIUADwAAoIUAAQAAoIUABQEAoIUBAQcAoIUBAQcAoIUBAQcAoIUBAQcAoIUBAQcAoIUBAQcAoIUBAQcAoIUYUAABAKCFAAYHAKCFGCsHBgCghQAAAACghRglAAcAoIUYKwcGAKCFGQFeCgAAoJgYhRguBwYAoIUBAAEAoIUAAQAAoIUAAQAAoIUAAQAAoIUAAQAAoIURAQAAoIURAQAAoIUBAAEAoIUYYQABAKCFGGEAAQCghRhhAAEAoIUYYQABAKCFGGEAAQCghRhhAAEAoIURBgEAoIURBgEAoIUYYgABAKCFEQYHAKCFGC8HBgCghRgZBgcAoIUYGQYHAKCFGDEHBgCghRkBXQoAAKA=`
 };
+mapper.actions.attack = (playerId) => {
+  const ids = mapper.entitiesAhead(playerId);
+  for (const targetId of ids) {
+    if (targetId === playerId) continue;
+    if (!b8.ECS.hasComponent(targetId, "AttackTarget")) continue;
+    const targetHealth = b8.ECS.getComponent(targetId, "Health");
+    const playerAttack = b8.ECS.getComponent(playerId, "Attack") || { value: 1 };
+    targetHealth.value -= playerAttack.value;
+  }
+};
+mapper.actions.ignite = function(playerId) {
+  const ids = mapper.entitiesAhead(playerId);
+  for (const targetId of ids) {
+    if (targetId === playerId) continue;
+    const bomb = b8.ECS.getComponent(targetId, "Bomb");
+    if (!bomb) continue;
+    bomb.fuseTime = 5;
+  }
+  ;
+};
 mapper.actions.open = async function(playerId) {
   const entities = mapper.entitiesAhead(playerId);
   for (const id of entities) {
@@ -385,7 +424,7 @@ mapper.actions.open = async function(playerId) {
     b8.ECS.removeComponent(id, "Openable");
     const messageComponent = b8.ECS.getComponent(id, "Message");
     if (messageComponent?.message?.length > 0) {
-      b8.ECS.addComponent(id, "Action", { verb: "read" });
+      b8.ECS.addComponent(id, "Action", { ButtonB: "read" });
     }
     mapper.delayKeyPress();
     return;
@@ -410,6 +449,16 @@ mapper.actions.read = async function(playerId) {
     await b8.Async.dialogTypewriter(message, ["OK"], 20);
     mapper.delayKeyPress();
     return;
+  }
+};
+mapper.actions.trigger = function(playerId) {
+  const ids = mapper.entitiesAhead(playerId);
+  for (const targetId of ids) {
+    const type = b8.ECS.getComponent(targetId, "Type");
+    console.log(`Trigger action by player on type: ${type.name}`);
+    if (mapper.types[type.name]?.handleTrigger) {
+      mapper.types[type.name].handleTrigger(playerId, targetId);
+    }
   }
 };
 mapper.camera = {
@@ -542,8 +591,8 @@ mapper.load = function(mapData) {
     (level, index) => {
       const mapDataString = level.mapData.join("\n");
       b8.Utilities.checkString(`mapDataString for level ${index}`, mapDataString);
-      const maze = b8.Tilemap.convertFromText(mapDataString);
-      const map = b8.Tilemap.createFromArray(maze, mapData.tiles);
+      const mapArray = b8.Tilemap.convertFromText(mapDataString);
+      const map = b8.Tilemap.createFromArray(mapArray, mapData.tiles);
       const objects = (level.objects || []).map(
         (obj) => ({ ...obj, mapId: index })
       );
@@ -600,9 +649,13 @@ mapper.load = function(mapData) {
   b8.ECS.addSystem("characterAnimation", mapper.systems.characterAnimation);
   b8.ECS.addSystem("pathFollower", mapper.systems.pathFollower);
   b8.ECS.addSystem("sprite", mapper.systems.sprite);
-  b8.ECS.addSystem("bumpAttack", mapper.systems.bumpAttack);
   b8.ECS.addSystem("pickup", mapper.systems.pickup);
   b8.ECS.addSystem("vfx", mapper.systems.vfx);
+  b8.ECS.addSystem("health", mapper.systems.health);
+  b8.ECS.addSystem("bomb", mapper.systems.bomb);
+  b8.ECS.addSystem("fire", mapper.systems.fire);
+  b8.ECS.addSystem("fireSmall", mapper.systems.fireSmall);
+  b8.ECS.addSystem("flammable", mapper.systems.flammable);
   if (mapper.settings.bgm) b8.Music.play(mapper.settings.bgm);
   if (mapper.settings.splash && mapper.settings.splash.length > 10 && b8.Tilemap.validateTilemap(mapper.settings.splash)) {
     mapper.bg.splash = b8.Tilemap.load(mapper.settings.splash);
@@ -745,11 +798,11 @@ mapper.sceneGame = {
       keyPressed = true;
     }
     if (b8.key("ButtonA")) {
-      mapper.doAttack(mapper.player);
+      mapper.doAttack(mapper.player, "ButtonA");
       keyPressed = true;
     }
     if (b8.key("ButtonB")) {
-      mapper.doAction(mapper.player);
+      mapper.doAction(mapper.player, "ButtonB");
       keyPressed = true;
     }
     if (keyPressed) mapper.updateMoveDelay();
@@ -813,7 +866,7 @@ mapper.sceneGame = {
     b8.locate(11, b8.CONFIG.SCREEN_ROWS - 4);
     b8.print(" Hit");
     b8.locate(15, b8.CONFIG.SCREEN_ROWS - 4);
-    b8.print(mapper.helpers.capitalizeWords(" " + mapper.promptAhead(mapper.player)));
+    b8.print(mapper.helpers.capitalizeWords(" " + mapper.promptAhead(mapper.player, "ButtonB")));
     return;
   }
 };
@@ -877,23 +930,32 @@ mapper.sceneMenu = {
     setTimeout(mapper.sceneMenu.main, 10);
   }
 };
-mapper.systems.bumpAttack = function(dt) {
-  const ids = b8.ECS.query("BumpAttack");
-  for (const id of ids) {
-    const bump = b8.ECS.getComponent(id, "BumpAttack");
-    const targetId = bump.targetId;
-    if (!b8.ECS.hasComponent(targetId, "Health")) {
-      b8.ECS.removeComponent(id, "BumpAttack");
-      continue;
+mapper.systems.bomb = async function(dt) {
+  const bombs = b8.ECS.query("Bomb");
+  const color = mapper.types.bomb.color;
+  const flickerColor = mapper.types.bomb.flickerColor;
+  for (const id of bombs) {
+    const bomb = b8.ECS.getComponent(id, "Bomb");
+    if (bomb.fuseTime === false) continue;
+    bomb.fuseTime -= dt;
+    const sprite = b8.ECS.getComponent(id, "Sprite");
+    if (bomb.fuseTime > 5) {
+      sprite.fg = color;
+    } else if (bomb.fuseTime > 2.5) {
+      sprite.fg = Math.floor(bomb.fuseTime * 2) % 2 === 0 ? color : flickerColor;
+    } else if (bomb.fuseTime > 1) {
+      sprite.fg = Math.floor(bomb.fuseTime * 4) % 2 === 0 ? color : flickerColor;
+    } else if (bomb.fuseTime > 0) {
+      sprite.fg = Math.floor(bomb.fuseTime * 10) % 2 === 0 ? color : flickerColor;
     }
-    const targetHealth = b8.ECS.getComponent(targetId, "Health");
-    const attackerAttack = b8.ECS.getComponent(id, "Attack") || { value: 1 };
-    targetHealth.value -= attackerAttack.value;
-    if (targetHealth.value <= 0) {
-      b8.ECS.removeEntity(targetId);
+    if (bomb.fuseTime <= 0) {
+      const bombLoc = b8.ECS.getComponent(id, "Loc");
+      mapper.types.vfx.spawn(bombLoc.col, bombLoc.row, { id: "explosion", fg: 9 });
+      await mapper.types.bomb.explode(id);
+      b8.ECS.removeEntity(id);
     }
-    b8.ECS.removeComponent(id, "BumpAttack");
   }
+  ;
 };
 mapper.systems.characterAnimation = function(dt) {
   const anims = b8.ECS.query("CharacterAnimation");
@@ -920,6 +982,127 @@ mapper.systems.characterAnimation = function(dt) {
       }
     }
   }
+};
+mapper.systems.fireSmall = async function(dt) {
+  const damagePerSecond = mapper.types.fireSmall.damagePerSecond;
+  const smallFires = b8.ECS.query("FireSmall");
+  smallFires.forEach(
+    (entityId) => {
+      const smallFire = b8.ECS.getComponent(entityId, "FireSmall");
+      const loc = b8.ECS.getComponent(entityId, "Loc");
+      const parentLoc = b8.ECS.getComponent(smallFire.parent, "Loc");
+      if (parentLoc) {
+        loc.col = parentLoc.col;
+        loc.row = parentLoc.row;
+      }
+      const health = b8.ECS.getComponent(smallFire.parent, "Health");
+      if (health) {
+        health.value -= damagePerSecond * dt;
+        if (health.value < 0) smallFire.duration = 0;
+      }
+      smallFire.duration -= dt;
+      if (smallFire.duration <= 0) {
+        b8.ECS.removeEntity(entityId);
+        b8.ECS.removeComponent(smallFire.parent, "OnFire");
+        if (health) health.value = Math.floor(health.value);
+      }
+    }
+  );
+};
+mapper.systems.fire = async function(dt) {
+  const fires = b8.ECS.query("Fire", "Loc");
+  fires.forEach(
+    (fireId) => {
+      const fire = b8.ECS.getComponent(fireId, "Fire");
+      const loc = b8.ECS.getComponent(fireId, "Loc");
+      if (fire.duration !== Infinity) {
+        fire.duration -= dt;
+        if (fire.duration <= 0) {
+          b8.ECS.removeEntity(fireId);
+          mapper.types.vfx.spawn(
+            loc.col,
+            loc.row,
+            { id: "shrink", fg: 9 }
+          );
+          return;
+        }
+      }
+      const entitiesAtLocation = b8.ECS.entitiesAt(loc.col, loc.row);
+      entitiesAtLocation.forEach(
+        (entityId) => {
+          if (entityId === fireId) return;
+          if (b8.ECS.hasComponent(entityId, "Health")) {
+            if (!b8.ECS.hasComponent(entityId, "OnFire")) {
+              mapper.types.fireSmall.spawn(
+                loc.col,
+                loc.row,
+                {
+                  parent: entityId,
+                  duration: 3
+                }
+              );
+            }
+            b8.ECS.addComponent(entityId, "OnFire");
+          }
+          if (b8.ECS.hasComponent(entityId, "Bomb")) {
+            const bomb = b8.ECS.getComponent(entityId, "Bomb");
+            bomb.fuseTime = 2;
+          }
+        }
+      );
+      const nearbyEntities = mapper.entitiesNextTo(fireId);
+      nearbyEntities.forEach(
+        (entityId) => {
+          if (entityId === fireId) return;
+          const flammable = b8.ECS.getComponent(entityId, "Flammable");
+          if (flammable) {
+            flammable.temperature = (flammable.temperature || 0) + 70 * dt;
+          }
+        }
+      );
+    }
+  );
+};
+mapper.systems.flammable = async function(dt) {
+  const flammables = b8.ECS.query("Flammable");
+  flammables.forEach(
+    (entityId) => {
+      const flammable = b8.ECS.getComponent(entityId, "Flammable");
+      if (flammable.temperature >= 100) {
+        const location = b8.ECS.getComponent(entityId, "Loc");
+        b8.ECS.removeEntity(entityId);
+        mapper.types.fire.spawn(
+          location.col,
+          location.row
+        );
+        return;
+      }
+      flammable.temperature = Math.max(0, (flammable.temperature || 0) - 10 * dt);
+    }
+  );
+};
+mapper.systems.health = async function(dt) {
+  const entities = b8.ECS.query("Health");
+  entities.forEach(
+    (entityId) => {
+      const health = b8.ECS.getComponent(entityId, "Health");
+      if (health.value <= 0) {
+        const loc = b8.ECS.getComponent(entityId, "Loc");
+        if (loc) {
+          mapper.types.vfx.spawn(
+            loc.col,
+            loc.row,
+            { id: "skull", fg: 2, bg: 0, offsetTime: 200 }
+          );
+        }
+        mapper.updateMoveDelay(0.6);
+        b8.ECS.removeEntity(entityId);
+        if (entityId === mapper.player.id) {
+          return;
+        }
+      }
+    }
+  );
 };
 mapper.systems.pathFollower = async function(dt) {
   const animationMap = {
@@ -1112,16 +1295,58 @@ mapper.systems.vfx = async function(dt) {
   const list = b8.ECS.query("Vfx", "Sprite");
   for (const id of list) {
     const sprite = b8.ECS.getComponent(id, "Sprite");
-    const animation = b8.Vfx.get(sprite.id);
-    if (animation) {
-      if (b8.Animation.shouldLoop(animation, sprite.startTime)) continue;
-    }
+    if (b8.Vfx.shouldLoop(sprite.id, sprite.startTime)) continue;
     b8.ECS.removeEntity(id);
   }
 };
 mapper.types.skeleton = {};
+mapper.types.bomb = {
+  color: 8,
+  flickerColor: 15,
+  spawn: function(col, row, props = {}) {
+    return b8.ECS.create(
+      {
+        Type: { name: "bomb" },
+        Loc: { col, row },
+        Sprite: {
+          tile: 283,
+          fg: mapper.types.bomb.color,
+          bg: 0,
+          depth: 10
+        },
+        Solid: {},
+        Pushable: {},
+        Action: {
+          ButtonB: "pull",
+          ButtonA: "ignite"
+        },
+        Bomb: {
+          fuseTime: false,
+          radius: parseInt(props.radius) || 1,
+          damage: 2
+        },
+        Flammable: {
+          temperature: 20
+        }
+      }
+    );
+  },
+  explode: async function(bombId) {
+    const bombLoc = b8.ECS.getComponent(bombId, "Loc");
+    const bombComp = b8.ECS.getComponent(bombId, "Bomb");
+    for (let dx = -bombComp.radius; dx <= bombComp.radius; dx++) {
+      for (let dy = -bombComp.radius; dy <= bombComp.radius; dy++) {
+        console.log("Spawn fire", dx, dy);
+        const row = bombLoc.row + dy;
+        const col = bombLoc.col + dx;
+        if (!mapper.collision.isWalkable(col, row)) continue;
+        mapper.types.fire.spawn(col, row);
+      }
+    }
+  }
+};
 mapper.types.chestOpen = {
-  spawn: function(col, row, props) {
+  spawn: function(col, row, props = {}) {
     const entitySettings = {
       Type: { name: "chest" },
       Loc: { col, row },
@@ -1136,7 +1361,7 @@ mapper.types.chestOpen = {
     console.log("chest open props", props);
     if (props.message) {
       entitySettings.Message = { message: props.message };
-      entitySettings.Action = { verb: "read" };
+      entitySettings.Action = { ButtonB: "read" };
     }
     return b8.ECS.create(entitySettings);
   }
@@ -1154,7 +1379,7 @@ mapper.types.chest = {
     // 4: '1 Bomb',
     // 5: '5 Bombs',
   },
-  spawn: function(col, row, props) {
+  spawn: function(col, row, props = {}) {
     let items = [];
     let foregroundColor = props.fg || 15;
     let containsType = "";
@@ -1228,7 +1453,8 @@ mapper.types.chest = {
         Message: { message: props.message || "" },
         Reward: { items },
         Action: {
-          verb: "open"
+          ButtonA: "open",
+          ButtonB: "open"
         }
       }
     );
@@ -1243,7 +1469,7 @@ mapper.types.coin = {
    * @param {Object} props - Additional properties for the coin.
    * @returns {number} The entity ID of the spawned coin.
    */
-  spawn: function(col, row, props) {
+  spawn: function(col, row, props = {}) {
     return mapper.types.pickup.spawn(
       col,
       row,
@@ -1270,7 +1496,7 @@ mapper.types.coin = {
   }
 };
 mapper.types.crate = {
-  spawn: function(col, row, props) {
+  spawn: function(col, row, props = {}) {
     return b8.ECS.create(
       {
         Type: { name: "crate" },
@@ -1283,13 +1509,16 @@ mapper.types.crate = {
         },
         Solid: {},
         Pushable: {},
-        Action: { verb: "pull" }
+        Action: { ButtonB: "pull" },
+        Flammable: {
+          temperature: 20
+        }
       }
     );
   }
 };
 mapper.types.doorOpen = {
-  spawn: function(col, row, props) {
+  spawn: function(col, row, props = {}) {
     const doorProps = {
       Type: { name: "door" },
       Loc: { col, row },
@@ -1311,7 +1540,7 @@ mapper.types.doorOpen = {
   }
 };
 mapper.types.doorStairs = {
-  spawn: function(col, row, props) {
+  spawn: function(col, row, props = {}) {
     const icon = props.icon || 197;
     const stairsProps = {
       Type: { name: "doorStairs" },
@@ -1336,7 +1565,7 @@ mapper.types.doorStairs = {
 mapper.types.door = {
   TILE_DOOR_OPEN: 216,
   TILE_DOOR_DEFAULT: 219,
-  spawn: function(col, row, props) {
+  spawn: function(col, row, props = {}) {
     const icon = props.icon || mapper.types.door.TILE_DOOR_DEFAULT;
     const doorProps = {
       Type: { name: "door" },
@@ -1379,7 +1608,7 @@ mapper.types.enemy = {
     "Medium": [5, 2, 9],
     "Hard": [8, 3, 8]
   },
-  spawn: function(col, row, props) {
+  spawn: function(col, row, props = {}) {
     const initialDirection = "D";
     const difficulty = props.health || "Easy";
     const [health, attack, color] = mapper.types.enemy.difficulties[difficulty] || mapper.types.enemy.difficulties["Easy"];
@@ -1399,14 +1628,15 @@ mapper.types.enemy = {
         default: "idle",
         duration: 0
       },
-      AttackTarget: {},
       Health: {
         value: health || 3,
         max: health || 3
       },
       Attack: {
         value: attack || 1
-      }
+      },
+      AttackTarget: {},
+      Action: { ButtonA: "attack" }
     };
     if (props.path && b8.Path.validPathSyntax(props.path)) {
       let mode = props.mode || "pingpong";
@@ -1438,8 +1668,56 @@ mapper.types.enemy = {
     return b8.ECS.create(characterProperties);
   }
 };
+mapper.types.fireSmall = {
+  damagePerSecond: 1,
+  spawn: function(col, row, props = {}) {
+    if (!props.parent) return;
+    return b8.ECS.create(
+      {
+        Type: { name: "fire-small" },
+        Loc: { col, row },
+        Sprite: {
+          type: "vfx",
+          id: "fire-small",
+          offsetY: -4,
+          startTime: b8.Core.getNow(),
+          fg: 9,
+          bg: -1,
+          depth: 100
+        },
+        FireSmall: {
+          duration: props.duration || 3,
+          parent: props.parent
+        }
+      }
+    );
+  }
+};
+mapper.types.fire = {
+  damagePerSecond: 2,
+  spawn: function(col, row, props = {}) {
+    let duration = parseInt(props.duration) || 5;
+    duration += b8.Random.range(0, 2);
+    return b8.ECS.create(
+      {
+        Type: { name: "fire" },
+        Loc: { col, row },
+        Sprite: {
+          type: "vfx",
+          id: "fire",
+          startTime: b8.Core.getNow() + b8.Random.int(0, 400),
+          fg: 10,
+          bg: 0
+        },
+        Fire: {
+          duration
+        }
+      }
+    );
+  }
+};
 mapper.types.healthFull = {
-  spawn: function(col, row, props) {
+  spawn: function(col, row, props = {}) {
     return mapper.types.pickup.spawn(
       col,
       row,
@@ -1461,7 +1739,7 @@ mapper.types.healthFull = {
   // Handled by mapper.types.health.pickupHandler
 };
 mapper.types.healthHalf = {
-  spawn: function(col, row, props) {
+  spawn: function(col, row, props = {}) {
     return mapper.types.pickup.spawn(
       col,
       row,
@@ -1480,7 +1758,7 @@ mapper.types.healthHalf = {
   // Handled by mapper.types.health.pickupHandler
 };
 mapper.types.health = {
-  spawn: function(col, row, props) {
+  spawn: function(col, row, props = {}) {
     return mapper.types.pickup.spawn(
       col,
       row,
@@ -1516,7 +1794,7 @@ mapper.types.key = {
    * @param {Object} props - Additional properties for the key (e.g., fg, bg colors).
    * @returns {number} The entity ID of the spawned key.
    */
-  spawn: function(col, row, props) {
+  spawn: function(col, row, props = {}) {
     const color = props.fg || 14;
     return mapper.types.pickup.spawn(
       col,
@@ -1569,7 +1847,7 @@ mapper.types.pickup = {
   }
 };
 mapper.types.signpost = {
-  spawn: function(col, row, props) {
+  spawn: function(col, row, props = {}) {
     return b8.ECS.create(
       {
         Type: { name: "signpost" },
@@ -1581,18 +1859,35 @@ mapper.types.signpost = {
         },
         Solid: {},
         Message: { message: props.message || "" },
-        Action: { verb: "read" }
+        Action: {
+          ButtonA: "trigger",
+          ButtonB: "read"
+        }
       }
     );
+  },
+  /**
+   * Handle the signpost being triggered (Button A).
+   *
+   * @param {number} id - The entity ID of the signpost.
+   * @returns {void}
+   */
+  handleTrigger: function(playerId, id) {
+    const sprite = b8.ECS.getComponent(id, "Sprite");
+    if (sprite.tile !== 252) return;
+    sprite.tile = 270;
+    if (!b8.ECS.hasComponent(id, "Message")) return;
+    const message = b8.ECS.getComponent(id, "Message");
+    message.message = "... " + message.message.slice(Math.floor(message.message.length / 2));
   }
 };
 mapper.types.start = {
-  spawn: function(col, row, props) {
+  spawn: function(col, row, props = {}) {
     b8.ECS.setLoc(mapper.player, col, row);
   }
 };
 mapper.types.vfx = {
-  spawn: function(col, row, props) {
+  spawn: function(col, row, props = {}) {
     if (!props.id) return {};
     return b8.ECS.create(
       {
@@ -1603,8 +1898,10 @@ mapper.types.vfx = {
           type: "vfx",
           id: props.id,
           startTime: b8.Core.getNow() + (props.offsetTime || 0),
-          fg: props.fg || 15,
-          bg: props.bg || 0,
+          fg: parseInt(props.fg) || 15,
+          bg: parseInt(props.bg) || 0,
+          nudgeCol: parseInt(props.nudgeCol) || 0,
+          nudgeRow: parseInt(props.nudgeRow) || 0,
           depth: 50
         }
       }
