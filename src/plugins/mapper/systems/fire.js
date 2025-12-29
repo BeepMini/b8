@@ -35,6 +35,7 @@ mapper.systems.fire = async function( dt ) {
 
 						// Only spawn a FireSmall if the entity doesn't already have one
 						if ( !b8.ECS.hasComponent( entityId, 'OnFire' ) ) {
+
 							mapper.types.fireSmall.spawn(
 								loc.col, loc.row,
 								{
@@ -42,9 +43,10 @@ mapper.systems.fire = async function( dt ) {
 									duration: 3.0
 								}
 							);
-						}
 
-						b8.ECS.addComponent( entityId, 'OnFire' );
+							b8.ECS.addComponent( entityId, 'OnFire' );
+
+						}
 
 					}
 

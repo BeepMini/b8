@@ -35,26 +35,27 @@ mapper.types.bomb = {
 	},
 
 
+	/**
+	 * Handle bomb explosion.
+	 *
+	 * @param {number} bombId - The entity ID of the bomb.
+	 * @returns {Promise<void>} Resolves when the explosion is complete.
+	 */
 	explode: async function( bombId ) {
 
 		const bombLoc = b8.ECS.getComponent( bombId, 'Loc' );
 		const bombComp = b8.ECS.getComponent( bombId, 'Bomb' );
 
 		// Create explosion effect
-		// Loop through an area with radius and create explosion VFX
-		// Also allow damage to entities in the blast radius
-		// Also set fire to anything flammable in the blast radius
-
 		// Loop through tiles in radius.
 		for ( let dx = -bombComp.radius; dx <= bombComp.radius; dx++ ) {
 			for ( let dy = -bombComp.radius; dy <= bombComp.radius; dy++ ) {
 
-				console.log( 'Spawn fire', dx, dy );
 				const row = bombLoc.row + dy;
 				const col = bombLoc.col + dx;
 
+				// Spawn fire only on walkable tiles.
 				if ( !mapper.collision.isWalkable( col, row ) ) continue;
-
 				mapper.types.fire.spawn( col, row );
 
 			}

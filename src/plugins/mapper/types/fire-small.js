@@ -1,6 +1,6 @@
 mapper.types.fireSmall = {
 
-	damagePerSecond: 1,
+	damagePerSecond: 0.75,
 
 	spawn: function( col, row, props = {} ) {
 

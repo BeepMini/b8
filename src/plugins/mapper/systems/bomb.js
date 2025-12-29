@@ -41,6 +41,12 @@ mapper.systems.bomb = async function( dt ) {
 			// Remove bomb entity
 			b8.ECS.removeEntity( id );
 
+			// Screen shake.
+			b8.Renderer.shakeScreen();
+
+			// Explode sound effect.
+			b8.Sfx.play( 'weapon/explode/013' );
+
 		}
 
 	};

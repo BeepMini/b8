@@ -1,6 +1,6 @@
 mapper.types.fire = {
 
-	damagePerSecond: 2,
+	damagePerSecond: 3,
 
 	spawn: function( col, row, props = {} ) {
 

@@ -29,7 +29,7 @@ mapper.types.signpost = {
 	 * @param {number} id - The entity ID of the signpost.
 	 * @returns {void}
 	 */
-	handleTrigger: function( playerId, id ) {
+	triggerHandler: function( playerId, id ) {
 
 		const sprite = b8.ECS.getComponent( id, 'Sprite' );
 
