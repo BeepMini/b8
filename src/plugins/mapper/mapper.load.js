@@ -100,11 +100,12 @@ mapper.load = function( mapData ) {
 	b8.ECS.addSystem( 'characterAnimation', mapper.systems.characterAnimation );
 	b8.ECS.addSystem( 'pathFollower', mapper.systems.pathFollower );
 	b8.ECS.addSystem( 'sprite', mapper.systems.sprite );
-	b8.ECS.addSystem( 'bumpAttack', mapper.systems.bumpAttack );
 	b8.ECS.addSystem( 'pickup', mapper.systems.pickup );
 	b8.ECS.addSystem( 'vfx', mapper.systems.vfx );
+	b8.ECS.addSystem( 'health', mapper.systems.health );
 	b8.ECS.addSystem( 'bomb', mapper.systems.bomb );
 	b8.ECS.addSystem( 'fire', mapper.systems.fire );
+	b8.ECS.addSystem( 'fireSmall', mapper.systems.fireSmall );
 	b8.ECS.addSystem( 'flammable', mapper.systems.flammable );
 
 	// Play music.

@@ -31,8 +31,27 @@ mapper.systems.fire = async function( dt ) {
 
 					if ( entityId === fireId ) return; // Skip the fire itself
 
-					const health = b8.ECS.getComponent( entityId, 'Health' );
-					if ( health ) health.value -= fire.damagePerSecond * dt;
+					if ( b8.ECS.hasComponent( entityId, 'Health' ) ) {
+
+						// Only spawn a FireSmall if the entity doesn't already have one
+						if ( !b8.ECS.hasComponent( entityId, 'OnFire' ) ) {
+							mapper.types.fireSmall.spawn(
+								loc.col, loc.row,
+								{
+									parent: entityId,
+									duration: 3.0
+								}
+							);
+						}
+
+						b8.ECS.addComponent( entityId, 'OnFire' );
+
+					}
+
+					if ( b8.ECS.hasComponent( entityId, 'Bomb' ) ) {
+						const bomb = b8.ECS.getComponent( entityId, 'Bomb' );
+						bomb.fuseTime = 2;
+					}
 
 				}
 			);
@@ -47,7 +66,6 @@ mapper.systems.fire = async function( dt ) {
 					const flammable = b8.ECS.getComponent( entityId, 'Flammable' );
 					if ( flammable ) {
 						flammable.temperature = ( flammable.temperature || 0 ) + 70 * dt;
-						console.log( 'Heated entity', entityId, 'to', flammable ? flammable.temperature : 'N/A' );
 					}
 
 				}
