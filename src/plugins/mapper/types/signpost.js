@@ -33,7 +33,7 @@ mapper.types.signpost = {
 
 		const sprite = b8.ECS.getComponent( id, 'Sprite' );
 
-		// Quit if not the default signpost
+		// Quit if not the default signpost.
 		if ( sprite.tile !== 252 ) return;
 
 		// Make the cut in half signpost.
@@ -43,6 +43,9 @@ mapper.types.signpost = {
 		if ( !b8.ECS.hasComponent( id, 'Message' ) ) return;
 
 		const message = b8.ECS.getComponent( id, 'Message' );
+
+		// Change both actions to 'read'.
+		b8.ECS.addComponent( id, 'Action', { ButtonA: 'read', ButtonB: 'read' } );
 
 		// Truncate the front half of the message and prepend ...
 		message.message = '... ' + message.message.slice( Math.floor( message.message.length / 2 ) );

@@ -36,7 +36,7 @@ mapper.actions.open = async function( playerId ) {
 		// action verb to read.
 		const messageComponent = b8.ECS.getComponent( id, 'Message' );
 		if ( messageComponent?.message?.length > 0 ) {
-			b8.ECS.addComponent( id, 'Action', { ButtonB: 'read' } );
+			b8.ECS.addComponent( id, 'Action', { ButtonA: 'read', ButtonB: 'read' } );
 		}
 
 		mapper.delayKeyPress();
