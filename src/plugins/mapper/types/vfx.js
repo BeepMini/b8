@@ -10,7 +10,7 @@ mapper.types.vfx = {
 				Loc: { col, row },
 				Vfx: {},
 				Sprite: {
-					type: 'vfx',
+					type: props.type || 'vfx',
 					id: props.id,
 					startTime: b8.Core.getNow() + ( props.offsetTime || 0 ),
 					fg: parseInt( props.fg ) || 15,

@@ -11,12 +11,12 @@ mapper.types.fireSmall = {
 				Type: { name: 'fire-small' },
 				Loc: { col, row },
 				Sprite: {
-					type: 'vfx',
+					type: 'vfx-outline',
 					id: 'fire-small',
 					offsetY: -4,
 					startTime: b8.Core.getNow(),
 					fg: 9,
-					bg: -1,
+					bg: 0,
 					depth: 100,
 				},
 				FireSmall: {
