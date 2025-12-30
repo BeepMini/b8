@@ -20,6 +20,7 @@ mapper.types.skeleton = {
 	onCharacterCollision: function( id, newCol, newRow, dx, dy ) {
 	},
 
-
+	burnHandler: function( id, fire ) {
+	},
 
 };

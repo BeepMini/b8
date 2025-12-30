@@ -24,13 +24,18 @@ mapper.systems.fire = async function( dt ) {
 
 			}
 
-			// Apply damage to entities at the fire's location
+
+			// Apply damage or custom burn behavior to entities at the fire's location
 			const entitiesAtLocation = b8.ECS.entitiesAt( loc.col, loc.row );
 			entitiesAtLocation.forEach(
 				( entityId ) => {
 
-					if ( entityId === fireId ) return; // Skip the fire itself
+					// Skip the fire itself
+					if ( entityId === fireId ) return;
 
+					// Set entities on fire if they have a health component.
+					// This suggests they are living things that can burn (enemy/ player/ npc).
+					// We spawn a small fire effect on them to indicate this.
 					if ( b8.ECS.hasComponent( entityId, 'Health' ) ) {
 
 						// Only spawn a FireSmall if the entity doesn't already have one
@@ -50,10 +55,7 @@ mapper.systems.fire = async function( dt ) {
 
 					}
 
-					if ( b8.ECS.hasComponent( entityId, 'Bomb' ) ) {
-						const bomb = b8.ECS.getComponent( entityId, 'Bomb' );
-						bomb.fuseTime = 2;
-					}
+					mapper.doHandler( entityId, 'burnHandler' );
 
 				}
 			);
@@ -69,6 +71,8 @@ mapper.systems.fire = async function( dt ) {
 					if ( flammable ) {
 						flammable.temperature = ( flammable.temperature || 0 ) + 70 * dt;
 					}
+
+					mapper.doHandler( entityId, 'burnHandler' );
 
 				}
 			);

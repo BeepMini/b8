@@ -18,7 +18,10 @@ mapper.types.chestOpen = {
 
 		if ( props.message ) {
 			entitySettings.Message = { message: props.message };
-			entitySettings.Action = { ButtonB: 'read' };
+			entitySettings.Action = {
+				ButtonA: 'read',
+				ButtonB: 'read'
+			};
 		}
 
 		return b8.ECS.create( entitySettings );

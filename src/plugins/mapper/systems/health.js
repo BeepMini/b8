@@ -19,15 +19,13 @@ mapper.systems.health = async function( dt ) {
 				}
 
 				// Small pause on defeat.
-				mapper.updateMoveDelay( 0.6 );
+				// mapper.updateMoveDelay( 0.6 );
 
-				// Remove the entity.
-				b8.ECS.removeEntity( entityId );
-
-				// Game Over!
-				if ( entityId === mapper.player.id ) {
-					// mapper.handlePlayerDeath();
-					return;
+				// Kill the entity unless it's the player.
+				if ( entityId !== mapper.player.id ) {
+					b8.ECS.removeEntity( entityId );
+				} else {
+					// Game over for the player.
 				}
 
 			}

@@ -26,9 +26,6 @@ mapper.types.bomb = {
 					radius: parseInt( props.radius ) || 1,
 					damage: 2,
 				},
-				Flammable: {
-					temperature: 20,
-				},
 			}
 		);
 
@@ -61,6 +58,18 @@ mapper.types.bomb = {
 			}
 		}
 
-	}
+	},
+
+
+
+	burnHandler: function( id ) {
+
+		const bomb = b8.ECS.getComponent( id, 'Bomb' );
+
+		if ( bomb.fuseTime !== false ) return;
+
+		bomb.fuseTime = 2;
+
+	},
 
 };
