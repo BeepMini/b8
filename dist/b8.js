@@ -962,6 +962,16 @@ const b8 = {};
       fps: 18
     }
   };
+  const outlineDirections = [
+    [-1, -1],
+    [1, 1],
+    [1, -1],
+    [-1, 1],
+    [-1, 0],
+    [1, 0],
+    [0, -1],
+    [0, 1]
+  ];
   for (const key in b82.Vfx.animations) {
     const anim = b82.Vfx.animations[key];
     if (anim.fps === void 0) anim.fps = 4;
@@ -980,11 +990,49 @@ const b8 = {};
     );
     b82.Core.drawState.cursorCol++;
   };
+  const drawVfxOutline = function(animation, x, y, startTime) {
+    const font = b82.TextRenderer.curVfx_;
+    const frame = Math.abs(b82.Animation.frame(animation, startTime));
+    const direction = frame >= 0 ? 0 : 1;
+    const currentFg = b82.Core.drawState.fgColor;
+    const currentBg = b82.Core.drawState.bgColor;
+    b82.Core.setColor(currentBg, -1);
+    for (const dir of outlineDirections) {
+      b82.TextRenderer.spr(
+        frame,
+        x + dir[0],
+        y + dir[1],
+        font,
+        direction || 0
+      );
+    }
+    b82.Core.setColor(currentFg, -1);
+    b82.TextRenderer.spr(
+      frame,
+      x,
+      y,
+      font,
+      direction || 0
+    );
+    b82.Core.setColor(currentFg, currentBg);
+    b82.Core.drawState.cursorCol++;
+  };
   b82.Vfx.draw = function(animation, startTime, offsetCol = 0, offsetRow = 0) {
     if (startTime !== null) b82.Utilities.checkNumber("startTime", startTime);
     b82.Utilities.checkNumber("offsetCol", offsetCol);
     b82.Utilities.checkNumber("offsetRow", offsetRow);
     return b82.Vfx.spr(
+      animation,
+      startTime,
+      (b82.Core.drawState.cursorCol + offsetCol) * b82.CONFIG.CHR_WIDTH,
+      (b82.Core.drawState.cursorRow + offsetRow) * b82.CONFIG.CHR_HEIGHT
+    );
+  };
+  b82.Vfx.drawOutline = function(animation, startTime, offsetCol = 0, offsetRow = 0) {
+    if (startTime !== null) b82.Utilities.checkNumber("startTime", startTime);
+    b82.Utilities.checkNumber("offsetCol", offsetCol);
+    b82.Utilities.checkNumber("offsetRow", offsetRow);
+    return b82.Vfx.sprOutline(
       animation,
       startTime,
       (b82.Core.drawState.cursorCol + offsetCol) * b82.CONFIG.CHR_WIDTH,
@@ -999,6 +1047,21 @@ const b8 = {};
     const anim = b82.Vfx.get(animation);
     if (!b82.Animation.shouldLoop(anim, startTime)) return false;
     drawVfx(
+      anim,
+      x,
+      y,
+      startTime
+    );
+    return true;
+  };
+  b82.Vfx.sprOutline = function(animation, startTime, x, y) {
+    if (startTime !== null) b82.Utilities.checkNumber("startTime", startTime);
+    b82.Utilities.checkNumber("x", x);
+    b82.Utilities.checkNumber("y", y);
+    if (startTime > b82.Core.getNow()) return true;
+    const anim = b82.Vfx.get(animation);
+    if (!b82.Animation.shouldLoop(anim, startTime)) return false;
+    drawVfxOutline(
       anim,
       x,
       y,

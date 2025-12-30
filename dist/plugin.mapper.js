@@ -105,6 +105,9 @@ const mapper = {
         case "vfx":
           b8.Vfx.draw(spr.id, spr.startTime, nudgeCol, nudgeRow);
           break;
+        case "vfx-outline":
+          b8.Vfx.drawOutline(spr.id, spr.startTime, nudgeCol, nudgeRow);
+          break;
         default:
           b8.printChar(parseInt(spr.tile));
           break;
@@ -368,6 +371,19 @@ const mapper = {
         if (fn) fn(playerId, reward);
       }
     );
+  },
+  /**
+   * Invoke a handler function for a given entity based on its type.
+   *
+   * @param {number} entityId - The entity ID to invoke the handler for.
+   * @param {string} handlerName - The name of the handler function to invoke.
+   * @returns {boolean} The result of the handler function, or false if not found.
+   */
+  doHandler: function(entityId, handlerName) {
+    const type = b8.ECS.getComponent(entityId, "Type");
+    const handler = type && mapper.types[type.name];
+    if (handler?.[handlerName]) return handler[handlerName](entityId);
+    return false;
   }
 };
 mapper.CONFIG = {
@@ -424,7 +440,7 @@ mapper.actions.open = async function(playerId) {
     b8.ECS.removeComponent(id, "Openable");
     const messageComponent = b8.ECS.getComponent(id, "Message");
     if (messageComponent?.message?.length > 0) {
-      b8.ECS.addComponent(id, "Action", { ButtonB: "read" });
+      b8.ECS.addComponent(id, "Action", { ButtonA: "read", ButtonB: "read" });
     }
     mapper.delayKeyPress();
     return;
@@ -456,8 +472,8 @@ mapper.actions.trigger = function(playerId) {
   for (const targetId of ids) {
     const type = b8.ECS.getComponent(targetId, "Type");
     console.log(`Trigger action by player on type: ${type.name}`);
-    if (mapper.types[type.name]?.handleTrigger) {
-      mapper.types[type.name].handleTrigger(playerId, targetId);
+    if (mapper.types[type.name]?.triggerHandler) {
+      mapper.types[type.name].triggerHandler(playerId, targetId);
     }
   }
 };
@@ -632,7 +648,7 @@ mapper.load = function(mapData) {
         duration: 0
       },
       Health: {
-        value: 2,
+        value: 6,
         max: 12
       },
       Attack: {
@@ -953,6 +969,8 @@ mapper.systems.bomb = async function(dt) {
       mapper.types.vfx.spawn(bombLoc.col, bombLoc.row, { id: "explosion", fg: 9 });
       await mapper.types.bomb.explode(id);
       b8.ECS.removeEntity(id);
+      b8.Renderer.shakeScreen();
+      b8.Sfx.play("weapon/explode/013");
     }
   }
   ;
@@ -1041,13 +1059,10 @@ mapper.systems.fire = async function(dt) {
                   duration: 3
                 }
               );
+              b8.ECS.addComponent(entityId, "OnFire");
             }
-            b8.ECS.addComponent(entityId, "OnFire");
           }
-          if (b8.ECS.hasComponent(entityId, "Bomb")) {
-            const bomb = b8.ECS.getComponent(entityId, "Bomb");
-            bomb.fuseTime = 2;
-          }
+          mapper.doHandler(entityId, "burnHandler");
         }
       );
       const nearbyEntities = mapper.entitiesNextTo(fireId);
@@ -1058,6 +1073,7 @@ mapper.systems.fire = async function(dt) {
           if (flammable) {
             flammable.temperature = (flammable.temperature || 0) + 70 * dt;
           }
+          mapper.doHandler(entityId, "burnHandler");
         }
       );
     }
@@ -1095,10 +1111,9 @@ mapper.systems.health = async function(dt) {
             { id: "skull", fg: 2, bg: 0, offsetTime: 200 }
           );
         }
-        mapper.updateMoveDelay(0.6);
-        b8.ECS.removeEntity(entityId);
-        if (entityId === mapper.player.id) {
-          return;
+        if (entityId !== mapper.player.id) {
+          b8.ECS.removeEntity(entityId);
+        } else {
         }
       }
     }
@@ -1299,7 +1314,21 @@ mapper.systems.vfx = async function(dt) {
     b8.ECS.removeEntity(id);
   }
 };
-mapper.types.skeleton = {};
+mapper.types.skeleton = {
+  spawn: function(col, row, props = {}) {
+    return b8.ECS.create(
+      {}
+    );
+  },
+  pickupHandler: function(playerId, pickup) {
+  },
+  triggerHandler: function(playerId, id) {
+  },
+  onCharacterCollision: function(id, newCol, newRow, dx, dy) {
+  },
+  burnHandler: function(id, fire) {
+  }
+};
 mapper.types.bomb = {
   color: 8,
   flickerColor: 15,
@@ -1324,25 +1353,32 @@ mapper.types.bomb = {
           fuseTime: false,
           radius: parseInt(props.radius) || 1,
           damage: 2
-        },
-        Flammable: {
-          temperature: 20
         }
       }
     );
   },
+  /**
+   * Handle bomb explosion.
+   *
+   * @param {number} bombId - The entity ID of the bomb.
+   * @returns {Promise<void>} Resolves when the explosion is complete.
+   */
   explode: async function(bombId) {
     const bombLoc = b8.ECS.getComponent(bombId, "Loc");
     const bombComp = b8.ECS.getComponent(bombId, "Bomb");
     for (let dx = -bombComp.radius; dx <= bombComp.radius; dx++) {
       for (let dy = -bombComp.radius; dy <= bombComp.radius; dy++) {
-        console.log("Spawn fire", dx, dy);
         const row = bombLoc.row + dy;
         const col = bombLoc.col + dx;
         if (!mapper.collision.isWalkable(col, row)) continue;
         mapper.types.fire.spawn(col, row);
       }
     }
+  },
+  burnHandler: function(id) {
+    const bomb = b8.ECS.getComponent(id, "Bomb");
+    if (bomb.fuseTime !== false) return;
+    bomb.fuseTime = 2;
   }
 };
 mapper.types.chestOpen = {
@@ -1361,7 +1397,10 @@ mapper.types.chestOpen = {
     console.log("chest open props", props);
     if (props.message) {
       entitySettings.Message = { message: props.message };
-      entitySettings.Action = { ButtonB: "read" };
+      entitySettings.Action = {
+        ButtonA: "read",
+        ButtonB: "read"
+      };
     }
     return b8.ECS.create(entitySettings);
   }
@@ -1565,8 +1604,9 @@ mapper.types.doorStairs = {
 mapper.types.door = {
   TILE_DOOR_OPEN: 216,
   TILE_DOOR_DEFAULT: 219,
+  FLAMMABLE_DOOR_TILES: [221],
   spawn: function(col, row, props = {}) {
-    const icon = props.icon || mapper.types.door.TILE_DOOR_DEFAULT;
+    const icon = parseInt(props.icon) || mapper.types.door.TILE_DOOR_DEFAULT;
     const doorProps = {
       Type: { name: "door" },
       Loc: { col, row },
@@ -1582,6 +1622,11 @@ mapper.types.door = {
     };
     if (icon !== mapper.types.door.TILE_DOOR_OPEN) {
       doorProps.Solid = {};
+    }
+    if (mapper.types.door.FLAMMABLE_DOOR_TILES.includes(icon)) {
+      doorProps.Flammable = {
+        temperature: 0
+      };
     }
     return b8.ECS.create(doorProps);
   },
@@ -1599,6 +1644,20 @@ mapper.types.door = {
       return true;
     }
     return true;
+  },
+  burnHandler: function(id) {
+    console.log("Door burnHandler called");
+    const sprite = b8.ECS.getComponent(id, "Sprite");
+    if (sprite.tile === mapper.types.door.TILE_DOOR_OPEN) return;
+    const loc = b8.ECS.getComponent(id, "Loc");
+    sprite.tile = mapper.types.door.TILE_DOOR_OPEN;
+    b8.ECS.removeComponent(id, "Solid");
+    b8.ECS.removeComponent(id, "Flammable");
+    mapper.types.fire.spawn(
+      loc.col,
+      loc.row
+    );
+    return false;
   }
 };
 mapper.types.enemy = {
@@ -1669,7 +1728,7 @@ mapper.types.enemy = {
   }
 };
 mapper.types.fireSmall = {
-  damagePerSecond: 1,
+  damagePerSecond: 0.75,
   spawn: function(col, row, props = {}) {
     if (!props.parent) return;
     return b8.ECS.create(
@@ -1677,12 +1736,12 @@ mapper.types.fireSmall = {
         Type: { name: "fire-small" },
         Loc: { col, row },
         Sprite: {
-          type: "vfx",
+          type: "vfx-outline",
           id: "fire-small",
           offsetY: -4,
           startTime: b8.Core.getNow(),
           fg: 9,
-          bg: -1,
+          bg: 0,
           depth: 100
         },
         FireSmall: {
@@ -1694,7 +1753,7 @@ mapper.types.fireSmall = {
   }
 };
 mapper.types.fire = {
-  damagePerSecond: 2,
+  damagePerSecond: 3,
   spawn: function(col, row, props = {}) {
     let duration = parseInt(props.duration) || 5;
     duration += b8.Random.range(0, 2);
@@ -1872,12 +1931,13 @@ mapper.types.signpost = {
    * @param {number} id - The entity ID of the signpost.
    * @returns {void}
    */
-  handleTrigger: function(playerId, id) {
+  triggerHandler: function(playerId, id) {
     const sprite = b8.ECS.getComponent(id, "Sprite");
     if (sprite.tile !== 252) return;
     sprite.tile = 270;
     if (!b8.ECS.hasComponent(id, "Message")) return;
     const message = b8.ECS.getComponent(id, "Message");
+    b8.ECS.addComponent(id, "Action", { ButtonA: "read", ButtonB: "read" });
     message.message = "... " + message.message.slice(Math.floor(message.message.length / 2));
   }
 };
@@ -1895,7 +1955,7 @@ mapper.types.vfx = {
         Loc: { col, row },
         Vfx: {},
         Sprite: {
-          type: "vfx",
+          type: props.type || "vfx",
           id: props.id,
           startTime: b8.Core.getNow() + (props.offsetTime || 0),
           fg: parseInt(props.fg) || 15,
