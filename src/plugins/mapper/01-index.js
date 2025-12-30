@@ -159,6 +159,12 @@ const mapper = {
 
 					break;
 
+				case 'vfx-outline':
+
+					b8.Vfx.drawOutline( spr.id, spr.startTime, nudgeCol, nudgeRow );
+
+					break;
+
 				default:
 
 					b8.printChar( parseInt( spr.tile ) );
@@ -531,7 +537,24 @@ const mapper = {
 	},
 
 
+	/**
+	 * Invoke a handler function for a given entity based on its type.
+	 *
+	 * @param {number} entityId - The entity ID to invoke the handler for.
+	 * @param {string} handlerName - The name of the handler function to invoke.
+	 * @returns {boolean} The result of the handler function, or false if not found.
+	 */
+	doHandler: function( entityId, handlerName ) {
 
+		// Retrieve the Type component for the given entity ID
+		const type = b8.ECS.getComponent( entityId, 'Type' );
+		const handler = type && mapper.types[ type.name ];
+
+		if ( handler?.[ handlerName ] ) return handler[ handlerName ]( entityId );
+
+		return false;
+
+	},
 
 };
 

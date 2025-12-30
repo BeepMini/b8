@@ -76,7 +76,7 @@ mapper.load = function( mapData ) {
 				duration: 0,
 			},
 			Health: {
-				value: 2,
+				value: 6,
 				max: 12
 			},
 			Attack: {
