@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>Vfx</title>
+	<meta name="description" content="Visual Effects Preview.">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+	<link rel="stylesheet" href="example.css">
+	<script src="../dist/b8.js"></script>
+
+	<script>
+
+		const MAX_VFX = 60;
+
+		const vfxList = [];
+
+		async function main() {
+
+			addVfx();
+			b8.color( 15, 0 );
+			b8.frame( draw );
+
+		}
+
+		const draw = function() {
+
+			b8.cls( 10 );
+
+			if ( b8.Random.chance( 10 ) ) {
+				addVfx();
+			}
+
+			for ( let i = vfxList.length - 1; i >= 0; i-- ) {
+
+				const vfx = vfxList[ i ];
+
+				b8.locate( vfx.loc[ 0 ], vfx.loc[ 1 ] );
+				const stillPlaying = b8.Vfx.drawOutline( vfx.name, vfx.startTime );
+
+				if ( !stillPlaying || b8.Core.getNow() > vfx.maxLife ) vfxList.splice( i, 1 );
+
+			}
+
+		}
+
+		const addVfx = () => {
+
+			if ( vfxList.length >= MAX_VFX ) return;
+
+			vfxList.push(
+				{
+					loc: [
+						Math.round( b8.Random.range( 0, b8.CONFIG.SCREEN_COLS - 1 ) ),
+						Math.round( b8.Random.range( 0, b8.CONFIG.SCREEN_ROWS - 1 ) )
+					],
+					name: b8.Random.pick( Object.keys( b8.Vfx.animations ) ),
+					// name: 'fire2',
+					startTime: b8.Core.getNow(),
+					maxLife: b8.Core.getNow() + 5000,
+				}
+			);
+
+		}
+
+		window.addEventListener( "load", () => b8.init( main ) );
+	</script>
+</head>
+
+<body>
+</body>
+
+</html>

@@ -45,6 +45,20 @@
 	};
 
 
+	// Pixel directions for outline drawing.
+	// Each entry is an [x, y] offset.
+	const outlineDirections = [
+		[ -1, -1 ],
+		[ 1, 1 ],
+		[ 1, -1 ],
+		[ -1, 1 ],
+		[ -1, 0 ],
+		[ 1, 0 ],
+		[ 0, -1 ],
+		[ 0, 1 ]
+	];
+
+
 	// Loop through Vfx animations and set default fps and loop values.
 	for ( const key in b8.Vfx.animations ) {
 		const anim = b8.Vfx.animations[ key ];
@@ -81,6 +95,55 @@
 
 
 	/**
+	 * Draw Vfx at a specific position with an outline.
+	 * The outline uses the specified background color for the border.
+	 * The Vfx will have a transparent background with the border in the background colour.
+	 *
+	 * @param {Object} animation The animation to draw.
+	 * @param {number} x The x position to draw the Vfx.
+	 * @param {number} y The y position to draw the Vfx.
+	 * @param {number} startTime The start time of the animation.
+	 * @returns {void}
+	 */
+	const drawVfxOutline = function( animation, x, y, startTime ) {
+
+		const font = b8.TextRenderer.curVfx_;
+		const frame = Math.abs( b8.Animation.frame( animation, startTime ) );
+		const direction = frame >= 0 ? 0 : 1;
+
+		const currentFg = b8.Core.drawState.fgColor;
+		const currentBg = b8.Core.drawState.bgColor;
+
+		// Set outline color to background color.
+		b8.Core.setColor( currentBg, -1 );
+
+		for ( const dir of outlineDirections ) {
+			b8.TextRenderer.spr(
+				frame,
+				x + dir[ 0 ], y + dir[ 1 ],
+				font,
+				direction || 0
+			);
+		}
+
+		// Reset color to foreground color and draw main Vfx.
+		b8.Core.setColor( currentFg, -1 );
+
+		b8.TextRenderer.spr(
+			frame,
+			x, y,
+			font,
+			direction || 0
+		);
+
+		b8.Core.setColor( currentFg, currentBg );
+
+		b8.Core.drawState.cursorCol++;
+
+	};
+
+
+	/**
 	 * Draw Vfx at the current cursor position.
 	 *
 	 * @param {string} animation The animation to draw.
@@ -106,7 +169,34 @@
 
 
 	/**
-	 * Draw Vfx at a specific position.
+	 * Draw Vfx outline at the current cursor position.
+	 * The outline uses the current background color for the border.
+	 * The Vfx will have a transparent background with the border in the background colour.
+	 *
+	 * @param {string} animation The animation to draw.
+	 * @param {number} startTime The start time of the animation. If null, uses the core start time. If startTime is in the future, the animation will delayed until startTime.
+	 * @param {number} [offsetCol=0] The x offset to apply to the drawing position.
+	 * @param {number} [offsetRow=0] The y offset to apply to the drawing position.
+	 * @return {boolean} Returns true if the animation is still playing, false if it has finished.
+	 */
+	b8.Vfx.drawOutline = function( animation, startTime, offsetCol = 0, offsetRow = 0 ) {
+
+		if ( startTime !== null ) b8.Utilities.checkNumber( "startTime", startTime );
+		b8.Utilities.checkNumber( "offsetCol", offsetCol );
+		b8.Utilities.checkNumber( "offsetRow", offsetRow );
+
+		return b8.Vfx.sprOutline(
+			animation,
+			startTime,
+			( b8.Core.drawState.cursorCol + offsetCol ) * b8.CONFIG.CHR_WIDTH,
+			( b8.Core.drawState.cursorRow + offsetRow ) * b8.CONFIG.CHR_HEIGHT,
+		);
+
+	};
+
+
+	/**
+	 * Draw Vfx at a specific x, y position.
 	 *
 	 * @param {string} animation The animation to draw.
 	 * @param {number|null} startTime The start time of the animation. If null, uses the core start time. If startTime is in the future, the animation will delayed until startTime.
@@ -127,6 +217,40 @@
 		if ( !b8.Animation.shouldLoop( anim, startTime ) ) return false;
 
 		drawVfx(
+			anim,
+			x, y,
+			startTime
+		);
+
+		return true;
+
+	};
+
+
+	/**
+	 * Draw Vfx at a specific x, y position with an outline.
+	 * The outline uses the current background color for the border.
+	 * The Vfx will have a transparent background with the border in the background colour.
+	 *
+	 * @param {string} animation The animation to draw.
+	 * @param {number|null} startTime The start time of the animation. If null, uses the core start time. If startTime is in the future, the animation will delayed until startTime.
+	 * @param {number} x The x position to draw the Vfx.
+	 * @param {number} y The y position to draw the Vfx.
+	 * @returns {boolean} Returns true if the animation is still playing, false if it has finished.
+	 */
+	b8.Vfx.sprOutline = function( animation, startTime, x, y ) {
+
+		if ( startTime !== null ) b8.Utilities.checkNumber( "startTime", startTime );
+		b8.Utilities.checkNumber( "x", x );
+		b8.Utilities.checkNumber( "y", y );
+
+		if ( startTime > b8.Core.getNow() ) return true;
+
+		const anim = b8.Vfx.get( animation );
+
+		if ( !b8.Animation.shouldLoop( anim, startTime ) ) return false;
+
+		drawVfxOutline(
 			anim,
 			x, y,
 			startTime
