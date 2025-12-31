@@ -15,7 +15,7 @@
 	b8.ECS = {};
 
 	// auto-incrementing entity IDs
-	let nextId = 0;
+	let nextId = 1;
 
 	// Map<name, Map<id, data>>
 	let components = new Map();
@@ -438,7 +438,7 @@
 		components = new Map();
 		systems = new Map();
 		grid = [];
-		nextId = 0;
+		nextId = 1;
 
 	}
 
