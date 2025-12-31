@@ -466,6 +466,28 @@ const mapper = {
 
 
 	/**
+	 * Check if there is an entity of a specific type at the given coordinates.
+	 *
+	 * @param {number} col - The column coordinate to check.
+	 * @param {number} row - The row coordinate to check.
+	 * @param {string} type - The type of the entity to look for.
+	 * @returns {boolean} True if an entity of the specified type exists at the coordinates, false otherwise.
+	 */
+	hasEntityAt: function( col, row, type ) {
+
+		const entities = b8.ECS.entitiesAt( col, row );
+
+		for ( const id of entities ) {
+			const typeComp = b8.ECS.getComponent( id, 'Type' );
+			if ( typeComp?.name === type ) return true;
+		}
+
+		return false;
+
+	},
+
+
+	/**
 	 * Remove an object of a specific type at the given coordinates from the current map.
 	 *
 	 * @param {number} col - The column coordinate of the object to remove.

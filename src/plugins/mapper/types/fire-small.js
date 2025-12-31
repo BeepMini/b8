@@ -15,7 +15,7 @@ mapper.types.fireSmall = {
 					id: 'fire-small',
 					offsetY: -4,
 					startTime: b8.Core.getNow(),
-					fg: 9,
+					fg: mapper.types.fire.color,
 					bg: 0,
 					depth: 100,
 				},
