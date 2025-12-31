@@ -24,7 +24,6 @@ mapper.systems.fire = async function( dt ) {
 
 			}
 
-
 			// Apply damage or custom burn behavior to entities at the fire's location
 			const entitiesAtLocation = b8.ECS.entitiesAt( loc.col, loc.row );
 			entitiesAtLocation.forEach(

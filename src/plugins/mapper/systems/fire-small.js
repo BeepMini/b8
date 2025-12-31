@@ -19,11 +19,11 @@ mapper.systems.fireSmall = async function( dt ) {
 			}
 
 			// Get entities at the fire's location
-			const health = b8.ECS.getComponent( smallFire.parent, 'Health' );
-			if ( health ) {
-				health.value -= damagePerSecond * dt;
+			const parentHealth = b8.ECS.getComponent( smallFire.parent, 'Health' );
+			if ( parentHealth ) {
+				parentHealth.value -= damagePerSecond * dt;
 				// If parent dies, extinguish the small fire.
-				if ( health.value < 0 ) smallFire.duration = 0;
+				if ( parentHealth.value < 0 ) smallFire.duration = 0;
 			}
 
 			// Reduce the fire's duration
@@ -31,7 +31,7 @@ mapper.systems.fireSmall = async function( dt ) {
 			if ( smallFire.duration <= 0 ) {
 				b8.ECS.removeEntity( entityId );
 				b8.ECS.removeComponent( smallFire.parent, 'OnFire' );
-				if ( health ) health.value = Math.floor( health.value );
+				if ( parentHealth ) parentHealth.value = Math.floor( parentHealth.value );
 			}
 
 		}
