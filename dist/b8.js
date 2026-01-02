@@ -4116,7 +4116,7 @@ const b8 = {};
 (function(b82) {
   "use strict";
   b82.ECS = {};
-  let nextId = 0;
+  let nextId = 1;
   let components = /* @__PURE__ */ new Map();
   let grid = [];
   let systems = /* @__PURE__ */ new Map();
@@ -4264,7 +4264,7 @@ const b8 = {};
     components = /* @__PURE__ */ new Map();
     systems = /* @__PURE__ */ new Map();
     grid = [];
-    nextId = 0;
+    nextId = 1;
   };
 })(b8);
 (function(b82) {

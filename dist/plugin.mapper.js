@@ -9,6 +9,7 @@ const mapper = {
   actions: {},
   settings: {},
   bg: {},
+  lastDoorway: null,
   // The player entity ID.
   player: null,
   // Cooldown timer for actions such as key presses.
@@ -21,10 +22,40 @@ const mapper = {
    */
   play: function(mapData) {
     b8.Utilities.checkObject("mapData", mapData);
-    mapper.load(mapData);
+    mapper.mapData = mapData;
+    mapper.reset();
     b8.Scene.add("menu", mapper.sceneMenu);
     b8.Scene.add("game", mapper.sceneGame);
+    b8.Scene.add("gameover", mapper.sceneGameOver);
     b8.Scene.set("menu");
+  },
+  /**
+   * Reset the game state to the initial map data.
+   *
+   * @returns {void}
+   */
+  reset: function() {
+    mapper.load(mapper.mapData);
+  },
+  /**
+   * Continue the game from the last doorway.
+   *
+   * @returns {void}
+   */
+  continue: function() {
+    b8.ECS.setComponent(
+      mapper.player,
+      "Health",
+      {
+        value: 6,
+        max: 12
+      }
+    );
+    b8.ECS.setLoc(
+      mapper.player,
+      mapper.lastDoorway.col,
+      mapper.lastDoorway.row
+    );
   },
   /**
    * Update the game state.
@@ -322,6 +353,22 @@ const mapper = {
     return typeof mapId === "number" && mapId >= 0;
   },
   /**
+   * Check if there is an entity of a specific type at the given coordinates.
+   *
+   * @param {number} col - The column coordinate to check.
+   * @param {number} row - The row coordinate to check.
+   * @param {string} type - The type of the entity to look for.
+   * @returns {boolean} True if an entity of the specified type exists at the coordinates, false otherwise.
+   */
+  hasEntityAt: function(col, row, type) {
+    const entities = b8.ECS.entitiesAt(col, row);
+    for (const id of entities) {
+      const typeComp = b8.ECS.getComponent(id, "Type");
+      if (typeComp?.name === type) return true;
+    }
+    return false;
+  },
+  /**
    * Remove an object of a specific type at the given coordinates from the current map.
    *
    * @param {number} col - The column coordinate of the object to remove.
@@ -433,6 +480,14 @@ mapper.actions.open = async function(playerId) {
       mapper.changeObjectTypeAt(loc.col, loc.row, type.name, obj.newType);
     }
     b8.Sfx.play("tone/jingle/017");
+    if (obj.message) {
+      b8.color(
+        sprite.fg ?? 15,
+        sprite.bg ?? 5
+      );
+      const message = mapper.helpers.processChatText(obj.message || "");
+      await b8.Async.dialogTypewriter(message, ["OK"], 20);
+    }
     const rewards = b8.ECS.getComponent(id, "Reward");
     mapper.giveRewards(playerId, rewards?.items || []);
     b8.ECS.removeComponent(id, "Reward");
@@ -506,6 +561,7 @@ mapper.camera = {
    */
   getTilePosition: function(col, row) {
     const loc = b8.ECS.getComponent(mapper.player, "Loc");
+    if (!loc) return { col: 0, row: 0 };
     const pos = mapper.camera.getScreenPosition(loc.col, loc.row);
     let tileCol = col - pos.col;
     let tileRow = row - pos.row;
@@ -853,7 +909,7 @@ mapper.sceneGame = {
     b8.print(" " + parseInt(b8.Inventory.getCount("coin")).toString().padStart(4, "0"));
     const health = b8.ECS.getComponent(mapper.player, "Health");
     const max = health.max;
-    const hp = health.value;
+    const hp = Math.floor(health.value);
     for (let i = 0; i < Math.floor(max / 2); i++) {
       const x = 2 + i;
       const y = b8.CONFIG.SCREEN_ROWS - 3;
@@ -884,6 +940,47 @@ mapper.sceneGame = {
     b8.locate(15, b8.CONFIG.SCREEN_ROWS - 4);
     b8.print(mapper.helpers.capitalizeWords(" " + mapper.promptAhead(mapper.player, "ButtonB")));
     return;
+  }
+};
+mapper.sceneGameOver = {
+  /**
+   * Initialize the menu scene.
+   *
+   * @returns {void}
+   */
+  init: function() {
+    mapper.sceneGameOver.main();
+  },
+  /**
+   * Draw the main menu.
+   *
+   * @returns {void}
+   */
+  main: async () => {
+    b8.cls(6);
+    b8.locate(0, 5);
+    b8.color(10, 6);
+    b8.printCentered("GAME OVER\n\n");
+    let menuChoices = ["Continue", "Main Menu"];
+    let choice = await b8.Async.menu(
+      menuChoices,
+      {
+        border: false,
+        padding: 0,
+        centerH: true
+      }
+    );
+    const selected = menuChoices[choice];
+    if ("Continue" === selected) {
+      mapper.continue();
+      b8.Scene.set("game");
+      return;
+    }
+    if ("Main Menu" === selected) {
+      b8.Scene.set("menu");
+      return;
+    }
+    setTimeout(mapper.sceneGameOver.main, 10);
   }
 };
 mapper.sceneMenu = {
@@ -922,6 +1019,7 @@ mapper.sceneMenu = {
     );
     const selected = menuChoices[choice];
     if ("Start Game" === selected) {
+      mapper.reset();
       b8.Scene.set("game");
       return;
     }
@@ -1013,16 +1111,16 @@ mapper.systems.fireSmall = async function(dt) {
         loc.col = parentLoc.col;
         loc.row = parentLoc.row;
       }
-      const health = b8.ECS.getComponent(smallFire.parent, "Health");
-      if (health) {
-        health.value -= damagePerSecond * dt;
-        if (health.value < 0) smallFire.duration = 0;
+      const parentHealth = b8.ECS.getComponent(smallFire.parent, "Health");
+      if (parentHealth) {
+        parentHealth.value -= damagePerSecond * dt;
+        if (parentHealth.value < 0) smallFire.duration = 0;
       }
       smallFire.duration -= dt;
       if (smallFire.duration <= 0) {
         b8.ECS.removeEntity(entityId);
         b8.ECS.removeComponent(smallFire.parent, "OnFire");
-        if (health) health.value = Math.floor(health.value);
+        if (parentHealth) parentHealth.value = Math.floor(parentHealth.value);
       }
     }
   );
@@ -1100,7 +1198,7 @@ mapper.systems.flammable = async function(dt) {
 mapper.systems.health = async function(dt) {
   const entities = b8.ECS.query("Health");
   entities.forEach(
-    (entityId) => {
+    async (entityId) => {
       const health = b8.ECS.getComponent(entityId, "Health");
       if (health.value <= 0) {
         const loc = b8.ECS.getComponent(entityId, "Loc");
@@ -1111,9 +1209,11 @@ mapper.systems.health = async function(dt) {
             { id: "skull", fg: 2, bg: 0, offsetTime: 200 }
           );
         }
-        if (entityId !== mapper.player.id) {
+        if (entityId !== mapper.player) {
           b8.ECS.removeEntity(entityId);
         } else {
+          await b8.Async.wait(0.5);
+          b8.Scene.set("gameover");
         }
       }
     }
@@ -1232,6 +1332,7 @@ mapper.systems.handlePortal = async function(portal) {
   if (targetDoorway) {
     await b8.Async.wait(0.1);
     mapper.setCurrentMap(targetDoorway.mapId);
+    mapper.lastDoorway = { col: targetDoorway.x, row: targetDoorway.y };
     b8.ECS.setLoc(mapper.player, targetDoorway.x, targetDoorway.y);
   }
   return false;
@@ -1284,26 +1385,6 @@ mapper.systems.sprite = function(dt) {
     if (spr.nudgeRow) {
       spr.nudgeRow = spr.nudgeRow * 0.75;
     }
-  }
-};
-mapper.systems.teleportSystem = async function(dt) {
-  const list = b8.ECS.query("Teleport");
-  for (const [id, teleport] of list) {
-    const doorways = b8.ECS.query("Portal");
-    const targetDoorway = doorways.find(
-      ([targetId]) => {
-        const targetPortal = b8.ECS.getComponent(targetId, "Portal");
-        return targetPortal?.name === teleport.target;
-      }
-    );
-    if (targetDoorway) {
-      const targetLoc = b8.ECS.getComponent(targetDoorway[0], "Loc");
-      if (targetLoc) {
-        await b8.Async.wait(0.1);
-        b8.ECS.setLoc(id, targetLoc.col, targetLoc.row);
-      }
-    }
-    b8.ECS.removeComponent(id, "Teleport");
   }
 };
 mapper.systems.vfx = async function(dt) {
@@ -1418,6 +1499,18 @@ mapper.types.chest = {
     // 4: '1 Bomb',
     // 5: '5 Bombs',
   },
+  messages: {
+    0: "The chest is empty.",
+    1: "You found a key!",
+    2: "You found a coin!",
+    3: "You found 10 coins!",
+    4: "You found 50 coins!",
+    5: "You found a half heart!",
+    6: "You found a heart!",
+    7: "You found a full heart!"
+    // 4: "You found a bomb!",
+    // 5: "You found 5 bombs!",
+  },
   spawn: function(col, row, props = {}) {
     let items = [];
     let foregroundColor = props.fg || 15;
@@ -1487,7 +1580,8 @@ mapper.types.chest = {
         Openable: {
           closedTile: 253,
           openedTile: 271,
-          newType: "chestOpen"
+          newType: "chestOpen",
+          message: mapper.types.chest.messages[props.contains] || "The chest is empty."
         },
         Message: { message: props.message || "" },
         Reward: { items },
@@ -1740,7 +1834,7 @@ mapper.types.fireSmall = {
           id: "fire-small",
           offsetY: -4,
           startTime: b8.Core.getNow(),
-          fg: 9,
+          fg: mapper.types.fire.color,
           bg: 0,
           depth: 100
         },
@@ -1754,9 +1848,16 @@ mapper.types.fireSmall = {
 };
 mapper.types.fire = {
   damagePerSecond: 3,
+  color: 10,
   spawn: function(col, row, props = {}) {
-    let duration = parseInt(props.duration) || 5;
-    duration += b8.Random.range(0, 2);
+    if (mapper.hasEntityAt(col, row, "fire")) return null;
+    let duration = parseInt(props.duration);
+    if (duration === 0) {
+      duration = Infinity;
+    } else {
+      duration = isNaN(duration) ? 5 : duration;
+      duration += b8.Random.range(0, 2);
+    }
     return b8.ECS.create(
       {
         Type: { name: "fire" },
@@ -1765,7 +1866,7 @@ mapper.types.fire = {
           type: "vfx",
           id: "fire",
           startTime: b8.Core.getNow() + b8.Random.int(0, 400),
-          fg: 10,
+          fg: mapper.types.fire.color,
           bg: 0
         },
         Fire: {
@@ -1943,6 +2044,7 @@ mapper.types.signpost = {
 };
 mapper.types.start = {
   spawn: function(col, row, props = {}) {
+    mapper.lastDoorway = { col, row };
     b8.ECS.setLoc(mapper.player, col, row);
   }
 };
