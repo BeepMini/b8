@@ -51,6 +51,7 @@ mapper.systems.handlePortal = async function( portal ) {
 	if ( targetDoorway ) {
 		await b8.Async.wait( 0.1 );
 		mapper.setCurrentMap( targetDoorway.mapId );
+		mapper.lastDoorway = { col: targetDoorway.x, row: targetDoorway.y };
 		b8.ECS.setLoc( mapper.player, targetDoorway.x, targetDoorway.y );
 	}
 

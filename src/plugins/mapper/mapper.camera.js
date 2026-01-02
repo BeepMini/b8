@@ -38,6 +38,9 @@ mapper.camera = {
 	getTilePosition: function( col, row ) {
 
 		const loc = b8.ECS.getComponent( mapper.player, 'Loc' );
+
+		if ( !loc ) return { col: 0, row: 0 };
+
 		const pos = mapper.camera.getScreenPosition( loc.col, loc.row );
 
 		let tileCol = col - pos.col;

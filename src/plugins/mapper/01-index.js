@@ -12,6 +12,7 @@ const mapper = {
 	actions: {},
 	settings: {},
 	bg: {},
+	lastDoorway: null,
 
 	// The player entity ID.
 	player: null,
@@ -30,11 +31,54 @@ const mapper = {
 
 		b8.Utilities.checkObject( 'mapData', mapData );
 
-		mapper.load( mapData );
+		mapper.mapData = mapData;
+
+		mapper.reset();
 
 		b8.Scene.add( 'menu', mapper.sceneMenu );
 		b8.Scene.add( 'game', mapper.sceneGame );
+		b8.Scene.add( 'gameover', mapper.sceneGameOver );
 		b8.Scene.set( 'menu' );
+		// b8.Scene.set( 'gameover' );
+
+	},
+
+
+	/**
+	 * Reset the game state to the initial map data.
+	 *
+	 * @returns {void}
+	 */
+	reset: function() {
+
+		mapper.load( mapper.mapData );
+
+	},
+
+
+	/**
+	 * Continue the game from the last doorway.
+	 *
+	 * @returns {void}
+	 */
+	continue: function() {
+
+		// mapper.reset();
+
+		b8.ECS.setComponent(
+			mapper.player,
+			'Health',
+			{
+				value: 6,
+				max: 12
+			}
+		);
+
+		b8.ECS.setLoc(
+			mapper.player,
+			mapper.lastDoorway.col,
+			mapper.lastDoorway.row
+		);
 
 	},
 

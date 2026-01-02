@@ -3,7 +3,7 @@ mapper.systems.health = async function( dt ) {
 	const entities = b8.ECS.query( 'Health' );
 
 	entities.forEach(
-		( entityId ) => {
+		async ( entityId ) => {
 
 			const health = b8.ECS.getComponent( entityId, 'Health' );
 
@@ -22,10 +22,11 @@ mapper.systems.health = async function( dt ) {
 				// mapper.updateMoveDelay( 0.6 );
 
 				// Kill the entity unless it's the player.
-				if ( entityId !== mapper.player.id ) {
+				if ( entityId !== mapper.player ) {
 					b8.ECS.removeEntity( entityId );
 				} else {
-					// Game over for the player.
+					await b8.Async.wait( 0.5 );
+					b8.Scene.set( 'gameover' );
 				}
 
 			}

@@ -102,7 +102,7 @@ mapper.sceneGame = {
 		// Draw heart containers.
 		const health = b8.ECS.getComponent( mapper.player, 'Health' );
 		const max = health.max;
-		const hp = health.value;
+		const hp = Math.floor( health.value );
 
 		for ( let i = 0; i < Math.floor( max / 2 ); i++ ) {
 			const x = 2 + i;
