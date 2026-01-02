@@ -12,7 +12,7 @@ const mapper = {
 	actions: {},
 	settings: {},
 	bg: {},
-	lastDoorway: null,
+	lastPosition: null,
 
 	// The player entity ID.
 	player: null,
@@ -63,8 +63,6 @@ const mapper = {
 	 */
 	continue: function() {
 
-		// mapper.reset();
-
 		b8.ECS.setComponent(
 			mapper.player,
 			'Health',
@@ -74,10 +72,13 @@ const mapper = {
 			}
 		);
 
+		// Set map and force reload of map to reset properties.
+		mapper.setCurrentMap( mapper.lastPosition.map, true );
+
 		b8.ECS.setLoc(
 			mapper.player,
-			mapper.lastDoorway.col,
-			mapper.lastDoorway.row
+			mapper.lastPosition.col,
+			mapper.lastPosition.row
 		);
 
 	},

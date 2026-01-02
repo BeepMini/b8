@@ -85,6 +85,12 @@ mapper.load = function( mapData ) {
 		}
 	);
 
+	mapper.lastPosition = {
+		col: 0,
+		row: 0,
+		map: 0
+	};
+
 	// This sets the map and then loads the objects.
 	mapper.setCurrentMap( 0 );
 
@@ -163,7 +169,7 @@ mapper.upgradeMapDataV1toV2 = function( mapData ) {
  * @param {string} mapName - The name of the map to set as current.
  * @returns {void}
  */
-mapper.setCurrentMap = function( mapId ) {
+mapper.setCurrentMap = function( mapId, forceLoad = false ) {
 
 	b8.Utilities.checkInt( 'mapId', mapId );
 
@@ -173,7 +179,10 @@ mapper.setCurrentMap = function( mapId ) {
 	}
 
 	// Check if already on this map.
-	if ( mapId === mapper.currentMapId ) return;
+	if ( mapId === mapper.currentMapId && !forceLoad ) return;
+
+	// Set current map id.
+	mapper.currentMapId = mapId;
 
 	let currentMap = mapper.maps[ mapId ];
 
@@ -197,9 +206,6 @@ mapper.setCurrentMap = function( mapId ) {
 		if ( handler?.spawn ) handler.spawn( obj.x, obj.y, obj.props );
 
 	}
-
-	// Set current map id.
-	mapper.currentMapId = mapId;
 
 	// Delete any start objects from the current map.
 	// It's no longer needed.
