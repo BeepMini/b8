@@ -44,7 +44,7 @@
 	/**
 	 * Ensure a component bucket exists and return it.
 	 *
-	 * @param {string} name
+	 * @param {string} name Component name
 	 * @returns {Map<number, Object>}
 	 * @private
 	 */
@@ -61,8 +61,8 @@
 	/**
 	 * Get all entities at a specific grid location.
 	 *
-	 * @param {number} col
-	 * @param {number} row
+	 * @param {number} col Column coordinate
+	 * @param {number} row Row coordinate
 	 * @returns {number[]} Array of entity IDs at that location
 	 */
 	b8.ECS.entitiesAt = function( col, row ) {
@@ -76,8 +76,8 @@
 	 * Register a system that runs every frame.
 	 *
 	 * @param {Function} fn   System function (dt)=>void
-	 * @param {string}   name Unique system name
-	 * @param {number}  [order=0] Lower numbers run first
+	 * @param {string} name Unique system name
+	 * @param {number} [order=0] Lower numbers run first
 	 */
 	b8.ECS.addSystem = function( name, fn, order = 0 ) {
 
@@ -95,9 +95,9 @@
 	/**
 	 * Add a system a single time. Don't overwite existing systems or add multiple copies.
 	 *
-	 * @param {Function} fn   System function (dt)=>void
-	 * @param {string}   name Unique system name
-	 * @param {number}  [order=0] Lower numbers run first
+	 * @param {Function} fn System function (dt)=>void
+	 * @param {string} name Unique system name
+	 * @param {number} [order=0] Lower numbers run first
 	 */
 	b8.ECS.addSystemOnce = function( fn, name, order = 0 ) {
 
@@ -227,7 +227,7 @@
 	/**
 	 * Get the component map for a given component name.
 	 *
-	 * @param {string} name
+	 * @param {string} name Component name
 	 * @returns {Map<number,Object>} Map<entityId,data>
 	 */
 	b8.ECS.getComponents = function( name ) {
@@ -242,7 +242,7 @@
 	/**
 	 * Return *all* components for a given entity.
 	 *
-	 * @param {number} id
+	 * @param {number} id Entity ID
 	 * @returns {Map<string, Object>} Map of name → data
 	 */
 	b8.ECS.getEntity = function( id ) {
@@ -281,8 +281,8 @@
 	/**
 	 * Get one specific component for an entity.
 	 *
-	 * @param {number} id
-	 * @param {string} name
+	 * @param {number} id Entity ID
+	 * @param {string} name Component name
 	 * @returns {Object|undefined}
 	 */
 	b8.ECS.getComponent = function( id, name ) {
@@ -298,8 +298,8 @@
 	/**
 	 * Check if an entity owns a component.
 	 *
-	 * @param {number} id
-	 * @param {string} name
+	 * @param {number} id Entity ID
+	 * @param {string} name Component name
 	 * @returns {boolean}
 	 */
 	b8.ECS.hasComponent = function( id, name ) {
@@ -315,8 +315,8 @@
 	/**
 	 * Remove a single component from an entity.
 	 *
-	 * @param {number} id
-	 * @param {string} name
+	 * @param {number} id Entity ID
+	 * @param {string} name Component name
 	 * @returns {void}
 	 */
 	b8.ECS.removeComponent = function( id, name ) {
@@ -341,7 +341,7 @@
 	/**
 	 * Remove an entity entirely (all its components).
 	 *
-	 * @param {number} id
+	 * @param {number} id Entity ID
 	 * @returns {void}
 	 */
 	b8.ECS.removeEntity = function( id ) {
@@ -380,7 +380,7 @@
 	/**
 	 * Query for entities that own *all* given components.
 	 *
-	 * @param {...string} names
+	 * @param {...string} names List of component names
 	 * @returns {number[]} Array of entity IDs
 	 */
 	b8.ECS.query = function( ...names ) {
@@ -408,7 +408,7 @@
 	/**
 	 * Count entities by type.
 	 *
-	 * @param {string} typeName
+	 * @param {string} typeName Type name
 	 * @returns {number}
 	 */
 	b8.ECS.countByType = function( typeName ) {
