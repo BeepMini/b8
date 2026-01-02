@@ -13,6 +13,19 @@ mapper.types.chest = {
 		// 5: '5 Bombs',
 	},
 
+	messages: {
+		0: "The chest is empty.",
+		1: "You found a key!",
+		2: "You found a coin!",
+		3: "You found 10 coins!",
+		4: "You found 50 coins!",
+		5: "You found a half heart!",
+		6: "You found a heart!",
+		7: "You found a full heart!",
+		// 4: "You found a bomb!",
+		// 5: "You found 5 bombs!",
+	},
+
 
 	spawn: function( col, row, props = {} ) {
 
@@ -93,6 +106,7 @@ mapper.types.chest = {
 					closedTile: 253,
 					openedTile: 271,
 					newType: 'chestOpen',
+					message: mapper.types.chest.messages[ props.contains ] || "The chest is empty.",
 				},
 				Message: { message: props.message || "" },
 				Reward: { items },

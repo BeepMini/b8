@@ -23,6 +23,17 @@ mapper.actions.open = async function( playerId ) {
 		// Play sound effect.
 		b8.Sfx.play( 'tone/jingle/017' );
 
+		// Display message if specified.
+		if ( obj.message ) {
+			b8.color(
+				sprite.fg ?? 15,
+				sprite.bg ?? 5
+			);
+
+			const message = mapper.helpers.processChatText( obj.message || '' );
+			await b8.Async.dialogTypewriter( message, [ "OK" ], 20 );
+		}
+
 		// Rewards.
 		const rewards = b8.ECS.getComponent( id, 'Reward' );
 		mapper.giveRewards( playerId, rewards?.items || [] );
