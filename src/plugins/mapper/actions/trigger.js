@@ -16,7 +16,6 @@ mapper.actions.trigger = function( playerId ) {
 
 		const type = b8.ECS.getComponent( targetId, 'Type' );
 
-		console.log( `Trigger action by player on type: ${type.name}` );
 		if ( mapper.types[ type.name ]?.triggerHandler ) {
 			mapper.types[ type.name ].triggerHandler( playerId, targetId );
 		}

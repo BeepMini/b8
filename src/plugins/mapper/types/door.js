@@ -53,9 +53,7 @@ mapper.types.door = {
 		const keyName = `key-${sprite.fg ?? "default"}`;
 
 		if ( b8.Inventory.has( keyName ) ) {
-			b8.ECS.removeComponent( id, 'Solid' );
-			sprite.tile = mapper.types.door.TILE_DOOR_OPEN;
-			b8.Sfx.play( 'ui/click/004' );
+			mapper.types.door.openDoor( id, sprite );
 			return true;
 		}
 
@@ -64,16 +62,15 @@ mapper.types.door = {
 	},
 
 
-	burnHandler: function( id ) {
+	/**
+	 * Open the door by changing its sprite and removing solid component.
+	 *
+	 * @param {number} id - The entity ID of the door.
+	 * @param {Object} sprite - The Sprite component of the door.
+	 * @returns {void}
+	 */
+	openDoor: function( id, sprite ) {
 
-		console.log( 'Door burnHandler called' );
-
-		// Change sprite to open door.
-		const sprite = b8.ECS.getComponent( id, 'Sprite' );
-
-		if ( sprite.tile === mapper.types.door.TILE_DOOR_OPEN ) return;
-
-		const loc = b8.ECS.getComponent( id, 'Loc' );
 		sprite.tile = mapper.types.door.TILE_DOOR_OPEN;
 
 		// Remove solid component.
@@ -82,14 +79,47 @@ mapper.types.door = {
 		// Remove flammable component to prevent re-burning.
 		b8.ECS.removeComponent( id, 'Flammable' );
 
+		b8.Sfx.play( 'ui/click/004' );
+
+		const loc = b8.ECS.getComponent( id, 'Loc' );
+
+		mapper.changeObjectTypeAt(
+			loc.col,
+			loc.row,
+			'door',
+			'doorOpen'
+		);
+
+	},
+
+
+	/**
+	 * Handle burning of door entities.
+	 *
+	 * @param {number} id - The entity ID of the door.
+	 * @returns {boolean} False to prevent removal of the door entity.
+	 */
+	burnHandler: function( id ) {
+
+		// Change sprite to open door.
+		const sprite = b8.ECS.getComponent( id, 'Sprite' );
+
+		// Ignore open doors.
+		if ( sprite.tile === mapper.types.door.TILE_DOOR_OPEN ) return;
+
+		mapper.types.door.openDoor( id, sprite );
+
+		// Spawn fire at door location.
+		const loc = b8.ECS.getComponent( id, 'Loc' );
+
 		mapper.types.fire.spawn(
-			loc.col, loc.row
+			loc.col,
+			loc.row
 		);
 
 		// Do not remove the door entity.
 		return false;
 
 	},
-
 
 };

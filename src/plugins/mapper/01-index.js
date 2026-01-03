@@ -553,6 +553,30 @@ const mapper = {
 
 
 	/**
+	 * Change properties of an object at the given coordinates in the current map.
+	 *
+	 * @param {number} col - The column coordinate of the object to change.
+	 * @param {number} row - The row coordinate of the object to change.
+	 * @param {string} type - The current type of the object to change.
+	 * @param {Object} properties - An object containing the properties to update.
+	 * @returns {void}
+	 */
+	changeObjectPropertiesAt: function( col, row, type, properties = {} ) {
+
+		const currentMap = mapper.getCurrentMap();
+
+		// Find the object matching the specified coordinates and type.
+		for ( const obj of currentMap.objects ) {
+			if ( obj.x === col && obj.y === row && obj.type.startsWith( type ) ) {
+				Object.assign( obj, properties );
+				return;
+			}
+		}
+
+	},
+
+
+	/**
 	 * Change the type of an object at the given coordinates in the current map.
 	 *
 	 * @param {number} col - The column coordinate of the object to change.
@@ -562,8 +586,6 @@ const mapper = {
 	 * @returns {void}
 	 */
 	changeObjectTypeAt: function( col, row, type, newType ) {
-
-		console.log( 'changeObjectTypeAt', col, row, type, newType );
 
 		const currentMap = mapper.getCurrentMap();
 

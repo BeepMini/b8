@@ -14,8 +14,6 @@ mapper.types.chestOpen = {
 			Solid: {},
 		};
 
-		console.log( 'chest open props', props );
-
 		if ( props.message ) {
 			entitySettings.Message = { message: props.message };
 			entitySettings.Action = {
