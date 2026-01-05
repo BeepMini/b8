@@ -1,4 +1,3 @@
-
 ( function( b8 ) {
 	'use strict';
 
@@ -249,13 +248,21 @@
 
 		b8.Utilities.checkInt( 'id', id );
 
-		const out = new Map();
-		for ( const [ name, map ] of components ) {
-			if ( map.has( id ) ) out.set( name, map.get( id ) );
+		const out = {};
+		for ( const [ name, data ] of components ) {
+			if ( data.has( id ) ) {
+				out[ name ] = data.get( id );
+			}
 		}
 		return out;
 
 	}
+
+
+	/**
+	 * Alias for getEntity().
+	 */
+	b8.ECS.get = b8.ECS.getEntity;
 
 
 	/**

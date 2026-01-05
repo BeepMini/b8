@@ -28,6 +28,27 @@
 
 
 	/**
+	 * Calculate the Manhattan distance between two locations.
+	 *
+	 * The Manhattan distance is the sum of the absolute differences
+	 * of their Cartesian coordinates. It represents the distance
+	 * traveled along axes at right angles (like navigating a grid). It's not
+	 * a straight-line distance, but rather the total number of steps required
+	 * to move from one point to another when only moving horizontally and
+	 * vertically.
+	 *
+	 * @param {Object} a - The first location with col and row properties.
+	 * @param {Object} b - The second location with col and row properties.
+	 * @returns {number} The Manhattan distance between the two locations.
+	 */
+	b8.Math.distManhattan = function( a, b ) {
+
+		return Math.abs( a.col - b.col ) + Math.abs( a.row - b.row );
+
+	};
+
+
+	/**
 	 * Linearly interpolates between two values.
 	 *
 	 * @param {number} a - The start value.
