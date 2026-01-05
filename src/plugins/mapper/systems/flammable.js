@@ -9,13 +9,14 @@ mapper.systems.flammable = async function( dt ) {
 
 			// Check if the flammable entity should catch fire.
 			if ( flammable.temperature >= 100 ) {
-				const location = b8.ECS.getComponent( entityId, 'Loc' );
-				b8.ECS.removeEntity( entityId ); // The entity catches fire
 
+				const location = b8.ECS.getComponent( entityId, 'Loc' );
 				mapper.types.fire.spawn(
 					location.col,
 					location.row
 				);
+
+				b8.ECS.removeEntity( entityId ); // The entity catches fire
 
 				return;
 			}
