@@ -39,9 +39,9 @@
 	 * @param {number} y - The y-coordinate of the current cell.
 	 * @returns {number} - The Manhattan distance to the goal.
 	 */
-	function heuristic( x, y ) {
+	function heuristic( target, goal ) {
 
-		return b8.Math.distManhattan( { col: x, row: y }, { col: goal.x, row: goal.y } );
+		return b8.Math.distManhattan( { col: target.x, row: target.y }, { col: goal.x, row: goal.y } );
 
 	}
 
@@ -88,8 +88,8 @@
 			x: start.x,
 			y: start.y,
 			g: 0, // Cost from start to this node
-			h: heuristic( start.x, start.y ), // Heuristic cost to goal
-			f: heuristic( start.x, start.y ), // Total cost (g + h)
+			h: heuristic( start, goal ), // Heuristic cost to goal
+			f: heuristic( start, goal ), // Total cost (g + h)
 			parent: null, // Parent node for path reconstruction
 		};
 		openList.push( startNode );
@@ -149,8 +149,8 @@
 						x: neighbor.x,
 						y: neighbor.y,
 						g: tentativeG, // Set the cost from start to this node
-						h: heuristic( neighbor.x, neighbor.y ), // Estimate cost to goal
-						f: tentativeG + heuristic( neighbor.x, neighbor.y ), // Total cost
+						h: heuristic( neighbor, goal ), // Estimate cost to goal
+						f: tentativeG + heuristic( neighbor, goal ), // Total cost
 						parent: current, // Set the parent node for path reconstruction
 					};
 
