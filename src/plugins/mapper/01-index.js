@@ -475,7 +475,7 @@ const mapper = {
 		// Do swipe VFX.
 		mapper.types.vfx.spawn(
 			ahead.x, ahead.y,
-			{ id: 'swipe', fg: 15, bg: 0 }
+			{ id: 'swipe', fg: 15, bg: 0, type: 'vfx-outline' }
 		);
 
 		mapper.doAction( playerId, propertyName );
