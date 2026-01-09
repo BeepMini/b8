@@ -144,8 +144,15 @@
 					neighbor.row >= gridHeight
 				) continue;
 
-				// Skip unwalkable cells
-				if ( !isWalkable( neighbor.x, neighbor.y ) ) continue;
+				// if not start point or end point skip unwalkable cells.
+				if (
+					neighbor.col !== start.col &&
+					neighbor.row !== start.row &&
+					neighbor.col !== goal.col &&
+					neighbor.row !== goal.row
+				) {
+					if ( !isWalkable( neighbor.col, neighbor.row ) ) continue;
+				}
 
 				const neighborKey = nodeKey( neighbor.col, neighbor.row );
 				if ( closedList.has( neighborKey ) ) continue; // Skip already explored nodes
