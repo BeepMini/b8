@@ -9,7 +9,7 @@ const mapper = {
   actions: {},
   settings: {},
   bg: {},
-  lastDoorway: null,
+  lastPosition: null,
   // The player entity ID.
   player: null,
   // Cooldown timer for actions such as key presses.
@@ -51,10 +51,11 @@ const mapper = {
         max: 12
       }
     );
+    mapper.setCurrentMap(mapper.lastPosition.map, true);
     b8.ECS.setLoc(
       mapper.player,
-      mapper.lastDoorway.col,
-      mapper.lastDoorway.row
+      mapper.lastPosition.col,
+      mapper.lastPosition.row
     );
   },
   /**
@@ -208,6 +209,14 @@ const mapper = {
   getCurrentMap: () => {
     return mapper.maps[mapper.currentMapId];
   },
+  getMapWidth: () => {
+    const currentMap = mapper.getCurrentMap();
+    return currentMap.mapWidth;
+  },
+  getMapHeight: () => {
+    const currentMap = mapper.getCurrentMap();
+    return currentMap.mapHeight;
+  },
   /**
    * Get the action verb for the entity directly in front of the player.
    *
@@ -330,7 +339,7 @@ const mapper = {
     mapper.types.vfx.spawn(
       ahead.x,
       ahead.y,
-      { id: "swipe", fg: 15, bg: 0 }
+      { id: "swipe", fg: 15, bg: 0, type: "vfx-outline" }
     );
     mapper.doAction(playerId, propertyName);
   },
@@ -383,6 +392,24 @@ const mapper = {
     );
   },
   /**
+   * Change properties of an object at the given coordinates in the current map.
+   *
+   * @param {number} col - The column coordinate of the object to change.
+   * @param {number} row - The row coordinate of the object to change.
+   * @param {string} type - The current type of the object to change.
+   * @param {Object} properties - An object containing the properties to update.
+   * @returns {void}
+   */
+  changeObjectPropertiesAt: function(col, row, type, properties = {}) {
+    const currentMap = mapper.getCurrentMap();
+    for (const obj of currentMap.objects) {
+      if (obj.x === col && obj.y === row && obj.type.startsWith(type)) {
+        Object.assign(obj, properties);
+        return;
+      }
+    }
+  },
+  /**
    * Change the type of an object at the given coordinates in the current map.
    *
    * @param {number} col - The column coordinate of the object to change.
@@ -392,7 +419,6 @@ const mapper = {
    * @returns {void}
    */
   changeObjectTypeAt: function(col, row, type, newType) {
-    console.log("changeObjectTypeAt", col, row, type, newType);
     const currentMap = mapper.getCurrentMap();
     for (const obj of currentMap.objects) {
       if (obj.x === col && obj.y === row && obj.type.startsWith(type)) {
@@ -526,7 +552,6 @@ mapper.actions.trigger = function(playerId) {
   const ids = mapper.entitiesAhead(playerId);
   for (const targetId of ids) {
     const type = b8.ECS.getComponent(targetId, "Type");
-    console.log(`Trigger action by player on type: ${type.name}`);
     if (mapper.types[type.name]?.triggerHandler) {
       mapper.types[type.name].triggerHandler(playerId, targetId);
     }
@@ -581,8 +606,11 @@ mapper.collision = {
    *
    * @param {number} col
    */
-  isSolidAt: (col, row) => {
+  isSolid: (col, row) => {
     return b8.ECS.entitiesAt(col, row).some((id) => b8.ECS.hasComponent(id, "Solid"));
+  },
+  isSafe: (col, row) => {
+    return !b8.ECS.entitiesAt(col, row).some((id) => b8.ECS.hasComponent(id, "Fire"));
   },
   /**
    * Check if (col,row) is free (walkable and no solid object).
@@ -592,7 +620,7 @@ mapper.collision = {
    * @returns {boolean}
    */
   isFree: (col, row) => {
-    return mapper.collision.isWalkable(col, row) && !mapper.collision.isSolidAt(col, row);
+    return mapper.collision.isWalkable(col, row) && !mapper.collision.isSolid(col, row);
   },
   /**
    * Check if (col,row) is walkable (not a wall or closed door).
@@ -712,6 +740,11 @@ mapper.load = function(mapData) {
       }
     }
   );
+  mapper.lastPosition = {
+    col: 0,
+    row: 0,
+    map: 0
+  };
   mapper.setCurrentMap(0);
   let coinCount = 0;
   for (const level of mapper.maps) {
@@ -748,13 +781,14 @@ mapper.upgradeMapDataV1toV2 = function(mapData) {
   delete mapData.screenCountY;
   return mapData;
 };
-mapper.setCurrentMap = function(mapId) {
+mapper.setCurrentMap = function(mapId, forceLoad = false) {
   b8.Utilities.checkInt("mapId", mapId);
   if (mapId < 0 || mapId >= mapper.maps.length) {
     b8.Utilities.fatal(`Map ID "${mapId}" is out of bounds.`);
     return;
   }
-  if (mapId === mapper.currentMapId) return;
+  if (mapId === mapper.currentMapId && !forceLoad) return;
+  mapper.currentMapId = mapId;
   let currentMap = mapper.maps[mapId];
   if (!currentMap.objects) currentMap.objects = [];
   const allEntities = b8.ECS.getAllEntities();
@@ -1184,11 +1218,11 @@ mapper.systems.flammable = async function(dt) {
       const flammable = b8.ECS.getComponent(entityId, "Flammable");
       if (flammable.temperature >= 100) {
         const location = b8.ECS.getComponent(entityId, "Loc");
-        b8.ECS.removeEntity(entityId);
         mapper.types.fire.spawn(
           location.col,
           location.row
         );
+        b8.ECS.removeEntity(entityId);
         return;
       }
       flammable.temperature = Math.max(0, (flammable.temperature || 0) - 10 * dt);
@@ -1332,7 +1366,7 @@ mapper.systems.handlePortal = async function(portal) {
   if (targetDoorway) {
     await b8.Async.wait(0.1);
     mapper.setCurrentMap(targetDoorway.mapId);
-    mapper.lastDoorway = { col: targetDoorway.x, row: targetDoorway.y };
+    mapper.lastPosition = { col: targetDoorway.x, row: targetDoorway.y, map: targetDoorway.mapId };
     b8.ECS.setLoc(mapper.player, targetDoorway.x, targetDoorway.y);
   }
   return false;
@@ -1475,7 +1509,6 @@ mapper.types.chestOpen = {
       },
       Solid: {}
     };
-    console.log("chest open props", props);
     if (props.message) {
       entitySettings.Message = { message: props.message };
       entitySettings.Action = {
@@ -1732,21 +1765,43 @@ mapper.types.door = {
     const sprite = b8.ECS.getComponent(id, "Sprite");
     const keyName = `key-${sprite.fg ?? "default"}`;
     if (b8.Inventory.has(keyName)) {
-      b8.ECS.removeComponent(id, "Solid");
-      sprite.tile = mapper.types.door.TILE_DOOR_OPEN;
-      b8.Sfx.play("ui/click/004");
+      mapper.types.door.openDoor(id, sprite);
       return true;
     }
     return true;
   },
+  /**
+   * Open the door by changing its sprite and removing solid component.
+   *
+   * @param {number} id - The entity ID of the door.
+   * @param {Object} sprite - The Sprite component of the door.
+   * @returns {void}
+   */
+  openDoor: function(id, sprite) {
+    sprite.tile = mapper.types.door.TILE_DOOR_OPEN;
+    b8.ECS.removeComponent(id, "Solid");
+    b8.ECS.removeComponent(id, "Flammable");
+    b8.Sfx.play("ui/click/004");
+    const loc = b8.ECS.getComponent(id, "Loc");
+    mapper.changeObjectTypeAt(
+      loc.col,
+      loc.row,
+      "door",
+      "doorOpen"
+    );
+  },
+  /**
+   * Handle burning of door entities.
+   *
+   * @param {number} id - The entity ID of the door.
+   * @returns {boolean} False to prevent removal of the door entity.
+   */
   burnHandler: function(id) {
     console.log("Door burnHandler called");
     const sprite = b8.ECS.getComponent(id, "Sprite");
     if (sprite.tile === mapper.types.door.TILE_DOOR_OPEN) return;
+    mapper.types.door.openDoor(id, sprite);
     const loc = b8.ECS.getComponent(id, "Loc");
-    sprite.tile = mapper.types.door.TILE_DOOR_OPEN;
-    b8.ECS.removeComponent(id, "Solid");
-    b8.ECS.removeComponent(id, "Flammable");
     mapper.types.fire.spawn(
       loc.col,
       loc.row
@@ -2044,7 +2099,11 @@ mapper.types.signpost = {
 };
 mapper.types.start = {
   spawn: function(col, row, props = {}) {
-    mapper.lastDoorway = { col, row };
+    mapper.lastPosition = {
+      col,
+      row,
+      map: mapper.currentMapId
+    };
     b8.ECS.setLoc(mapper.player, col, row);
   }
 };
