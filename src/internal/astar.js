@@ -22,6 +22,38 @@
 
 
 	/**
+	 * Prepares the final path from the goal node by tracing back to the start node.
+	 *
+	 * This function reconstructs the path from the goal node to the start node by following
+	 * the parent references of each node. The resulting path is reversed to provide the
+	 * correct order from start to goal, and the starting node is removed since the entity
+	 * is already at that position.
+	 *
+	 * @param {Object} current - The goal node from which to trace back the path.
+	 * @returns {Array} - An array of path steps from start to goal.
+	 */
+	function preparePath( current ) {
+
+		let path = [];
+
+		// Trace back the path using parent nodes.
+		let node = current;
+		while ( node ) {
+			path.push( { col: node.col, row: node.row } ); // Trace back the path using parent nodes
+			node = node.parent;
+		}
+
+		// Reverse the path to get it from start to goal
+		path = path.reverse();
+		// Remove the starting node since the entity is already there.
+		path.shift();
+
+		return path;
+
+	}
+
+
+	/**
 	 * Calculates the Manhattan distance heuristic between two points.
 	 *
 	 * The Manhattan distance is the sum of the absolute differences of the column and row coordinates.
@@ -43,9 +75,6 @@
 	function heuristic( target, goal ) {
 
 		const distance = b8.Math.distManhattan( { col: target.col, row: target.row }, { col: goal.col, row: goal.row } );
-
-		// console.log( 'Heuristic distance from', target, 'to', goal, 'is', distance );
-
 		return distance;
 
 	}
@@ -79,10 +108,6 @@
 	 */
 	b8.AStar.Pathfind = ( start, goal, isWalkable, gridWidth, gridHeight ) => {
 
-		// console.log( 'A* start', start, 'goal', goal, 'w/h', gridWidth, gridHeight );
-		// console.log( 'start walkable', isWalkable( start.col, start.row ) );
-		// console.log( 'goal walkable', isWalkable( goal.col, goal.row ) );
-
 		// Priority queue for nodes to explore
 		const openList = [];
 
@@ -112,17 +137,9 @@
 			const currentKey = nodeKey( current.col, current.row );
 			closedList.add( currentKey ); // Mark the current node as explored
 
-			// console.log( 'Current:', current, 'Goal:', goal, openList.length, closedList.size );
-
-			// Check if the goal has been reached
+			// Check if the goal has been reached.
 			if ( current.col === goal.col && current.row === goal.row ) {
-				const path = [];
-				let node = current;
-				while ( node ) {
-					path.push( { col: node.col, row: node.row } ); // Trace back the path using parent nodes
-					node = node.parent;
-				}
-				return path.reverse(); // Return the reconstructed path in the correct order
+				return preparePath( current );
 			}
 
 			// Explore neighbors (up, down, left, right)
