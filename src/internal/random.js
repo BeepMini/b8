@@ -87,6 +87,13 @@
 		b8.Utilities.checkNumber( "min", min );
 		b8.Utilities.checkNumber( "max", max );
 
+		// If max and min are the wrong way around, reverse them.
+		if ( max <= min ) {
+			const tmp = max;
+			max = min;
+			min = tmp;
+		}
+
 		return min + b8.Random.num() * ( max - min );
 
 	}
@@ -103,13 +110,6 @@
 
 		b8.Utilities.checkInt( "min", min );
 		b8.Utilities.checkInt( "max", max );
-
-		// Reverse max and min.
-		if ( max <= min ) {
-			const tmp = max;
-			max = min;
-			min = tmp;
-		}
 
 		const randomValue = b8.Random.range( min, max );
 		return Math.round( randomValue );
