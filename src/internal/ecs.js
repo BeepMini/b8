@@ -78,7 +78,7 @@
 	 * @param {string} name Unique system name
 	 * @param {number} [order=0] Lower numbers run first
 	 */
-	b8.ECS.addSystem = function( name, fn, order = 0 ) {
+	b8.ECS.addSystem = function( name, fn, order = 100 ) {
 
 		b8.Utilities.checkFunction( 'fn', fn );
 		b8.Utilities.checkString( 'name', name );
@@ -249,10 +249,9 @@
 		b8.Utilities.checkInt( 'id', id );
 
 		const out = {};
-		for ( const [ name, data ] of components ) {
-			if ( data.has( id ) ) {
-				out[ name ] = data.get( id );
-			}
+		for ( const [ name, map ] of components ) {
+			const data = map.get( id );
+			if ( data ) out[ name ] = data;
 		}
 		return out;
 
@@ -394,6 +393,9 @@
 
 		// If no component names given, return empty array.
 		if ( names.length === 0 ) return [];
+
+		// Check if names[0] is an array (for ECS.query([ 'A', 'B' ]))
+		if ( names.length === 1 && Array.isArray( names[ 0 ] ) ) names = names[ 0 ];
 
 		// Start with the first component's entities.
 		const base = components.get( names[ 0 ] );
