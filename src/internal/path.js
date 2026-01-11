@@ -2,6 +2,14 @@
 
 	b8.Path = {};
 
+
+	b8.Path.AnimationMode = {
+		LOOP: 'loop',
+		PINGPONG: 'pingpong',
+		ONCE: 'once',
+	};
+
+
 	const movementMap = {
 		U: { dx: 0, dy: -1 },
 		D: { dx: 0, dy: 1 },
@@ -34,7 +42,7 @@
 	 * @param {number} startCol - The starting column position.
 	 * @param {number} startRow - The starting row position.
 	 * @param {string} initialDir - The initial facing direction ('U', 'D', 'L', 'R').
-	 * @returns {Array} Array of steps with x, y, and dir properties.
+	 * @returns {Array} Array of steps with col, row, and dir properties.
 	 */
 	b8.Path.parseCode = function( code, startCol = 0, startRow = 0, initialDir = 'D' ) {
 
@@ -46,8 +54,8 @@
 			b8.Utilities.fatal( 'Path.parseCode: initialDir must be one of U, D, L, R' );
 		}
 
-		let x = startCol;
-		let y = startRow;
+		let col = startCol;
+		let row = startRow;
 		let currentDir = initialDir;
 		const steps = [];
 
@@ -69,9 +77,9 @@
 				i = index;
 
 				for ( let n = 0; n < count; n++ ) {
-					x += movementMap[ cmd ].dx;
-					y += movementMap[ cmd ].dy;
-					_pushStep( steps, x, y, cmd );
+					col += movementMap[ cmd ].dx;
+					row += movementMap[ cmd ].dy;
+					_pushStep( steps, col, row, cmd );
 				}
 
 				continue;
@@ -85,7 +93,7 @@
 				const { count, index } = _parseNumber( cleaned, i );
 				i = index;
 
-				_pushStep( steps, x, y, currentDir, count );
+				_pushStep( steps, col, row, currentDir, count );
 
 				continue;
 
@@ -104,13 +112,13 @@
 				const { count, index } = _parseNumber( cleaned, i );
 				i = index;
 
-				_pushStep( steps, x, y, cmd + faceDir, count );
+				_pushStep( steps, col, row, cmd + faceDir, count );
 
 				continue;
 
 			}
 
-			b8.Utilities.fatal( 'Invalid command: ' + cmd );
+			b8.Utilities.fatal( `Invalid path command: ${cmd} in path code: ${code}` );
 
 		}
 
@@ -184,18 +192,18 @@
 	 * Push steps into the steps array.
 	 *
 	 * @param {Array} steps - The array to store steps.
-	 * @param {number} x - The x-coordinate of the step.
-	 * @param {number} y - The y-coordinate of the step.
+	 * @param {number} col - The x-coordinate of the step.
+	 * @param {number} row - The y-coordinate of the step.
 	 * @param {string|null} dir - The direction of the step.
 	 * @param {number} count - The number of steps to push.
 	 */
-	function _pushStep( steps, x, y, dir = null, count = 1 ) {
+	function _pushStep( steps, col, row, dir = null, count = 1 ) {
 
 		for ( let n = 0; n < count; n++ ) {
 			steps.push(
 				{
-					x,
-					y,
+					col,
+					row,
 					dir: dir,
 				}
 			);
