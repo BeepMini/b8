@@ -27,6 +27,10 @@
 	}
 
 
+	// Alias dist2d to dist2D for consistency.
+	b8.Math.dist2d = b8.Math.dist2D;
+
+
 	/**
 	 * Calculate the Manhattan distance between two locations.
 	 *
