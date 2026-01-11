@@ -314,6 +314,32 @@ const mapper = {
 
 
 	/**
+	 * Get the width of the current map.
+	 *
+	 * @returns {number} The width of the current map in tiles.
+	 */
+	getMapWidth: () => {
+
+		const currentMap = mapper.getCurrentMap();
+		return currentMap.mapWidth;
+
+	},
+
+
+	/**
+	 * Get the height of the current map.
+	 *
+	 * @returns {number} The height of the current map in tiles.
+	 */
+	getMapHeight: () => {
+
+		const currentMap = mapper.getCurrentMap();
+		return currentMap.mapHeight;
+
+	},
+
+
+	/**
 	 * Get the action verb for the entity directly in front of the player.
 	 *
 	 * @param {number} playerId - The player entity ID.
