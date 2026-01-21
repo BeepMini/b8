@@ -39,13 +39,14 @@
 		// Trace back the path using parent nodes.
 		let node = current;
 		while ( node ) {
-			path.push( { col: node.col, row: node.row } ); // Trace back the path using parent nodes
+			path.push( { col: node.col, row: node.row } );
 			node = node.parent;
 		}
 
 		// Reverse the path to get it from start to goal
 		path = path.reverse();
-		// Remove the starting node since the entity is already there.
+
+		// Remove the starting node since the entity is already in this position.
 		path.shift();
 
 		return path;
@@ -68,14 +69,13 @@
 	 * computationally inexpensive and works well for grid-based movement where diagonal movement
 	 * is not allowed.
 	 *
-	 * @param {Object} target - The target position with properties `col` and `row`.
+	 * @param {Object} start - The target position with properties `col` and `row`.
 	 * @param {Object} goal - The goal position with properties `col` and `row`.
 	 * @returns {number} - The Manhattan distance to the goal.
 	 */
-	function heuristic( target, goal ) {
+	function heuristic( start, goal ) {
 
-		const distance = b8.Math.distManhattan( { col: target.col, row: target.row }, { col: goal.col, row: goal.row } );
-		return distance;
+		return b8.Math.distManhattan( start, goal );
 
 	}
 
@@ -108,6 +108,12 @@
 	 */
 	b8.AStar.Pathfind = ( start, goal, isWalkable, gridWidth, gridHeight ) => {
 
+		if ( !start.col || !start.row ) b8.Utilities.fatal( 'AStar.Pathfind: Invalid start position.' );
+		if ( !goal.col || !goal.row ) b8.Utilities.fatal( 'AStar.Pathfind: Invalid goal position.' );
+		b8.Utilities.checkFunction( 'isWalkable', isWalkable );
+		b8.Utilities.checkInt( 'gridWidth', gridWidth );
+		b8.Utilities.checkInt( 'gridHeight', gridHeight );
+
 		// Priority queue for nodes to explore
 		const openList = [];
 
@@ -137,7 +143,7 @@
 			const currentKey = nodeKey( current.col, current.row );
 			closedList.add( currentKey ); // Mark the current node as explored
 
-			// Check if the goal has been reached.
+			// If the goal has been reached return the path.
 			if ( current.col === goal.col && current.row === goal.row ) {
 				return preparePath( current );
 			}
@@ -161,15 +167,15 @@
 					neighbor.row >= gridHeight
 				) continue;
 
-				// if not start point or end point skip unwalkable cells.
+				// Skip non-walkable cells, excluding start and goal.
+				// The start and goal positions must always be considered
+				// walkable to ensure a path can be found when these tiles
+				// contain obstacles that are considered unwalkable.
 				if (
-					neighbor.col !== start.col &&
-					neighbor.row !== start.row &&
-					neighbor.col !== goal.col &&
-					neighbor.row !== goal.row
-				) {
-					if ( !isWalkable( neighbor.col, neighbor.row ) ) continue;
-				}
+					!( neighbor.col === start.col && neighbor.row === start.row ) &&
+					!( neighbor.col === goal.col && neighbor.row === goal.row ) &&
+					!isWalkable( neighbor.col, neighbor.row )
+				) continue;
 
 				const neighborKey = nodeKey( neighbor.col, neighbor.row );
 				if ( closedList.has( neighborKey ) ) continue; // Skip already explored nodes
@@ -179,13 +185,15 @@
 
 				if ( !neighborNode ) {
 
+					const h = heuristic( neighbor, goal );
+
 					// Create a new node if it doesn't exist
 					neighborNode = {
 						col: neighbor.col,
 						row: neighbor.row,
 						g: tentativeG, // Set the cost from start to this node
-						h: heuristic( neighbor, goal ), // Estimate cost to goal
-						f: tentativeG + heuristic( neighbor, goal ), // Total cost
+						h: h, // Estimate cost to goal
+						f: tentativeG + h, // Total cost
 						parent: current, // Set the parent node for path reconstruction
 					};
 
