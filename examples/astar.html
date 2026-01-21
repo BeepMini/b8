@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>AStar</title>
+	<meta name="description" content="Demo of the AStar pathfinding library.">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+	<link rel="stylesheet" href="example.css">
+	<script src="../dist/b8.js"></script>
+
+	<script>
+
+		const mapWidth = b8.CONFIG.SCREEN_COLS;
+		const mapHeight = b8.CONFIG.SCREEN_ROWS;
+
+		const TILES = {
+			"|": { fg: 12, t: [ 185, 184 ], coll: true },			// tree.
+			" ": { fg: 13, t: [ 0, 289, 3, 307 ], coll: false },		// grass.
+			"G": { fg: 14, t: 34, coll: false },			// goal.
+		};
+
+		// Create a random map.
+		const mapTextArray = [];
+		for ( let row = 0; row < mapHeight; row++ ) {
+			const rowTiles = [];
+			for ( let col = 0; col < mapWidth; col++ ) {
+				let tileChar = b8.Random.chance( 10 ) ? "|" : " ";
+				rowTiles.push( tileChar );
+			}
+			mapTextArray.push( rowTiles.join( "" ) );
+		}
+
+		// Generate the map data.
+		const mapArray = b8.Tilemap.convertFromText( mapTextArray.join( "\n" ) );
+		const map = b8.Tilemap.createFromArray( mapArray, TILES );
+
+		// Character start position.
+		let characterPosition = findEmptyTile();
+		let characterTargetPosition = findEmptyTile();
+
+		async function main() {
+
+			// Draw the map.
+			b8.locate( 0, 0 );
+			b8.Tilemap.draw( map );
+
+			// Draw goal tile.
+			b8.locate( characterTargetPosition.col, characterTargetPosition.row );
+			b8.color( 10 );
+			b8.printChar( 485 );
+
+			// Draw character.
+			b8.locate( characterPosition.col, characterPosition.row );
+			b8.color( 14 );
+			b8.drawActor( 4, 'idle' );
+
+			nextPathStep();
+
+			setTimeout( main, 500 );
+
+		}
+
+		function nextPathStep() {
+
+			const path = b8.AStar.Pathfind(
+				characterPosition, // start
+				characterTargetPosition, // goal
+				isWalkable,
+				mapWidth,
+				mapHeight
+			);
+
+			if ( path && path.length >= 1 ) {
+				// The first step is the current position, so take the next step.
+				characterPosition = path[ 0 ];
+			} else {
+				// No path found or already at goal; pick a new target.
+				characterTargetPosition = findEmptyTile();
+			}
+
+		}
+
+		function isWalkable( col, row ) {
+			const tile = map[ row ][ col ];
+			return !tile[ b8.Tilemap.MAP_COLLISION ];
+		}
+
+		function findEmptyTile() {
+			let col, row;
+			do {
+				col = b8.Random.int( 1, mapWidth - 2 );
+				row = b8.Random.int( 1, mapHeight - 2 );
+			} while ( !isWalkable( col, row ) );
+			return { col, row };
+		}
+
+		window.addEventListener( "load", () => b8.init( main ) );
+	</script>
+</head>
+
+<body>
+</body>
+
+</html>
