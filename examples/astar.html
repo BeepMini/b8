@@ -12,13 +12,16 @@
 
 	<script>
 
+		// Randomize the seed for different maps each load.
+		b8.Random.setSeed();
+
 		const mapWidth = b8.CONFIG.SCREEN_COLS;
 		const mapHeight = b8.CONFIG.SCREEN_ROWS;
 
 		const TILES = {
 			"|": { fg: 12, t: [ 185, 184 ], coll: true },			// tree.
 			" ": { fg: 13, t: [ 0, 289, 3, 307 ], coll: false },		// grass.
-			"G": { fg: 14, t: 34, coll: false },			// goal.
+			"B": { fg: 15, t: [ 375, 376 ], coll: true }			// building.
 		};
 
 		// Create a random map.
@@ -26,7 +29,9 @@
 		for ( let row = 0; row < mapHeight; row++ ) {
 			const rowTiles = [];
 			for ( let col = 0; col < mapWidth; col++ ) {
-				let tileChar = b8.Random.chance( 10 ) ? "|" : " ";
+				let tileChar = b8.Random.chance( 30 ) ? "|" : " ";
+				if ( b8.Random.chance( 1 ) ) tileChar = "B";
+
 				rowTiles.push( tileChar );
 			}
 			mapTextArray.push( rowTiles.join( "" ) );
@@ -58,7 +63,7 @@
 
 			nextPathStep();
 
-			setTimeout( main, 500 );
+			setTimeout( main, 150 );
 
 		}
 
