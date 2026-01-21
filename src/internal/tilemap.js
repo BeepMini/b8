@@ -331,7 +331,7 @@
 			0, // Tile
 			15, // Fg
 			0, // Bg
-			0, // Collision
+			false, // Collision
 			{} // Data
 		];
 
@@ -470,7 +470,7 @@
 					tileId,
 					fg,
 					bg,
-					tile.coll || 0,
+					tile.coll || false,
 					tile.data || {},
 				];
 

@@ -62,8 +62,6 @@
 		const cleaned = code.replace( /\s+/g, '' ).toUpperCase();
 		let i = 0;
 
-		console.log( 'Parsing path code:', cleaned );
-
 		while ( i < cleaned.length ) {
 
 			const cmd = cleaned[ i ];
@@ -87,6 +85,7 @@
 			}
 
 			// pause command
+			// This duplicates the current position in the steps array.
 			if ( cmd === 'P' ) {
 
 				i++;
@@ -178,12 +177,12 @@
 	function _parseNumber( cleaned, i ) {
 
 		let numStr = '';
+
 		while ( i < cleaned.length && /[0-9]/.test( cleaned[ i ] ) ) {
 			numStr += cleaned[ i++ ];
 		}
 
 		return { count: numStr ? parseInt( numStr, 10 ) : 1, index: i };
-
 
 	}
 
