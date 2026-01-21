@@ -4,10 +4,26 @@ mapper.collision = {
 	 * Check if there is a solid object at (col,row).
 	 *
 	 * @param {number} col
+	 * @param {number} row
+	 * @returns {boolean}
 	 */
-	isSolidAt: ( col, row ) => {
+	isSolid: ( col, row ) => {
 
 		return b8.ECS.entitiesAt( col, row ).some( id => b8.ECS.hasComponent( id, 'Solid' ) );
+
+	},
+
+
+	/**
+	 * Check if (col,row) is safe (no hazards like fire).
+	 *
+	 * @param {number} col
+	 * @param {number} row
+	 * @returns {boolean}
+	 */
+	isSafe: ( col, row ) => {
+
+		return !b8.ECS.entitiesAt( col, row ).some( id => b8.ECS.hasComponent( id, 'Fire' ) );
 
 	},
 
@@ -21,7 +37,7 @@ mapper.collision = {
 	 */
 	isFree: ( col, row ) => {
 
-		return mapper.collision.isWalkable( col, row ) && !mapper.collision.isSolidAt( col, row );
+		return mapper.collision.isWalkable( col, row ) && !mapper.collision.isSolid( col, row );
 
 	},
 
