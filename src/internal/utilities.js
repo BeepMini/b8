@@ -153,7 +153,7 @@
 
 		b8.Utilities.checkNumber( varName, varValue, optMin, optMax );
 
-		if ( varValue !== Math.round( varValue ) ) {
+		if ( !Number.isInteger( varValue ) ) {
 			b8.Utilities.fatal( `${varName} should be an integer but is ${varValue}` );
 		}
 

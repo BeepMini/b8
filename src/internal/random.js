@@ -19,9 +19,8 @@
 	 */
 	b8.Random.setSeed = function( seed = null ) {
 
-		if ( seed === null ) {
-			seed = Date.now();
-		}
+		// If no seed provided, use current time.
+		if ( seed === null ) seed = Date.now();
 
 		// Convert seed string to number.
 		if ( typeof seed === "string" ) {

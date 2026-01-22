@@ -179,6 +179,8 @@
 	b8.Tilemap.draw = function( tilemap, tileXOffset = 0, tileYOffset = 0, width = null, height = null ) {
 
 		b8.Utilities.checkArray( "tilemap", tilemap );
+		b8.Utilities.checkInt( "tileXOffset", tileXOffset );
+		b8.Utilities.checkInt( "tileYOffset", tileYOffset );
 
 		if ( !width ) {
 			width = tilemap[ 0 ].length;
@@ -300,8 +302,8 @@
 	b8.Tilemap.resize = function( tilemap, width, height ) {
 
 		b8.Utilities.checkArray( "tilemap", tilemap );
-		b8.Utilities.checkNumber( "width", width );
-		b8.Utilities.checkNumber( "height", height );
+		b8.Utilities.checkInt( "width", width );
+		b8.Utilities.checkInt( "height", height );
 
 		const newTilemap = b8.Tilemap.createEmptyTilemap( width, height );
 
@@ -408,6 +410,7 @@
 	 *
 	 * @param {Array} grid The grid array to create the tilemap from.
 	 * @param {Object} tilePattern The tile pattern object.
+	 * @param {Object} [defaultTilePattern=null] The default tile pattern to use for empty tiles.
 	 * @returns {Array} The created tilemap array.
 	 */
 	b8.Tilemap.createFromArray = function( grid, tilePattern, defaultTilePattern = null ) {
@@ -495,8 +498,8 @@
 	 */
 	b8.Tilemap.wallTile = function( col, row, grid, name = null ) {
 
-		b8.Utilities.checkNumber( "col", col );
-		b8.Utilities.checkNumber( "row", row );
+		b8.Utilities.checkInt( "col", col );
+		b8.Utilities.checkInt( "row", row );
 		b8.Utilities.checkArray( "grid", grid );
 		b8.Utilities.checkString( "name", name );
 

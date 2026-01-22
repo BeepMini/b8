@@ -108,11 +108,16 @@
 	 */
 	b8.AStar.Pathfind = ( start, goal, isWalkable, gridWidth, gridHeight ) => {
 
-		if ( !start.col || !start.row ) b8.Utilities.fatal( 'AStar.Pathfind: Invalid start position.' );
-		if ( !goal.col || !goal.row ) b8.Utilities.fatal( 'AStar.Pathfind: Invalid goal position.' );
+		b8.Utilities.checkInt( 'start.col', start.col );
+		b8.Utilities.checkInt( 'start.row', start.row );
+		b8.Utilities.checkInt( 'goal.col', goal.col );
+		b8.Utilities.checkInt( 'goal.row', goal.row );
 		b8.Utilities.checkFunction( 'isWalkable', isWalkable );
 		b8.Utilities.checkInt( 'gridWidth', gridWidth );
 		b8.Utilities.checkInt( 'gridHeight', gridHeight );
+
+		// Already at the goal.
+		if ( start.col === goal.col && start.row === goal.row ) return [];
 
 		// Priority queue for nodes to explore
 		const openList = [];
