@@ -103,6 +103,9 @@ mapper.load = function( mapData ) {
 	b8.data.totalCoins = coinCount;
 
 	// Add systems.
+
+	// AI First so it can set intents before movement.
+	b8.ECS.addSystem( 'ai', mapper.systems.ai );
 	b8.ECS.addSystem( 'characterAnimation', mapper.systems.characterAnimation );
 	b8.ECS.addSystem( 'pathFollower', mapper.systems.pathFollower );
 	b8.ECS.addSystem( 'sprite', mapper.systems.sprite );

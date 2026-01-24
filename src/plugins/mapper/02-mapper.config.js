@@ -6,6 +6,9 @@ mapper.CONFIG = {
 	// Key press delay.
 	keyPressDelay: 0.25,
 
+	// Time in seconds between AI updates.
+	aiUpdateDelay: 0.5,
+
 	/**
 	 * Offset to apply when drawing the map and actors.
 	 * This is to account for any borders or UI elements.

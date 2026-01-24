@@ -302,7 +302,7 @@ const mapper = {
 
 
 	/**
-	 * Get the currently active map.
+	 * Retrieve the currently active map.
 	 *
 	 * @returns {Object} The current map object.
 	 */
@@ -314,7 +314,7 @@ const mapper = {
 
 
 	/**
-	 * Get the width of the current map.
+	 * Get the pixel width of the current map.
 	 *
 	 * @returns {number} The width of the current map in tiles.
 	 */
@@ -327,7 +327,7 @@ const mapper = {
 
 
 	/**
-	 * Get the height of the current map.
+	 * Get the pixel height of the current map.
 	 *
 	 * @returns {number} The height of the current map in tiles.
 	 */
@@ -668,6 +668,21 @@ const mapper = {
 		if ( handler?.[ handlerName ] ) return handler[ handlerName ]( entityId );
 
 		return false;
+
+	},
+
+
+	/**
+	 * Repeat the last step of a path a specified number of times.
+	 *
+	 * @param {Array} path - The path array to modify.
+	 * @param {number} count - The number of times to repeat the last step.
+	 * @returns {void}
+	 */
+	repeatLastValue: function( path, count ) {
+
+		const last = path.at( -1 );
+		path.push( ...Array( count ).fill( last ) );
 
 	},
 

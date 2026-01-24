@@ -32,6 +32,7 @@ mapper.systems.pathFollower = async function( dt ) {
 	for ( const id of ids ) {
 
 		const pf = b8.ECS.getComponent( id, 'PathFollower' );
+		const Loc = b8.ECS.getComponent( id, 'Loc' );
 
 		// Skip if no steps defined.
 		if ( !pf ) continue;
@@ -43,24 +44,25 @@ mapper.systems.pathFollower = async function( dt ) {
 		if ( pf.timer > 0 ) continue;
 		pf.timer = mapper.CONFIG.moveDelay * 2;
 
-		const step = pf.steps[ pf.index ];
+		let step = pf.steps[ pf.index ];
 
-		let canMove = false;
+		// Check if step is a pause (stay in place).
+		const isPauseStep = ( Loc.col === step.col && Loc.row === step.row );
+
+		// Determine if movement can occur.
+		let canMove = isPauseStep;
 
 		// Face command - always allowed.
 		if ( step.dir && step.dir[ 0 ] === 'F' ) canMove = true;
 
 		// Check if step is not blocked by collision.
-		if (
-			mapper.collision.isWalkable( step.x, step.y ) &&
-			!mapper.collision.isSolidAt( step.x, step.y )
-		) { canMove = true; }
+		if ( !isPauseStep && mapper.collision.isFree( step.col, step.row ) ) canMove = true;
 
 		// If movement is blocked, skip to next character.
 		if ( !canMove ) continue;
 
 		// Move to next step
-		b8.ECS.setLoc( id, step.x, step.y );
+		b8.ECS.setLoc( id, step.col, step.row );
 
 		// Advance to next step index based on mode
 		_advancePathIndex( pf );
@@ -73,6 +75,12 @@ mapper.systems.pathFollower = async function( dt ) {
 			// Invert the direction for reverse movement.
 			if ( pf.dirStep === -1 ) { direction = animationInverse[ step.dir ] || step.dir; }
 			anim.name = animationMap[ direction ];
+		}
+
+		// Stop at last step for ONCE mode.
+		if ( pf.mode === b8.Path.AnimationMode.ONCE && pf.index >= pf.steps.length - 1 ) {
+			console.log( `PathFollower ${id} reached end of path.` );
+			pf.steps = [];
 		}
 
 	}
@@ -91,19 +99,19 @@ mapper.systems.pathFollower = async function( dt ) {
 		switch ( pf.mode ) {
 
 			// Advance index until the last step, then stop.
-			case 'once':
+			case b8.Path.AnimationMode.ONCE:
 
 				if ( pf.index < last ) pf.index++;
 				break;
 
 			// Advance index and loop back to start after last step.
-			case 'loop':
+			case b8.Path.AnimationMode.LOOP:
 
 				pf.index = ( pf.index + 1 ) % pf.steps.length;
 				break;
 
 			// Advance index back and forth between first and last step.
-			case 'pingpong':
+			case b8.Path.AnimationMode.PINGPONG:
 			default:
 
 				if ( pf.index === 0 ) {
