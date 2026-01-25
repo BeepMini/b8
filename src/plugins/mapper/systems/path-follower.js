@@ -79,8 +79,7 @@ mapper.systems.pathFollower = async function( dt ) {
 
 		// Stop at last step for ONCE mode.
 		if ( pf.mode === b8.Path.AnimationMode.ONCE && pf.index >= pf.steps.length - 1 ) {
-			console.log( `PathFollower ${id} reached end of path.` );
-			pf.steps = [];
+			b8.ECS.removeComponent( id, 'PathFollower' );
 		}
 
 	}
