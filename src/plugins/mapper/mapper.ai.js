@@ -189,7 +189,7 @@ mapper.ai = {
 	 */
 	doAstar: ( start, goal ) => {
 
-		const path = b8.AStar.Pathfind(
+		const path = b8.AStar.pathfind(
 			start,
 			goal,
 			mapper.collision.isFree,

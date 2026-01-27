@@ -106,8 +106,10 @@
 	 * @param {number} gridHeight - The height of the grid.
 	 * @returns {Array<Object>|null} - The shortest path as an array of positions `{col, row}`, or `null` if no path is found.
 	 */
-	b8.AStar.Pathfind = ( start, goal, isWalkable, gridWidth, gridHeight ) => {
+	b8.AStar.pathfind = function( start, goal, isWalkable, gridWidth, gridHeight ) {
 
+		b8.Utilities.checkObject( 'start', start );
+		b8.Utilities.checkObject( 'goal', goal );
 		b8.Utilities.checkInt( 'start.col', start.col );
 		b8.Utilities.checkInt( 'start.row', start.row );
 		b8.Utilities.checkInt( 'goal.col', goal.col );
