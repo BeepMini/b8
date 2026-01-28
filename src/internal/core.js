@@ -1003,20 +1003,28 @@
 	/**
 	 * Handles a crash.
 	 *
-	 * @param {string} [errorMessage="Fatal error"] - The error message to display.
+	 * @param {string} [error="Fatal error"] - The error message to display.
 	 * @returns {void}
 	 */
-	b8.Core.handleCrash = function( errorMessage = "Fatal error" ) {
+	b8.Core.handleCrash = function( error = "Fatal error" ) {
 
 		if ( b8.Core.crashed || b8.Core.crashing ) return;
 
 		b8.Core.crashing = true;
 
+		const errorObj = ( error instanceof Error ) ? error : new Error( String( error ) );
+		const stackLines = _cleanStackTrace( String( errorObj.stack || "" ) );
+
+		const text =
+			"*** CRASH ***\n" +
+			( errorObj.name ? ( errorObj.name + ": " ) : "" ) + errorObj.message + "\n" +
+			( stackLines.length > 0 ? ( "\nStack:\n" + stackLines.join( "\n" ) ) : "" );
+
 		b8.Core.setColor( b8.CONFIG.COLORS.length - 1, 0 );
 		b8.Core.cls();
 
 		b8.Core.setCursorLocation( 1, 1 );
-		b8.TextRenderer.print( "*** CRASH ***:\n" + errorMessage, null, b8.CONFIG.SCREEN_COLS - 2 );
+		b8.TextRenderer.print( text, null, b8.CONFIG.SCREEN_COLS - 2 );
 		b8.Renderer.render();
 
 		b8.Core.crashing = false;
@@ -1099,5 +1107,48 @@
 
 	}
 
+
+	/**
+	 * Cleans a stack trace string.
+	 *
+	 * @param {string} stackStr - The stack trace string.
+	 * @returns {string[]} The cleaned stack trace lines.
+	 */
+	function _cleanStackTrace( stackStr ) {
+
+		const lines = String( stackStr ).split( "\n" ).map( s => s.trim() );
+		const cleanedLines = [];
+
+		for ( let line of lines ) {
+
+			// Remove anything after and including @ or "at"
+			line = line.replace( /^at\s+/, "" );
+			line = line.replace( /@.*/, "" );
+			line = line.trim();
+			line = line.replace( /^b8\d+\./, "b8." );
+
+			// If empty continue.
+			if ( line.length === 0 ) continue;
+
+			// Remove internal frames.
+			// These are debug & error functions.
+			const isInternal =
+				line.includes( "Utilities.fatal" ) ||
+				line.includes( "Utilities.check" ) ||
+				line.includes( "Utilities.assert" ) ||
+				line.includes( "Core.doFrame" ) ||
+				line.includes( "Core.handleCrash" );
+
+			console.log( 'stack line', line, 'isInternal=', isInternal );
+
+			if ( isInternal ) continue;
+
+			cleanedLines.push( line.trim() );
+
+		}
+
+		return cleanedLines;
+
+	}
 
 } )( b8 );

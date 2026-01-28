@@ -10,14 +10,16 @@
 	 * @throws {Error} The error message.
 	 * @returns {void}
 	 */
-	b8.Utilities.fatal = function( error ) {
+	b8.Utilities.fatal = function( errorMessage ) {
 
-		b8.Utilities.error( "Fatal error: " + error );
+		const error = ( errorMessage instanceof Error ) ? errorMessage : new Error( String( errorMessage ) );
+
+		b8.Utilities.error( "Fatal error: " + error.message );
 
 		try {
 			b8.Core.handleCrash( error );
 		} catch ( e ) {
-			b8.Utilities.error( "Error in b8.Core.handleCrash: " + e + " while handling error " + error );
+			b8.Utilities.error( "Error in b8.Core.handleCrash: " + e + " while handling error " + error.message );
 		}
 
 		throw new Error( error );
