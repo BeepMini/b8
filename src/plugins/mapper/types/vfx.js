@@ -17,7 +17,7 @@ mapper.types.vfx = {
 					bg: parseInt( props.bg ) || 0,
 					nudgeCol: parseInt( props.nudgeCol ) || 0,
 					nudgeRow: parseInt( props.nudgeRow ) || 0,
-					depth: 50,
+					depth: 101,
 				},
 			}
 		);
