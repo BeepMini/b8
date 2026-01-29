@@ -6,6 +6,10 @@ mapper.pathFollower = {
 		D: { dx: 0, dy: 1 },
 		L: { dx: -1, dy: 0 },
 		R: { dx: 1, dy: 0 },
+		FU: { dx: 0, dy: -1 },
+		FD: { dx: 0, dy: 1 },
+		FL: { dx: -1, dy: 0 },
+		FR: { dx: 1, dy: 0 },
 	},
 
 	VEC_TO_DIR: null,
