@@ -21,6 +21,7 @@ mapper.types.player = {
 					duration: 0,
 				},
 				Health: {
+					cooldownTimer: 0,
 					cooldown: mapper.CONFIG.healthCooldown || 1.0,
 					value: 6,
 					max: 12

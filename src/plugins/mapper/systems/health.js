@@ -9,8 +9,7 @@ mapper.systems.health = async function( dt ) {
 
 			// Reduce cooldown timer.
 			// If still in cooldown, skip further processing.
-			health.cooldownTimer = Math.max( 0, ( health.cooldownTimer || 0 ) - dt );
-			if ( health.cooldownTimer > 0 ) return;
+			health.cooldownTimer = Math.max( 0, health.cooldownTimer - dt );
 
 			if ( health.value <= 0 ) {
 
