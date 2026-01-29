@@ -12,8 +12,6 @@ const mapper = {
   lastPosition: null,
   // The player entity ID.
   player: null,
-  // Cooldown timer for actions such as key presses.
-  actionCooldown: 0,
   /**
    * Initialize and start the game with the provided map data.
    *
@@ -66,8 +64,6 @@ const mapper = {
    */
   update: function(dt) {
     b8.ECS.run(dt);
-    mapper.actionCooldown -= dt;
-    if (mapper.actionCooldown < 0) mapper.actionCooldown = 0;
   },
   /**
    * Draw an actor at its location with optional offsets.
@@ -88,8 +84,9 @@ const mapper = {
    *
    * @returns {void}
    */
-  delayKeyPress: function() {
-    mapper.actionCooldown = mapper.CONFIG.keyPressDelay;
+  delayKeyPress: function(id) {
+    console.log(`Key press delay for entity ${id}`);
+    b8.ECS.setComponent(id, "ActionCooldown", { time: mapper.CONFIG.keyPressDelay });
   },
   /**
    * Set the player's walking animation based on movement direction.
@@ -202,17 +199,27 @@ const mapper = {
     return a[propertyName] ?? "";
   },
   /**
-   * Get the currently active map.
+   * Retrieve the currently active map.
    *
    * @returns {Object} The current map object.
    */
   getCurrentMap: () => {
     return mapper.maps[mapper.currentMapId];
   },
+  /**
+   * Get the pixel width of the current map.
+   *
+   * @returns {number} The width of the current map in tiles.
+   */
   getMapWidth: () => {
     const currentMap = mapper.getCurrentMap();
     return currentMap.mapWidth;
   },
+  /**
+   * Get the pixel height of the current map.
+   *
+   * @returns {number} The height of the current map in tiles.
+   */
   getMapHeight: () => {
     const currentMap = mapper.getCurrentMap();
     return currentMap.mapHeight;
@@ -317,15 +324,22 @@ const mapper = {
    *
    * @param {number} playerId - The player entity ID.
    * @param {string} propertyName - The name of the property to check for an action.
-   * @returns {void}
+   * @returns {boolean} True if an action was performed, false otherwise.
    */
   doAction: (playerId, propertyName) => {
-    if (!propertyName) return;
-    if (mapper.actionCooldown > 0) return;
+    if (!propertyName) return false;
+    const ac = b8.ECS.getComponent(playerId, "ActionCooldown");
+    if (!ac) {
+      mapper.delayKeyPress(playerId);
+    } else {
+      if (ac.time > 0) return false;
+    }
     const action = mapper.promptAhead(playerId, propertyName);
     if (action && mapper.actions[action]) {
       mapper.actions[action](playerId);
     }
+    mapper.delayKeyPress(playerId);
+    return true;
   },
   /**
    * Perform an attack action by the player.
@@ -335,13 +349,13 @@ const mapper = {
    * @returns {void}
    */
   doAttack: (playerId, propertyName) => {
+    if (!mapper.doAction(playerId, propertyName)) return;
     const ahead = mapper.ahead(playerId);
     mapper.types.vfx.spawn(
       ahead.x,
       ahead.y,
       { id: "swipe", fg: 15, bg: 0, type: "vfx-outline" }
     );
-    mapper.doAction(playerId, propertyName);
   },
   /**
    * Update the move delay to control player movement speed.
@@ -457,13 +471,29 @@ const mapper = {
     const handler = type && mapper.types[type.name];
     if (handler?.[handlerName]) return handler[handlerName](entityId);
     return false;
+  },
+  /**
+   * Repeat the last step of a path a specified number of times.
+   *
+   * @param {Array} path - The path array to modify.
+   * @param {number} count - The number of times to repeat the last step.
+   * @returns {void}
+   */
+  repeatLastValue: function(path, count) {
+    const last = path.at(-1);
+    path.push(...Array(count).fill(last));
   }
 };
 mapper.CONFIG = {
   // Time in seconds for player movement delay.
   moveDelay: 0.2,
+  actionDelay: 0.5,
+  // Time in seconds for player to not take damage after being hit.
+  healthCooldown: 1.2,
   // Key press delay.
   keyPressDelay: 0.25,
+  // Time in seconds between AI updates.
+  aiUpdateDelay: 0.5,
   /**
    * Offset to apply when drawing the map and actors.
    * This is to account for any borders or UI elements.
@@ -523,7 +553,7 @@ mapper.actions.open = async function(playerId) {
     if (messageComponent?.message?.length > 0) {
       b8.ECS.addComponent(id, "Action", { ButtonA: "read", ButtonB: "read" });
     }
-    mapper.delayKeyPress();
+    mapper.delayKeyPress(id);
     return;
   }
 };
@@ -544,7 +574,7 @@ mapper.actions.read = async function(playerId) {
     );
     const message = mapper.helpers.processChatText(obj.message || "");
     await b8.Async.dialogTypewriter(message, ["OK"], 20);
-    mapper.delayKeyPress();
+    mapper.delayKeyPress(id);
     return;
   }
 };
@@ -556,6 +586,273 @@ mapper.actions.trigger = function(playerId) {
       mapper.types[type.name].triggerHandler(playerId, targetId);
     }
   }
+};
+mapper.ai = {
+  MODE: {
+    NONE: "none",
+    RETURN: "return",
+    CHASE: "chase",
+    ATTACK: "attack",
+    FLEE: "flee",
+    LOOT: "loot",
+    WANDER: "wander",
+    PATROL: "patrol",
+    CHASE_LAST_SEEN: "chase_last_seen"
+  },
+  /**
+   * Is location b next to (adjacent to) location a?
+   *
+   * @param {Object} a - The first location with col and row properties.
+   * @param {Object} b - The second location with col and row properties.
+   * @returns {boolean} True if the locations are adjacent, false otherwise.
+   */
+  isAdjacent: (a, b) => {
+    return b8.Math.distManhattan(a, b) === 1;
+  },
+  /**
+   * Get the direction from one location to another.
+   * Returns a direction object with dx and dy.
+   *
+   * @param {Object} from - The starting location with col and row properties.
+   * @param {Object} to - The target location with col and row properties.
+   * @returns {Object} An object with dx and dy properties representing the direction.
+   */
+  dirTo: (from, to) => {
+    if (to.col > from.col) return { dx: 1, dy: 0 };
+    if (to.col < from.col) return { dx: -1, dy: 0 };
+    if (to.row > from.row) return { dx: 0, dy: 1 };
+    if (to.row < from.row) return { dx: 0, dy: -1 };
+    return { dx: 0, dy: 0 };
+  },
+  /**
+   * Is the 'from' location facing the to location based on direction?
+   *
+   * @param {Object} from - The id of the entity in the from location.
+   * @param {Object} to - The id of the entity in the to location.
+   * @returns {boolean} True if 'to' is in front of 'from', false otherwise.
+   */
+  isFacing: (from, to) => {
+    b8.Utilities.checkInt("from", from);
+    b8.Utilities.checkInt("to", to);
+    const fromDir = b8.ECS.getComponent(from, "Direction");
+    const fromLoc = b8.ECS.getComponent(from, "Loc");
+    const toLoc = b8.ECS.getComponent(to, "Loc");
+    const d = mapper.ai.dirTo(fromLoc, toLoc);
+    return fromDir.dx === d.dx && fromDir.dy === d.dy;
+  },
+  face: (from, to) => {
+    const direction = mapper.ai.dirTo(from, to);
+    b8.ECS.setComponent(
+      from,
+      "Direction",
+      direction
+    );
+  },
+  /**
+   * Is the 'to' location behind the 'from' location based on direction?
+   *
+   * @param {Object} direction - The direction object with dx and dy.
+   * @param {Object} from - The starting location with col and row properties.
+   * @param {Object} to - The target location with col and row properties.
+   * @returns {boolean} True if 'to' is behind 'from', false otherwise.
+   */
+  isBehind: (direction, from, to) => {
+    const d = mapper.ai.dirTo(from, to);
+    return direction.dx === -d.dx && direction.dy === -d.dy;
+  },
+  /**
+   * Determine if there is a line of sight between two locations within a given range,
+   * considering solid obstacles.
+   *
+   * Uses Bresenham's algorithm to step to next tile.
+   *
+   * Bresenham's line algorithm is used here to determine which tiles
+   * the line passes through, allowing us to check for obstacles.
+   *
+   * The algorithm works by calculating the error term to decide
+   * when to step in the y-direction while iterating over x (or vice versa).
+   *
+   * The error term refers to the difference between the ideal line and the actual
+   * rasterized line. By adjusting the error term, we can determine when to
+   * increment the y-coordinate as we move along the x-axis (or vice versa),
+   * ensuring that we stay as close to the ideal line as possible.
+   *
+   * @see https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
+   *
+   * @param { Object } from - The starting location with col and row properties.
+   * @param { Object } to - The target location with col and row properties.
+   * @param { number } range - The maximum range for line of sight.
+   * @param { Function } solidsFn - A function that takes( col, row ) and returns true if the tile is solid.
+   * @returns { boolean } True if there is line of sight, false otherwise.
+   */
+  hasLineOfSight: (fromId, toId, range = 5, solidsFn = mapper.collision.isFree) => {
+    const from = b8.ECS.getComponent(fromId, "Loc");
+    const to = b8.ECS.getComponent(toId, "Loc");
+    const dist = b8.Math.dist2d(from.col, from.row, to.col, to.row);
+    if (dist > range) return false;
+    if (dist <= 1) return true;
+    return true;
+    let x0 = from.col;
+    let y0 = from.row;
+    let x1 = to.col;
+    let y1 = to.row;
+    let dx = Math.abs(x1 - x0);
+    let dy = Math.abs(y1 - y0);
+    let sx = x0 < x1 ? 1 : -1;
+    let sy = y0 < y1 ? 1 : -1;
+    let err = dx - dy;
+    let whileCount = 0;
+    while (true) {
+      whileCount++;
+      const tileSize = b8.CONFIG.CHR_WIDTH;
+      b8.drawRect(x0 * tileSize, y0 * tileSize, tileSize, tileSize, 2);
+      if (!(x0 === from.col && y0 === from.row)) {
+        if (solidsFn(x0, y0)) {
+          return false;
+        }
+      }
+      if (x0 === x1 && y0 === y1) return true;
+      const e2 = err * 2;
+      if (e2 > -dy) {
+        err -= dy;
+        x0 += sx;
+      }
+      if (e2 < dx) {
+        err += dx;
+        y0 += sy;
+      }
+    }
+  },
+  /**
+   * Can the attacker attack the target based on adjacency and facing direction?
+   *
+   * @param {Object} attacker - The attacker entity with Loc and Direction components.
+   * @param {Object} target - The target entity with Loc component.
+   * @returns {boolean} True if the attacker can attack the target, false otherwise.
+   */
+  canAttack: (attacker, target) => {
+    const attackerLoc = b8.ECS.getComponent(attacker, "Loc");
+    const targetLoc = b8.ECS.getComponent(target, "Loc");
+    if (!attackerLoc || !targetLoc) return false;
+    if (!mapper.ai.isAdjacent(attackerLoc, targetLoc)) return false;
+    return true;
+  },
+  /**
+   * Perform A* pathfinding from start to goal and set the PathIntent component.
+   *
+   * @param {number} id - The entity ID of the character to move.
+   * @param {Object} start - The starting location with col and row properties.
+   * @param {Object} goal - The target location with col and row properties.
+   * @returns {void}
+   */
+  doAstar: (start, goal) => {
+    return b8.AStar.pathfind(
+      start,
+      goal,
+      mapper.collision.isFree,
+      mapper.getMapWidth(),
+      mapper.getMapHeight()
+    );
+  },
+  /**
+   * Find the nearest loot item to the enemy within a specified range.
+   *
+   * @param {Object} enemyLoc - The location of the enemy with col and row properties.
+   * @param {Array} items - An array of item entities with Loc components.
+   * @param {number} maxRange - The maximum range to consider for loot.
+   * @returns {Object|null} The nearest loot item entity or null if none found.
+   */
+  findNearestLoot: (enemyLoc, items, maxRange) => {
+    let best = null;
+    let bestDist = Infinity;
+    items.forEach(
+      (item) => {
+        const d = b8.Math.distManhattan(enemyLoc, item.Loc);
+        if (d <= maxRange && d < bestDist) {
+          best = item;
+          bestDist = d;
+        }
+      }
+    );
+    return best;
+  },
+  /**
+   * Find a random nearby tile within a given radius that satisfies the walkable condition.
+   *
+   * @param {Object} from - The starting location with col and row properties.
+   * @param {number} radius - The radius within which to search for a tile.
+   * @returns {Object|null} A location object with col and row properties or null if none found.
+   */
+  randomNearbyTile: (from, radius) => {
+    const tries = 10;
+    for (let i = 0; i < tries; i++) {
+      const col = from.col + b8.Random.int(-radius, radius);
+      const row = from.row + b8.Random.int(-radius, radius);
+      if (mapper.collision.isWalkable(col, row) && mapper.collision.isSafe(col, row)) {
+        return { col, row };
+      }
+    }
+    for (let i = 0; i < tries; i++) {
+      const col = from.col + b8.Random.int(-radius, radius);
+      const row = from.row + b8.Random.int(-radius, radius);
+      if (mapper.collision.isWalkable(col, row)) return { col, row };
+    }
+    return false;
+  },
+  /**
+   * Find the index of the nearest tile in a path to a given location.
+   *
+   * @param {Object} loc The location with col and row properties.
+   * @param {Array} tiles An array of tile locations with col and row properties.
+   * @returns {number} The index of the nearest tile in the path.
+   */
+  nearestPathIndex: (loc, tiles) => {
+    let best = 0;
+    let bestDist = Infinity;
+    for (let i = 0; i < tiles.length; i++) {
+      const d = b8.Math.distManhattan(loc, { col: tiles[i].col, row: tiles[i].row });
+      if (d < bestDist) {
+        bestDist = d;
+        best = i;
+      }
+    }
+    return best;
+  },
+  /**
+   * Check if a location is on a given path of tiles.
+   *
+   * @param {Object} loc The location with col and row properties.
+   * @param {Array} tiles An array of tile locations with col and row properties.
+   * @param {number} maxDist The maximum distance to consider as "on the path".
+   * @returns {Object} An object with onPath (boolean) and index (number) properties.
+   */
+  isOnPath: (loc, tiles, maxDist = 0) => {
+    for (let i = 0; i < tiles.length; i++) {
+      if (b8.Math.distManhattan(loc, { col: tiles[i].x, row: tiles[i].y }) <= maxDist) {
+        return { near: true, index: i, onPath: true };
+      }
+    }
+    return { onPath: false, index: -1 };
+  },
+  think: (id) => {
+    const ai = b8.ECS.getComponent(id, "AI");
+    if (b8.ECS.hasComponent(id, "OnFire")) {
+      return mapper.ai.MODE.FLEE;
+    }
+    if (mapper.ai.canAttack(id, mapper.player)) {
+      return mapper.ai.MODE.ATTACK;
+    }
+    const canSeePlayer = mapper.ai.hasLineOfSight(id, mapper.player);
+    if (canSeePlayer) {
+      return mapper.ai.MODE.CHASE;
+    }
+    if (ai.path && ai.path.length > 0) {
+      return mapper.ai.MODE.PATROL;
+    }
+    return mapper.ai.MODE.WANDER;
+  },
+  toXY: (loc) => ({ x: loc.col, y: loc.row }),
+  toLoc: (xy) => ({ col: xy.x, row: xy.y })
 };
 mapper.camera = {
   /**
@@ -605,10 +902,19 @@ mapper.collision = {
    * Check if there is a solid object at (col,row).
    *
    * @param {number} col
+   * @param {number} row
+   * @returns {boolean}
    */
   isSolid: (col, row) => {
     return b8.ECS.entitiesAt(col, row).some((id) => b8.ECS.hasComponent(id, "Solid"));
   },
+  /**
+   * Check if (col,row) is safe (no hazards like fire).
+   *
+   * @param {number} col
+   * @param {number} row
+   * @returns {boolean}
+   */
   isSafe: (col, row) => {
     return !b8.ECS.entitiesAt(col, row).some((id) => b8.ECS.hasComponent(id, "Fire"));
   },
@@ -713,33 +1019,7 @@ mapper.load = function(mapData) {
   if (mapper.settings.gameName) {
     b8.CONFIG.NAME = mapper.settings.gameName;
   }
-  mapper.player = b8.ECS.create(
-    {
-      Type: { name: "player" },
-      Loc: { row: 0, col: 0 },
-      Direction: { dx: 0, dy: 1 },
-      Sprite: {
-        type: "actor",
-        tile: parseInt(mapper.settings.character) || 6,
-        fg: parseInt(mapper.settings.characterColor) || 10,
-        bg: 0,
-        depth: 100
-      },
-      Solid: {},
-      CharacterAnimation: {
-        name: "idle",
-        default: "idle",
-        duration: 0
-      },
-      Health: {
-        value: 6,
-        max: 12
-      },
-      Attack: {
-        value: 1
-      }
-    }
-  );
+  mapper.player = mapper.types.player.spawn();
   mapper.lastPosition = {
     col: 0,
     row: 0,
@@ -751,6 +1031,8 @@ mapper.load = function(mapData) {
     coinCount += level.objects.filter((obj) => obj.type === "coin").length;
   }
   b8.data.totalCoins = coinCount;
+  b8.ECS.addSystem("ai", mapper.systems.ai);
+  b8.ECS.addSystem("action-cooldown", mapper.systems.actionCooldown);
   b8.ECS.addSystem("characterAnimation", mapper.systems.characterAnimation);
   b8.ECS.addSystem("pathFollower", mapper.systems.pathFollower);
   b8.ECS.addSystem("sprite", mapper.systems.sprite);
@@ -801,7 +1083,6 @@ mapper.setCurrentMap = function(mapId, forceLoad = false) {
     const handler = mapper.types[obj.type];
     if (handler?.spawn) handler.spawn(obj.x, obj.y, obj.props);
   }
-  mapper.currentMapId = mapId;
   mapper.maps[mapper.currentMapId].objects = mapper.maps[mapper.currentMapId].objects.filter(
     (obj) => obj.type !== "start"
   );
@@ -867,6 +1148,83 @@ mapper.menu = {
     return !!mapper.bg.splash;
   }
 };
+mapper.pathFollower = {
+  DIRS: {
+    U: { dx: 0, dy: -1 },
+    D: { dx: 0, dy: 1 },
+    L: { dx: -1, dy: 0 },
+    R: { dx: 1, dy: 0 },
+    FU: { dx: 0, dy: -1 },
+    FD: { dx: 0, dy: 1 },
+    FL: { dx: -1, dy: 0 },
+    FR: { dx: 1, dy: 0 }
+  },
+  VEC_TO_DIR: null,
+  animationMap: {
+    U: "move-up",
+    D: "move-down",
+    L: "move-left",
+    R: "move-right",
+    FU: "idle-up",
+    FD: "idle-down",
+    FL: "idle-left",
+    FR: "idle-right"
+  },
+  animationInverse: {
+    U: "D",
+    D: "U",
+    L: "R",
+    R: "L",
+    FU: "FD",
+    FD: "FU",
+    FL: "FR",
+    FR: "FL"
+  },
+  /**
+   * Initialize the path follower module.
+   *
+   * @returns {void}
+   */
+  init: function() {
+    mapper.pathFollower.VEC_TO_DIR = Object.fromEntries(
+      Object.entries(mapper.pathFollower.DIRS).map(([dir, v]) => [`${v.dx},${v.dy}`, dir])
+    );
+    console.log(mapper.pathFollower.VEC_TO_DIR);
+  },
+  /**
+   * Advance the path index based on the current mode.
+   *
+   * @param {Object} pf - The PathFollower component.
+   * @returns {void}
+   */
+  advancePathIndex: function(pf) {
+    const last = pf.steps.length - 1;
+    switch (pf.mode) {
+      case b8.Path.AnimationMode.ONCE:
+        if (pf.index < last) pf.index++;
+        break;
+      case b8.Path.AnimationMode.LOOP:
+        pf.index = (pf.index + 1) % pf.steps.length;
+        break;
+      case b8.Path.AnimationMode.PINGPONG:
+      default:
+        if (pf.index === 0) pf.dirStep = 1;
+        else if (pf.index === last) pf.dirStep = -1;
+        pf.index += pf.dirStep;
+        break;
+    }
+  },
+  /**
+   * Get the facing direction string from a vector.
+   *
+   * @param {Object} vec - The direction vector with `dx` and `dy`.
+   * @returns {string|undefined} The direction string (e.g., 'U', 'D', 'L', 'R') or undefined if not found.
+   */
+  getFaceDirection: function(vec) {
+    return mapper.pathFollower.VEC_TO_DIR[`${vec.dx},${vec.dy}`];
+  }
+};
+mapper.pathFollower.init();
 mapper.sceneGame = {
   UI: null,
   moveDelay: 0.15,
@@ -1078,6 +1436,87 @@ mapper.sceneMenu = {
     setTimeout(mapper.sceneMenu.main, 10);
   }
 };
+mapper.systems.actionCooldown = function(dt) {
+  const ids = b8.ECS.query("ActionCooldown");
+  for (const id of ids) {
+    const ac = b8.ECS.getComponent(id, "ActionCooldown");
+    ac.time -= dt;
+    if (ac.time < 0) ac.time = 0;
+  }
+};
+mapper.ai.updateTimer = 0;
+mapper.systems.ai = function(dt) {
+  mapper.ai.updateTimer += dt;
+  if (mapper.ai.updateTimer < mapper.CONFIG.aiUpdateDelay) return;
+  mapper.ai.updateTimer = 0;
+  const ids = b8.ECS.query("AI", "Loc");
+  for (const id of ids) {
+    const mode = mapper.ai.think(id);
+    const ai = b8.ECS.getComponent(id, "AI");
+    if (mode !== ai.mode) {
+      ai.mode = mode;
+      b8.ECS.setComponent(id, "AI", ai);
+    }
+    const directions = ["U", "D", "L", "R"];
+    const Loc = b8.ECS.getComponent(id, "Loc");
+    if (mapper.ai.MODE.WANDER === mode) {
+      const direction = b8.Random.pick(directions);
+      const distance = b8.Random.int(2, 8);
+      const pauseDuration = b8.Random.int(8, 24);
+      const pathCode = `${direction}${distance}P${pauseDuration}`;
+      const steps = b8.Path.parseCode(
+        pathCode,
+        Loc.col,
+        Loc.row,
+        direction
+      );
+      mapper.types.enemy.setPath(id, steps, b8.Path.AnimationMode.ONCE);
+    }
+    if (mapper.ai.MODE.PATROL === mode) {
+      const pf = b8.ECS.getComponent(id, "PathFollower");
+      if (pf?.steps && pf.steps.length > 0) continue;
+      const ai2 = b8.ECS.getComponent(id, "AI");
+      if (ai2.path && ai2.path.length > 0) {
+        const Loc2 = b8.ECS.getComponent(id, "Loc");
+        const nearestPathIndex = mapper.ai.nearestPathIndex(Loc2, ai2.path);
+        const nearestPathTile = ai2.path[nearestPathIndex];
+        if (nearestPathTile.col === Loc2.col && nearestPathTile.row === Loc2.row) {
+          mapper.types.enemy.setPath(id, ai2.path, null, nearestPathIndex);
+        } else {
+          const path = mapper.ai.doAstar(Loc2, nearestPathTile);
+          if (path) mapper.types.enemy.setPath(id, path, b8.Path.AnimationMode.ONCE);
+        }
+      }
+    }
+    if (mapper.ai.MODE.CHASE === mode) {
+      const tileGoal = b8.ECS.getComponent(mapper.player, "Loc");
+      if (tileGoal) {
+        const path = mapper.ai.doAstar(Loc, tileGoal);
+        if (path) {
+          mapper.repeatLastValue(path, 12);
+          mapper.types.enemy.setPath(id, path, b8.Path.AnimationMode.ONCE);
+        }
+      }
+    }
+    if (mapper.ai.MODE.ATTACK === mode) {
+      console.log(`Think ATTACK mode (${id})`);
+      mapper.doAttack(id, "ButtonA");
+    }
+    if (mapper.ai.MODE.FLEE === mode) {
+      const tile = mapper.ai.randomNearbyTile(Loc, 4);
+      if (tile) {
+        const path = mapper.ai.doAstar(Loc, tile);
+        if (path) mapper.types.enemy.setPath(id, path, b8.Path.AnimationMode.ONCE);
+      }
+    }
+    if (mapper.ai.MODE.LOOT === mode) {
+      console.log(`Think LOOT mode (${id})`);
+    }
+    if (mapper.ai.MODE.IDLE === mode) {
+      console.log(`Think IDLE mode (${id})`);
+    }
+  }
+};
 mapper.systems.bomb = async function(dt) {
   const bombs = b8.ECS.query("Bomb");
   const color = mapper.types.bomb.color;
@@ -1234,6 +1673,8 @@ mapper.systems.health = async function(dt) {
   entities.forEach(
     async (entityId) => {
       const health = b8.ECS.getComponent(entityId, "Health");
+      health.cooldownTimer = Math.max(0, (health.cooldownTimer || 0) - dt);
+      if (health.cooldownTimer > 0) return;
       if (health.value <= 0) {
         const loc = b8.ECS.getComponent(entityId, "Loc");
         if (loc) {
@@ -1246,7 +1687,7 @@ mapper.systems.health = async function(dt) {
         if (entityId !== mapper.player) {
           b8.ECS.removeEntity(entityId);
         } else {
-          await b8.Async.wait(0.5);
+          await b8.Async.wait(1);
           b8.Scene.set("gameover");
         }
       }
@@ -1254,74 +1695,37 @@ mapper.systems.health = async function(dt) {
   );
 };
 mapper.systems.pathFollower = async function(dt) {
-  const animationMap = {
-    "U": "move-up",
-    "D": "move-down",
-    "L": "move-left",
-    "R": "move-right",
-    "FU": "idle-up",
-    "FD": "idle-down",
-    "FL": "idle-left",
-    "FR": "idle-right"
-  };
-  const animationInverse = {
-    "U": "D",
-    "D": "U",
-    "L": "R",
-    "R": "L",
-    "FU": "FD",
-    "FD": "FU",
-    "FL": "FR",
-    "FR": "FL"
-  };
   const ids = b8.ECS.query("Loc", "PathFollower");
   for (const id of ids) {
     const pf = b8.ECS.getComponent(id, "PathFollower");
-    if (!pf) continue;
-    if (!pf.steps.length) continue;
+    const Loc = b8.ECS.getComponent(id, "Loc");
+    if (!pf || !pf.steps.length) continue;
     pf.timer -= dt;
     if (pf.timer > 0) continue;
     pf.timer = mapper.CONFIG.moveDelay * 2;
     const step = pf.steps[pf.index];
-    let canMove = false;
+    const isPauseStep = Loc.col === step.col && Loc.row === step.row;
+    let canMove = isPauseStep;
     if (step.dir && step.dir[0] === "F") canMove = true;
-    if (mapper.collision.isWalkable(step.x, step.y) && !mapper.collision.isSolidAt(step.x, step.y)) {
-      canMove = true;
-    }
+    if (!isPauseStep && mapper.collision.isFree(step.col, step.row)) canMove = true;
     if (!canMove) continue;
-    b8.ECS.setLoc(id, step.x, step.y);
-    _advancePathIndex(pf);
+    const directionVector = {
+      dx: step.col - Loc.col,
+      dy: step.row - Loc.row
+    };
+    b8.ECS.setComponent(id, "Direction", directionVector);
+    b8.ECS.setLoc(id, step.col, step.row);
+    if (!step.dir) step.dir = mapper.pathFollower.getFaceDirection(directionVector);
+    mapper.pathFollower.advancePathIndex(pf);
     const anim = b8.ECS.getComponent(id, "CharacterAnimation");
     anim.duration = 0.5;
-    if (animationMap[step.dir]) {
-      let direction = step.dir;
-      if (pf.dirStep === -1) {
-        direction = animationInverse[step.dir] || step.dir;
-      }
-      anim.name = animationMap[direction];
+    if (mapper.pathFollower.animationMap[step.dir]) {
+      let dir = step.dir;
+      if (pf.dirStep === -1) dir = mapper.pathFollower.animationInverse[step.dir] || step.dir;
+      anim.name = mapper.pathFollower.animationMap[dir];
     }
-  }
-  function _advancePathIndex(pf) {
-    const last = pf.steps.length - 1;
-    switch (pf.mode) {
-      // Advance index until the last step, then stop.
-      case "once":
-        if (pf.index < last) pf.index++;
-        break;
-      // Advance index and loop back to start after last step.
-      case "loop":
-        pf.index = (pf.index + 1) % pf.steps.length;
-        break;
-      // Advance index back and forth between first and last step.
-      case "pingpong":
-      default:
-        if (pf.index === 0) {
-          pf.dirStep = 1;
-        } else if (pf.index === last) {
-          pf.dirStep = -1;
-        }
-        pf.index += pf.dirStep;
-        break;
+    if (pf.mode === b8.Path.AnimationMode.ONCE && pf.index >= pf.steps.length - 1) {
+      b8.ECS.removeComponent(id, "PathFollower");
     }
   }
 };
@@ -1797,7 +2201,6 @@ mapper.types.door = {
    * @returns {boolean} False to prevent removal of the door entity.
    */
   burnHandler: function(id) {
-    console.log("Door burnHandler called");
     const sprite = b8.ECS.getComponent(id, "Sprite");
     if (sprite.tile === mapper.types.door.TILE_DOOR_OPEN) return;
     mapper.types.door.openDoor(id, sprite);
@@ -1823,6 +2226,8 @@ mapper.types.enemy = {
     const characterProperties = {
       Type: { name: "enemy" },
       Loc: { col, row },
+      Direction: { dx: 0, dy: 1 },
+      // initial 'D'
       Sprite: {
         type: "actor",
         tile: parseInt(props.actor) || 6,
@@ -1831,6 +2236,19 @@ mapper.types.enemy = {
         depth: 50
       },
       Solid: {},
+      AI: {
+        mode: mapper.ai.MODE.NONE,
+        // current intent: patrol|chase|attack|flee|loot|idle
+        startLoc: { col, row },
+        // starting location for patrols
+        targetId: mapper.player,
+        // entity id (player, item, etc)
+        props: {
+          canLoot: false,
+          canDrop: false,
+          viewRange: 5
+        }
+      },
       CharacterAnimation: {
         name: "idle",
         default: "idle",
@@ -1838,7 +2256,8 @@ mapper.types.enemy = {
       },
       Health: {
         value: health || 3,
-        max: health || 3
+        max: health || 3,
+        cooldown: mapper.CONFIG.healthCooldown || 1
       },
       Attack: {
         value: attack || 1
@@ -1846,9 +2265,9 @@ mapper.types.enemy = {
       AttackTarget: {},
       Action: { ButtonA: "attack" }
     };
+    let steps = [];
     if (props.path && b8.Path.validPathSyntax(props.path)) {
-      let mode = props.mode || "pingpong";
-      const steps = b8.Path.parseCode(
+      steps = b8.Path.parseCode(
         props.path,
         col,
         // startCol
@@ -1857,23 +2276,33 @@ mapper.types.enemy = {
         initialDirection
         // initialDir
       );
-      const lastStep = steps.length - 1;
-      if (steps[lastStep].x === col && steps[lastStep].y === row) {
-        mode = "loop";
-      }
-      characterProperties.PathFollower = {
-        steps,
-        index: 0,
-        mode,
-        dirStep: 1,
-        // for pingpong direction: 1 or -1
-        timer: 0,
-        // accumulates dt
-        startDir: props.startDir || initialDirection
-      };
+      characterProperties.AI.path = steps;
     }
     ;
-    return b8.ECS.create(characterProperties);
+    const id = b8.ECS.create(characterProperties);
+    return id;
+  },
+  setPath: function(id, steps, animationMode = null, index = 0) {
+    if (!animationMode || animationMode === null) {
+      const Loc = b8.ECS.getComponent(id, "Loc");
+      animationMode = b8.Path.AnimationMode.PINGPONG;
+      const lastStep = steps.length - 1;
+      if (steps[lastStep].col === Loc.col && steps[lastStep].row === Loc.row) {
+        animationMode = b8.Path.AnimationMode.LOOP;
+      }
+    }
+    b8.ECS.setComponent(
+      id,
+      "PathFollower",
+      {
+        steps,
+        index,
+        mode: animationMode,
+        dirStep: 1,
+        timer: 0,
+        startDir: "D"
+      }
+    );
   }
 };
 mapper.types.fireSmall = {
@@ -2061,6 +2490,41 @@ mapper.types.pickup = {
     );
   }
 };
+mapper.types.player = {
+  spawn: function(col = 0, row = 0, props = {}) {
+    const player = b8.ECS.create(
+      {
+        Type: { name: "player" },
+        Loc: { row: row || 0, col: col || 0 },
+        Direction: { dx: 0, dy: 1 },
+        Sprite: {
+          type: "actor",
+          tile: parseInt(mapper.settings.character) || 6,
+          fg: parseInt(mapper.settings.characterColor) || 10,
+          bg: 0,
+          depth: 100
+        },
+        Solid: {},
+        CharacterAnimation: {
+          name: "idle",
+          default: "idle",
+          duration: 0
+        },
+        Health: {
+          cooldown: mapper.CONFIG.healthCooldown || 1,
+          value: 6,
+          max: 12
+        },
+        Attack: {
+          value: 1
+        },
+        AttackTarget: {},
+        Action: { ButtonA: "attack" }
+      }
+    );
+    return player;
+  }
+};
 mapper.types.signpost = {
   spawn: function(col, row, props = {}) {
     return b8.ECS.create(
@@ -2123,7 +2587,7 @@ mapper.types.vfx = {
           bg: parseInt(props.bg) || 0,
           nudgeCol: parseInt(props.nudgeCol) || 0,
           nudgeRow: parseInt(props.nudgeRow) || 0,
-          depth: 50
+          depth: 101
         }
       }
     );

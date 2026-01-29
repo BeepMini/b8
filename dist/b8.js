@@ -943,7 +943,7 @@ const b8 = {};
     },
     "swipe": {
       frames: [18, 19, 20, 20, 20, 21, 22],
-      fps: 18
+      fps: 24
     },
     "skull": {
       frames: [24, 24, 24, 25, 26, 27, 28, 28, 29],
@@ -1087,12 +1087,13 @@ const b8 = {};
 })(b8);
 (function(b82) {
   b82.Utilities = {};
-  b82.Utilities.fatal = function(error) {
-    b82.Utilities.error("Fatal error: " + error);
+  b82.Utilities.fatal = function(errorMessage) {
+    const error = errorMessage instanceof Error ? errorMessage : new Error(String(errorMessage));
+    b82.Utilities.error("Fatal error: " + error.message);
     try {
       b82.Core.handleCrash(error);
     } catch (e) {
-      b82.Utilities.error("Error in b8.Core.handleCrash: " + e + " while handling error " + error);
+      b82.Utilities.error("Error in b8.Core.handleCrash: " + e + " while handling error " + error.message);
     }
     throw new Error(error);
   };
@@ -1145,7 +1146,7 @@ const b8 = {};
   };
   b82.Utilities.checkInt = function(varName, varValue, optMin, optMax) {
     b82.Utilities.checkNumber(varName, varValue, optMin, optMax);
-    if (varValue !== Math.round(varValue)) {
+    if (!Number.isInteger(varValue)) {
       b82.Utilities.fatal(`${varName} should be an integer but is ${varValue}`);
     }
     return varValue;
@@ -1647,6 +1648,8 @@ const b8 = {};
   };
   b82.Tilemap.draw = function(tilemap, tileXOffset = 0, tileYOffset = 0, width = null, height = null) {
     b82.Utilities.checkArray("tilemap", tilemap);
+    b82.Utilities.checkInt("tileXOffset", tileXOffset);
+    b82.Utilities.checkInt("tileYOffset", tileYOffset);
     if (!width) {
       width = tilemap[0].length;
     }
@@ -1708,8 +1711,8 @@ const b8 = {};
   };
   b82.Tilemap.resize = function(tilemap, width, height) {
     b82.Utilities.checkArray("tilemap", tilemap);
-    b82.Utilities.checkNumber("width", width);
-    b82.Utilities.checkNumber("height", height);
+    b82.Utilities.checkInt("width", width);
+    b82.Utilities.checkInt("height", height);
     const newTilemap = b82.Tilemap.createEmptyTilemap(width, height);
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
@@ -1728,7 +1731,7 @@ const b8 = {};
       // Fg
       0,
       // Bg
-      0,
+      false,
       // Collision
       {}
       // Data
@@ -1791,7 +1794,7 @@ const b8 = {};
           tileId,
           fg,
           bg,
-          tile.coll || 0,
+          tile.coll || false,
           tile.data || {}
         ];
       }
@@ -1799,8 +1802,8 @@ const b8 = {};
     return tilemap;
   };
   b82.Tilemap.wallTile = function(col, row, grid, name = null) {
-    b82.Utilities.checkNumber("col", col);
-    b82.Utilities.checkNumber("row", row);
+    b82.Utilities.checkInt("col", col);
+    b82.Utilities.checkInt("row", row);
     b82.Utilities.checkArray("grid", grid);
     b82.Utilities.checkString("name", name);
     if (null === name) {
@@ -2865,9 +2868,7 @@ const b8 = {};
   b82.Random = {};
   let randomSeed = null;
   b82.Random.setSeed = function(seed = null) {
-    if (seed === null) {
-      seed = Date.now();
-    }
+    if (seed === null) seed = Date.now();
     if (typeof seed === "string") {
       seed = seed.split("").reduce((a, b) => a + b.charCodeAt(0), 0);
     }
@@ -2893,16 +2894,16 @@ const b8 = {};
   b82.Random.range = function(min, max) {
     b82.Utilities.checkNumber("min", min);
     b82.Utilities.checkNumber("max", max);
-    return min + b82.Random.num() * (max - min);
-  };
-  b82.Random.int = function(min, max) {
-    b82.Utilities.checkInt("min", min);
-    b82.Utilities.checkInt("max", max);
     if (max <= min) {
       const tmp = max;
       max = min;
       min = tmp;
     }
+    return min + b82.Random.num() * (max - min);
+  };
+  b82.Random.int = function(min, max) {
+    b82.Utilities.checkInt("min", min);
+    b82.Utilities.checkInt("max", max);
     const randomValue = b82.Random.range(min, max);
     return Math.round(randomValue);
   };
@@ -2982,6 +2983,11 @@ const b8 = {};
 })(b8);
 (function(b82) {
   b82.Path = {};
+  b82.Path.AnimationMode = {
+    LOOP: "loop",
+    PINGPONG: "pingpong",
+    ONCE: "once"
+  };
   const movementMap = {
     U: { dx: 0, dy: -1 },
     D: { dx: 0, dy: 1 },
@@ -2996,13 +3002,12 @@ const b8 = {};
     if (!"UDLR".includes(initialDir)) {
       b82.Utilities.fatal("Path.parseCode: initialDir must be one of U, D, L, R");
     }
-    let x = startCol;
-    let y = startRow;
+    let col = startCol;
+    let row = startRow;
     let currentDir = initialDir;
     const steps = [];
     const cleaned = code.replace(/\s+/g, "").toUpperCase();
     let i = 0;
-    console.log("Parsing path code:", cleaned);
     while (i < cleaned.length) {
       const cmd = cleaned[i];
       if ("UDLR".includes(cmd)) {
@@ -3010,9 +3015,9 @@ const b8 = {};
         const { count, index } = _parseNumber(cleaned, i);
         i = index;
         for (let n = 0; n < count; n++) {
-          x += movementMap[cmd].dx;
-          y += movementMap[cmd].dy;
-          _pushStep(steps, x, y, cmd);
+          col += movementMap[cmd].dx;
+          row += movementMap[cmd].dy;
+          _pushStep(steps, col, row, cmd);
         }
         continue;
       }
@@ -3020,7 +3025,7 @@ const b8 = {};
         i++;
         const { count, index } = _parseNumber(cleaned, i);
         i = index;
-        _pushStep(steps, x, y, currentDir, count);
+        _pushStep(steps, col, row, currentDir, count);
         continue;
       }
       if (cmd === "F") {
@@ -3032,10 +3037,10 @@ const b8 = {};
         i++;
         const { count, index } = _parseNumber(cleaned, i);
         i = index;
-        _pushStep(steps, x, y, cmd + faceDir, count);
+        _pushStep(steps, col, row, cmd + faceDir, count);
         continue;
       }
-      b82.Utilities.fatal("Invalid command: " + cmd);
+      b82.Utilities.fatal(`Invalid path command: ${cmd} in path code: ${code}`);
     }
     return steps;
   };
@@ -3065,12 +3070,12 @@ const b8 = {};
     }
     return { count: numStr ? parseInt(numStr, 10) : 1, index: i };
   }
-  function _pushStep(steps, x, y, dir = null, count = 1) {
+  function _pushStep(steps, col, row, dir = null, count = 1) {
     for (let n = 0; n < count; n++) {
       steps.push(
         {
-          x,
-          y,
+          col,
+          row,
           dir
         }
       );
@@ -3667,6 +3672,10 @@ const b8 = {};
     const dy = y0 - y1;
     return Math.sqrt(dx * dx + dy * dy);
   };
+  b82.Math.dist2d = b82.Math.dist2D;
+  b82.Math.distManhattan = function(a, b) {
+    return Math.abs(a.col - b.col) + Math.abs(a.row - b.row);
+  };
   b82.Math.lerp = function(a, b, t) {
     return a + (b - a) * t;
   };
@@ -4130,7 +4139,7 @@ const b8 = {};
   b82.ECS.entitiesAt = function(col, row) {
     return grid[row]?.[col] ?? [];
   };
-  b82.ECS.addSystem = function(name, fn, order = 0) {
+  b82.ECS.addSystem = function(name, fn, order = 100) {
     b82.Utilities.checkFunction("fn", fn);
     b82.Utilities.checkString("name", name);
     b82.Utilities.checkInt("order", order);
@@ -4189,12 +4198,14 @@ const b8 = {};
   };
   b82.ECS.getEntity = function(id) {
     b82.Utilities.checkInt("id", id);
-    const out = /* @__PURE__ */ new Map();
+    const out = {};
     for (const [name, map] of components) {
-      if (map.has(id)) out.set(name, map.get(id));
+      const data = map.get(id);
+      if (data) out[name] = data;
     }
     return out;
   };
+  b82.ECS.get = b82.ECS.getEntity;
   b82.ECS.getAllEntities = function() {
     const entitySet = /* @__PURE__ */ new Set();
     for (const compMap of components.values()) {
@@ -4244,6 +4255,7 @@ const b8 = {};
   };
   b82.ECS.query = function(...names) {
     if (names.length === 0) return [];
+    if (names.length === 1 && Array.isArray(names[0])) names = names[0];
     const base = components.get(names[0]);
     if (!base) return [];
     if (names.length === 1) return [...base.keys()];
@@ -4741,13 +4753,16 @@ const b8 = {};
     b82.Core.realCanvas.height = b82.CONFIG.SCREEN_REAL_HEIGHT;
     b82.Core.container.style.aspectRatio = `${b82.CONFIG.SCREEN_COLS} / ${b82.CONFIG.SCREEN_ROWS}`;
   };
-  b82.Core.handleCrash = function(errorMessage = "Fatal error") {
+  b82.Core.handleCrash = function(error = "Fatal error") {
     if (b82.Core.crashed || b82.Core.crashing) return;
     b82.Core.crashing = true;
+    const errorObj = error instanceof Error ? error : new Error(String(error));
+    const stackLines = _cleanStackTrace(String(errorObj.stack || ""));
+    const text = "*** CRASH ***\n" + (errorObj.name ? errorObj.name + ": " : "") + errorObj.message + "\n" + (stackLines.length > 0 ? "\nStack:\n" + stackLines.join("\n") : "");
     b82.Core.setColor(b82.CONFIG.COLORS.length - 1, 0);
     b82.Core.cls();
     b82.Core.setCursorLocation(1, 1);
-    b82.TextRenderer.print("*** CRASH ***:\n" + errorMessage, null, b82.CONFIG.SCREEN_COLS - 2);
+    b82.TextRenderer.print(text, null, b82.CONFIG.SCREEN_COLS - 2);
     b82.Renderer.render();
     b82.Core.crashing = false;
     b82.Core.crashed = true;
@@ -4771,6 +4786,22 @@ const b8 = {};
     if (e.key === "0") {
       b82.Core.downloadScreenshot();
     }
+  }
+  function _cleanStackTrace(stackStr) {
+    const lines = String(stackStr).split("\n").map((s) => s.trim());
+    const cleanedLines = [];
+    for (let line of lines) {
+      line = line.replace(/^at\s+/, "");
+      line = line.replace(/@.*/, "");
+      line = line.trim();
+      line = line.replace(/^b8\d+\./, "b8.");
+      if (line.length === 0) continue;
+      const isInternal = line.includes("Utilities.fatal") || line.includes("Utilities.check") || line.includes("Utilities.assert") || line.includes("Core.doFrame") || line.includes("Core.handleCrash");
+      console.log("stack line", line, "isInternal=", isInternal);
+      if (isInternal) continue;
+      cleanedLines.push(line.trim());
+    }
+    return cleanedLines;
   }
 })(b8);
 (function(b82) {
@@ -4885,6 +4916,104 @@ const b8 = {};
     }
     return ~crc >>> 0;
   }
+})(b8);
+(function(b82) {
+  b82.AStar = {};
+  function nodeKey(col, row) {
+    return `${col},${row}`;
+  }
+  function preparePath(current) {
+    let path = [];
+    let node = current;
+    while (node) {
+      path.push({ col: node.col, row: node.row });
+      node = node.parent;
+    }
+    path = path.reverse();
+    path.shift();
+    return path;
+  }
+  function heuristic(start, goal) {
+    return b82.Math.distManhattan(start, goal);
+  }
+  b82.AStar.pathfind = function(start, goal, isWalkable, gridWidth, gridHeight) {
+    b82.Utilities.checkObject("start", start);
+    b82.Utilities.checkObject("goal", goal);
+    b82.Utilities.checkInt("start.col", start.col);
+    b82.Utilities.checkInt("start.row", start.row);
+    b82.Utilities.checkInt("goal.col", goal.col);
+    b82.Utilities.checkInt("goal.row", goal.row);
+    b82.Utilities.checkFunction("isWalkable", isWalkable);
+    b82.Utilities.checkInt("gridWidth", gridWidth);
+    b82.Utilities.checkInt("gridHeight", gridHeight);
+    if (start.col === goal.col && start.row === goal.row) return [];
+    const openList = [];
+    const closedList = /* @__PURE__ */ new Set();
+    const nodes = {};
+    const startNode = {
+      col: start.col,
+      row: start.row,
+      g: 0,
+      // Cost from start to this node
+      h: heuristic(start, goal),
+      // Heuristic cost to goal
+      f: heuristic(start, goal),
+      // Total cost (g + h)
+      parent: null
+      // Parent node for path reconstruction
+    };
+    openList.push(startNode);
+    nodes[nodeKey(start.col, start.row)] = startNode;
+    while (openList.length > 0) {
+      openList.sort((a, b) => a.f - b.f);
+      const current = openList.shift();
+      const currentKey = nodeKey(current.col, current.row);
+      closedList.add(currentKey);
+      if (current.col === goal.col && current.row === goal.row) {
+        return preparePath(current);
+      }
+      const neighbors = [
+        { col: current.col - 1, row: current.row },
+        // Left
+        { col: current.col + 1, row: current.row },
+        // Right
+        { col: current.col, row: current.row - 1 },
+        // Up
+        { col: current.col, row: current.row + 1 }
+        // Down
+      ];
+      for (let neighbor of neighbors) {
+        if (neighbor.col < 0 || neighbor.col >= gridWidth || neighbor.row < 0 || neighbor.row >= gridHeight) continue;
+        if (!(neighbor.col === start.col && neighbor.row === start.row) && !(neighbor.col === goal.col && neighbor.row === goal.row) && !isWalkable(neighbor.col, neighbor.row)) continue;
+        const neighborKey = nodeKey(neighbor.col, neighbor.row);
+        if (closedList.has(neighborKey)) continue;
+        const tentativeG = current.g + 1;
+        let neighborNode = nodes[neighborKey];
+        if (!neighborNode) {
+          const h = heuristic(neighbor, goal);
+          neighborNode = {
+            col: neighbor.col,
+            row: neighbor.row,
+            g: tentativeG,
+            // Set the cost from start to this node
+            h,
+            // Estimate cost to goal
+            f: tentativeG + h,
+            // Total cost
+            parent: current
+            // Set the parent node for path reconstruction
+          };
+          nodes[neighborKey] = neighborNode;
+          openList.push(neighborNode);
+        } else if (tentativeG < neighborNode.g) {
+          neighborNode.g = tentativeG;
+          neighborNode.f = tentativeG + neighborNode.h;
+          neighborNode.parent = current;
+        }
+      }
+    }
+    return null;
+  };
 })(b8);
 (function(b82) {
   b82.Animation = {};
@@ -5767,76 +5896,4 @@ class MinHeap {
   else if (!global.CBOR)
     global.CBOR = obj;
 })(this);
-function aStarPathfind(start, goal, isWalkable, gridWidth, gridHeight) {
-  function nodeKey(x, y) {
-    return `${x},${y}`;
-  }
-  function heuristic(x, y) {
-    return Math.abs(x - goal.x) + Math.abs(y - goal.y);
-  }
-  const openList = [];
-  const closedList = /* @__PURE__ */ new Set();
-  const nodes = {};
-  const startNode = {
-    x: start.x,
-    y: start.y,
-    g: 0,
-    // Cost from start to this node
-    h: heuristic(start.x, start.y),
-    // Heuristic cost to goal
-    f: heuristic(start.x, start.y),
-    // Total cost (g + h)
-    parent: null
-    // Parent node for path reconstruction
-  };
-  openList.push(startNode);
-  nodes[nodeKey(start.x, start.y)] = startNode;
-  while (openList.length > 0) {
-    openList.sort((a, b) => a.f - b.f);
-    const current = openList.shift();
-    const currentKey = nodeKey(current.x, current.y);
-    closedList.add(currentKey);
-    if (current.x === goal.x && current.y === goal.y) {
-      const path = [];
-      let node = current;
-      while (node) {
-        path.push({ x: node.x, y: node.y });
-        node = node.parent;
-      }
-      return path.reverse();
-    }
-    const neighbors = [
-      { x: current.x - 1, y: current.y },
-      { x: current.x + 1, y: current.y },
-      { x: current.x, y: current.y - 1 },
-      { x: current.x, y: current.y + 1 }
-    ];
-    for (let neighbor of neighbors) {
-      if (neighbor.x < 0 || neighbor.x >= gridWidth || neighbor.y < 0 || neighbor.y >= gridHeight)
-        continue;
-      if (!isWalkable(neighbor.x, neighbor.y)) continue;
-      const neighborKey = nodeKey(neighbor.x, neighbor.y);
-      if (closedList.has(neighborKey)) continue;
-      const tentativeG = current.g + 1;
-      let neighborNode = nodes[neighborKey];
-      if (!neighborNode) {
-        neighborNode = {
-          x: neighbor.x,
-          y: neighbor.y,
-          g: tentativeG,
-          h: heuristic(neighbor.x, neighbor.y),
-          f: tentativeG + heuristic(neighbor.x, neighbor.y),
-          parent: current
-        };
-        nodes[neighborKey] = neighborNode;
-        openList.push(neighborNode);
-      } else if (tentativeG < neighborNode.g) {
-        neighborNode.g = tentativeG;
-        neighborNode.f = tentativeG + neighborNode.h;
-        neighborNode.parent = current;
-      }
-    }
-  }
-  return null;
-}
 //# sourceMappingURL=b8.js.map
