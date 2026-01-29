@@ -7,6 +7,11 @@ mapper.systems.health = async function( dt ) {
 
 			const health = b8.ECS.getComponent( entityId, 'Health' );
 
+			// Reduce cooldown timer.
+			// If still in cooldown, skip further processing.
+			health.cooldownTimer = Math.max( 0, ( health.cooldownTimer || 0 ) - dt );
+			if ( health.cooldownTimer > 0 ) return;
+
 			if ( health.value <= 0 ) {
 
 				// Spawn defeat VFX.
@@ -25,7 +30,7 @@ mapper.systems.health = async function( dt ) {
 				if ( entityId !== mapper.player ) {
 					b8.ECS.removeEntity( entityId );
 				} else {
-					await b8.Async.wait( 0.5 );
+					await b8.Async.wait( 1 );
 					b8.Scene.set( 'gameover' );
 				}
 

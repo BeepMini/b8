@@ -46,7 +46,8 @@ mapper.types.enemy = {
 			},
 			Health: {
 				value: health || 3,
-				max: health || 3
+				max: health || 3,
+				cooldown: mapper.CONFIG.healthCooldown || 1.0,
 			},
 			Attack: {
 				value: attack || 1
