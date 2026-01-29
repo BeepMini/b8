@@ -57,33 +57,7 @@ mapper.load = function( mapData ) {
 	}
 
 	// Setup player.
-	mapper.player = b8.ECS.create(
-		{
-			Type: { name: 'player' },
-			Loc: { row: 0, col: 0 },
-			Direction: { dx: 0, dy: 1 },
-			Sprite: {
-				type: 'actor',
-				tile: parseInt( mapper.settings.character ) || 6,
-				fg: parseInt( mapper.settings.characterColor ) || 10,
-				bg: 0,
-				depth: 100,
-			},
-			Solid: {},
-			CharacterAnimation: {
-				name: 'idle',
-				default: 'idle',
-				duration: 0,
-			},
-			Health: {
-				value: 6,
-				max: 12
-			},
-			Attack: {
-				value: 1
-			},
-		}
-	);
+	mapper.player = mapper.types.player.spawn();
 
 	mapper.lastPosition = {
 		col: 0,
@@ -106,6 +80,9 @@ mapper.load = function( mapData ) {
 
 	// AI First so it can set intents before movement.
 	b8.ECS.addSystem( 'ai', mapper.systems.ai );
+
+	// Everything else.
+	b8.ECS.addSystem( 'action-cooldown', mapper.systems.actionCooldown );
 	b8.ECS.addSystem( 'characterAnimation', mapper.systems.characterAnimation );
 	b8.ECS.addSystem( 'pathFollower', mapper.systems.pathFollower );
 	b8.ECS.addSystem( 'sprite', mapper.systems.sprite );
