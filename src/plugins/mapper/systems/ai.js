@@ -116,6 +116,8 @@ mapper.systems.ai = function( dt ) {
 
 			console.log( `Think ATTACK mode (${id})` );
 
+			mapper.doAttack( id, 'ButtonA' );
+
 		}
 
 

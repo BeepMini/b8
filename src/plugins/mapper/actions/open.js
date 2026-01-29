@@ -50,7 +50,7 @@ mapper.actions.open = async function( playerId ) {
 			b8.ECS.addComponent( id, 'Action', { ButtonA: 'read', ButtonB: 'read' } );
 		}
 
-		mapper.delayKeyPress();
+		mapper.delayKeyPress( id );
 
 		return;
 

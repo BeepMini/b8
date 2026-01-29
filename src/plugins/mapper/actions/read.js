@@ -17,7 +17,7 @@ mapper.actions.read = async function( playerId ) {
 		const message = mapper.helpers.processChatText( obj.message || '' );
 		await b8.Async.dialogTypewriter( message, [ "OK" ], 20 );
 
-		mapper.delayKeyPress();
+		mapper.delayKeyPress( id );
 
 		return;
 

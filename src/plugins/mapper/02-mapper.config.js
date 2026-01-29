@@ -3,6 +3,11 @@ mapper.CONFIG = {
 	// Time in seconds for player movement delay.
 	moveDelay: 0.2,
 
+	actionDelay: 0.5,
+
+	// Time in seconds for player to not take damage after being hit.
+	healthCooldown: 1.2,
+
 	// Key press delay.
 	keyPressDelay: 0.25,
 

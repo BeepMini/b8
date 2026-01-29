@@ -17,9 +17,6 @@ const mapper = {
 	// The player entity ID.
 	player: null,
 
-	// Cooldown timer for actions such as key presses.
-	actionCooldown: 0,
-
 
 	/**
 	 * Initialize and start the game with the provided map data.
@@ -94,9 +91,6 @@ const mapper = {
 
 		b8.ECS.run( dt );
 
-		mapper.actionCooldown -= dt;
-		if ( mapper.actionCooldown < 0 ) mapper.actionCooldown = 0;
-
 	},
 
 
@@ -126,9 +120,10 @@ const mapper = {
 	 *
 	 * @returns {void}
 	 */
-	delayKeyPress: function() {
+	delayKeyPress: function( id ) {
 
-		mapper.actionCooldown = mapper.CONFIG.keyPressDelay;
+		console.log( `Key press delay for entity ${id}` );
+		b8.ECS.setComponent( id, 'ActionCooldown', { time: mapper.CONFIG.keyPressDelay } );
 
 	},
 
@@ -471,18 +466,28 @@ const mapper = {
 	 *
 	 * @param {number} playerId - The player entity ID.
 	 * @param {string} propertyName - The name of the property to check for an action.
-	 * @returns {void}
+	 * @returns {boolean} True if an action was performed, false otherwise.
 	 */
 	doAction: ( playerId, propertyName ) => {
 
-		if ( !propertyName ) return;
-		if ( mapper.actionCooldown > 0 ) return;
+		if ( !propertyName ) return false;
+
+		const ac = b8.ECS.getComponent( playerId, 'ActionCooldown' );
+		if ( !ac ) {
+			mapper.delayKeyPress( playerId );
+		} else {
+			if ( ac.time > 0 ) return false;
+		}
 
 		const action = mapper.promptAhead( playerId, propertyName );
 
 		if ( action && mapper.actions[ action ] ) {
 			mapper.actions[ action ]( playerId );
 		}
+
+		mapper.delayKeyPress( playerId );
+
+		return true;
 
 	},
 
@@ -496,6 +501,8 @@ const mapper = {
 	 */
 	doAttack: ( playerId, propertyName ) => {
 
+		if ( !mapper.doAction( playerId, propertyName ) ) return;
+
 		const ahead = mapper.ahead( playerId );
 
 		// Do swipe VFX.
@@ -503,8 +510,6 @@ const mapper = {
 			ahead.x, ahead.y,
 			{ id: 'swipe', fg: 15, bg: 0, type: 'vfx-outline' }
 		);
-
-		mapper.doAction( playerId, propertyName );
 
 	},
 

@@ -1,5 +1,17 @@
 mapper.ai = {
 
+	MODE: {
+		NONE: 'none',
+		RETURN: 'return',
+		CHASE: 'chase',
+		ATTACK: 'attack',
+		FLEE: 'flee',
+		LOOT: 'loot',
+		WANDER: 'wander',
+		PATROL: 'patrol',
+		CHASE_LAST_SEEN: 'chase_last_seen',
+	},
+
 
 	/**
 	 * Is location b next to (adjacent to) location a?
@@ -36,18 +48,37 @@ mapper.ai = {
 
 
 	/**
-	 * Is the 'to' location in front of the 'from' location based on direction?
+	 * Is the 'from' location facing the to location based on direction?
 	 *
-	 * @param {Object} direction - The direction object with dx and dy.
-	 * @param {Object} from - The starting location with col and row properties.
-	 * @param {Object} to - The target location with col and row properties.
+	 * @param {Object} from - The id of the entity in the from location.
+	 * @param {Object} to - The id of the entity in the to location.
 	 * @returns {boolean} True if 'to' is in front of 'from', false otherwise.
 	 */
-	isFacing: ( direction, from, to ) => {
+	isFacing: ( from, to ) => {
 
-		const d = mapper.ai.dirTo( from, to );
+		b8.Utilities.checkInt( "from", from );
+		b8.Utilities.checkInt( "to", to );
 
-		return direction.dx === d.dx && direction.dy === d.dy;
+		const fromDir = b8.ECS.getComponent( from, 'Direction' );
+		const fromLoc = b8.ECS.getComponent( from, 'Loc' );
+		const toLoc = b8.ECS.getComponent( to, 'Loc' );
+
+		const d = mapper.ai.dirTo( fromLoc, toLoc );
+
+		return fromDir.dx === d.dx && fromDir.dy === d.dy;
+
+	},
+
+
+	face: ( from, to ) => {
+
+		const direction = mapper.ai.dirTo( from, to );
+
+		b8.ECS.setComponent(
+			from,
+			'Direction',
+			direction
+		);
 
 	},
 
@@ -170,11 +201,9 @@ mapper.ai = {
 
 		if ( !mapper.ai.isAdjacent( attackerLoc, targetLoc ) ) return false;
 
-		return mapper.ai.isFacing(
-			b8.ECS.getComponent( attacker, 'Direction' ),
-			attackerLoc,
-			targetLoc
-		);
+		return true;
+
+		// return mapper.ai.isFacing( attacker, target );
 
 	},
 
@@ -189,15 +218,13 @@ mapper.ai = {
 	 */
 	doAstar: ( start, goal ) => {
 
-		const path = b8.AStar.pathfind(
+		return b8.AStar.pathfind(
 			start,
 			goal,
 			mapper.collision.isFree,
 			mapper.getMapWidth(),
 			mapper.getMapHeight()
 		);
-
-		return path;
 
 	},
 
@@ -320,66 +347,6 @@ mapper.ai = {
 
 	},
 
-
-	/**
-	 * Choose the AI mode for an enemy based on its state and context.
-	 *
-	 * @param {Object} enemy The enemy entity with AI and other components.
-	 * @param {Object} context The context object containing information about the environment.
-	 * @returns {string} The chosen AI mode (e.g., 'flee', 'attack', 'chase', 'loot', 'patrol', 'wander').
-	 */
-	_chooseMode: ( e, context ) => {
-
-		if ( e.OnFire ) {
-			return mapper.ai.MODE.FLEE;
-		}
-
-		if ( context.canAttack ) {
-			return mapper.ai.MODE.ATTACK;
-		}
-
-		if ( context.canSeePlayer ) {
-			return mapper.ai.MODE.CHASE;
-		}
-
-		const now = b8.Core.getNow();
-
-		if ( context.lastSeenPlayer && now - context.lastSeenPlayer.time < 2000 ) {
-			return mapper.ai.MODE.CHASE_LAST_SEEN;
-		}
-
-		if ( e?.AI?.flags?.canLoot && context.nearestLoot ) {
-			return mapper.ai.MODE.LOOT;
-		}
-
-		const pf = e.PathFollower;
-
-		if ( pf?.steps?.length ) {
-
-			const onPath = mapper.ai.isOnPath( e.Loc, pf.steps ).onPath;
-
-			if ( !onPath ) return mapper.ai.MODE.RETURN;
-
-			return mapper.ai.MODE.NONE;
-
-		}
-
-		return mapper.ai.MODE.WANDER;
-
-	},
-
-
-	MODE: {
-		NONE: 'none',
-		RETURN: 'return',
-		CHASE: 'chase',
-		ATTACK: 'attack',
-		FLEE: 'flee',
-		LOOT: 'loot',
-		WANDER: 'wander',
-		PATROL: 'patrol',
-		CHASE_LAST_SEEN: 'chase_last_seen',
-	},
 
 	think: ( id ) => {
 
