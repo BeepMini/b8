@@ -101,7 +101,6 @@
 
 		// Clear any inputs.
 		if ( b8.Input && typeof b8.Input.onEndFrame === 'function' ) {
-			b8.UI.onEndFrame();
 			b8.Input.onEndFrame();
 		}
 

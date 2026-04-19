@@ -3,95 +3,57 @@
 	/**
 	 * Immediate-mode UI helpers.
 	 *
-	 * The UI system is designed for BeepMini's ephemeral rendering model.
-	 * Buttons and regions are not persistent objects. Instead, they are
-	 * registered as they are drawn during the current frame, then cleared
-	 * automatically before the next frame.
+	 * The UI system follows BeepMini’s ephemeral rendering model:
+	 * - UI elements are declared during rendering
+	 * - No persistent widget state is stored
+	 * - Input is resolved immediately and consumed
 	 *
-	 * This allows game code to simply:
-	 *   - locate the cursor
-	 *   - draw a button or region
-	 *   - react if it returns true
-	 *
-	 * Example:
-	 *
-	 *   b8.locate( 2, 10 );
-	 *   if ( b8.UI.textButton( { width: 4, height: 2, label: "RUN" } ) ) {
-	 *     startProgram();
-	 *   }
+	 * This keeps UI logic simple, predictable, and stateless.
 	 */
 	b8.UI = {};
 
 
 	/**
-	 * Registered UI regions for the current frame.
-	 *
-	 * Regions are tested in reverse order so that the last drawn region
-	 * takes priority when regions overlap.
-	 *
-	 * @type {Array<Object>}
-	 */
-	let regions_ = [];
-
-
-	/**
 	 * Registers a clickable region at the current cursor position.
 	 *
-	 * The region is measured in tile units, using the current cursor
-	 * position as its top-left corner.
+	 * A region is defined in tile space using the current cursor as
+	 * the top-left corner.
 	 *
-	 * A region returns true only when:
-	 *   - the pointer was pressed inside it
-	 *   - the pointer was released inside it
-	 *   - it is the topmost matching region
-	 *
-	 * This function does not draw anything.
+	 * This uses the input system’s tap model:
+	 * - A tap persists until consumed
+	 * - Only one region can consume a tap
 	 *
 	 * @param {Object} opts
-	 * @param {number} opts.width Width of the region in tiles.
-	 * @param {number} opts.height Height of the region in tiles.
-	 * @param {boolean} [opts.disabled=false] If true, the region cannot be activated.
-	 * @returns {boolean} True if the region was clicked this frame.
+	 * @param {number} [opts.width=1] Width in tiles
+	 * @param {number} [opts.height=1] Height in tiles
+	 * @param {boolean} [opts.disabled=false] Whether the region is inactive
+	 * @returns {boolean} True if this region consumed the tap
 	 */
 	b8.UI.region = function( opts = {} ) {
 
-		const col = b8.Core.drawState.cursorCol;
-		const row = b8.Core.drawState.cursorRow;
-		const width = opts.width ?? 1;
-		const height = opts.height ?? 1;
-		const disabled = !!opts.disabled;
+		const rect = getCurrentRect_( opts );
 
-		const region = {
-			col,
-			row,
-			width,
-			height,
-			disabled,
-		};
+		if ( rect.disabled ) return false;
 
-		regions_.push( region );
+		return consumeTapInRect_( rect );
 
-		if ( disabled ) return false;
-
-		return b8.Input.pointerJustReleased() && isPointerInRegion_( region );
-
-	}
+	};
 
 
 	/**
-	 * Draws a simple filled text button at the current cursor position.
+	 * Draws a simple text button at the current cursor position.
 	 *
-	 * The button uses the current foreground/background colour settings
-	 * for drawing. Text is centered within the button region.
-	 *
-	 * This helper both draws the button and registers its clickable area.
+	 * This helper:
+	 * - Registers a clickable region
+	 * - Draws a filled rectangle
+	 * - Centers the label within the region
 	 *
 	 * @param {Object} opts
-	 * @param {number} opts.width Width of the button in tiles.
-	 * @param {number} opts.height Height of the button in tiles.
-	 * @param {string} opts.label Text or icon to display.
-	 * @param {boolean} [opts.disabled=false] If true, the button cannot be activated.
-	 * @returns {boolean} True if the button was clicked this frame.
+	 * @param {number} [opts.width=1] Width in tiles
+	 * @param {number} [opts.height=1] Height in tiles
+	 * @param {string} [opts.label=""] Text to display
+	 * @param {boolean} [opts.disabled=false] Whether the button is inactive
+	 * @returns {boolean} True if the button was clicked this frame
 	 */
 	b8.UI.textButton = function( opts = {} ) {
 
@@ -111,66 +73,78 @@
 		drawTextButton_( col, row, width, height, label, disabled );
 
 		return clicked;
-	}
+
+	};
 
 
 	/**
-	 * Ends UI processing for the frame.
+	 * Resets UI state.
 	 *
-	 * This is called internally by the engine at the end of each frame.
-	 * It clears transient press state after releases have been processed.
-	 *
-	 * @returns {void}
-	 */
-	b8.UI.onEndFrame = function() {
-
-		activeRegionId_ = null;
-
-	}
-
-
-	/**
-	 * Resets all UI state immediately.
-	 *
-	 * This can be used to cancel active presses, for example when opening a
-	 * menu in response to a button press. It is not usually necessary to call
-	 * this directly, but it can be useful in some cases.
+	 * Currently no persistent state is stored, but this exists for
+	 * future expansion and consistency with other subsystems.
 	 *
 	 * @returns {void}
 	 */
 	b8.UI.reset = function() {
+		// No-op for now.
+	};
 
-		regions_ = [];
+
+	/**
+	 * Builds a rectangle from the current cursor position.
+	 *
+	 * @param {Object} opts
+	 * @returns {{col:number,row:number,width:number,height:number,disabled:boolean}}
+	 */
+	function getCurrentRect_( opts = {} ) {
+
+		return {
+			col: b8.Core.drawState.cursorCol,
+			row: b8.Core.drawState.cursorRow,
+			width: opts.width ?? 1,
+			height: opts.height ?? 1,
+			disabled: !!opts.disabled,
+		};
 
 	}
 
 
 	/**
-	 * Checks whether the current pointer position is inside a region.
+	 * Tests whether a pending tap falls within a rectangle.
+	 * If it does, the tap is consumed.
 	 *
-	 * @param {Object} region
+	 * This ensures:
+	 * - One tap triggers only one UI element
+	 * - Input remains deterministic and frame-independent
+	 *
+	 * @param {Object} rect
 	 * @returns {boolean}
 	 */
-	function isPointerInRegion_( region ) {
+	function consumeTapInRect_( rect ) {
 
-		const pointer = b8.Input.pointerTile();
+		if ( !b8.Input.hasTap() ) return false;
 
-		return (
-			pointer.col >= region.col &&
-			pointer.col < region.col + region.width &&
-			pointer.row >= region.row &&
-			pointer.row < region.row + region.height
-		);
+		const tap = b8.Input.tapTile();
+
+		const hit =
+			tap.col >= rect.col &&
+			tap.col < rect.col + rect.width &&
+			tap.row >= rect.row &&
+			tap.row < rect.row + rect.height;
+
+		if ( !hit ) return false;
+
+		b8.Input.consumeTap();
+		return true;
 
 	}
 
 
 	/**
-	 * Draws a simple filled button using text cells.
+	 * Draws a filled text button using tile cells.
 	 *
-	 * This is intentionally minimal and is meant as a first-pass helper.
-	 * More advanced button styles, such as framed or tile-skinned buttons,
-	 * can be built on top later.
+	 * The button uses the current draw colours.
+	 * The label is centered within the region.
 	 *
 	 * @param {number} col
 	 * @param {number} row
@@ -182,28 +156,28 @@
 	 */
 	function drawTextButton_( col, row, width, height, label, disabled ) {
 
-		// Cache current colours so we can restore them afterwards.
+		// Preserve current draw colours.
 		const oldFg = b8.Core.drawState.fgColor;
 		const oldBg = b8.Core.drawState.bgColor;
 
-		// Fill the button area with spaces using the current colours.
+		// Fill button background.
 		b8.printRect( width, height, 0 );
 
-		// Centre the label within the button area.
+		// Measure label for vertical centering.
 		const labelSize = b8.TextRenderer.measure( label );
-		const labelCol = col;
 		const labelRow = row + ( height / 2 ) - ( labelSize.rows / 2 );
 
-		b8.locate( labelCol, labelRow );
-		b8.printCentered( label, width );
+		b8.locate( col, labelRow );
 
-		// Dim disabled buttons a little by forcing a muted foreground.
+		// Apply disabled styling.
 		if ( disabled ) {
 			b8.color( 8, oldBg );
-			b8.printCentered( label, width );
 		}
 
-		// Restore original colours and cursor.
+		// Draw label centered horizontally.
+		b8.printCentered( label, width );
+
+		// Restore previous draw state.
 		b8.color( oldFg, oldBg );
 		b8.locate( col, row );
 

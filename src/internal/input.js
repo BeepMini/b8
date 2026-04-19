@@ -82,6 +82,23 @@
 	 * ─────────────────────────────────────────────────────────────
 	 */
 
+	/**
+	 * Maps physical keys to their BeepMini aliases.
+	 *
+	 * @type {Object<string, string[]>}
+	 */
+	const KEY_ALIASES_ = {
+		W: [ "W", "ArrowUp" ],
+		A: [ "A", "ArrowLeft" ],
+		S: [ "S", "ArrowDown" ],
+		D: [ "D", "ArrowRight" ],
+		ENTER: [ "Enter", "Escape" ],
+		Z: [ "Z", "ButtonA" ],
+		N: [ "N", "ButtonA" ],
+		X: [ "X", "ButtonB" ],
+		M: [ "M", "ButtonB" ],
+	};
+
 
 	/**
 	 * List of keys currently held down.
@@ -118,9 +135,7 @@
 	 *
 	 * @type {Array<{name: string, capture: boolean, passthrough: boolean, queue: Array}>}
 	 */
-	let contexts_ = [
-		{ name: "game", capture: false, passthrough: true, queue: [] }
-	];
+	let contexts_ = [ createDefaultContext_() ];
 
 
 	/**
@@ -177,12 +192,7 @@
 	 *
 	 * @type {{x: number, y: number, justPressed: boolean, justReleased: boolean}}
 	 */
-	let pointer_ = {
-		x: 0,
-		y: 0,
-		justPressed: false,
-		justReleased: false,
-	};
+	let pointer_ = createPointerState_();
 
 
 	/**
@@ -304,17 +314,13 @@
 	 */
 	b8.Input.reset = function() {
 
+
 		keysHeldRaw_ = new Set();
 		gameJustPressed_ = new Set();
+		contexts_ = [ createDefaultContext_() ];
+		pointer_ = createPointerState_();
 
-		// Remove existing event listeners.
-		window.removeEventListener( "keydown", b8.Input.onKeyDown );
-		window.removeEventListener( "keyup", b8.Input.onKeyUp );
-
-		const canvas = b8.Core.realCanvas;
-		canvas?.addEventListener( "pointerdown", b8.Input.onPointerDown );
-		canvas?.addEventListener( "pointerup", b8.Input.onPointerUp );
-
+		unbindEvents_();
 		b8.Input.onEndFrame();
 
 	}
@@ -328,15 +334,7 @@
 	b8.Input.init = function() {
 
 		b8.Input.reset();
-
-		// Bind event listeners to handle keydown and keyup events.
-		window.addEventListener( "keydown", b8.Input.onKeyDown );
-		window.addEventListener( "keyup", b8.Input.onKeyUp );
-
-		// Bind pointer events to the canvas to handle pointer input.
-		const canvas = b8.Core.realCanvas;
-		canvas.addEventListener( "pointerdown", b8.Input.onPointerDown );
-		canvas.addEventListener( "pointerup", b8.Input.onPointerUp );
+		bindEvents_();
 
 	}
 
@@ -397,44 +395,26 @@
 	 */
 	b8.Input.onKeyDown = function( e ) {
 
-		const key = e.key;
-		const keys = b8.Input.getKeys( key );
-
-		if ( [ "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " " ].includes( key ) ) {
-			e.preventDefault();
-		}
-
-		// Update raw held always
-		for ( const k of keys ) {
-			keysHeldRaw_.add( k.toUpperCase() );
-		}
-
+		const keys = b8.Input.getKeys( e.key );
 		const ctx = active_();
 
-		// If not capturing, or capture allows passthrough, also update gameplay pressed
+		preventDefaultKeyBehaviour_( e );
+		addKeysToSet_( keysHeldRaw_, keys );
+
 		if ( !ctx.capture || ctx.passthrough ) {
-			for ( const k of keys ) {
-				gameJustPressed_.add( k.toUpperCase() );
-			}
+			addKeysToSet_( gameJustPressed_, keys );
 		}
 
-		// If context is capturing, feed async reads first-class
 		if ( ctx.capture ) {
-
 			ctx.queue.push( keys );
 
-			// If something is awaiting, resolve it
 			if ( b8.Core.hasPendingAsync( "b8.Async.key" ) ) {
-				// Prefer draining from queue, not current event, so ordering is consistent
-				const next = ctx.queue.shift();
-				b8.Core.resolveAsync( "b8.Async.key", next );
+				b8.Core.resolveAsync( "b8.Async.key", ctx.queue.shift() );
 			}
 
 			return;
-
 		}
 
-		// Resolve pending async in non-capture mode too (optional)
 		if ( b8.Core.hasPendingAsync( "b8.Async.key" ) ) {
 			b8.Core.resolveAsync( "b8.Async.key", keys );
 		}
@@ -452,10 +432,7 @@
 
 		if ( !e.key ) return;
 
-		const keys = b8.Input.getKeys( e.key );
-		for ( const k of keys ) {
-			keysHeldRaw_.delete( k.toUpperCase() );
-		}
+		removeKeysFromSet_( keysHeldRaw_, b8.Input.getKeys( e.key ) );
 
 	}
 
@@ -465,7 +442,9 @@
 	 *
 	 * Async key reads always pull from the active context. This prevents async input from racing gameplay polling.
 	 *
-	 * @returns {Promise<string>} A promise that resolves to the key that was pressed.
+	 * Resolves with the full logical key list for the next key event.
+	 *
+	 * @returns {Promise<string[]>} A promise that resolves to the pressed key aliases.
 	 */
 	b8.Input.readKeyAsync = function() {
 
@@ -504,48 +483,14 @@
 
 	/**
 	 * Gets an array of keys that correspond to a given key.
-	 * This is used to handle key aliases (e.g. "W" and "ArrowUp").
+	 * For example, pressing "W" also maps to "ArrowUp".
 	 *
 	 * @param {string} key The key to get aliases for.
 	 * @returns {string[]} An array of key names.
 	 */
 	b8.Input.getKeys = function( key ) {
 
-		let keys = [ key ];
-
-		switch ( key.toUpperCase() ) {
-			case "W":
-				keys.push( "ArrowUp" );
-				break;
-
-			case "A":
-				keys.push( "ArrowLeft" );
-				break;
-
-			case "S":
-				keys.push( "ArrowDown" );
-				break;
-
-			case "D":
-				keys.push( "ArrowRight" );
-				break;
-
-			case "Enter":
-				keys.push( "Escape" );
-				break;
-
-			case "Z":
-			case "N":
-				keys.push( "ButtonA" );
-				break;
-
-			case "X":
-			case "M":
-				keys.push( "ButtonB" );
-				break;
-		}
-
-		return keys;
+		return KEY_ALIASES_[ key.toUpperCase() ] || [ key ];
 
 	}
 
@@ -563,6 +508,8 @@
 
 		pointer_.x = pos.x;
 		pointer_.y = pos.y;
+		pointer_.pressX = pos.x;
+		pointer_.pressY = pos.y;
 		pointer_.isDown = true;
 		pointer_.justPressed = true;
 
@@ -591,6 +538,104 @@
 		pointer_.isDown = false;
 		pointer_.justReleased = true;
 
+		pointer_.tapX = pos.x;
+		pointer_.tapY = pos.y;
+
+	}
+
+
+	/**
+	 * Handles pointer move events, updating the pointer position.
+	 *
+	 * This is used for hover states and dragging, but does not trigger any immediate-mode UI interactions on its own.
+	 *
+	 * @param {PointerEvent} e
+	 * @return {void}
+	 */
+	b8.Input.onPointerMove = function( e ) {
+
+		const pos = b8.Core.clientToCanvas( e.clientX, e.clientY );
+		pointer_.x = pos.x;
+		pointer_.y = pos.y;
+
+	}
+
+
+	/**
+	 * Resets the game input state. This is useful when restarting a level or resetting the game.
+	 *
+	 * This clears all held keys, just pressed keys, and pointer state.
+	 *
+	 * @returns {void}
+	 */
+	b8.Input.onPointerCancel = function() {
+
+		pointer_.isDown = false;
+		pointer_.justPressed = false;
+		pointer_.justReleased = false;
+
+	}
+
+
+	/**
+	 * Checks if the pointer is currently held down.
+	 *
+	 * @returns {boolean} True if the pointer is held down, false otherwise.
+	 */
+	b8.Input.pointerHeld = function() {
+
+		return !!pointer_.isDown;
+
+	}
+
+
+	/**
+	 * Checks if there is a pending tap (pointer down and up) that has not yet
+	 * been consumed.
+	 *
+	 * This is used for immediate-mode UI interactions, where a tap should
+	 * trigger a button or region only once.
+	 *
+	 * @returns {boolean} True if there is a pending tap, false otherwise.
+	 */
+	b8.Input.hasTap = function() {
+
+		return pointer_.tapX !== null && pointer_.tapY !== null;
+
+	}
+
+
+	/**
+	 * Gets the tile coordinates of the pending tap, if any. Returns null if
+	 * there is no pending tap.
+	 *
+	 * This is used for immediate-mode UI interactions, where a tap should
+	 * trigger a button or region only once.
+	 *
+	 * @returns {{col: number, row: number} | null} The tile coordinates of the tap, or null if there is no tap.
+	 */
+	b8.Input.tapTile = function() {
+		if ( pointer_.tapX === null || pointer_.tapY === null ) return null;
+
+		return {
+			col: Math.floor( pointer_.tapX / b8.CONFIG.CHR_WIDTH ),
+			row: Math.floor( pointer_.tapY / b8.CONFIG.CHR_HEIGHT ),
+		};
+	}
+
+
+	/**
+	 * Consumes the pending tap, if any, so that it does not trigger multiple UI interactions.
+	 *
+	 * This should be called after handling a tap to ensure that the same tap does not trigger multiple buttons or regions.
+	 *
+	 * @returns {void}
+	 */
+	b8.Input.consumeTap = function() {
+
+		pointer_.tapX = null;
+		pointer_.tapY = null;
+
 	}
 
 
@@ -600,11 +645,11 @@
 	 *
 	 * readLine runs inside a capture context so that gameplay input is fully suspended while typing.
 	 *
-	 * @param {string} initString The initial string to display.
-	 * @param {string} [prompt=''] An optional prompt to display before the input.
-	 * @param {number} [maxLen=100] The maximum length of the string to read.
-	 * @param {number} [maxWidth=-1] The maximum width of the line.
-	 * @returns {Promise<string>} A promise that resolves to the string that was read.
+	 * @param {string} [prompt='Enter text:'] Prompt text to display.
+	 * @param {string} [initString=''] Initial input value.
+	 * @param {number} [maxLen=100] Maximum allowed length.
+	 * @param {number} [maxWidth=-1] Maximum width before wrapping.
+	 * @returns {Promise<string>} A promise that resolves to the entered text.
 	 */
 	b8.Input.readLine = async function( prompt = 'Enter text:', initString = '', maxLen = 100, maxWidth = -1 ) {
 
@@ -779,5 +824,140 @@
 		return textInput;
 
 	}
+
+
+	/**
+	 * Creates the default gameplay input context.
+	 *
+	 * @returns {{name: string, capture: boolean, passthrough: boolean, queue: Array}}
+	 */
+	function createDefaultContext_() {
+
+		return {
+			name: "game",
+			capture: false,
+			passthrough: true,
+			queue: [],
+		};
+
+	}
+
+
+	/**
+	 * Creates the default pointer state.
+	 *
+	 * @returns {{
+	 * 	x: number,
+	 * 	y: number,
+	 * 	isDown: boolean,
+	 * 	justPressed: boolean,
+	 * 	justReleased: boolean,
+	 * 	pressX: number,
+	 * 	pressY: number,
+	 * 	tapX: ?number,
+	 * 	tapY: ?number
+	 * }}
+	 */
+	function createPointerState_() {
+
+		return {
+			x: 0,
+			y: 0,
+			isDown: false,
+			justPressed: false,
+			justReleased: false,
+			pressX: 0,
+			pressY: 0,
+			tapX: null,
+			tapY: null,
+		};
+
+	}
+
+
+	/**
+	 * Binds keyboard and pointer event listeners.
+	 *
+	 * @returns {void}
+	 */
+	function bindEvents_() {
+
+		window.addEventListener( "keydown", b8.Input.onKeyDown );
+		window.addEventListener( "keyup", b8.Input.onKeyUp );
+
+		const canvas = b8.Core.realCanvas;
+		canvas?.addEventListener( "pointerdown", b8.Input.onPointerDown );
+		canvas?.addEventListener( "pointerup", b8.Input.onPointerUp );
+		canvas?.addEventListener( "pointermove", b8.Input.onPointerMove );
+		canvas?.addEventListener( "pointercancel", b8.Input.onPointerCancel );
+
+	}
+
+
+	/**
+	 * Unbinds keyboard and pointer event listeners.
+	 *
+	 * @returns {void}
+	 */
+	function unbindEvents_() {
+
+		window.removeEventListener( "keydown", b8.Input.onKeyDown );
+		window.removeEventListener( "keyup", b8.Input.onKeyUp );
+
+		const canvas = b8.Core.realCanvas;
+		canvas?.removeEventListener( "pointerdown", b8.Input.onPointerDown );
+		canvas?.removeEventListener( "pointerup", b8.Input.onPointerUp );
+		canvas?.removeEventListener( "pointermove", b8.Input.onPointerMove );
+		canvas?.removeEventListener( "pointercancel", b8.Input.onPointerCancel );
+
+	}
+
+
+	/**
+	 * Adds a list of keys to a Set, normalising them to upper case.
+	 *
+	 * @param {Set<string>} set The target set.
+	 * @param {string[]} keys The keys to add.
+	 * @returns {void}
+	 */
+	function addKeysToSet_( set, keys ) {
+
+		for ( const key of keys ) {
+			set.add( key.toUpperCase() );
+		}
+
+	}
+
+
+	/**
+	 * Removes a list of keys from a Set, normalising them to upper case.
+	 *
+	 * @param {Set<string>} set The target set.
+	 * @param {string[]} keys The keys to remove.
+	 * @returns {void}
+	 */
+	function removeKeysFromSet_( set, keys ) {
+
+		for ( const key of keys ) {
+			set.delete( key.toUpperCase() );
+		}
+
+	}
+
+
+	/**
+	 * Prevents browser defaults for keys that should stay under game control.
+	 *
+	 * @param {KeyboardEvent} e The keyboard event.
+	 * @returns {void}
+	 */
+	function preventDefaultKeyBehaviour_( e ) {
+
+		if ( [ "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " " ].includes( e.key ) ) {
+			e.preventDefault();
+		}
+
+	}
+
 
 } )( b8 );
