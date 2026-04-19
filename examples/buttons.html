@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>UI Buttons</title>
+	<meta name="description" content="Preview the bundled UI buttons and how to detect tap events.">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+	<link rel="stylesheet" href="example.css">
+	<script src="../dist/b8.js"></script>
+
+	<script>
+		const state = {
+			message: "Tap something",
+			timer: 0,
+		};
+
+		const demoScene = {
+			update: ( dt ) => {
+				if ( state.timer > 0 ) {
+					state.timer -= dt;
+					if ( state.timer <= 0 ) {
+						state.message = "Tap something";
+					}
+				}
+			},
+
+			render: () => {
+				b8.cls( 0 );
+
+				const pointer = b8.Input.pointerTile();
+
+				b8.locate( 1, 1 );
+				b8.color( 15, 0 );
+				b8.print( `Pointer: ${pointer.col}, ${pointer.row}` );
+
+				b8.locate( 2, 4 );
+				b8.color( 10, 0 );
+				if ( b8.UI.region( { width: 6, height: 2 } ) ) {
+					state.message = "Region tapped";
+					state.timer = 1;
+				}
+				b8.print( "REGION" );
+
+				b8.locate( 2, 8 );
+				b8.color( 7, 10 );
+				if ( b8.UI.textButton( { width: 8, height: 2, label: "BUTTON" } ) ) {
+					state.message = "Button tapped";
+					state.timer = 1;
+				}
+
+				b8.locate( 1, 12 );
+				b8.color( 15, 0 );
+				b8.print( state.message );
+			}
+		};
+
+		async function main() {
+			b8.Scene.add( "demo", demoScene, 30 );
+			b8.Scene.set( "demo" );
+		}
+
+		window.addEventListener( "load", () => b8.init( main ) );
+	</script>
+</head>
+
+<body>
+</body>
+
+</html>

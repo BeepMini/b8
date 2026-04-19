@@ -123,27 +123,177 @@
 	];
 
 
+	/**
+	 * ─────────────────────────────────────────────────────────────
+	 * Pointer Input (Mouse / Touch / Pen)
+	 * ─────────────────────────────────────────────────────────────
+	 *
+	 * BeepMini uses Pointer Events to unify mouse, touch, and pen
+	 * input into a single system.
+	 *
+	 * Pointer state is tracked per-frame and exposed through a
+	 * simple polling API, similar to keyboard input.
+	 *
+	 * ─────────────────────────────────────────────────────────────
+	 * Core Concepts
+	 * ─────────────────────────────────────────────────────────────
+	 *
+	 * • pointer_.x / pointer_.y
+	 *   - Position of the pointer in canvas pixel space.
+	 *
+	 * • pointer_.isDown
+	 *   - Whether the pointer is currently held down.
+	 *
+	 * • pointer_.justPressed
+	 *   - True only on the frame the pointer was pressed.
+	 *
+	 * • pointer_.justReleased
+	 *   - True only on the frame the pointer was released.
+	 *
+	 * These flags are automatically reset at the end of each frame.
+	 *
+	 * ─────────────────────────────────────────────────────────────
+	 * Why this exists
+	 * ─────────────────────────────────────────────────────────────
+	 *
+	 * Immediate-mode UI (buttons, regions, etc.) requires knowing
+	 * when a pointer interaction starts and ends within a single
+	 * frame window.
+	 *
+	 * This system provides a minimal, consistent API that works for:
+	 *   - Mouse clicks
+	 *   - Touch taps
+	 *   - Stylus input
+	 *
+	 * Without requiring separate code paths.
+	 *
+	 * ─────────────────────────────────────────────────────────────
+	 */
+
+
+	/**
+	 * Internal pointer state.
+	 * This is updated via pointer events and reset per frame.
+	 *
+	 * @type {{x: number, y: number, justPressed: boolean, justReleased: boolean}}
+	 */
+	let pointer_ = {
+		x: 0,
+		y: 0,
+		justPressed: false,
+		justReleased: false,
+	};
+
+
+	/**
+	 * Gets the pointer X position in canvas pixels.
+	 *
+	 * @returns {number}
+	 */
+	b8.Input.pointerX = function() {
+		return pointer_.x;
+	}
+
+
+	/**
+	 * Gets the pointer Y position in canvas pixels.
+	 *
+	 * @returns {number}
+	 */
+	b8.Input.pointerY = function() {
+		return pointer_.y;
+	}
+
+
+	/**
+	 * Checks if the pointer was pressed this frame.
+	 *
+	 * @returns {boolean}
+	 */
+	b8.Input.pointerJustPressed = function() {
+		return pointer_.justPressed;
+	}
+
+
+	/**
+	 * Checks if the pointer was released this frame.
+	 *
+	 * @returns {boolean}
+	 */
+	b8.Input.pointerJustReleased = function() {
+		return pointer_.justReleased;
+	}
+
+
+	/**
+	 * Gets the pointer position in tile coordinates.
+	 *
+	 * @returns {{col: number, row: number}}
+	 */
+	b8.Input.pointerTile = function() {
+
+		return {
+			col: Math.floor( pointer_.x / b8.CONFIG.CHR_WIDTH ),
+			row: Math.floor( pointer_.y / b8.CONFIG.CHR_HEIGHT ),
+		};
+
+	}
+
+
+	/**
+	 * Pushes a new input context onto the stack.
+	 *
+	 * @param {string} name - The name of the context.
+	 * @param {Object} [opts={}] - Options for the context.
+	 * @param {boolean} [opts.capture=false] - If true, gameplay polling is blocked.
+	 * @param {boolean} [opts.passthrough=false] - If true, allows gameplay justPressed events even when capturing.
+	 */
 	b8.Input.pushContext = function( name, opts = {} ) {
-		contexts_.push( {
-			name,
-			capture: !!opts.capture, // if true, gameplay polling should be blocked
-			passthrough: opts.passthrough ?? false, // if true, still allow gameplay justPressed
-			queue: [],
-		} );
-	};
 
+		contexts_.push(
+			{
+				name,
+				capture: !!opts.capture, // if true, gameplay polling should be blocked
+				passthrough: opts.passthrough ?? false, // if true, still allow gameplay justPressed
+				queue: [],
+			}
+		);
+
+	}
+
+
+	/**
+	 * Pops the most recent input context from the stack.
+	 *
+	 * Ensures that at least one context (the default "game" context) remains on the stack.
+	 */
 	b8.Input.popContext = function() {
-		if ( contexts_.length > 1 ) contexts_.pop();
-	};
 
+		if ( contexts_.length > 1 ) contexts_.pop();
+
+	}
+
+
+	/**
+	 * Executes a function within a temporary input context.
+	 *
+	 * Pushes a new context, runs the provided function, and then pops the context.
+	 *
+	 * @param {string} name - The name of the temporary context.
+	 * @param {Object} opts - Options for the context.
+	 * @param {Function} fn - The function to execute within the context.
+	 * @returns {Promise<any>} The result of the executed function.
+	 */
 	b8.Input.withContext = async function( name, opts, fn ) {
+
 		b8.Input.pushContext( name, opts );
 		try {
 			return await fn();
 		} finally {
 			b8.Input.popContext();
 		}
-	};
+
+	}
 
 
 	/**
@@ -160,7 +310,12 @@
 		// Remove existing event listeners.
 		window.removeEventListener( "keydown", b8.Input.onKeyDown );
 		window.removeEventListener( "keyup", b8.Input.onKeyUp );
-		window.removeEventListener( "pointerdown", b8.Input.onPointerDown );
+
+		const canvas = b8.Core.realCanvas;
+		canvas?.addEventListener( "pointerdown", b8.Input.onPointerDown );
+		canvas?.addEventListener( "pointerup", b8.Input.onPointerUp );
+
+		b8.Input.onEndFrame();
 
 	}
 
@@ -177,7 +332,11 @@
 		// Bind event listeners to handle keydown and keyup events.
 		window.addEventListener( "keydown", b8.Input.onKeyDown );
 		window.addEventListener( "keyup", b8.Input.onKeyUp );
-		window.addEventListener( "pointerdown", b8.Input.onPointerDown );
+
+		// Bind pointer events to the canvas to handle pointer input.
+		const canvas = b8.Core.realCanvas;
+		canvas.addEventListener( "pointerdown", b8.Input.onPointerDown );
+		canvas.addEventListener( "pointerup", b8.Input.onPointerUp );
 
 	}
 
@@ -222,6 +381,9 @@
 	b8.Input.onEndFrame = function() {
 
 		gameJustPressed_.clear();
+
+		pointer_.justPressed = false;
+		pointer_.justReleased = false;
 
 	}
 
@@ -275,21 +437,6 @@
 		// Resolve pending async in non-capture mode too (optional)
 		if ( b8.Core.hasPendingAsync( "b8.Async.key" ) ) {
 			b8.Core.resolveAsync( "b8.Async.key", keys );
-		}
-
-	}
-
-
-	/**
-	 * Handles pointerdown events, resolving any pending asynchronous pointer events.
-	 *
-	 * @param {PointerEvent} e The event object.
-	 * @returns {void}
-	 */
-	b8.Input.onPointerDown = function( e ) {
-
-		if ( b8.Core.hasPendingAsync( "b8.Async.pointer" ) ) {
-			b8.Core.resolveAsync( "b8.Async.pointer", { x: e.clientX, y: e.clientY } );
 		}
 
 	}
@@ -399,6 +546,50 @@
 		}
 
 		return keys;
+
+	}
+
+
+	/**
+	 * Handles pointer down events.
+	 *
+	 * Marks the pointer as pressed and updates position.
+	 *
+	 * @param {PointerEvent} e
+	 */
+	b8.Input.onPointerDown = function( e ) {
+
+		const pos = b8.Core.clientToCanvas( e.clientX, e.clientY );
+
+		pointer_.x = pos.x;
+		pointer_.y = pos.y;
+		pointer_.isDown = true;
+		pointer_.justPressed = true;
+
+		b8.Core.realCanvas.setPointerCapture( e.pointerId );
+
+		if ( b8.Core.hasPendingAsync( "b8.Async.pointer" ) ) {
+			b8.Core.resolveAsync( "b8.Async.pointer", pos );
+		}
+
+	}
+
+
+	/**
+	 * Handles pointer up events.
+	 *
+	 * Marks the pointer as released.
+	 *
+	 * @param {PointerEvent} e
+	 */
+	b8.Input.onPointerUp = function( e ) {
+
+		const pos = b8.Core.clientToCanvas( e.clientX, e.clientY );
+
+		pointer_.x = pos.x;
+		pointer_.y = pos.y;
+		pointer_.isDown = false;
+		pointer_.justReleased = true;
 
 	}
 

@@ -500,6 +500,7 @@
 				updateHandler( targetDt );
 			}
 			if ( b8.Input && typeof b8.Input.onEndFrame === 'function' ) {
+				b8.UI.onEndFrame();
 				b8.Input.onEndFrame();
 			}
 			b8.Particles.update( targetDt );
@@ -982,6 +983,7 @@
 				desynchronized: true
 			}
 		);
+
 		b8.Core.realCtx.imageSmoothingEnabled = false;
 		b8.Core.realCtx.imageSmoothingQuality = 'pixelated';
 
@@ -997,6 +999,31 @@
 		b8.Core.realCanvas.height = b8.CONFIG.SCREEN_REAL_HEIGHT;
 
 		b8.Core.container.style.aspectRatio = `${b8.CONFIG.SCREEN_COLS} / ${b8.CONFIG.SCREEN_ROWS}`;
+
+	}
+
+
+	/**
+	 * Converts a client-space position to internal canvas coordinates.
+	 *
+	 * This accounts for CSS scaling between the displayed canvas size
+	 * and the actual internal resolution.
+	 *
+	 * @param {number} clientX
+	 * @param {number} clientY
+	 * @returns {{x: number, y: number}}
+	 */
+	b8.Core.clientToCanvas = function( clientX, clientY ) {
+
+		const rect = b8.Core.realCanvas.getBoundingClientRect();
+
+		const scaleX = b8.Core.realCanvas.width / rect.width;
+		const scaleY = b8.Core.realCanvas.height / rect.height;
+
+		return {
+			x: ( clientX - rect.left ) * scaleX,
+			y: ( clientY - rect.top ) * scaleY,
+		};
 
 	}
 
