@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>Scenes</title>
+	<meta name="description" content="Preview the scenes and how they connect together.">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+	<link rel="stylesheet" href="example.css">
+	<script src="../dist/b8.js"></script>
+
+	<script>
+
+		/**
+		 * A scene should be a javascript object with at least one of the following functions:
+		 *
+		 * - init( optional ): A function that will be called when the scene is set.
+		 * - update( optional ): A function that will be called multiple times a frame and passed a deltatime value as a parameter.
+		 * - render( optional ): A function that will be called every frame.
+		 *
+		 * Init can be used to set up the scene.For asynchronous games you can add a while loop here and use await functions( eg for keypresses) and then render yourself.
+		 * For synchronous games you can use the update and render functions to manage game logic and rendering efficiently.
+		 */
+		const scene1 = {
+			init: () => {
+				// We call main from init since we don't want to use the built
+				// in updating and rendering for this scene.
+				// We also want the function to be async so we can use await for
+				// the menu and dialog functions.
+				scene1.main();
+			},
+			main: async () => {
+
+				b8.cls( 0 );
+				// Position the cursor for the menu options and set the text color.
+				b8.locate( 5, 15 );
+				b8.color( 0, 10 );
+
+				// Display a menu with options and wait for the user's choice.
+				let choice = await b8.Async.menu(
+					[
+						"Scene 2",
+						"Scene 3",
+					]
+				);
+
+				// Handle the user's choice.
+				if ( choice === 0 ) {
+					b8.Scene.set( 'scene2' );
+					return;
+				}
+
+				if ( choice === 1 ) {
+					b8.Scene.set( 'scene3' );
+					return;
+				}
+
+				// Do it all again to keep the menu looping.
+				scene1.main();
+
+			},
+
+			// update: ( dt ) => {},
+			// render: () => {}
+		};
+
+		const scene2 = {
+			// init: () => {},
+			update: async ( dt ) => {
+				b8.cls();
+				const text = "This is scene 2. Press OK to return to the menu.";
+				await b8.Async.dialog( text, [ "OK" ] );
+				b8.Scene.set( 'scene1' );
+			},
+			// render: () => {}
+		};
+
+		const scene3 = {
+			position: {
+				x: 0,
+				y: 0
+			},
+			// init: () => {},
+			update: ( dt ) => {
+				if ( b8.keyp( "a" ) ) b8.Scene.set( 'scene1' );
+
+				scene3.position.x = b8.Random.int( 0, 20 );
+				scene3.position.y = b8.Random.int( 0, 20 );
+			},
+			render: () => {
+				b8.cls( 1 );
+				b8.locate( scene3.position.x, scene3.position.y );
+				b8.print( "Scene 3" );
+				b8.locate( 1, 1 );
+				b8.print( "Press A to return to the menu." );
+			}
+		};
+
+		const main = async () => {
+
+			console.log( "Main async function" );
+			// scene name, scene object, frames per second
+			// frames per second is optional. Defaults to 60
+			b8.Scene.add( 'scene1', scene1, 30 );
+			b8.Scene.add( 'scene2', scene2 );
+			b8.Scene.add( 'scene3', scene3, 2 );
+
+			b8.Scene.set( 'scene1' );
+
+		};
+
+		window.addEventListener( "load", () => b8.init( main ) );
+	</script>
+</head>
+
+<body>
+</body>
+
+</html>
