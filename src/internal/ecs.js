@@ -147,6 +147,8 @@
 
 	/**
 	 * Attach or overwrite a component on an entity.
+	 * If you use the component name "Loc", the position grid will be updated
+	 * for spatial queries using b8.ECS.setLoc().
 	 *
 	 * @param {number} id Entity ID
 	 * @param {string} name Component name
@@ -186,6 +188,8 @@
 
 	/**
 	 * Set the location of an entity.
+	 * Also sets the position in the tilemap grid for fast spatial queries. You
+	 * must use this to move entities for the grid to stay updated.
 	 *
 	 * @param {number} id Entity ID
 	 * @param {number} col X tile coordinate
@@ -320,6 +324,8 @@
 
 	/**
 	 * Remove a single component from an entity.
+	 * Also removes the entity from the position grid if it's a Loc component.
+	 * You must use this to move entities for the grid to stay updated.
 	 *
 	 * @param {number} id Entity ID
 	 * @param {string} name Component name
