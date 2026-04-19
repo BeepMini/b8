@@ -56,6 +56,8 @@
 		let startCol = b8.Core.drawState.cursorCol;
 		let startRow = b8.Core.drawState.cursorRow;
 
+		options.prompt = b8.wrapText( options.prompt, b8.CONFIG.SCREEN_COLS - 2 * options.padding - 2 * ( options.border ? 1 : 0 ) );
+
 		const promptSize = b8.TextRenderer.measure( options.prompt );
 		const prompt01 = options.prompt ? 1 : 0;
 		const border01 = options.borderChar ? 1 : 0;

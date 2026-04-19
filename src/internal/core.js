@@ -547,7 +547,8 @@
 	 */
 	b8.Core.cls = function( bgColor = undefined ) {
 
-		bgColor = bgColor || b8.Core.drawState.bgColor;
+		// If bgColor is explicitly set to 0, use it instead of falling back to drawState.bgColor.
+		bgColor = ( bgColor === undefined ) ? b8.Core.drawState.bgColor : bgColor;
 
 		b8.Utilities.checkNumber( "bgColor", bgColor );
 

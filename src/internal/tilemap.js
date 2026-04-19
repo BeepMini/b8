@@ -341,6 +341,77 @@
 
 
 	/**
+	 * Set a tile in the tilemap array at the specified coordinates.
+	 * This function modifies the tilemap array in place.
+	 *
+	 * @param {Array} tilemap The tilemap array to modify.
+	 * @param {number} col The x coordinate of the tile to set.
+	 * @param {number} row The y coordinate of the tile to set.
+	 * @param {Array} tile The tile data to set at the specified coordinates.
+	 * @returns {void}
+	 */
+	b8.Tilemap.setTile = function( tilemap, col, row, tile = null ) {
+
+		b8.Utilities.checkArray( "tilemap", tilemap );
+		b8.Utilities.checkInt( "col", col );
+		b8.Utilities.checkInt( "row", row );
+
+		if ( !tile ) {
+			b8.Utilities.fatal( "Tile data is required." );
+		}
+
+		if ( !tilemap[ row ] ) {
+			b8.Utilities.fatal( `Row ${row} does not exist in the tilemap.` );
+		}
+
+		if ( typeof tilemap[ row ][ col ] === "undefined" ) {
+			b8.Utilities.fatal( `Column ${col} does not exist in row ${row} of the tilemap.` );
+		}
+
+		tilemap[ row ][ col ] = b8.Tilemap.normaliseTile( tile );
+
+	};
+
+
+	/**
+	 * Convert a tile definition to a tile array.
+	 *
+	 * The tile definition can be an array or an object with properties.
+	 * This function ensures that the tile array is in the correct format and all properties are set.
+	 *
+	 * @param {Array|Object} tile The tile definition to convert. t.t = tile id, t.fg = foreground color, t.bg = background color, t.coll = collision flag, t.data = additional 	data.
+	 * @returns {Array} The converted tile array.
+	 */
+	b8.Tilemap.normaliseTile = function( tile ) {
+
+		const newTile = b8.Tilemap.getDefaultTile();
+
+		if ( Array.isArray( tile ) ) {
+			for ( let i = 0; i < newTile.length; i++ ) {
+				if ( typeof tile[ i ] !== "undefined" ) {
+					newTile[ i ] = tile[ i ];
+				}
+			}
+
+			return newTile;
+		}
+
+		if ( tile && typeof tile === "object" ) {
+			if ( typeof tile.t !== "undefined" ) newTile[ 0 ] = tile.t;
+			if ( typeof tile.fg !== "undefined" ) newTile[ 1 ] = tile.fg;
+			if ( typeof tile.bg !== "undefined" ) newTile[ 2 ] = tile.bg;
+			if ( typeof tile.coll !== "undefined" ) newTile[ 3 ] = !!tile.coll;
+			if ( typeof tile.data !== "undefined" ) newTile[ 4 ] = tile.data;
+
+			return newTile;
+		}
+
+		return newTile;
+
+	};
+
+
+	/**
 	 * Get a text map and convert it to an array of arrays.
 	 *
 	 * An example text map might look like:
