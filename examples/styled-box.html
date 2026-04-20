@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>Styled Box styles</title>
+	<meta name="description" content="Preview the bundled styled boxes used for UI buttons, menus, and dialogs.">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+	<link rel="stylesheet" href="example.css">
+	<script src="../dist/b8.js"></script>
+
+	<script>
+
+		const styles = [ "plain", "border", "round" ];
+		const boxSizeW = 6;
+		const boxSizeH = 4;
+
+		async function main() {
+
+			b8.cls( 10 );
+			b8.color( 10, 0 );
+
+			for ( let i = 0; i < styles.length; i++ ) {
+				const style = styles[ i ];
+
+				b8.locate( 2, 2 + i * ( boxSizeH + 1 ) );
+				b8.TextRenderer.printStyledBox( boxSizeW, boxSizeH, { style } );
+			}
+
+		}
+
+		window.addEventListener( "load", () => b8.init( main ) );
+	</script>
+</head>
+
+<body>
+</body>
+
+</html>
