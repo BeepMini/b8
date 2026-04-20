@@ -43,17 +43,13 @@
 	/**
 	 * Draws a simple text button at the current cursor position.
 	 *
-	 * This helper:
-	 * - Registers a clickable region
-	 * - Draws a filled rectangle
-	 * - Centers the label within the region
-	 *
 	 * @param {Object} opts
-	 * @param {number} [opts.width=1] Width in tiles
-	 * @param {number} [opts.height=1] Height in tiles
-	 * @param {string} [opts.label=""] Text to display
-	 * @param {boolean} [opts.disabled=false] Whether the button is inactive
-	 * @returns {boolean} True if the button was clicked this frame
+	 * @param {number} [opts.width=1]
+	 * @param {number} [opts.height=1]
+	 * @param {string} [opts.label=""]
+	 * @param {string} [opts.style="flat"]
+	 * @param {boolean} [opts.disabled=false]
+	 * @returns {boolean}
 	 */
 	b8.UI.textButton = function( opts = {} ) {
 
@@ -62,32 +58,49 @@
 		const width = opts.width ?? 1;
 		const height = opts.height ?? 1;
 		const label = opts.label ?? "";
+		const style = opts.style ?? "plain";
 		const disabled = !!opts.disabled;
 
-		const clicked = b8.UI.region( {
+		drawTextButton_( col, row, width, height, label, style, disabled );
+
+		return b8.UI.region( {
 			width,
 			height,
 			disabled,
 		} );
 
-		drawTextButton_( col, row, width, height, label, disabled );
-
-		return clicked;
-
 	};
 
 
 	/**
-	 * Resets UI state.
+	 * Draws a simple icon button at the current cursor position.
 	 *
-	 * Currently no persistent state is stored, but this exists for
-	 * future expansion and consistency with other subsystems.
-	 *
-	 * @returns {void}
+	 * @param {Object} opts
+	 * @param {number} [opts.width=1]
+	 * @param {number} [opts.height=1]
+	 * @param {number} opts.icon Character / tile index
+	 * @param {boolean} [opts.disabled=false]
+	 * @returns {boolean}
 	 */
-	b8.UI.reset = function() {
-		// No-op for now.
-	};
+	b8.UI.iconButton = function( opts = {} ) {
+
+		const col = b8.Core.drawState.cursorCol;
+		const row = b8.Core.drawState.cursorRow;
+		const width = opts.width ?? 1;
+		const height = opts.height ?? 1;
+		const icon = opts.icon ?? 0;
+		const style = opts.style ?? "plain";
+		const disabled = !!opts.disabled;
+
+		drawIconButton_( col, row, width, height, icon, style, disabled );
+
+		return b8.UI.region( {
+			width,
+			height,
+			disabled,
+		} );
+
+	}
 
 
 	/**
@@ -141,6 +154,33 @@
 
 
 	/**
+	 * Draws the base button background.
+	 *
+	 * @param {number} col
+	 * @param {number} row
+	 * @param {number} width
+	 * @param {number} height
+	 * @returns {{fg:number,bg:number}} Previous colours
+	 */
+	function drawButtonBase_( width, height, style = "plain" ) {
+
+		const oldFg = b8.Core.drawState.fgColor;
+		const oldBg = b8.Core.drawState.bgColor;
+
+		b8.TextRenderer.printStyledBox(
+			width,
+			height,
+			{
+				style
+			}
+		);
+
+		return { oldFg, oldBg };
+
+	}
+
+
+	/**
 	 * Draws a filled text button using tile cells.
 	 *
 	 * The button uses the current draw colours.
@@ -151,33 +191,63 @@
 	 * @param {number} width
 	 * @param {number} height
 	 * @param {string} label
+	 * @param {string} style
 	 * @param {boolean} disabled
 	 * @returns {void}
 	 */
-	function drawTextButton_( col, row, width, height, label, disabled ) {
+	function drawTextButton_( col, row, width, height, label, style, disabled ) {
 
-		// Preserve current draw colours.
 		const oldFg = b8.Core.drawState.fgColor;
 		const oldBg = b8.Core.drawState.bgColor;
 
-		// Fill button background.
-		b8.printRect( width, height, 0 );
+		drawButtonBase_( width, height, style );
 
-		// Measure label for vertical centering.
 		const labelSize = b8.TextRenderer.measure( label );
 		const labelRow = row + ( height / 2 ) - ( labelSize.rows / 2 );
 
 		b8.locate( col, labelRow );
 
-		// Apply disabled styling.
 		if ( disabled ) {
 			b8.color( 8, oldBg );
 		}
 
-		// Draw label centered horizontally.
 		b8.printCentered( label, width );
 
-		// Restore previous draw state.
+		b8.color( oldFg, oldBg );
+		b8.locate( col, row );
+
+	}
+
+
+	/**
+	 * Draws a button with a single character icon.
+	 *
+	 * @param {number} col
+	 * @param {number} row
+	 * @param {number} width
+	 * @param {number} height
+	 * @param {number} char Tile index / character code
+	 * @param {boolean} disabled
+	 * @returns {void}
+	 */
+	function drawIconButton_( col, row, width, height, icon, style, disabled ) {
+
+		const oldFg = b8.Core.drawState.fgColor;
+		const oldBg = b8.Core.drawState.bgColor;
+
+		drawButtonBase_( width, height, style );
+
+		const iconCol = col + ( width / 2 ) - 0.5;
+		const iconRow = row + ( height / 2 ) - 0.5;
+
+		b8.locate( iconCol, iconRow );
+
+		if ( disabled ) {
+			b8.color( 8, -1 );
+		}
+
+		b8.printChar( icon );
+
 		b8.color( oldFg, oldBg );
 		b8.locate( col, row );
 

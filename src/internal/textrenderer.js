@@ -10,6 +10,38 @@
 	 */
 	const charMap = [];
 
+
+	/**
+	 * Built-in box style presets.
+	 *
+	 * Each style defines border tiles and whether the interior should be filled.
+	 *
+	 * @type {Object<string, Object>}
+	 */
+	const BOX_STYLES_ = {
+		plain: {
+			fill: true,
+			borders: false,
+			borderChar: null,
+		},
+		border: {
+			fill: true,
+			borderChar: b8.CONFIG.BORDER_CHAR,
+		},
+		round: {
+			invertBorder: true,
+			fill: true,
+			borders: {
+				NW: 18,
+				NE: 19,
+				SW: 36,
+				SE: 37,
+				V: 1,
+				H: 1,
+			},
+		},
+	};
+
 	// b8.TextRendererFont for each font, keyed by font name. The default font is called "default".
 	b8.TextRenderer.fonts_ = {};
 
@@ -607,15 +639,7 @@
 		b8.Utilities.checkBoolean( "fill", fill );
 		b8.Utilities.checkNumber( "borderChar", borderChar );
 
-		const colCount = b8.TextRenderer.curTiles_.getColCount();
-		const borders = {
-			NW: borderChar,
-			NE: borderChar + 2,
-			SW: borderChar + colCount + colCount,
-			SE: borderChar + colCount + colCount + 2,
-			V: borderChar + colCount,
-			H: borderChar + 1,
-		};
+		const borders = fromBorderChar_( borderChar );
 
 		b8.TextRenderer.drawBox( width, height, fill, borders );
 
@@ -637,42 +661,100 @@
 	 * @param {number} [borders.H] - The horizontal border character.
 	 * @returns {void}
 	 */
-	b8.TextRenderer.drawBox = function( width, height, fill = true, borders = {} ) {
-
+	b8.TextRenderer.drawBox = function(
+		width,
+		height,
+		fill = true,
+		borders = {},
+		fillChar = 0,
+		options = {}
+	) {
 		const startCol = b8.Core.drawState.cursorCol;
 		const startRow = b8.Core.drawState.cursorRow;
 
-		for ( let i = 0; i < height; i++ ) {
+		const oldFg = b8.Core.drawState.fgColor;
+		const oldBg = b8.Core.drawState.bgColor;
 
+		const borderFg = options.invertBorder ? oldBg : oldFg;
+		const borderBg = options.invertBorder ? oldFg : oldBg;
+		const fillFg = options.invertFill ? oldBg : oldFg;
+		const fillBg = options.invertFill ? oldFg : oldBg;
+
+		for ( let i = 0; i < height; i++ ) {
 			b8.Core.drawState.cursorCol = startCol;
 			b8.Core.drawState.cursorRow = startRow + i;
 
 			if ( i === 0 ) {
-				// Top border
+				b8.color( borderFg, borderBg );
 				b8.TextRenderer.printChar( borders.NW );
 				b8.TextRenderer.printChar( borders.H, width - 2 );
 				b8.TextRenderer.printChar( borders.NE );
 			} else if ( i === height - 1 ) {
-				// Bottom border.
+				b8.color( borderFg, borderBg );
 				b8.TextRenderer.printChar( borders.SW );
 				b8.TextRenderer.printChar( borders.H, width - 2 );
 				b8.TextRenderer.printChar( borders.SE );
 			} else {
-				// Middle.
+				b8.color( borderFg, borderBg );
 				b8.TextRenderer.printChar( borders.V );
-				b8.Core.drawState.cursorCol = startCol + width - 1;
+
+				if ( fill && width > 2 ) {
+					b8.color( fillFg, fillBg );
+					b8.TextRenderer.printChar( fillChar, width - 2 );
+				} else {
+					b8.Core.drawState.cursorCol += width - 2;
+				}
+
+				b8.color( borderFg, borderBg );
 				b8.TextRenderer.printChar( borders.V );
 			}
 		}
 
-		if ( fill && width > 2 && height > 2 ) {
-			b8.Core.drawState.cursorCol = startCol + 1;
-			b8.Core.drawState.cursorRow = startRow + 1;
-			b8.TextRenderer.printRect( width - 2, height - 2, 0 );
-		}
-
+		b8.color( oldFg, oldBg );
 		b8.Core.drawState.cursorCol = startCol;
 		b8.Core.drawState.cursorRow = startRow;
+
+	}
+
+
+	/**
+	 * Draws a box using a named style preset or explicit border definition.
+	 *
+	 * @param {number} width The width of the box.
+	 * @param {number} height The height of the box.
+	 * @param {Object} [options={}] Rendering options.
+	 * @param {string} [options.style="plain"] Named style preset.
+	 * @param {boolean} [options.fill] Whether to fill the box interior.
+	 * @param {Object} [options.borders] Explicit border tiles.
+	 * @returns {void}
+	 */
+	b8.TextRenderer.printStyledBox = function( width, height, options = {} ) {
+
+		const style = resolveBoxStyle_( options.style || "plain" );
+
+		const fill = options.fill ?? style.fill;
+		const fillChar = options.fillChar ?? style.fillChar;
+		const borders = options.borders ?? style.borders;
+
+		const invertBorder = options.invertBorder ?? style.invertBorder;
+		const invertFill = options.invertFill ?? style.invertFill;
+
+		if ( !borders ) {
+			b8.TextRenderer.printRect( width, height, fillChar );
+			return;
+		}
+
+		b8.TextRenderer.drawBox(
+			width,
+			height,
+			fill,
+			borders,
+			fillChar,
+			{
+				invertBorder,
+				invertFill,
+			}
+		);
 
 	}
 
@@ -944,6 +1026,63 @@
 
 		// Tell all the fonts to regenerate their glyph images.
 		Object.values( b8.TextRenderer.fonts_ ).forEach( f => f.regenColors() );
+
+	}
+
+
+	/**
+	 * Builds a border definition from the top-left tile of a 3x3 box set.
+	 *
+	 * Layout:
+	 * NW H NE
+	 * V  . .
+	 * SW . SE
+	 *
+	 * @param {number} borderChar The top-left tile index.
+	 * @returns {{NW:number,NE:number,SW:number,SE:number,V:number,H:number}}
+	 */
+	function fromBorderChar_( borderChar ) {
+
+		const colCount = b8.TextRenderer.curTiles_.getColCount();
+
+		return {
+			NW: borderChar,
+			NE: borderChar + 2,
+			SW: borderChar + colCount + colCount,
+			SE: borderChar + colCount + colCount + 2,
+			V: borderChar + colCount,
+			H: borderChar + 1,
+		};
+
+	}
+
+
+	/**
+	 * Resolves a box style into concrete border tiles.
+	 *
+	 * Styles may define either:
+	 * - explicit borders
+	 * - a borderChar seed for a 3x3 tile set
+	 * - no borders at all
+	 *
+	 * @param {string} styleName The style name.
+	 * @returns {{fill:boolean,borders:?Object,fillChar:number}}
+	 */
+	function resolveBoxStyle_( styleName ) {
+
+		const style = BOX_STYLES_[ styleName ] || BOX_STYLES_.plain;
+
+		return {
+			fill: style.fill ?? true,
+			fillChar: style.fillChar ?? 0,
+			invertBorder: !!style.invertBorder,
+			invertFill: !!style.invertFill,
+			borders: style.borders ?? (
+				style.borderChar != null
+					? fromBorderChar_( style.borderChar )
+					: null
+			),
+		};
 
 	}
 

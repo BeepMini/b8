@@ -42,6 +42,7 @@
 				selBgColor: b8.Core.drawState.fgColor,
 				selFgColor: b8.Core.drawState.bgColor,
 				border: true,
+				style: "border",
 				borderChar: b8.CONFIG.BORDER_CHAR,
 				center: false,
 				centerH: false,
@@ -86,17 +87,29 @@
 		b8.Core.drawState.cursorCol = startCol;
 		b8.Core.drawState.cursorRow = startRow;
 
-		if ( options.border ) {
+		if ( options.style ) {
 
-			// Print the background & border.
+			b8.TextRenderer.printStyledBox(
+				totalCols, totalRows,
+				{
+					style: options.style,
+					fill: true,
+				}
+			);
+
+		}
+
+		if ( !options.style && options.border ) {
+
 			b8.TextRenderer.printBox( totalCols, totalRows, true, options.borderChar );
 
-			// Print title at the top of the border.
-			if ( options.title ) {
-				const t = " " + options.title + " ";
-				b8.Core.drawState.cursorCol = startCol + Math.round( ( totalCols - t.length ) / 2 );
-				b8.TextRenderer.print( t );
-			}
+		}
+
+		if ( options.title ) {
+
+			const t = " " + options.title + " ";
+			b8.Core.drawState.cursorCol = startCol + 1;
+			b8.TextRenderer.print( t );
 
 		}
 
