@@ -170,17 +170,17 @@
 	 * Draw a tilemap array to the screen.
 	 *
 	 * @param {Array} tilemap The tilemap array to draw.
-	 * @param {number} [tileX=0] The x-coordinate of the tile to start drawing from.
-	 * @param {number} [tileY=0] The y-coordinate of the tile to start drawing from.
+	 * @param {number} [tileStartCol=0] Tile column to start drawing from.
+	 * @param {number} [tileStartRow=0] Tile row to start drawing from.
 	 * @param {number} [width=null] The width of the tilemap to draw.
 	 * @param {number} [height=null] The height of the tilemap to draw.
 	 * @returns {void}
 	 */
-	b8.Tilemap.draw = function( tilemap, tileXOffset = 0, tileYOffset = 0, width = null, height = null ) {
+	b8.Tilemap.draw = function( tilemap, tileStartCol = 0, tileStartRow = 0, width = null, height = null ) {
 
 		b8.Utilities.checkArray( "tilemap", tilemap );
-		b8.Utilities.checkInt( "tileXOffset", tileXOffset );
-		b8.Utilities.checkInt( "tileYOffset", tileYOffset );
+		b8.Utilities.checkInt( "tileStartCol", tileStartCol );
+		b8.Utilities.checkInt( "tileStartRow", tileStartRow );
 
 		if ( !width ) {
 			width = tilemap[ 0 ].length;
@@ -196,14 +196,14 @@
 		const startRow = b8.Core.drawState.cursorRow;
 		const startCol = b8.Core.drawState.cursorCol;
 
-		for ( let y = tileYOffset; y < tileYOffset + height; y++ ) {
+		for ( let y = tileStartRow; y < tileStartRow + height; y++ ) {
 
 			// Position the cursor at the start of the row.
 			const lx = 0 + startCol;
-			const ly = y - tileYOffset + startRow;
+			const ly = y - tileStartRow + startRow;
 			b8.locate( lx, ly );
 
-			for ( let x = tileXOffset; x < tileXOffset + width; x++ ) {
+			for ( let x = tileStartCol; x < tileStartCol + width; x++ ) {
 
 				if ( !tilemap[ y ] || tilemap[ y ][ x ] == null ) continue;
 
