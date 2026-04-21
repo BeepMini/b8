@@ -553,7 +553,48 @@
 
 		return tilemap;
 
-	};
+	}
+
+
+	/**
+	 * Add a wall tile set to the tilemap system.
+	 * The tile set should be an array of 16 tile ids, corresponding to the 16 possible bitmask values.
+	 *
+	 * @param {string} name The name of the wall tile set. This should match the name used in the tile pattern (e.g. "wall:brick").
+	 * @param {Array} tileIds The array of 16 tile ids for the wall tile set.
+	 * @returns {void}
+	 */
+	b8.Tilemap.addWallTileSet = function( name, tileIds ) {
+
+		b8.Utilities.checkString( "name", name );
+		b8.Utilities.checkObject( "tileIds", tileIds );
+
+		if ( wallTiles[ name ] ) {
+			b8.Utilities.fatal( `Wall tile set with name ${name} already exists.` );
+		}
+
+		wallTiles[ name ] = normaliseWallTileSet( tileIds );
+
+	}
+
+
+	/**
+	 * Get a wall tile set by name.
+	 *
+	 * @param {string} name The name of the wall tile set to get.
+	 * @returns {Array} The wall tile set array.
+	 */
+	b8.Tilemap.getWallTileSet = function( name ) {
+
+		b8.Utilities.checkString( "name", name );
+
+		if ( !wallTiles[ name ] ) {
+			b8.Utilities.fatal( `Wall tile set with name ${name} does not exist.` );
+		}
+
+		return wallTiles[ name ];
+
+	}
 
 
 	/**
@@ -589,6 +630,31 @@
 		return wallTiles[ tileType ][ mask ];
 
 	};
+
+
+	/**
+	 * Normalise a wall tile set to ensure it has 16 entries, one for each bitmask value.
+	 * If any entries are missing, they will be filled in with the corresponding entry from the default "solid" tile set.
+	 *
+	 * @param {Array} tileSet The wall tile set to normalise.
+	 * @returns {Array} The normalised wall tile set.
+	 */
+	function normaliseWallTileSet( tileSet ) {
+
+		const defaultTileSet = wallTiles[ 'solid' ];
+		const normalisedTileSet = [];
+
+		for ( let i = 0; i < 16; i++ ) {
+			if ( typeof tileSet[ i ] === "undefined" ) {
+				normalisedTileSet[ i ] = defaultTileSet[ i ];
+			} else {
+				normalisedTileSet[ i ] = tileSet[ i ];
+			}
+		}
+
+		return normalisedTileSet;
+
+	}
 
 
 	// A helper function to compute a 4-bit bitmask for a wall tile.
