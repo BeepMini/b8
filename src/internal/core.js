@@ -848,8 +848,8 @@
 
 		b8.Core.offCtx.fillStyle = b8.Core.getColorHex( b8.Core.drawState.fgColor );
 		b8.Core.offCtx.fillRect(
-			Math.round( x ) + 0.5, Math.round( y ) + 0.5,
-			Math.round( width ) - 1, Math.round( height ) - 1
+			Math.round( x ), Math.round( y ),
+			Math.round( width ), Math.round( height )
 		);
 
 	}
