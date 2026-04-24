@@ -39,6 +39,24 @@
 
 
 	/**
+	 * Function to list passcodes for a given number of levels. This is useful for debugging and testing.
+	 *
+	 * @param {number} count - The number of levels to list codes for.
+	 * @returns {void}
+	 */
+	b8.Passcodes.listCodes = function( count ) {
+
+		for ( let l = 0; l < count; l++ ) {
+
+			const levelCode = b8.Passcodes.getCode( l );
+			console.log( `Level ${l + 1} Code: ${levelCode}` );
+
+		}
+
+	}
+
+
+	/**
 	 * Function to check if a given code is valid for a given id.
 	 *
 	 * @param {string} id - The id to check the code for.
