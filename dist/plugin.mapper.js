@@ -509,7 +509,9 @@ mapper.actions.attack = (playerId) => {
     if (targetId === playerId) continue;
     if (!b8.ECS.hasComponent(targetId, "AttackTarget")) continue;
     const targetHealth = b8.ECS.getComponent(targetId, "Health");
+    if (targetHealth.cooldownTimer > 0) continue;
     const playerAttack = b8.ECS.getComponent(playerId, "Attack") || { value: 1 };
+    targetHealth.cooldownTimer = targetHealth.cooldown || mapper.CONFIG.healthCooldown;
     targetHealth.value -= playerAttack.value;
   }
 };
@@ -1673,8 +1675,7 @@ mapper.systems.health = async function(dt) {
   entities.forEach(
     async (entityId) => {
       const health = b8.ECS.getComponent(entityId, "Health");
-      health.cooldownTimer = Math.max(0, (health.cooldownTimer || 0) - dt);
-      if (health.cooldownTimer > 0) return;
+      health.cooldownTimer = Math.max(0, health.cooldownTimer - dt);
       if (health.value <= 0) {
         const loc = b8.ECS.getComponent(entityId, "Loc");
         if (loc) {
@@ -2257,6 +2258,7 @@ mapper.types.enemy = {
       Health: {
         value: health || 3,
         max: health || 3,
+        cooldownTimer: 0,
         cooldown: mapper.CONFIG.healthCooldown || 1
       },
       Attack: {
@@ -2511,6 +2513,7 @@ mapper.types.player = {
           duration: 0
         },
         Health: {
+          cooldownTimer: 0,
           cooldown: mapper.CONFIG.healthCooldown || 1,
           value: 6,
           max: 12
