@@ -841,7 +841,7 @@
 	 * @param {number} duration - The duration of the screenshake effect in seconds.
 	 * @returns {boolean} Returns true if the screenshake effect was successfully triggered.
 	 */
-	b8.screenShake = function( duration ) {
+	b8.screenShake = function( duration = 0.5 ) {
 
 		b8.Utilities.checkNumber( "duration", duration );
 
