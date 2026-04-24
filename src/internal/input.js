@@ -97,6 +97,7 @@
 		N: [ "N", "ButtonA" ],
 		X: [ "X", "ButtonB" ],
 		M: [ "M", "ButtonB" ],
+		' ': [ " ", "Space" ],
 	};
 
 
