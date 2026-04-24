@@ -131,6 +131,24 @@
 			14: 109, // wall_t_top.
 			15: 73  // wall_cross.
 		},
+		'barrier': {
+			0: 511,  // wall_isolated.
+			1: 493,  // wall_end_bottom.
+			2: 508,  // wall_end_left.
+			3: 490,  // wall_corner_bottomLeft.
+			4: 457,  // wall_end_top.
+			5: 475,  // wall_vertical.
+			6: 454,  // wall_corner_topLeft.
+			7: 472,  // wall_t_right.
+			8: 510,  // wall_end_right.
+			9: 492,  // wall_corner_bottomRight.
+			10: 509, // wall_horizontal.
+			11: 491, // wall_t_bottom.
+			12: 456, // wall_corner_topRight.
+			13: 474, // wall_t_left.
+			14: 455, // wall_t_top.
+			15: 473  // wall_cross.
+		},
 	};
 
 
@@ -592,7 +610,7 @@
 			b8.Utilities.fatal( `Wall tile set with name ${name} does not exist.` );
 		}
 
-		return wallTiles[ name ];
+		return { ...wallTiles[ name ] };
 
 	}
 
