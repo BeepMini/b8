@@ -63,11 +63,13 @@
 
 		drawTextButton_( col, row, width, height, label, style, disabled );
 
-		return b8.UI.region( {
-			width,
-			height,
-			disabled,
-		} );
+		return b8.UI.region(
+			{
+				width,
+				height,
+				disabled,
+			}
+		);
 
 	};
 
