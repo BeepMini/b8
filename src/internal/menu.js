@@ -136,9 +136,13 @@
 
 			// Draw choices.
 			b8.Core.drawState.cursorRow = startRow + border01 + options.padding + prompt01 * ( promptSize.rows + 1 );
-			b8.Core.drawState.cursorCol = ( promptSize.cols <= choicesCols ) ?
-				( startCol + border01 + options.padding ) :
-				( startCol + Math.round( ( totalCols - choicesCols ) / 2 ) );
+			if ( promptSize.cols <= choicesCols ) {
+				// Align with prompt if prompt is wider than choices.
+				b8.Core.drawState.cursorCol = startCol + border01 + options.padding;
+			} else {
+				// All on one line and centered if prompt is wider than choices.
+				b8.Core.drawState.cursorCol = startCol + ( totalCols - choicesCols ) / 2;
+			}
 
 			printChoices( choices, selIndex, options );
 
