@@ -97,7 +97,7 @@
 			return;
 		}
 
-		if ( noteBuffers.length > 200 ) {
+		if ( Object.keys( noteBuffers ).length > 200 ) {
 			console.warn( "b8.Music: Note buffers exceeded limit, clearing old buffers." );
 			noteBuffers = {};
 		}
@@ -109,7 +109,7 @@
 
 		// Split input into lines.
 		const rawLines = params.split( '\n' ).map( line => line.trim() );
-		let noteInterval = tempo / 1000; // seconds per note step.
+		let noteInterval = getNoteInterval();
 
 		// Regular expression for track lines: instrument|track data|
 		const trackLineRegex = /^([0-9])\|(.*)\|$/;
@@ -122,7 +122,7 @@
 				const timing = line.replace( /[\[\]]/g, '' ).split( '.' );
 				tempo = parseFloat( timing[ 0 ] ) || tempo;
 				baseNoteDuration = ( parseFloat( timing[ 1 ] ) || 50 ) / 100;
-				noteInterval = tempo / 1000;
+				noteInterval = getNoteInterval();
 				return;
 			}
 
@@ -145,17 +145,16 @@
 				while ( i + dashCount < trackData.length && trackData[ i + dashCount ] === '-' ) {
 					dashCount++;
 				}
-				let eventTime = i * noteInterval;
 				if ( char === ' ' ) {
-					events.push( { startTime: eventTime, noteBuffer: null } );
+					events.push( null );
 					i += dashCount - 1;
 					continue;
 				}
 				let noteValue = char.charCodeAt( 0 );
 				noteValue -= noteValue > 90 ? 71 : 65;
-				let noteDuration = dashCount * baseNoteDuration * ( tempo / 125 );
-				let noteBuffer = createNoteBuffer( noteValue, noteDuration, 44100, instrumentFn );
-				events.push( { startTime: eventTime, noteBuffer: noteBuffer } );
+				let noteDuration = dashCount * baseNoteDuration * ( 125 / tempo );
+				let noteBuffer = createNoteBuffer( noteValue, noteDuration, audioCtx.sampleRate, instrumentFn );
+				events.push( noteBuffer );
 				i += dashCount - 1;
 			}
 			schedules.push( events );
@@ -183,7 +182,7 @@
 	function schedulerFunction() {
 
 		const currentTime = audioCtx.currentTime;
-		const noteInterval = tempo / 1000; // note duration in seconds
+		const noteInterval = getNoteInterval(); // note duration in seconds
 		// Use the larger of the fixed lookahead and the current note interval.
 		const effectiveLookahead = Math.max( lookaheadTime, noteInterval );
 		schedules.forEach( ( events, trackIndex ) => {
@@ -194,9 +193,9 @@
 			const loopCount = Math.floor( pointer / trackLength );
 			const eventTime = playbackStartTime + ( step * noteInterval ) + ( loopCount * trackLength * noteInterval );
 			if ( eventTime < currentTime + effectiveLookahead ) {
-				const event = events[ step ];
-				if ( event.noteBuffer ) {
-					playNoteBuffer( event.noteBuffer, audioCtx, eventTime );
+				const noteBuffer = events[ step ];
+				if ( noteBuffer ) {
+					playNoteBuffer( noteBuffer, audioCtx, eventTime );
 				}
 				schedulePointers[ trackIndex ]++;
 			}
@@ -235,11 +234,13 @@
 	 * Set the tempo (in BPM).
 	 */
 	p1.setTempo = function( newTempo ) {
+
 		if ( newTempo < 50 ) newTempo = 50;
 
 		// Calculate old and new note intervals in seconds.
-		const oldNoteInterval = tempo / 1000;
-		const newNoteInterval = newTempo / 1000;
+		const oldNoteInterval = getNoteInterval();
+		tempo = newTempo;
+		const newNoteInterval = getNoteInterval();
 
 		// Determine how much time has elapsed since playback started.
 		const elapsed = audioCtx.currentTime - playbackStartTime;
@@ -250,8 +251,6 @@
 		// Rebase playbackStartTime so that the currentIndex now corresponds to the current time.
 		playbackStartTime = audioCtx.currentTime - currentIndex * newNoteInterval;
 
-		// Finally, update the tempo.
-		tempo = newTempo;
 	};
 
 	p1.setVolume = function( value ) {
@@ -317,10 +316,6 @@
 		source.start( when );
 		playingSources.push( source );
 
-		// source.connect( context.destination );
-		// source.start( when );
-		// playingSources.push( source );
-
 		if ( stopImmediately ) {
 			source.stop();
 		}
@@ -331,6 +326,13 @@
 			}
 		};
 	};
+
+	function getNoteInterval() {
+
+		const stepsPerBeat = 4;
+		return 60 / tempo / stepsPerBeat;
+
+	}
 
 	// Expose the p1 function globally.
 	window.p1 = p1;
