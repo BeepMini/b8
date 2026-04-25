@@ -33,21 +33,81 @@
 	 */
 	const SONG_STYLES = {
 		calm: {
-			tempo: [ 70, 100, 140 ],
-			hold: [ 90, 100, 110, 120 ],
+			tempo: [ 50, 70, 100 ],
+			hold: [ 110, 120, 130, 140 ],
+			noteCount: [ 48, 64, 96 ],
+			chordLength: [ 8, 16 ],
 			channels: [ "bass", "chords", "melody" ],
+			melodyDensity: 2,
+			chordDensity: 1,
+			bassInterval: [ 8, 16 ],
+			arpChance: 10,
+			drumDensity: [ 0 ],
 		},
 
 		arcade: {
 			tempo: [ 170, 200, 240 ],
 			hold: [ 50, 60, 70, 80 ],
+			noteCount: [ 32, 48, 64 ],
+			chordLength: [ 4, 8 ],
 			channels: [ "bass", "arp", "melody", "drums" ],
+			melodyDensity: 5,
+			chordDensity: 4,
+			bassInterval: [ 4, 8 ],
+			arpChance: 50,
+			drumDensity: [ 2, 3 ],
 		},
 
 		busy: {
 			tempo: [ 200, 240, 280 ],
 			hold: [ 40, 50, 60, 70 ],
+			noteCount: [ 32, 48 ],
+			chordLength: [ 4 ],
 			channels: [ "bass", "arp", "counter", "drums" ],
+			melodyDensity: 7,
+			chordDensity: 6,
+			bassInterval: [ 2, 4 ],
+			arpChance: 80,
+			drumDensity: [ 3, 4 ],
+		},
+
+		adventure: {
+			tempo: [ 70, 85, 100 ],
+			hold: [ 120, 150, 180 ],
+			noteCount: [ 96, 128 ],
+			chordLength: [ 16, 32 ],
+			channels: [ "bass", "chords", "melody" ],
+			melodyDensity: 2,
+			chordDensity: 1,
+			bassInterval: [ 8, 16 ],
+			arpChance: 5,
+			drumDensity: [ 0 ],
+		},
+
+		puzzle: {
+			tempo: [ 130, 150, 170 ],
+			hold: [ 70, 80, 90 ],
+			noteCount: [ 64, 96 ],
+			chordLength: [ 4, 8 ],
+			channels: [ "bass", "arp", "melody", "drums" ],
+			melodyDensity: 5,
+			chordDensity: 7,
+			bassInterval: [ 4, 8 ],
+			arpChance: 90,
+			drumDensity: [ 1, 2 ],
+		},
+
+		shooter: {
+			tempo: [ 220, 260, 300 ],
+			hold: [ 25, 35, 45 ],
+			noteCount: [ 32, 48 ],
+			chordLength: [ 2, 4 ],
+			channels: [ "bass", "arp", "counter", "drums" ],
+			melodyDensity: 8,
+			chordDensity: 8,
+			bassInterval: [ 2 ],
+			arpChance: 95,
+			drumDensity: [ 4, 5 ],
 		}
 	};
 
@@ -158,7 +218,7 @@
 		const defaultOptions = {
 			seed: b8.Random.int( 10000, 99999 ),
 			style: styleName,
-			noteCount: b8.Random.pick( [ 32, 48, 64 ] ),
+			noteCount: b8.Random.pick( style.noteCount || [ 32, 48, 64 ] ),
 			channelCount: style.channels.length,
 			tempo: b8.Random.pick( style.tempo ),
 			hold: b8.Random.pick( style.hold )
@@ -170,12 +230,12 @@
 
 		b8.Random.setSeed( opts.seed );
 
-		var chordProgressionNotes = generateChordProgression( opts.noteCount );
+		var chordProgressionNotes = generateChordProgression( opts.noteCount, style );
 		var roles = style.channels.slice( 0, opts.channelCount );
 
 		var parts = roles.map(
 			function( role ) {
-				return generatePartByRole( role, opts.noteCount, chordProgressionNotes );
+				return generatePartByRole( role, opts.noteCount, chordProgressionNotes, style );
 			}
 		);
 
@@ -538,14 +598,15 @@
 	 * which makes later melody, bass, and chord generation simpler.
 	 *
 	 * @param {number} noteCount - Number of note positions to generate chord data for.
+	 * @param {Object} style - The song style object containing chord length options.
 	 * @returns {Array<Array<string>>} Chord notes for each note position.
 	 */
-	function generateChordProgression( noteCount ) {
+	function generateChordProgression( noteCount, style ) {
 
 		var keys = [ "C", "D", "Eb", "F", "G", "A", "Bb" ];
 		var key = b8.Random.pick( keys );
 		var progression = b8.Random.pick( PROGRESSIONS );
-		var chordLength = b8.Random.pick( [ 4, 8, 8, 16 ] );
+		var chordLength = b8.Random.pick( style.chordLength || [ 4, 8, 8, 16 ] );
 		var result = [];
 
 		for ( var i = 0; i < noteCount; i++ ) {
@@ -568,12 +629,13 @@
 	 *
 	 * @param {number} noteCount - Number of note positions to generate.
 	 * @param {Array<Array<string>>} chordProgressionNotes - Chord notes for each note position.
+	 * @param {Object} style - The song style object containing additional parameters.
 	 * @returns {string} A compressed p1.js bass part.
 	 */
-	function generateBassNote( noteCount, chordProgressionNotes ) {
+	function generateBassNote( noteCount, chordProgressionNotes, style ) {
 
 		const notes = [ b8.Random.pick( instrumentOptions ), "|" ];
-		var interval = b8.Random.pick( [ 4, 8 ] );
+		var interval = b8.Random.pick( style.bassInterval || [ 4, 8 ] );
 
 		for ( var i = 0; i < noteCount; i++ ) {
 
@@ -606,26 +668,27 @@
 	 * @param {string} role - The part role: "bass", "drums", "arp", "chords", "counter", or "melody".
 	 * @param {number} noteCount - Number of note positions to generate.
 	 * @param {Array<Array<string>>} chordProgressionNotes - Chord notes for each note position.
+	 * @param {Object} style - The song style object containing additional parameters.
 	 * @returns {string} A compressed p1.js part.
 	 */
-	function generatePartByRole( role, noteCount, chordProgressionNotes ) {
+	function generatePartByRole( role, noteCount, chordProgressionNotes, style ) {
 
 		switch ( role ) {
 
 			case "bass":
-				return generateBassNote( noteCount, chordProgressionNotes );
+				return generateBassNote( noteCount, chordProgressionNotes, style );
 
 			case "drums":
-				return generateDrumNote( noteCount );
+				return generateDrumNote( noteCount, style );
 
 			case "arp":
 			case "chords":
-				return generateChordNote( noteCount, chordProgressionNotes );
+				return generateChordNote( noteCount, chordProgressionNotes, style );
 
 			case "counter":
 			case "melody":
 			default:
-				return generateMelodyNote( noteCount, chordProgressionNotes );
+				return generateMelodyNote( noteCount, chordProgressionNotes, style );
 
 		}
 
@@ -637,12 +700,14 @@
 	 *
 	 * @param {number} noteCount - The number of beats/positions.
 	 * @param {Array<Array<string>>} chordProgressionNotes - The chord progression notes.
+	 * @param {Object} style - The song style object containing additional parameters.
 	 * @returns {string} The compressed melody note string.
 	 */
-	function generateMelodyNote( noteCount, chordProgressionNotes ) {
+	function generateMelodyNote( noteCount, chordProgressionNotes, style ) {
 
 		var notes = [ b8.Random.pick( instrumentOptions ), '|' ];
-		var pattern = createRandomPattern( noteCount, 4, 8, 3 );
+		var density = style.melodyDensity || 4;
+		var pattern = createRandomPattern( noteCount, density, 8, 3 );
 		var octaveOffset = b8.Random.int( -1, 1 );
 
 		for ( var i = 0; i < noteCount; i++ ) {
@@ -683,13 +748,14 @@
 	 *
 	 * @param {number} noteCount - The number of beats/positions.
 	 * @param {Array<Array<string>>} chordProgressionNotes - The chord progression notes.
+	 * @param {Object} style - The song style object containing additional parameters.
 	 * @returns {string} The compressed chord/arpeggio note string.
 	 */
-	function generateChordNote( noteCount, chordProgressionNotes ) {
+	function generateChordNote( noteCount, chordProgressionNotes, style ) {
 
 		const notes = [ b8.Random.pick( instrumentOptions ), '|' ];
 
-		var isArpeggio = b8.Random.chance( 30 );
+		var isArpeggio = b8.Random.chance( style.arpChance || 30 );
 		var arpeggioInterval = b8.Random.pick( [ 4, 8, 16 ] );
 		var arpeggioPattern = times(
 			arpeggioInterval,
@@ -703,7 +769,7 @@
 			? createFilledPattern( noteCount, true )
 			: createRandomPattern(
 				noteCount,
-				b8.Random.pick( [ 1, 1, interval / 2 ] ),
+				style.chordDensity || 2,
 				interval,
 				2
 			);
@@ -750,7 +816,7 @@
 	 * @param {number} noteCount - The number of beats/positions.
 	 * @returns {string} The compressed drum note string.
 	 */
-	function generateDrumNote( noteCount ) {
+	function generateDrumNote( noteCount, style ) {
 
 		// Pick an instrument and add the starting pipe.
 		const notes = [ b8.Random.pick( drumOptions ), '|' ];
@@ -758,7 +824,7 @@
 		// Create a random pattern for drum hits.
 		const pattern = createRandomPattern(
 			noteCount,
-			b8.Random.int( 1, 3 ),
+			b8.Random.pick( style.drumDensity || [ 1, 2, 3 ] ),
 			b8.Random.pick( [ 4, 8 ] ),
 			3
 		);
