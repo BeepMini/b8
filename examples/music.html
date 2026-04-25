@@ -24,25 +24,36 @@
 </body>
 
 <script>
-	const GOODSEEDS = [ 25101 ];
-
-	// Get list of song types.
-	// const songTypes = Object.keys( b8.Music.types );
-
 	const initialSeed = 46605;
 	const songName = 'song';
 	const playText = 'Generate and Play Song';
 
+	const songStyles = [
+		'calm',
+		'arcade',
+		'busy',
+		'adventure',
+		'puzzle',
+		'shooter'
+	];
+
 	let html = '';
-	// html += `<select id="song-type">${songTypes.map( type => `<option value="${type}">${type}</option>` ).join( '' )}</select>`;
+
+	html += `<div class="flex">`;
+	html += `<label for="song-style">Style</label>`;
+	html += `<select id="song-style">`;
+	html += songStyles.map( style => `<option value="${style}">${style}</option>` ).join( '' );
+	html += `</select>`;
+	html += `</div>`;
+
 	html += `<div class="flex">`;
 	html += `<input type="text" id="song-seed" value="${initialSeed}">`;
 	html += `<button id="random-seed">Random Seed</button>`;
 	html += `</div>`;
-	html += `<button id="play-music">${playText}</button>`;
-	html += `<div id="song-info"></div>`;
 
-	// Function to play the generated zzfxM song.
+	html += `<button id="play-music">${playText}</button>`;
+	html += `<pre id="song-info"></pre>`;
+
 	const playSong = function() {
 
 		const playButton = document.getElementById( 'play-music' );
@@ -55,23 +66,29 @@
 
 		playButton.textContent = 'Stop Song';
 
-		// const type = document.getElementById( 'song-type' ).value; // Get the selected song type.
-		const seed = document.getElementById( 'song-seed' ).value; // Get the seed.
-		console.log( 'Generating song with seed:', seed );
-		const song = b8.Music.generate( { seed } ); // Generate the song.
+		const seed = document.getElementById( 'song-seed' ).value;
+		const style = document.getElementById( 'song-style' ).value;
+
+		console.log( 'Generating song with seed:', seed, 'and style:', style );
+
+		const song = b8.Music.generate( {
+			seed,
+			style
+		} );
+
 		b8.Music.play( song );
 
-		document.querySelector( '#song-info' ).textContent = JSON.stringify( b8.Music.currentSongProperties, null, 2 );
+		document.querySelector( '#song-info' ).textContent = JSON.stringify(
+			b8.Music.currentSongProperties,
+			null,
+			2
+		);
 
-	}
-
-	let song = null; // Active song
-	let ab = null; // Audio buffer
+	};
 
 	document.getElementById( 'music-app' ).innerHTML = html;
 	document.getElementById( 'play-music' ).addEventListener( 'click', playSong );
-	document.getElementById( 'random-seed' ).addEventListener( 'click', () => document.getElementById( 'song-seed' ).value = Math.floor( Math.random() * 100000 ) );
-
+	document.getElementById( 'random-seed' ).addEventListener( 'click', () => {
+		document.getElementById( 'song-seed' ).value = Math.floor( Math.random() * 100000 );
+	} );
 </script>
-
-</html>
