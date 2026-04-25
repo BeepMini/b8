@@ -74,6 +74,20 @@
 			drumDensity: [ 2, 3 ],
 		},
 
+		menu: {
+			tempo: [ 60, 70 ],
+			hold: [ 140, 160, 180 ],
+			noteCount: [ 32, 48 ],
+			chordLength: [ 16, 32 ],
+			channels: [ "bass", "chords" ],
+			melodyDensity: 1,
+			melodyNotes: [ 0 ],
+			chordDensity: 1,
+			bassInterval: [ 16 ],
+			arpChance: 0,
+			drumDensity: [ 0 ],
+		},
+
 		adventure: {
 			tempo: [ 70, 85, 100 ],
 			hold: [ 120, 150, 180 ],
@@ -115,6 +129,21 @@
 			arpChance: 95,
 			drumDensity: [ 4, 5 ],
 		},
+
+		triumphant: {
+			tempo: [ 100, 120, 140 ],
+			hold: [ 80, 90, 100 ],
+			noteCount: [ 48, 64 ],
+			chordLength: [ 8, 16 ],
+			channels: [ "bass", "chords", "melody", "drums" ],
+			melodyDensity: 5,
+			melodyNotes: [ 0, 0, 1, 2, 2 ],  // strong chord tones
+			chordDensity: 8,
+			bassInterval: [ 4, 8 ],
+			arpChance: 10,
+			drumDensity: [ 2, 3 ],
+		},
+
 	};
 
 
@@ -374,6 +403,18 @@
 	b8.Music.isPlaying = function() {
 
 		return p1.isPlaying();
+
+	};
+
+
+	/**
+	 * Gets the available style keys for music generation.
+	 *
+	 * @returns {Array<string>} An array of style keys.
+	 */
+	b8.Music.getStyleKeys = function() {
+
+		return Object.keys( SONG_STYLES );
 
 	};
 
