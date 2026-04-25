@@ -39,6 +39,7 @@
 			chordLength: [ 8, 16 ],
 			channels: [ "bass", "chords", "melody" ],
 			melodyDensity: 2,
+			melodyNotes: [ 0, 0, 2 ],
 			chordDensity: 1,
 			bassInterval: [ 8, 16 ],
 			arpChance: 10,
@@ -50,25 +51,27 @@
 			hold: [ 50, 60, 70, 80 ],
 			noteCount: [ 32, 48, 64 ],
 			chordLength: [ 4, 8 ],
+			chordDensity: 4,
 			channels: [ "bass", "arp", "melody", "drums" ],
 			melodyDensity: 5,
-			chordDensity: 4,
+			melodyNotes: [ 0, 0, 1, 2, 2 ],
 			bassInterval: [ 4, 8 ],
 			arpChance: 50,
 			drumDensity: [ 2, 3 ],
 		},
 
 		busy: {
-			tempo: [ 200, 240, 280 ],
-			hold: [ 40, 50, 60, 70 ],
-			noteCount: [ 32, 48 ],
-			chordLength: [ 4 ],
-			channels: [ "bass", "arp", "counter", "drums" ],
-			melodyDensity: 7,
-			chordDensity: 6,
+			tempo: [ 180, 200, 220 ],
+			hold: [ 60, 70, 80 ],
+			noteCount: [ 48, 64 ],
+			chordLength: [ 4, 8 ],
+			channels: [ "bass", "chords", "arp", "melody", "drums" ],
+			melodyDensity: 6,
+			melodyNotes: [ 0, 1, 2, 2, 3 ],
+			chordDensity: 7,
 			bassInterval: [ 2, 4 ],
-			arpChance: 80,
-			drumDensity: [ 3, 4 ],
+			arpChance: 40,
+			drumDensity: [ 2, 3 ],
 		},
 
 		adventure: {
@@ -76,9 +79,10 @@
 			hold: [ 120, 150, 180 ],
 			noteCount: [ 96, 128 ],
 			chordLength: [ 16, 32 ],
-			channels: [ "bass", "chords", "melody" ],
-			melodyDensity: 2,
 			chordDensity: 1,
+			channels: [ "bass", "chords", "melody" ],
+			melodyDensity: 3,
+			melodyNotes: [ 0, 1, 2, 2, 3 ],
 			bassInterval: [ 8, 16 ],
 			arpChance: 5,
 			drumDensity: [ 0 ],
@@ -91,6 +95,7 @@
 			chordLength: [ 4, 8 ],
 			channels: [ "bass", "arp", "melody", "drums" ],
 			melodyDensity: 5,
+			melodyNotes: [ 0, 1, 2, 3 ],
 			chordDensity: 7,
 			bassInterval: [ 4, 8 ],
 			arpChance: 90,
@@ -98,17 +103,18 @@
 		},
 
 		shooter: {
-			tempo: [ 220, 260, 300 ],
-			hold: [ 25, 35, 45 ],
-			noteCount: [ 32, 48 ],
-			chordLength: [ 2, 4 ],
+			tempo: [ 240, 280, 320 ],
+			hold: [ 20, 25, 30 ],
+			noteCount: [ 32 ],
+			chordLength: [ 2 ],
 			channels: [ "bass", "arp", "counter", "drums" ],
-			melodyDensity: 8,
-			chordDensity: 8,
+			melodyDensity: 9,
+			melodyNotes: [ 1, 2, 2, 3, 3 ],
+			chordDensity: 9,
 			bassInterval: [ 2 ],
 			arpChance: 95,
 			drumDensity: [ 4, 5 ],
-		}
+		},
 	};
 
 
@@ -198,7 +204,7 @@
 	 * @param {number} [options.seed] - Random seed.
 	 * @param {number} [options.noteCount] - Number of beats/positions.
 	 * @param {number} [options.channelCount] - Number of parts to generate.
-	 * @param {string} [options.style] - Song style name: "calm", "arcade", or "busy".
+	 * @param {string} [options.style] - Song style name.
 	 * @param {number|null} [options.tempo] - Tempo in BPM. If null, tempo info is omitted.
 	 * @param {number|null} [options.hold] - Hold duration. If null, hold info is omitted.
 	 * @returns {string} The generated multi-track music string.
@@ -725,7 +731,7 @@
 
 			var chordNotes = chordProgressionNotes[ i ];
 			// Select a random note from the chord.
-			var sourceNote = chordNotes[ b8.Random.int( 0, chordNotes.length - 1 ) ];
+			var sourceNote = pickChordNote( chordNotes, style.melodyNotes );
 			var baseOctave = parseInt( sourceNote.slice( -1 ), 10 );
 			// Clamp the octave so it fits within p1.js range (3 to 6).
 			var newOctave = b8.Utilities.clamp( baseOctave + octaveOffset, 3, 6 );
@@ -814,6 +820,7 @@
 	 * Generates a drum note string for a given note length.
 	 *
 	 * @param {number} noteCount - The number of beats/positions.
+	 * @param {Object} style - The song style object containing drum density options.
 	 * @returns {string} The compressed drum note string.
 	 */
 	function generateDrumNote( noteCount, style ) {
@@ -838,6 +845,27 @@
 		notes.push( '|' );
 
 		return compressNotes( notes );
+
+	}
+
+
+	/**
+	 * Picks a note from a chord using optional weighted chord-note indexes.
+	 *
+	 * @param {Array<string>} chordNotes - Notes in the current chord.
+	 * @param {Array<number>} [noteIndexes] - Weighted chord-note indexes to choose from.
+	 * @returns {string} The selected note.
+	 */
+	function pickChordNote( chordNotes, noteIndexes ) {
+
+		if ( !noteIndexes || noteIndexes.length === 0 ) {
+			return b8.Random.pick( chordNotes );
+		}
+
+		var noteIndex = b8.Random.pick( noteIndexes );
+		noteIndex = b8.Utilities.clamp( noteIndex, 0, chordNotes.length - 1 );
+
+		return chordNotes[ noteIndex ];
 
 	}
 
