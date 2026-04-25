@@ -1,34 +1,351 @@
 /**
- * b8 Music Module
+ * b8 Music Module.
+ *
  * This module handles the creation, manipulation, and playback of procedurally generated music.
  */
 ( function( b8 ) {
 
 	b8.Music = {};
 
+	/**
+	 * BeepMini uses a custom version of p1.js for music generation and playback.
+	 *
+	 * Alphabet used for p1.js music notation.
+	 * p1.js supports 52 keys using these 52 characters.
+	 */
+	const p1Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
 
 	/**
-	 * Calls a function n times and collects the results in an array.
+	 * Predefined song styles with associated tempo ranges, hold durations, and musical roles.
 	 *
-	 * @param {number} n - Number of times to call the function.
-	 * @param {function(number): any} fn - Function to be called with the current index.
-	 * @returns {Array<any>} An array of results.
+	 * Each style defines:
+	 * - tempo: An array of possible tempos in BPM.
+	 * - hold: An array of possible p1.js hold values.
+	 * - channels: An array of musical roles that determine which parts to generate.
+	 *
+	 * Styles:
+	 * - calm: Slower tempo, longer holds, and simpler instrumentation.
+	 * - arcade: Medium tempo, moderate holds, and more varied instrumentation.
+	 * - busy: Faster tempo, shorter holds, and complex instrumentation.
+	 *
+	 * @type {Object<string, {tempo: Array<number>, hold: Array<number>, channels: Array<string>}>}
 	 */
-	function times( n, fn ) {
+	const SONG_STYLES = {
+		calm: {
+			tempo: [ 70, 100, 140 ],
+			hold: [ 90, 100, 110, 120 ],
+			channels: [ "bass", "chords", "melody" ],
+		},
 
-		var result = [];
-		for ( var i = 0; i < n; i++ ) {
-			result.push( fn( i ) );
+		arcade: {
+			tempo: [ 170, 200, 240 ],
+			hold: [ 50, 60, 70, 80 ],
+			channels: [ "bass", "arp", "melody", "drums" ],
+		},
+
+		busy: {
+			tempo: [ 200, 240, 280 ],
+			hold: [ 40, 50, 60, 70 ],
+			channels: [ "bass", "arp", "counter", "drums" ],
 		}
-		return result;
+	};
+
+
+	/**
+	 * Common chord progressions represented as arrays of Roman numeral chord
+	 * identifiers.
+	 *
+	 * Each progression is a sequence of chords that can be used to generate the
+	 * harmonic structure of a song.
+	 * The Roman numerals correspond to scale degrees and chord qualities
+	 * (e.g., "I" is the tonic major chord, "VIm" is the minor chord built on the sixth degree).
+	 *
+	 * @type {Array<Array<string>>}
+	 */
+	const PROGRESSIONS = [
+		[ "I", "V", "VIm", "IV" ],
+		[ "I", "VIm", "IV", "V" ],
+		[ "VIm", "IV", "I", "V" ],
+		[ "I", "IV", "V", "I" ],
+		[ "I", "IIm", "V", "I" ]
+	];
+
+
+	/**
+	 * Chord mapping for key C.
+	 *
+	 * @type {Object<string, Array<string>>}
+	 */
+	const chordMap = {
+		I: [ "C4", "E4", "G4", "B4" ],
+		IIIm: [ "E4", "G4", "B4", "D5" ],
+		VIm: [ "A3", "C4", "E4", "G4" ],
+		IV: [ "F4", "A4", "C5", "E5" ],
+		IIm: [ "D4", "F4", "A4", "C5" ],
+		V: [ "G3", "B3", "D4", "F4" ],
+		VIIm: [ "B3", "D4", "F4", "A4" ]
+	};
+
+
+	/**
+	 * Mapping of key shifts for transposition.
+	 *
+	 * @type {Object<string, number>}
+	 */
+	const keyShift = {
+		C: 0,
+		D: 2,
+		Eb: 3,
+		F: 5,
+		G: 7,
+		A: 9,
+		Bb: 10
+	};
+
+
+	/**
+	 * Available instrument options.
+	 *
+	 * @type {Array<number>}
+	 */
+	const instrumentOptions = [ 0, 1, 2, 3, 4, 5 ];
+
+
+	/**
+	 * Available drum options.
+	 *
+	 * @type {Array<number>}
+	 */
+	const drumOptions = [ 6, 7 ];
+
+
+	/**
+	 * Stores the most recent song so it can be restarted after pausing.
+	 * This is necessary because p1.js does not have a built-in pause/resume functionality.
+	 *
+	 * @type {string|null}
+	 */
+	let currentSong = null;
+
+
+	/**
+	 * Generates multi-track music in p1.js format.
+	 * It creates a chord progression and then generates various parts (melody, chord, or drum).
+	 * Optionally prepends tempo and hold information to the first part.
+	 *
+	 * @param {Object} [options] - Options for music generation.
+	 * @param {number} [options.seed] - Random seed.
+	 * @param {number} [options.noteCount] - Number of beats/positions.
+	 * @param {number} [options.channelCount] - Number of parts to generate.
+	 * @param {string} [options.style] - Song style name: "calm", "arcade", or "busy".
+	 * @param {number|null} [options.tempo] - Tempo in BPM. If null, tempo info is omitted.
+	 * @param {number|null} [options.hold] - Hold duration. If null, hold info is omitted.
+	 * @returns {string} The generated multi-track music string.
+	 */
+	b8.Music.generate = function( options ) {
+
+		if ( options && typeof options.seed !== "undefined" ) {
+			b8.Random.setSeed( options.seed );
+		}
+
+		var styleName = options && options.style
+			? options.style
+			: b8.Random.pick( Object.keys( SONG_STYLES ) );
+
+		var style = SONG_STYLES[ styleName ] || SONG_STYLES.arcade;
+
+		const defaultOptions = {
+			seed: b8.Random.int( 10000, 99999 ),
+			style: styleName,
+			noteCount: b8.Random.pick( [ 32, 48, 64 ] ),
+			channelCount: style.channels.length,
+			tempo: b8.Random.pick( style.tempo ),
+			hold: b8.Random.pick( style.hold )
+		};
+
+		const opts = Object.assign( {}, defaultOptions, options );
+
+		b8.Music.currentSongProperties = opts;
+
+		b8.Random.setSeed( opts.seed );
+
+		var chordProgressionNotes = generateChordProgression( opts.noteCount );
+		var roles = style.channels.slice( 0, opts.channelCount );
+
+		var parts = roles.map(
+			function( role ) {
+				return generatePartByRole( role, opts.noteCount, chordProgressionNotes );
+			}
+		);
+
+		if ( opts.tempo !== null ) {
+			var tempoStr = String( opts.tempo );
+
+			if ( opts.hold !== null ) {
+				tempoStr += "." + String( opts.hold );
+			}
+
+			parts[ 0 ] = tempoStr + "\n" + parts[ 0 ];
+		}
+
+		return parts.join( "\n" );
+
+	};
+
+
+	/**
+	 * Plays a p1.js music string.
+	 *
+	 * @param {string} song - The music string to play.
+	 * @returns {void}
+	 */
+	b8.Music.play = function( song ) {
+
+		p1( song );
+
+		if ( song ) {
+			currentSong = song;
+		}
+
+	};
+
+
+	/**
+	 * Stops the current music playback.
+	 * If `clearCurrentSong` is true, it will also clear the current song reference.
+	 * This is disabled when the music is paused to allow resuming playback.
+	 *
+	 * @param {boolean} [clearCurrentSong=true] - Whether to clear the current song reference.
+	 * @returns {void}
+	 */
+	b8.Music.stop = function( clearCurrentSong = true ) {
+
+		// Clear the currently stored song.
+		b8.Utilities.checkBoolean( "clearCurrentSong", clearCurrentSong );
+		if ( clearCurrentSong ) currentSong = null;
+
+		// Stop the music playback.
+		b8.Music.play( "" );
+
+	};
+
+
+	/**
+	 * Pauses the current music playback.
+	 *
+	 * @returns {void}
+	 */
+	b8.Music.pause = function() {
+
+		if ( b8.Music.isPlaying() ) {
+			b8.Music.stop( false );
+		}
+
+	};
+
+
+	/**
+	 * Resumes the current music playback.
+	 *
+	 * Restarts the most recent song after it has been paused.
+	 *
+	 * p1.js does not resume from the exact paused position here. It starts the
+	 * stored song again from the beginning.
+	 *
+	 * @returns {void}
+	 */
+	b8.Music.resume = function() {
+
+		// Restart the stored song if playback is currently stopped.
+		if ( currentSong && !b8.Music.isPlaying() ) {
+			b8.Music.play( currentSong );
+		}
+
+	};
+
+
+	/**
+	 * Sets the volume for the music playback.
+	 *
+	 * @param {number} volume - The volume level (0 to 1).
+	 * @returns {void}
+	 */
+	b8.Music.setVolume = function( volume ) {
+
+		b8.Utilities.checkNumber( "volume", volume );
+
+		p1.setVolume( volume );
+
+	};
+
+
+	/**
+	 * Set the tempo of a currently playing song.
+	 *
+	 * @param {number} tempo - The new tempo in BPM.
+	 * @returns {void}
+	 */
+	b8.Music.setTempo = function( tempo ) {
+
+		b8.Utilities.checkInt( "tempo", tempo );
+
+		// Ensure tempo is within a valid range.
+		if ( tempo < 50 ) {
+			tempo = 50;
+		}
+
+		p1.setTempo( tempo );
+
+	};
+
+
+	/**
+	 * Checks if music is currently playing.
+	 *
+	 * @returns {boolean} True if music is playing, otherwise false.
+	 */
+	b8.Music.isPlaying = function() {
+
+		return p1.isPlaying();
+
+	};
+
+
+	/**
+	 * Resets the music module, stopping any playback and clearing the current song.
+	 *
+	 * @returns {void}
+	 */
+	b8.Music.reset = function() {
+
+		b8.Music.stop();
+
+	};
+
+
+	// Handle page visibility changes to pause/resume music.
+	document.addEventListener( 'b8.pageVisibility.wake', b8.Music.resume );
+	document.addEventListener( 'b8.pageVisibility.sleep', b8.Music.pause );
+
+
+	/**
+	 * Creates a boolean pattern filled with the same value.
+	 *
+	 * @param {number} len - Number of values in the pattern.
+	 * @param {boolean} value - Value to use for every position.
+	 * @returns {Array<boolean>} The filled pattern.
+	 */
+	function createFilledPattern( len, value ) {
+
+		return times(
+			len,
+			function() {
+				return value;
+			}
+		);
 
 	}
-
-
-	// --- p1.js Note Conversion ---
-
-	// p1.js supports 52 keys using these 52 characters.
-	const p1Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
 
 	/**
@@ -149,7 +466,7 @@
 	 */
 	function reversePattern( pattern, interval, freq ) {
 
-		var pt = times(
+		var togglePattern = times(
 			interval,
 			function() {
 				return false;
@@ -157,86 +474,16 @@
 		);
 
 		for ( var i = 0; i < freq; i++ ) {
-			pt[ b8.Random.int( 0, interval - 1 ) ] = true;
+			togglePattern[ b8.Random.int( 0, interval - 1 ) ] = true;
 		}
 
 		return pattern.map(
 			function( p, i ) {
-				return pt[ i % interval ] ? !p : p;
+				return togglePattern[ i % interval ] ? !p : p;
 			}
 		);
 
 	}
-
-
-	// --- Chord Progression Generation ---
-
-
-	/**
-	 * Available chord progressions represented in Roman numerals.
-	 *
-	 * @type {Array<Array<string>>}
-	 */
-	const chords = [
-		[ "I", "IIIm", "VIm" ],
-		[ "IV", "IIm" ],
-		[ "V", "VIIm" ]
-	];
-
-
-	/**
-	 * Mapping of next chord progression indices.
-	 *
-	 * @type {Array<Array<number>>}
-	 */
-	const nextChordsIndex = [
-		[ 0, 1, 2 ],
-		[ 1, 2, 0 ],
-		[ 2, 0 ]
-	];
-
-
-	/**
-	 * Chord mapping for key C.
-	 *
-	 * @type {Object<string, Array<string>>}
-	 */
-	const chordMap = {
-		I: [ "C4", "E4", "G4", "B4" ],
-		IIIm: [ "E4", "G4", "B4", "D5" ],
-		VIm: [ "A3", "C4", "E4", "G4" ],
-		IV: [ "F4", "A4", "C5", "E5" ],
-		IIm: [ "D4", "F4", "A4", "C5" ],
-		V: [ "G3", "B3", "D4", "F4" ],
-		VIIm: [ "B3", "D4", "F4", "A4" ]
-	};
-
-
-	/**
-	 * Mapping of key shifts for transposition.
-	 *
-	 * @type {Object<string, number>}
-	 */
-	const keyShift = {
-		C: 0,
-		D: 2,
-		Eb: 3,
-		F: 5,
-		G: 7,
-		A: 9,
-		Bb: 10
-	};
-
-
-	/**
-	 * Available instrument options.
-	 *
-	 * @type {Array<number>}
-	 */
-	const instrumentOptions = [ 0, 1, 2, 3, 4, 5 ];
-
-	const drumOptions = [ 6, 7 ];
-
 
 	/**
 	 * Gets the chord notes for a given key, Roman numeral, and octave.
@@ -284,45 +531,106 @@
 
 
 	/**
-	 * Generates a chord progression as an array of chord note arrays.
+	 * Generates a chord progression as chord notes for every note position.
 	 *
-	 * @param {number} len - The number of segments in the progression.
-	 * @returns {Array<Array<string>>} The chord progression.
+	 * A key, Roman numeral progression, and chord length are chosen randomly.
+	 * The returned array has one chord-note array per generated note position,
+	 * which makes later melody, bass, and chord generation simpler.
+	 *
+	 * @param {number} noteCount - Number of note positions to generate chord data for.
+	 * @returns {Array<Array<string>>} Chord notes for each note position.
 	 */
-	function generateChordProgression( len ) {
+	function generateChordProgression( noteCount ) {
 
 		var keys = [ "C", "D", "Eb", "F", "G", "A", "Bb" ];
 		var key = b8.Random.pick( keys );
-		var chordChangeInterval = 4;
-		var currentRoman = null;
-		var chordsIndex = 0;
-		var progression = [];
+		var progression = b8.Random.pick( PROGRESSIONS );
+		var chordLength = b8.Random.pick( [ 4, 8, 8, 16 ] );
+		var result = [];
 
-		for ( var i = 0; i < len; i++ ) {
-			if ( i % chordChangeInterval === 0 ) {
-				if ( i === 0 ) {
-					chordsIndex = b8.Random.int( 0, chords.length - 1 );
-					currentRoman = b8.Random.pick( chords[ chordsIndex ] );
-				} else if (
-					b8.Random.num() <
-					0.8 - ( ( i / chordChangeInterval ) % 2 ) * 0.5
-				) {
-					chordsIndex = b8.Random.pick( nextChordsIndex[ chordsIndex ] );
-					currentRoman = b8.Random.pick( chords[ chordsIndex ] );
-				}
-				var currentChord = getChordNotes( key, currentRoman );
-			}
+		for ( var i = 0; i < noteCount; i++ ) {
+			var chordIndex = Math.floor( i / chordLength ) % progression.length;
+			var roman = progression[ chordIndex ];
 
-			progression.push( currentChord );
-
+			result.push( getChordNotes( key, roman ) );
 		}
 
-		return progression;
+		return result;
 
 	}
 
 
-	// --- p1.js Music String Generators ---
+	/**
+	 * Generates a bass part from the root note of each chord.
+	 *
+	 * The bass only plays at regular intervals. Between hits it inserts rests.
+	 * Root notes are forced into octave 3 to keep the bass low and stable.
+	 *
+	 * @param {number} noteCount - Number of note positions to generate.
+	 * @param {Array<Array<string>>} chordProgressionNotes - Chord notes for each note position.
+	 * @returns {string} A compressed p1.js bass part.
+	 */
+	function generateBassNote( noteCount, chordProgressionNotes ) {
+
+		const notes = [ b8.Random.pick( instrumentOptions ), "|" ];
+		var interval = b8.Random.pick( [ 4, 8 ] );
+
+		for ( var i = 0; i < noteCount; i++ ) {
+
+			if ( i % interval !== 0 ) {
+				notes.push( " " );
+				continue;
+			}
+
+			var root = chordProgressionNotes[ i ][ 0 ];
+			var noteName = root.slice( 0, -1 );
+			var finalNote = noteName + "3";
+
+			notes.push( noteToP1( finalNote ) );
+
+		}
+
+		notes.push( "|" );
+
+		return compressNotes( notes );
+
+	}
+
+
+	/**
+	 * Generates a p1.js part for a named musical role.
+	 *
+	 * This keeps style definitions simple. Styles only need to list role names,
+	 * and this function decides which generator should be used for each role.
+	 *
+	 * @param {string} role - The part role: "bass", "drums", "arp", "chords", "counter", or "melody".
+	 * @param {number} noteCount - Number of note positions to generate.
+	 * @param {Array<Array<string>>} chordProgressionNotes - Chord notes for each note position.
+	 * @returns {string} A compressed p1.js part.
+	 */
+	function generatePartByRole( role, noteCount, chordProgressionNotes ) {
+
+		switch ( role ) {
+
+			case "bass":
+				return generateBassNote( noteCount, chordProgressionNotes );
+
+			case "drums":
+				return generateDrumNote( noteCount );
+
+			case "arp":
+			case "chords":
+				return generateChordNote( noteCount, chordProgressionNotes );
+
+			case "counter":
+			case "melody":
+			default:
+				return generateMelodyNote( noteCount, chordProgressionNotes );
+
+		}
+
+	}
+
 
 	/**
 	 * Generates a melody note string based on note length and chord progression.
@@ -352,11 +660,11 @@
 
 			var chordNotes = chordProgressionNotes[ i ];
 			// Select a random note from the chord.
-			var ns = chordNotes[ b8.Random.int( 0, chordNotes.length - 1 ) ];
-			var baseOctave = parseInt( ns.slice( -1 ), 10 );
+			var sourceNote = chordNotes[ b8.Random.int( 0, chordNotes.length - 1 ) ];
+			var baseOctave = parseInt( sourceNote.slice( -1 ), 10 );
 			// Clamp the octave so it fits within p1.js range (3 to 6).
 			var newOctave = b8.Utilities.clamp( baseOctave + octaveOffset, 3, 6 );
-			var noteName = ns.slice( 0, -1 ).toUpperCase();
+			var noteName = sourceNote.slice( 0, -1 ).toUpperCase();
 			var finalNote = noteName + newOctave;
 			var p1Note = noteToP1( finalNote );
 			notes.push( p1Note );
@@ -392,13 +700,13 @@
 
 		var interval = b8.Random.pick( [ 2, 4, 8 ] );
 		var pattern = isArpeggio
-			? times(
+			? createFilledPattern( noteCount, true )
+			: createRandomPattern(
 				noteCount,
-				function() {
-					return true;
-				}
-			)
-			: createRandomPattern( noteCount, b8.Random.pick( [ 1, 1, interval / 2 ] ), interval, 2 );
+				b8.Random.pick( [ 1, 1, interval / 2 ] ),
+				interval,
+				2
+			);
 
 		var baseOctave = b8.Random.int( -1, 1 );
 		var isReciprocatingOctave = b8.Random.chance( isArpeggio ? 30 : 80 );
@@ -419,10 +727,10 @@
 
 			var chordNotes = chordProgressionNotes[ i ];
 			var noteIndex = isArpeggio ? arpeggioPattern[ i % arpeggioInterval ] : 0;
-			var ns = chordNotes[ noteIndex ];
-			var baseOct = parseInt( ns.slice( -1 ), 10 );
+			var sourceNote = chordNotes[ noteIndex ];
+			var baseOct = parseInt( sourceNote.slice( -1 ), 10 );
 			var newOct = b8.Utilities.clamp( baseOct + baseOctave + octaveOffset, 3, 6 );
-			var noteName = ns.slice( 0, -1 ).toUpperCase();
+			var noteName = sourceNote.slice( 0, -1 ).toUpperCase();
 			var finalNote = noteName + newOct;
 			var p1Note = noteToP1( finalNote );
 			notes.push( p1Note );
@@ -469,211 +777,20 @@
 
 
 	/**
-	 * Generates multi-track music in p1.js format.
-	 * It creates a chord progression and then generates various parts (melody, chord, or drum).
-	 * Optionally prepends tempo and hold information to the first part.
+	 * Calls a function n times and collects the results in an array.
 	 *
-	 * @param {Object} [options] - Options for music generation.
-	 * @param {number} [options.seed] - Random seed.
-	 * @param {number} [options.noteCount] - Number of beats/positions.
-	 * @param {number} [options.channelCount] - Number of parts to generate.
-	 * @param {number} [options.drumPartRatio] - Ratio of parts to be drums.
-	 * @param {number|null} [options.tempo] - Tempo in BPM. If null, tempo info is omitted.
-	 * @param {number|null} [options.hold] - Hold duration. If null, hold info is omitted.
-	 * @returns {string} The generated multi-track music string.
+	 * @param {number} n - Number of times to call the function.
+	 * @param {function(number): any} fn - Function to be called with the current index.
+	 * @returns {Array<any>} An array of results.
 	 */
-	b8.Music.generate = function( options ) {
+	function times( n, fn ) {
 
-		if ( options && options.seed ) {
-			b8.Random.setSeed( options.seed );
+		var result = [];
+		for ( var i = 0; i < n; i++ ) {
+			result.push( fn( i ) );
 		}
-
-		/**
-		 * Default options for the music generator.
-		 *
-		 * @type {Object}
-		 */
-		const defaultOptions = {
-			seed: b8.Random.int( 10000, 99999 ),
-			noteCount: b8.Random.pick( [ 16, 32, 48, 64 ] ),
-			channelCount: b8.Random.int( 2, 5 ),
-			drumPartRatio: 0.3,
-			tempo: b8.Random.pick( [ 70, 100, 140, 170, 200, 240, 280 ] ), // Default tempo (BPM).
-			hold: b8.Random.pick( [ 40, 50, 60, 60, 70, 70, 70, 80, 80, 80, 80, 90, 90, 90, 100, 110, 120, 130, 140, 150 ] )    // Default hold duration.
-		};
-
-		// Merge default options with provided options.
-		const opts = Object.assign( {}, defaultOptions, options );
-
-		b8.Music.currentSongProperties = opts;
-
-		b8.Random.setSeed( opts.seed );
-		var chordProgressionNotes = generateChordProgression( opts.noteCount );
-		var parts = times(
-			opts.channelCount,
-			function() {
-				var isDrum = b8.Random.num() < opts.drumPartRatio;
-				if ( isDrum ) {
-					return generateDrumNote( opts.noteCount );
-				} else {
-					if ( b8.Random.num() < 0.5 ) {
-						return generateMelodyNote( opts.noteCount, chordProgressionNotes );
-					} else {
-						return generateChordNote( opts.noteCount, chordProgressionNotes );
-					}
-				}
-			}
-		);
-
-		// Prepend tempo (and hold) information to the first part if provided.
-		if ( opts.tempo !== null ) {
-			var tempoStr = String( opts.tempo );
-			if ( opts.hold !== null ) {
-				tempoStr += "." + String( opts.hold );
-			}
-			parts[ 0 ] = tempoStr + "\n" + parts[ 0 ];
-		}
-
-		// Join all parts with a newline so p1.js can play multi-track music.
-		return parts.join( "\n" );
+		return result;
 
 	}
-
-
-	// Store the currently playing song so it can be started again after pausing.
-	let currentSong = null;
-
-
-	/**
-	 * Plays a p1.js music string.
-	 *
-	 * @param {string} song - The music string to play.
-	 * @returns {void}
-	 */
-	b8.Music.play = function( song ) {
-
-		p1( song );
-
-		if ( song ) {
-			currentSong = song;
-		}
-
-	}
-
-
-	/**
-	 * Stops the current music playback.
-	 * If `clearCurrentSong` is true, it will also clear the current song reference.
-	 * This is disabled when the music is paused to allow resuming playback.
-	 *
-	 * @param {boolean} [clearCurrentSong=true] - Whether to clear the current song reference.
-	 * @returns {void}
-	 */
-	b8.Music.stop = function( clearCurrentSong = true ) {
-
-		// Clear the currently stored song.
-		b8.Utilities.checkBoolean( "clearCurrentSong", clearCurrentSong );
-		if ( clearCurrentSong ) currentSong = null;
-
-		// Stop the music playback.
-		b8.Music.play( "" );
-
-	}
-
-
-	/**
-	 * Pauses the current music playback.
-	 *
-	 * @returns {void}
-	 */
-	b8.Music.pause = function() {
-
-		if ( b8.Music.isPlaying() ) {
-			b8.Music.stop( false );
-		}
-
-	}
-
-
-	/**
-	 * Resumes the current music playback.
-	 *
-	 * If a song is currently playing, it will continue from where it left off.
-	 * If no song is playing, it will do nothing.
-	 *
-	 * @returns {void}
-	 */
-	b8.Music.resume = function() {
-
-		// If there is a current song and it is not playing, resume playback.
-		if ( currentSong && !b8.Music.isPlaying() ) {
-			b8.Music.play( currentSong );
-		}
-
-	}
-
-
-	/**
-	 * Sets the volume for the music playback.
-	 *
-	 * @param {number} volume - The volume level (0 to 1).
-	 * @returns {void}
-	 */
-	b8.Music.setVolume = function( volume ) {
-
-		b8.Utilities.checkNumber( "volume", volume );
-
-		p1.setVolume( volume );
-
-	}
-
-
-	/**
-	 * Set the tempo of a currently playing song.
-	 *
-	 * @param {number} tempo - The new tempo in BPM.
-	 * @returns {void}
-	 */
-	b8.Music.setTempo = function( tempo ) {
-
-		b8.Utilities.checkInt( "tempo", tempo );
-
-		// Ensure tempo is within a valid range.
-		if ( tempo < 50 ) {
-			tempo = 50;
-		}
-
-		p1.setTempo( tempo );
-
-	}
-
-
-	/**
-	 * Checks if music is currently playing.
-	 *
-	 * @returns {boolean} True if music is playing, otherwise false.
-	 */
-	b8.Music.isPlaying = function() {
-
-		return p1.isPlaying();
-
-	}
-
-
-	/**
-	 * Resets the music module, stopping any playback and clearing the current song.
-	 *
-	 * @returns {void}
-	 */
-	b8.Music.reset = function() {
-
-		b8.Music.stop();
-		currentSong = null;
-
-	}
-
-	// Handle page visibility changes to pause/resume music.
-	document.addEventListener( 'b8.pageVisibility.wake', b8.Music.resume );
-	document.addEventListener( 'b8.pageVisibility.sleep', b8.Music.pause );
 
 } )( b8 );
