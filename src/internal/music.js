@@ -117,8 +117,8 @@
 		},
 
 		shooter: {
-			tempo: [ 240, 280, 320 ],
-			hold: [ 20, 25, 30 ],
+			tempo: [ 175, 200, 225 ],
+			hold: [ 30, 40, 50, 60 ],
 			noteCount: [ 32 ],
 			chordLength: [ 2 ],
 			channels: [ "bass", "arp", "counter", "drums" ],
