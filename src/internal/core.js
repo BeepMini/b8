@@ -792,8 +792,10 @@
 
 	/**
 	 * Draws a rectangle of the specified width and height.
-	 *
 	 * This ignores the cursor position.
+	 *
+	 * The rectangle is drawn using the current foreground color. It is drawn
+	 * with 4 rects to ensure pixel perfect lines.
 	 *
 	 * @param {number} x - The x-coordinate of the upper-left corner of the rectangle.
 	 * @param {number} y - The y-coordinate of the upper-left corner of the rectangle.
@@ -803,29 +805,38 @@
 	 */
 	b8.Core.drawRect = function( x, y, width, height, lineWidth = 1 ) {
 
-		b8.Utilities.checkNumber( "x", x );
-		b8.Utilities.checkNumber( "y", y );
-		b8.Utilities.checkNumber( "width", width );
-		b8.Utilities.checkNumber( "height", height );
-		b8.Utilities.checkNumber( "lineWidth", lineWidth );
+		b8.Utilities.checkInt( "x", x );
+		b8.Utilities.checkInt( "y", y );
+		b8.Utilities.checkInt( "width", width );
+		b8.Utilities.checkInt( "height", height );
+		b8.Utilities.checkInt( "lineWidth", lineWidth );
 
-		const oldStrokeStyle = b8.Core.offCtx.strokeStyle;
-		const oldLineWidth = b8.Core.offCtx.lineWidth;
+		x = Math.round( x );
+		y = Math.round( y );
+		width = Math.round( width );
+		height = Math.round( height );
+		// Clamp lineWidth to prevent it from being larger than half the width or height of the rectangle.
+		lineWidth = Math.min( lineWidth, Math.floor( width / 2 ), Math.floor( height / 2 ) );
 
-		b8.Core.offCtx.strokeStyle = b8.Core.getColorHex( b8.Core.drawState.fgColor );
-		b8.Core.offCtx.lineWidth = lineWidth;
+		const oldFillStyle = b8.Core.offCtx.fillStyle;
 
-		// Drawn inside the shape.
-		b8.Core.offCtx.strokeRect(
-			Math.round( x ), Math.round( y ),
-			Math.round( width ), Math.round( height )
-		);
+		b8.Core.offCtx.fillStyle = b8.Core.getColorHex( b8.Core.drawState.fgColor );
 
-		// Restore properties.
-		b8.Core.offCtx.strokeStyle = oldStrokeStyle;
-		b8.Core.offCtx.lineWidth = oldLineWidth;
+		// Top.
+		b8.Core.offCtx.fillRect( x, y, width, lineWidth );
 
-	}
+		// Bottom.
+		b8.Core.offCtx.fillRect( x, y + height - lineWidth, width, lineWidth );
+
+		// Left.
+		b8.Core.offCtx.fillRect( x, y, lineWidth, height );
+
+		// Right.
+		b8.Core.offCtx.fillRect( x + width - lineWidth, y, lineWidth, height );
+
+		b8.Core.offCtx.fillStyle = oldFillStyle;
+
+	};
 
 
 	/**
