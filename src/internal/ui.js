@@ -106,6 +106,51 @@
 
 
 	/**
+	 * Draws a progress bar. Uses the current background and foreground colours
+	 * for the background of the bar and the bar fill.
+	 *
+	 * @param {number} [length=5] - The length of the progress bar.
+	 * @param {number} [percent=0] - The percentage of the progress bar to fill.
+	 * @return {void}
+	 */
+	b8.UI.progressBar = function( length = 5, percent = 0 ) {
+
+		const col = b8.col();
+		const row = b8.row();
+		const pixelWidth = length * b8.CONFIG.CHR_WIDTH;
+
+		const oldFg = b8.Core.drawState.fgColor;
+		const oldBg = b8.Core.drawState.bgColor;
+
+		// Draw the background.
+		b8.color( oldBg );
+		b8.fillRect(
+			col * b8.CONFIG.CHR_WIDTH,
+			row * b8.CONFIG.CHR_HEIGHT,
+			pixelWidth,
+			b8.CONFIG.CHR_HEIGHT
+		);
+
+		// Clamp percent to the range [0, 1].
+		if ( percent <= 0 ) return;
+		if ( percent > 1 ) percent = 1;
+
+		// Draw the filled portion. The width is determined by the percentage of the
+		// progress bar to fill.
+		// Length in pixels of the filled portion.
+		const filledPixels = Math.round( pixelWidth * percent );
+		b8.color( oldFg, oldBg );
+		b8.fillRect(
+			col * b8.CONFIG.CHR_WIDTH,
+			row * b8.CONFIG.CHR_HEIGHT,
+			filledPixels,
+			b8.CONFIG.CHR_HEIGHT
+		);
+
+	}
+
+
+	/**
 	 * Builds a rectangle from the current cursor position.
 	 *
 	 * @param {Object} opts
