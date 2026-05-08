@@ -30,12 +30,19 @@
 
 
 	/**
-	 * Sets the frame handler, that is, the function that will be called on
-	 * every frame to render the screen. This is only needed if you are making a
-	 * real time game. For asynchronous games, you can update the screen manually.
+	 * Starts the realtime game loop.
 	 *
-	 * @param {Function} handler - The frame handler function.
-	 * @param {number} [fps=30] - The target frames per second. Recommended: 30.
+	 * This sets the update and render handlers that will be called automatically
+	 * every frame.
+	 *
+	 * Use this for realtime games. For asynchronous or turn-based games you can
+	 * update and render manually instead.
+	 *
+	 * The update handler receives delta time in seconds.
+	 *
+	 * @param {Function|null} [renderHandler=null] - Function called every frame to draw the screen.
+	 * @param {Function|null} [updateHandler=null] - Function called every frame to update game state. Receives dt in seconds.
+	 * @param {number} [fps=30] - The target frames per second.
 	 * @returns {void}
 	 */
 	b8.frame = function( renderHandler = null, updateHandler = null, fps = 30 ) {
@@ -584,13 +591,21 @@
 
 
 	/**
-	 * Draws an actor on the screen with a specific frame and direction.
+	 * Draws an animated actor at the current cursor position.
 	 *
-	 * @param {number} ch - The character code of the actor.
-	 * @param {number} frame - The frame to draw.
-	 * @param {number} [direction=0] - The direction to draw the actor in. 0 = right, 1 = left.
-	 * @param {number} [offsetCol=0] - The x offset to apply to the drawing position as a fraction of the tile width.
-	 * @param {number} [offsetRow=0] - The y offset to apply to the drawing position as a fraction of the tile height.
+	 * Actors use named animations such as:
+	 * - idle
+	 * - move-left
+	 * - move-right
+	 * - move-up
+	 * - move-down
+	 *
+	 * Unlike tiles, actors support animation playback.
+	 *
+	 * @param {number|string} ch - The actor character code or character.
+	 * @param {string} animation - The animation name to draw.
+	 * @param {number} [offsetCol=0] - Horizontal offset as a fraction of the tile width.
+	 * @param {number} [offsetRow=0] - Vertical offset as a fraction of the tile height.
 	 * @returns {void}
 	 */
 	b8.drawActor = function( ch, animation, offsetCol = 0, offsetRow = 0 ) {
@@ -878,45 +893,6 @@
 		b8.Utilities.checkNumber( "maxWidth", maxWidth );
 
 		return b8.TextRenderer.wrapText( text, maxWidth );
-
-	}
-
-
-	/**
-	 * Add a new game scene.
-	 *
-	 * @param {string} name - The name of the scene.
-	 * @param {Function} update - The update function for the scene.
-	 * @returns {void}
-	 */
-	b8.addScene = function( name, update = {} ) {
-
-		b8.Scene.add( name, update );
-
-	}
-
-
-	/**
-	 * Switches to a specified scene by name.
-	 *
-	 * @param {string} name - The name of the scene to switch to.
-	 * @returns {void}
-	 */
-	b8.switchScene = function( name ) {
-
-		b8.Scene.set( name );
-
-	}
-
-
-	/**
-	 * Gets the current active scene.
-	 *
-	 * @returns {Object|null} The active scene object, or null if no scene is active.
-	 */
-	b8.getScene = function() {
-
-		return b8.Scene.get();
 
 	}
 

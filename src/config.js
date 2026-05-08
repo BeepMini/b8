@@ -1,5 +1,7 @@
 ( function( b8 ) {
 
+	// User config passed to b8.init() is merged with this object.
+	// You only need to override the values you want to change.
 	b8.CONFIG = {
 		// Enable debug?
 		DEBUG: true,
@@ -38,8 +40,9 @@
 		// These are for the default font(s). If you use a different list you
 		// will need to upate the font file to match.
 		CHRS: `ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789*+=-<>_#&@%^~$£€¥¢!?:;'"/\\()[]{}.,©®™•…| `,
-		// Character size. The characters file's width must be
-		// 12 * CHR_WIDTH and the height must be 12 * CHR_HEIGHT.
+		// Size of each character tile in pixels.
+		// Font image width should be:
+		// charsPerRow * CHR_WIDTH
 		CHR_WIDTH: 12,
 		CHR_HEIGHT: 12,
 		// Screen width and height in characters.

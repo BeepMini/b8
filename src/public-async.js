@@ -108,8 +108,8 @@
 	/**
 	 * Waits until the user inputs a line of text, then returns it.
 	 *
-	 * @param {string} [initString=""] - The initial string presented for the user to edit.
 	 * @param {string} [prompt="Enter text:"] - An optional prompt to display before the input.
+	 * @param {string} [initString=""] - The initial string presented for the user to edit.
 	 * @param {number} [maxLen=-1] - The maximum length of the string the user can type. -1 means no limit.
 	 * @param {number} [maxWidth=-1] - The maximum width of the input line in characters. -1 means no wrapping.
 	 * @returns {Promise<string>} The input text.

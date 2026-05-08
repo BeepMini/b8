@@ -432,8 +432,8 @@
 	/**
 	 * Set the update and render callbacks for the game loop.
 	 *
+	 * @param {Function|null} renderCallback - The render function.
 	 * @param {Function|null} updateCallback - The update function. Optional.
-	 * @param {Function} renderCallback - The render function.
 	 * @param {number} [targetFps=30] - Target frames per second.
 	 * @returns {void}
 	 */
@@ -669,10 +669,10 @@
 	/**
 	 * Gets the current time in milliseconds.
 	 *
-	 * This is used for rendering and animation, and can also be used in the game
-	 * to get the current time for things like timers.
+	 * This is used for rendering and animation timing.
 	 *
-	 * You can get the game start time by calling b8.Core.startTime.
+	 * Note: this is not tied to game delta time and is not guaranteed
+	 * to start at zero.
 	 *
 	 * @returns {number} The current time in milliseconds.
 	 */
