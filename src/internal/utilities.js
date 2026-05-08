@@ -6,7 +6,7 @@
 	/**
 	 * Shows a fatal error and throws an exception.
 	 *
-	 * @param {string} error - The error to show.
+	 * @param {string} errorMessage - The error message to show.
 	 * @throws {Error} The error message.
 	 * @returns {void}
 	 */
@@ -149,7 +149,9 @@
 	 *
 	 * @param {string} varName - The name of the variable.
 	 * @param {any} varValue - The value of the variable.
-	 * @returns {number} The 'varValue' parameter.
+	 * @param {number} [optMin=undefined] - The minimum acceptable value.
+	 * @param {number} [optMax=undefined] - The maximum acceptable value.
+	 * @returns {number} The varValue parameter.
 	 */
 	b8.Utilities.checkInt = function( varName, varValue, optMin, optMax ) {
 
@@ -335,7 +337,7 @@
 	 * @param {HTMLImageElement} img - The image to process.
 	 * @param {array} color - The color to make transparent. By default this is pure magenta [255,0,255].
 	 * @param {number} range - The range of RGB values to consider as the target color.
-	 * @returns The processed image.
+	 * @returns {Promise<HTMLCanvasElement>} The processed image.
 	 */
 	b8.Utilities.makeColorTransparent = async function( img, color = [ 255, 0, 255 ], range = 5 ) {
 
@@ -570,7 +572,7 @@
 	/**
 	 * Converts a string to a pretty URL-friendly format.
 	 *
-	 * @param {string} str - The string to convert.
+	 * @param {string} uglyStr - The string to convert.
 	 * @returns {string} The pretty string.
 	 */
 	b8.Utilities.makeUrlPretty = function( uglyStr ) {
@@ -742,10 +744,10 @@
 
 
 	/**
-	 * Downloads a file.
+	 * Downloads a file using a URL or data URI.
 	 *
-	 * @param {string} filename - The name of the file.
-	 * @param {string} src - The source URL of the file.
+	 * @param {string} filename - The filename to save as.
+	 * @param {string} src - The file URL, blob URL, or data URI.
 	 * @returns {void}
 	 */
 	b8.Utilities.downloadFile = function( filename = '', src = '' ) {

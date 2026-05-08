@@ -58,11 +58,19 @@
  * }
  *
  * window.addEventListener( "load", () => {
- *   b8.init( async () => {
- *     // A function to run after everything loads.
- *     b8.Scene.add( 'game', playGame, 30 );
- *     b8.Scene.set( 'game' );
- *   } );
+ *   b8.init(
+ *     async () => {
+ *       // A function to run after everything loads.
+ *       b8.Scene.add( 'game', playGame, 30 );
+ *       b8.Scene.set( 'game' );
+ *     },
+ *     {
+ *       // Optional config overrides go here.
+ *       NAME: 'My Game',
+ *       SCREEN_COLS: 30,
+ *       SCREEN_ROWS: 30,
+ *     }
+ *   );
  * } );
  */
 
