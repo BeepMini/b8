@@ -20,135 +20,172 @@
 	b8.Tilemap.MAP_COLLISION = 3;
 	b8.Tilemap.MAP_DATA = 4;
 
+	const WATER_TILES = [ 1, 188, 206 ];
+
 
 	// Define a mapping from bitmask value to your desired tile name or index.
 	const wallTiles = {
 		'solid': {
-			0: 1,  // wall_isolated.
-			1: 1,  // wall_end_bottom.
-			2: 1,  // wall_end_left.
-			3: 36,  // wall_corner_bottomLeft.
-			4: 1,  // wall_end_top.
-			5: 1,  // wall_vertical.
-			6: 18,  // wall_corner_topLeft.
-			7: 1,  // wall_t_right.
-			8: 1,  // wall_end_right.
-			9: 37,  // wall_corner_bottomRight.
-			10: 1, // wall_horizontal.
-			11: 1, // wall_t_bottom.
-			12: 19, // wall_corner_topRight.
-			13: 1, // wall_t_left.
-			14: 1, // wall_t_top.
-			15: 1  // wall_cross.
+			tiles: {
+				0: 1,  // wall_isolated.
+				1: 1,  // wall_end_bottom.
+				2: 1,  // wall_end_left.
+				3: 36,  // wall_corner_bottomLeft.
+				4: 1,  // wall_end_top.
+				5: 1,  // wall_vertical.
+				6: 18,  // wall_corner_topLeft.
+				7: 1,  // wall_t_right.
+				8: 1,  // wall_end_right.
+				9: 37,  // wall_corner_bottomRight.
+				10: 1, // wall_horizontal.
+				11: 1, // wall_t_bottom.
+				12: 19, // wall_corner_topRight.
+				13: 1, // wall_t_left.
+				14: 1, // wall_t_top.
+				15: 1  // wall_cross.
+			}
 		},
 		'rounded': {
-			0: 1,  // wall_isolated.
-			1: 42,  // wall_end_bottom.
-			2: 23,  // wall_end_left.
-			3: 36,  // wall_corner_bottomLeft.
-			4: 41,  // wall_end_top.
-			5: 1,  // wall_vertical.
-			6: 18,  // wall_corner_topLeft.
-			7: 1,  // wall_t_right.
-			8: 24,  // wall_end_right.
-			9: 37,  // wall_corner_bottomRight.
-			10: 1, // wall_horizontal.
-			11: 1, // wall_t_bottom.
-			12: 19, // wall_corner_topRight.
-			13: 1, // wall_t_left.
-			14: 1, // wall_t_top.
-			15: 1  // wall_cross.
+			tiles: {
+				0: 1,  // wall_isolated.
+				1: 42,  // wall_end_bottom.
+				2: 23,  // wall_end_left.
+				3: 36,  // wall_corner_bottomLeft.
+				4: 41,  // wall_end_top.
+				5: 1,  // wall_vertical.
+				6: 18,  // wall_corner_topLeft.
+				7: 1,  // wall_t_right.
+				8: 24,  // wall_end_right.
+				9: 37,  // wall_corner_bottomRight.
+				10: 1, // wall_horizontal.
+				11: 1, // wall_t_bottom.
+				12: 19, // wall_corner_topRight.
+				13: 1, // wall_t_left.
+				14: 1, // wall_t_top.
+				15: 1  // wall_cross.
+			}
 		},
 		'half': {
-			0: 128,  // wall_isolated.
-			1: 75,  // wall_end_bottom.
-			2: 58,  // wall_end_left.
-			3: 93,  // wall_corner_bottomLeft.
-			4: 75,  // wall_end_top.
-			5: 75,  // wall_vertical.
-			6: 57,  // wall_corner_topLeft.
-			7: 129,  // wall_t_right.
-			8: 58,  // wall_end_right.
-			9: 95,  // wall_corner_bottomRight.
-			10: 58, // wall_horizontal.
-			11: 111, // wall_t_bottom.
-			12: 59, // wall_corner_topRight.
-			13: 130, // wall_t_left.
-			14: 112, // wall_t_top.
-			15: 113  // wall_cross.
+			tiles: {
+				0: 128,  // wall_isolated.
+				1: 75,  // wall_end_bottom.
+				2: 58,  // wall_end_left.
+				3: 93,  // wall_corner_bottomLeft.
+				4: 75,  // wall_end_top.
+				5: 75,  // wall_vertical.
+				6: 57,  // wall_corner_topLeft.
+				7: 129,  // wall_t_right.
+				8: 58,  // wall_end_right.
+				9: 95,  // wall_corner_bottomRight.
+				10: 58, // wall_horizontal.
+				11: 111, // wall_t_bottom.
+				12: 59, // wall_corner_topRight.
+				13: 130, // wall_t_left.
+				14: 112, // wall_t_top.
+				15: 113  // wall_cross.
+			}
 		},
 		'half_rounded': {
-			0: 128,  // wall_isolated.
-			1: 148,  // wall_end_bottom.
-			2: 166,  // wall_end_left.
-			3: 93,  // wall_corner_bottomLeft.
-			4: 149,  // wall_end_top.
-			5: 75,  // wall_vertical.
-			6: 57,  // wall_corner_topLeft.
-			7: 129,  // wall_t_right.
-			8: 167,  // wall_end_right.
-			9: 95,  // wall_corner_bottomRight.
-			10: 58, // wall_horizontal.
-			11: 111, // wall_t_bottom.
-			12: 59, // wall_corner_topRight.
-			13: 130, // wall_t_left.
-			14: 112, // wall_t_top.
-			15: 113  // wall_cross.
+			tiles: {
+				0: 128,  // wall_isolated.
+				1: 148,  // wall_end_bottom.
+				2: 166,  // wall_end_left.
+				3: 93,  // wall_corner_bottomLeft.
+				4: 149,  // wall_end_top.
+				5: 75,  // wall_vertical.
+				6: 57,  // wall_corner_topLeft.
+				7: 129,  // wall_t_right.
+				8: 167,  // wall_end_right.
+				9: 95,  // wall_corner_bottomRight.
+				10: 58, // wall_horizontal.
+				11: 111, // wall_t_bottom.
+				12: 59, // wall_corner_topRight.
+				13: 130, // wall_t_left.
+				14: 112, // wall_t_top.
+				15: 113  // wall_cross.
+			}
 		},
 		'pipe': {
-			0: 128,  // wall_isolated.
-			1: 148,  // wall_end_bottom.
-			2: 166,  // wall_end_left.
-			3: 93,  // wall_corner_bottomLeft.
-			4: 149,  // wall_end_top.
-			5: [ 75, 77 ],  // wall_vertical.
-			6: 57,  // wall_corner_topLeft.
-			7: 129,  // wall_t_right.
-			8: 167,  // wall_end_right.
-			9: 95,  // wall_corner_bottomRight.
-			10: [ 58, 94 ], // wall_horizontal.
-			11: 111, // wall_t_bottom.
-			12: 59, // wall_corner_topRight.
-			13: 130, // wall_t_left.
-			14: 112, // wall_t_top.
-			15: [ 113, 131, 76 ]  // wall_cross.
+			tiles: {
+				0: 128,  // wall_isolated.
+				1: 148,  // wall_end_bottom.
+				2: 166,  // wall_end_left.
+				3: 93,  // wall_corner_bottomLeft.
+				4: 149,  // wall_end_top.
+				5: [ 75, 77 ],  // wall_vertical.
+				6: 57,  // wall_corner_topLeft.
+				7: 129,  // wall_t_right.
+				8: 167,  // wall_end_right.
+				9: 95,  // wall_corner_bottomRight.
+				10: [ 58, 94 ], // wall_horizontal.
+				11: 111, // wall_t_bottom.
+				12: 59, // wall_corner_topRight.
+				13: 130, // wall_t_left.
+				14: 112, // wall_t_top.
+				15: [ 113, 131, 76 ]  // wall_cross.
+			}
 		},
 		'thin': {
-			0: 110,  // wall_isolated.
-			1: 173,  // wall_end_bottom.
-			2: 172,  // wall_end_left.
-			3: 164,  // wall_corner_bottomLeft.
-			4: 154,  // wall_end_top.
-			5: 72,  // wall_vertical.
-			6: 146,  // wall_corner_topLeft.
-			7: 126,  // wall_t_right.
-			8: 155,  // wall_end_right.
-			9: 165,  // wall_corner_bottomRight.
-			10: 55, // wall_horizontal.
-			11: 108, // wall_t_bottom.
-			12: 147, // wall_corner_topRight.
-			13: 127, // wall_t_left.
-			14: 109, // wall_t_top.
-			15: 73  // wall_cross.
+			tiles: {
+				0: 110,  // wall_isolated.
+				1: 173,  // wall_end_bottom.
+				2: 172,  // wall_end_left.
+				3: 164,  // wall_corner_bottomLeft.
+				4: 154,  // wall_end_top.
+				5: 72,  // wall_vertical.
+				6: 146,  // wall_corner_topLeft.
+				7: 126,  // wall_t_right.
+				8: 155,  // wall_end_right.
+				9: 165,  // wall_corner_bottomRight.
+				10: 55, // wall_horizontal.
+				11: 108, // wall_t_bottom.
+				12: 147, // wall_corner_topRight.
+				13: 127, // wall_t_left.
+				14: 109, // wall_t_top.
+				15: 73  // wall_cross.
+			}
 		},
 		'barrier': {
-			0: 511,  // wall_isolated.
-			1: 493,  // wall_end_bottom.
-			2: 508,  // wall_end_left.
-			3: 490,  // wall_corner_bottomLeft.
-			4: 457,  // wall_end_top.
-			5: 475,  // wall_vertical.
-			6: 454,  // wall_corner_topLeft.
-			7: 472,  // wall_t_right.
-			8: 510,  // wall_end_right.
-			9: 492,  // wall_corner_bottomRight.
-			10: 509, // wall_horizontal.
-			11: 491, // wall_t_bottom.
-			12: 456, // wall_corner_topRight.
-			13: 474, // wall_t_left.
-			14: 455, // wall_t_top.
-			15: 473  // wall_cross.
+			tiles: {
+				0: 511,  // wall_isolated.
+				1: 493,  // wall_end_bottom.
+				2: 508,  // wall_end_left.
+				3: 490,  // wall_corner_bottomLeft.
+				4: 457,  // wall_end_top.
+				5: 475,  // wall_vertical.
+				6: 454,  // wall_corner_topLeft.
+				7: 472,  // wall_t_right.
+				8: 510,  // wall_end_right.
+				9: 492,  // wall_corner_bottomRight.
+				10: 509, // wall_horizontal.
+				11: 491, // wall_t_bottom.
+				12: 456, // wall_corner_topRight.
+				13: 474, // wall_t_left.
+				14: 455, // wall_t_top.
+				15: 473  // wall_cross.
+			}
 		},
+		'water': {
+			edgeMode: "connect",
+			tiles: {
+				0: 519,  // wall_isolated.
+				1: 532,  // wall_end_bottom.
+				2: 535,  // wall_end_left.
+				3: [ 36, 178 ],  // wall_corner_bottomLeft.
+				4: 514,  // wall_end_top.
+				5: WATER_TILES,  // wall_vertical.
+				6: [ 18, 160 ],  // wall_corner_topLeft.
+				7: WATER_TILES,  // wall_t_right.
+				8: 536,  // wall_end_right.
+				9: [ 37, 179 ],  // wall_corner_bottomRight.
+				10: WATER_TILES, // wall_horizontal.
+				11: WATER_TILES, // wall_t_bottom.
+				12: [ 19, 161 ], // wall_corner_topRight.
+				13: WATER_TILES, // wall_t_left.
+				14: WATER_TILES, // wall_t_top.
+				15: WATER_TILES  // wall_cross.
+			}
+		}
 	};
 
 
@@ -536,7 +573,7 @@
 
 				// If tileId is a string and begins with "wall:" then compute bitmask.
 				if ( typeof tileId === "string" && tileId.startsWith( "wall:" ) ) {
-					tileId = b8.Tilemap.wallTile( x, y, grid, tileId );
+					tileId = pickWallTile( x, y, grid, tileId );
 				}
 
 				// If is an array of ids then do a weighted pick from those.
@@ -576,22 +613,34 @@
 
 	/**
 	 * Add a wall tile set to the tilemap system.
-	 * The tile set should be an array of 16 tile ids, corresponding to the 16 possible bitmask values.
 	 *
-	 * @param {string} name The name of the wall tile set. This should match the name used in the tile pattern (e.g. "wall:brick").
-	 * @param {Array} tileIds The array of 16 tile ids for the wall tile set.
+	 * The tile set should contain a `tiles` object with up to 16 tile ids,
+	 * corresponding to the 16 possible bitmask values.
+	 *
+	 * Optional properties:
+	 * - edgeMode: controls how map boundaries are handled.
+	 *
+	 * Supported edge modes:
+	 * - "open": outside the map does not match anything.
+	 * - "connect": outside the map always counts as a matching tile.
+	 * - "wrap": outside the map wraps around to the opposite edge.
+	 *
+	 * @param {string} name The name of the wall tile set. This should match the name used in the tile pattern, e.g. "wall:brick".
+	 * @param {Object} tileSet The wall tile set definition.
+	 * @param {Object} tileSet.tiles The tile ids for each bitmask value.
+	 * @param {string} [tileSet.edgeMode="open"] How map edges are handled: "open", "connect", or "wrap".
 	 * @returns {void}
 	 */
-	b8.Tilemap.addWallTileSet = function( name, tileIds ) {
+	b8.Tilemap.addWallTileSet = function( name, tileSet ) {
 
 		b8.Utilities.checkString( "name", name );
-		b8.Utilities.checkObject( "tileIds", tileIds );
+		b8.Utilities.checkObject( "tileSet", tileSet );
 
 		if ( wallTiles[ name ] ) {
 			b8.Utilities.fatal( `Wall tile set with name ${name} already exists.` );
 		}
 
-		wallTiles[ name ] = normaliseWallTileSet( tileIds );
+		wallTiles[ name ] = normaliseWallTileSet( tileSet );
 
 	}
 
@@ -626,26 +675,24 @@
 	 * @param {string} name The name of the wall tile to select. Picked from the default lists of wall patterns.
 	 * @returns {number} The selected wall tile id.
 	 */
-	b8.Tilemap.wallTile = function( col, row, grid, name = null ) {
+	function pickWallTile( col, row, grid, name = null ) {
 
-		b8.Utilities.checkInt( "col", col );
-		b8.Utilities.checkInt( "row", row );
-		b8.Utilities.checkArray( "grid", grid );
-		b8.Utilities.checkString( "name", name );
-
-		if ( null === name ) {
-			b8.Utilities.fatal( "Wall tile name not given: " + name );
-		}
-
-		// Remove wall: prefix from name.
 		const tileType = name.substring( 5 );
 
 		if ( !wallTiles[ tileType ] ) {
 			b8.Utilities.fatal( "Wall tile type not found: " + tileType );
 		}
 
-		const mask = computeBitmask( grid, col, row );
-		return wallTiles[ tileType ][ mask ];
+		const wallTileSet = wallTiles[ tileType ];
+
+		const mask = computeBitmask(
+			grid,
+			col,
+			row,
+			wallTileSet.edgeMode || "open"
+		);
+
+		return wallTileSet.tiles[ mask ];
 
 	};
 
@@ -659,14 +706,21 @@
 	 */
 	function normaliseWallTileSet( tileSet ) {
 
+		if ( !tileSet.tiles ) {
+			b8.Utilities.fatal( "Wall tile set must include a tiles object." );
+		}
+
 		const defaultTileSet = wallTiles[ 'solid' ];
-		const normalisedTileSet = [];
+		const normalisedTileSet = {
+			edgeMode: tileSet.edgeMode || "open",
+			tiles: {}
+		};
 
 		for ( let i = 0; i < 16; i++ ) {
-			if ( typeof tileSet[ i ] === "undefined" ) {
-				normalisedTileSet[ i ] = defaultTileSet[ i ];
+			if ( typeof tileSet.tiles[ i ] === "undefined" ) {
+				normalisedTileSet.tiles[ i ] = defaultTileSet.tiles[ i ];
 			} else {
-				normalisedTileSet[ i ] = tileSet[ i ];
+				normalisedTileSet.tiles[ i ] = tileSet.tiles[ i ];
 			}
 		}
 
@@ -675,25 +729,84 @@
 	}
 
 
-	// A helper function to compute a 4-bit bitmask for a wall tile.
-	// Bit values: 1 = North, 2 = East, 4 = South, 8 = West.
-	function computeBitmask( grid, col, row ) {
+	/**
+	 * Compute a 4-bit bitmask for a wall tile based on its surrounding tiles.
+	 *
+	 * The bitmask checks the four adjacent tiles: north, east, south, and west.
+	 * If an adjacent tile matches the current map character, the corresponding
+	 * bit is added to the mask.
+	 *
+	 * Edge modes control how tiles outside the map bounds are treated:
+	 * - "open": outside the map does not match anything.
+	 * - "connect": outside the map always counts as a matching tile.
+	 * - "wrap": outside the map wraps around to the opposite edge.
+	 *
+	 * Bit values: 1 = North, 2 = East, 4 = South, 8 = West.
+	 *
+	 * @param {Array} grid The 2D array of tile ids.
+	 * @param {number} col The x coordinate of the tile.
+	 * @param {number} row The y coordinate of the tile.
+	 * @param {string} [edgeMode="open"] How map edges are handled: "open", "connect", or "wrap".
+	 * @returns {number} The computed bitmask value from 0 to 15.
+	 */
+	function computeBitmask( grid, col, row, edgeMode = "open" ) {
 
 		let bitmask = 0;
 		const tileId = grid[ row ][ col ];
 
-		// Check North
-		if ( row > 0 && grid[ row - 1 ][ col ] === tileId ) bitmask += 1;
-		// Check East
-		if ( col < grid[ row ].length - 1 && grid[ row ][ col + 1 ] === tileId ) bitmask += 2;
-		// Check South
-		if ( row < grid.length - 1 && grid[ row + 1 ][ col ] === tileId ) bitmask += 4;
-		// Check West
-		if ( col > 0 && grid[ row ][ col - 1 ] === tileId ) bitmask += 8;
+		if ( matchesTile( grid, col, row - 1, tileId, edgeMode ) ) bitmask += 1;
+		if ( matchesTile( grid, col + 1, row, tileId, edgeMode ) ) bitmask += 2;
+		if ( matchesTile( grid, col, row + 1, tileId, edgeMode ) ) bitmask += 4;
+		if ( matchesTile( grid, col - 1, row, tileId, edgeMode ) ) bitmask += 8;
 
 		return bitmask;
 
 	}
 
+
+	/**
+	 * Check whether a tile matches the given tile id.
+	 *
+	 * If the coordinates are outside the map, the result depends on edgeMode:
+	 * - "open": return false.
+	 * - "connect": return true.
+	 * - "wrap": wrap the coordinates around the map before checking.
+	 *
+	 * @param {Array} grid The 2D array of tile ids.
+	 * @param {number} col The x coordinate to check.
+	 * @param {number} row The y coordinate to check.
+	 * @param {string|number} tileId The tile id to match against.
+	 * @param {string} edgeMode How map edges are handled: "open", "connect", or "wrap".
+	 * @returns {boolean} True if the tile matches.
+	 */
+	function matchesTile( grid, col, row, tileId, edgeMode ) {
+
+		// Wrap coordinates around the map.
+		if ( edgeMode === "wrap" ) {
+
+			row = ( row + grid.length ) % grid.length;
+			col = ( col + grid[ row ].length ) % grid[ row ].length;
+
+		}
+
+		// Outside map bounds.
+		if (
+			row < 0 ||
+			row >= grid.length ||
+			col < 0 ||
+			col >= grid[ row ].length
+		) {
+
+			if ( edgeMode === "connect" ) {
+				return true;
+			}
+
+			return false;
+
+		}
+
+		return grid[ row ][ col ] === tileId;
+
+	}
 
 } )( b8 );
