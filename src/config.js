@@ -69,6 +69,7 @@
 		// store a scaled copy of the characters image in memory, so more colors
 		// = more memory.
 		// You can redefine the colors at runtime with b8.redefineColors([]).
+		// Games on beepmini.com all use the default palette.
 		COLORS: [
 			"#0A0C1F", // 0. Very dark blue - almost black. The darkest colour.
 			"#263264", // 1. Dark blue
