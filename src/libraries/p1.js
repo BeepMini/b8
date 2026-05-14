@@ -20,6 +20,8 @@
 	let songLengthInSteps = 0; // Shared loop length across all tracks.
 	let playbackStartTime = 0; // When playback starts.
 	let tempo = 125; // Default tempo.
+	const defaultTempo = 125;
+	const stepsPerBeat = 4;
 	const lookaheadTime = 0.5; // Only schedule events within the next 0.5 seconds.
 	const schedulerIntervalMs = 50; // Check every 50ms.
 	const volumeMultiplier = 0.1; // Volume multiplier.
@@ -101,13 +103,12 @@
 		}
 
 		// Reset defaults.
-		tempo = 125;
+		tempo = defaultTempo;
 		let baseNoteDuration = 0.5; // seconds per note.
 		schedules = [];
 
 		// Split input into lines.
 		const rawLines = params.split( '\n' ).map( line => line.trim() );
-		let noteInterval = getNoteInterval();
 
 		// Regular expression for track lines: instrument|track data|
 		const trackLineRegex = /^([0-9])\|(.*)\|$/;
@@ -120,7 +121,6 @@
 				const timing = line.replace( /[\[\]]/g, '' ).split( '.' );
 				tempo = parseFloat( timing[ 0 ] ) || tempo;
 				baseNoteDuration = ( parseFloat( timing[ 1 ] ) || 50 ) / 100;
-				noteInterval = getNoteInterval();
 				return;
 			}
 
@@ -156,7 +156,7 @@
 				}
 				let noteValue = char.charCodeAt( 0 );
 				noteValue -= noteValue > 90 ? 71 : 65;
-				let noteDuration = dashCount * baseNoteDuration * ( 125 / tempo );
+				let noteDuration = dashCount * baseNoteDuration * ( defaultTempo / tempo );
 				let noteBuffer = createNoteBuffer( noteValue, noteDuration, audioCtx.sampleRate, instrumentFn, instrumentId );
 				events.push( noteBuffer );
 				i += dashCount - 1;
@@ -206,8 +206,7 @@
 			while ( true ) {
 				let pointer = schedulePointers[ trackIndex ];
 				const step = pointer % songLengthInSteps;
-				const loopCount = Math.floor( pointer / songLengthInSteps );
-				const eventTime = playbackStartTime + ( step * noteInterval ) + ( loopCount * songLengthInSteps * noteInterval );
+				const eventTime = playbackStartTime + ( pointer * noteInterval );
 				if ( eventTime >= currentTime + effectiveLookahead ) {
 					break;
 				}
@@ -223,9 +222,7 @@
 			}
 		} );
 		if ( !p1.loop ) {
-			const done = schedules.every( ( events, i ) => {
-				return schedulePointers[ i ] >= songLengthInSteps;
-			} );
+			const done = schedulePointers.every( pointer => pointer >= songLengthInSteps );
 			if ( done ) {
 				p1.stop();
 			}
@@ -370,7 +367,6 @@
 
 	function getNoteInterval() {
 
-		const stepsPerBeat = 4;
 		return 60 / tempo / stepsPerBeat;
 
 	}
