@@ -10,6 +10,8 @@
 
 	// Cache for generated note buffers.
 	let noteBuffers = {};
+	let noteBufferKeys = [];
+	const maxNoteBuffers = 200;
 
 	// Scheduler variables.
 	let schedulerInterval = null;
@@ -96,11 +98,6 @@
 		if ( !params || params.trim() === '' ) {
 			p1.stop();
 			return;
-		}
-
-		if ( Object.keys( noteBuffers ).length > 200 ) {
-			console.warn( "b8.Music: Note buffers exceeded limit, clearing old buffers." );
-			noteBuffers = {};
 		}
 
 		// Reset defaults.
@@ -292,6 +289,7 @@
 
 	p1.clearCache = function() {
 		noteBuffers = {};
+		noteBufferKeys = [];
 	};
 
 
@@ -328,6 +326,10 @@
 			if ( !unlocked ) {
 				playNoteBuffer( buffer, audioCtx, audioCtx.currentTime, true );
 				unlocked = true;
+			}
+			noteBufferKeys.push( key );
+			if ( noteBufferKeys.length > maxNoteBuffers ) {
+				delete noteBuffers[ noteBufferKeys.shift() ];
 			}
 		}
 		return buffer;
