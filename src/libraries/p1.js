@@ -309,6 +309,7 @@
 			const totalSamples = Math.floor( sampleRate * durationSeconds );
 			const attackSamples = 88;
 			const decaySamples = sampleRate * ( durationSeconds - 0.002 );
+			const decayExponent = Math.pow( Math.log( 1e4 * frequencyFactor ) / 2, 2 );
 			buffer = noteBuffers[ key ] = audioCtx.createBuffer( 1, totalSamples, sampleRate );
 			const channelData = buffer.getChannelData( 0 );
 			for ( let i = 0; i < totalSamples; i++ ) {
@@ -318,7 +319,7 @@
 				} else {
 					amplitude = Math.pow(
 						1 - ( ( i - attackSamples ) / decaySamples ),
-						Math.pow( Math.log( 1e4 * frequencyFactor ) / 2, 2 )
+						decayExponent
 					);
 				}
 				channelData[ i ] = amplitude * instrumentFn( i * frequencyFactor );
