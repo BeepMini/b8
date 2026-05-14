@@ -15,6 +15,7 @@
 	let schedulerInterval = null;
 	let schedules = []; // Array of event arrays per track.
 	let schedulePointers = []; // Next event index per track.
+	let songLengthInSteps = 0; // Shared loop length across all tracks.
 	let playbackStartTime = 0; // When playback starts.
 	let tempo = 125; // Default tempo.
 	const lookaheadTime = 0.5; // Only schedule events within the next 0.5 seconds.
@@ -135,7 +136,13 @@
 			const match = line.match( trackLineRegex );
 			const instrumentId = parseInt( match[ 1 ], 10 );
 			const instrumentFn = instrumentMapping[ instrumentId ] || instrumentMapping[ 0 ];
-			const trackData = match[ 2 ].trim();
+			/**
+			 * Preserve spaces inside the track data.
+			 *
+			 * Trailing spaces represent explicit rests at the end of a track,
+			 * so trimming here shortens the channel and makes it loop early.
+			 */
+			const trackData = match[ 2 ];
 
 			let events = [];
 			// Parse trackData character by character.
@@ -159,6 +166,16 @@
 			}
 			schedules.push( events );
 		} );
+
+		/**
+		 * Use one shared song length for every channel.
+		 *
+		 * This keeps all tracks aligned at the loop boundary even when some
+		 * channels contain fewer notes than others.
+		 */
+		songLengthInSteps = schedules.reduce( ( longestTrack, events ) => {
+			return Math.max( longestTrack, events.length );
+		}, 0 );
 
 		// Initialize schedule pointers and calculate loop duration.
 		schedulePointers = schedules.map( () => 0 );
@@ -188,12 +205,18 @@
 		schedules.forEach( ( events, trackIndex ) => {
 			let pointer = schedulePointers[ trackIndex ];
 			const trackLength = events.length;
-			if ( trackLength === 0 ) return;
-			const step = pointer % trackLength;
-			const loopCount = Math.floor( pointer / trackLength );
-			const eventTime = playbackStartTime + ( step * noteInterval ) + ( loopCount * trackLength * noteInterval );
+			if ( songLengthInSteps === 0 ) return;
+
+			const step = pointer % songLengthInSteps;
+			const loopCount = Math.floor( pointer / songLengthInSteps );
+			const eventTime = playbackStartTime + ( step * noteInterval ) + ( loopCount * songLengthInSteps * noteInterval );
+
 			if ( eventTime < currentTime + effectiveLookahead ) {
-				const noteBuffer = events[ step ];
+				/**
+				 * Treat anything beyond the channel's own length as silence until
+				 * the shared song loop comes back around.
+				 */
+				const noteBuffer = step < trackLength ? events[ step ] : null;
 				if ( noteBuffer ) {
 					playNoteBuffer( noteBuffer, audioCtx, eventTime );
 				}
@@ -201,7 +224,9 @@
 			}
 		} );
 		if ( !p1.loop ) {
-			const done = schedules.every( ( events, i ) => schedulePointers[ i ] >= events.length );
+			const done = schedules.every( ( events, i ) => {
+				return schedulePointers[ i ] >= songLengthInSteps;
+			} );
 			if ( done ) {
 				p1.stop();
 			}
