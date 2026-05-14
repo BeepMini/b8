@@ -128,7 +128,8 @@
 			}
 
 			// Track lines.
-			if ( !trackLineRegex.test( line ) ) {
+			const match = line.match( trackLineRegex );
+			if ( !match ) {
 				console.error( "Track lines must be in the format 'instrument|track data|': " + line );
 				return;
 			}
@@ -242,9 +243,13 @@
 			schedulerInterval = null;
 		}
 		/**
+		 * Stop every active source before clearing the collection.
 		 *
+		 * A Set is used here so add/remove operations stay simple and cheap
+		 * even when many short notes are being scheduled.
+		 */
 		playingSources.forEach( source => source.stop() );
-		playingSources = [];
+		playingSources.clear();
 	};
 
 
