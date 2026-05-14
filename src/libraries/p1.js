@@ -200,15 +200,17 @@
 		// Use the larger of the fixed lookahead and the current note interval.
 		const effectiveLookahead = Math.max( lookaheadTime, noteInterval );
 		schedules.forEach( ( events, trackIndex ) => {
-			let pointer = schedulePointers[ trackIndex ];
 			const trackLength = events.length;
 			if ( songLengthInSteps === 0 ) return;
 
-			const step = pointer % songLengthInSteps;
-			const loopCount = Math.floor( pointer / songLengthInSteps );
-			const eventTime = playbackStartTime + ( step * noteInterval ) + ( loopCount * songLengthInSteps * noteInterval );
-
-			if ( eventTime < currentTime + effectiveLookahead ) {
+			while ( true ) {
+				let pointer = schedulePointers[ trackIndex ];
+				const step = pointer % songLengthInSteps;
+				const loopCount = Math.floor( pointer / songLengthInSteps );
+				const eventTime = playbackStartTime + ( step * noteInterval ) + ( loopCount * songLengthInSteps * noteInterval );
+				if ( eventTime >= currentTime + effectiveLookahead ) {
+					break;
+				}
 				/**
 				 * Treat anything beyond the channel's own length as silence until
 				 * the shared song loop comes back around.
