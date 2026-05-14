@@ -157,7 +157,7 @@
 				let noteValue = char.charCodeAt( 0 );
 				noteValue -= noteValue > 90 ? 71 : 65;
 				let noteDuration = dashCount * baseNoteDuration * ( 125 / tempo );
-				let noteBuffer = createNoteBuffer( noteValue, noteDuration, audioCtx.sampleRate, instrumentFn );
+				let noteBuffer = createNoteBuffer( noteValue, noteDuration, audioCtx.sampleRate, instrumentFn, instrumentId );
 				events.push( noteBuffer );
 				i += dashCount - 1;
 			}
@@ -299,8 +299,8 @@
 	/**
 	 * Create an audio buffer for a given note.
 	 */
-	const createNoteBuffer = ( note, durationSeconds, sampleRate, instrumentFn ) => {
-		const key = note + '-' + durationSeconds + '-' + instrumentFn.name;
+	const createNoteBuffer = ( note, durationSeconds, sampleRate, instrumentFn, instrumentId ) => {
+		const key = note + '-' + durationSeconds + '-' + instrumentId;
 		let buffer = noteBuffers[ key ];
 		if ( note >= 0 && !buffer ) {
 			const frequencyFactor = 65.406 * Math.pow( 1.06, note ) / sampleRate;
