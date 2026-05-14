@@ -5,7 +5,7 @@
 
 	// Master gain node for volume control.
 	const masterGain = audioCtx.createGain();
-	masterGain.gain.value = 1;  // default volume (0.0–1.0)
+	masterGain.gain.value = 0.8;  // default volume (0.0–1.0)
 	masterGain.connect( audioCtx.destination );
 
 	// Cache for generated note buffers.
@@ -307,6 +307,7 @@
 			const attackSamples = 88;
 			const decaySamples = sampleRate * ( durationSeconds - 0.002 );
 			const decayExponent = Math.pow( Math.log( 1e4 * frequencyFactor ) / 2, 2 );
+			const fadeOutSamples = Math.min( 32, totalSamples );
 			buffer = noteBuffers[ key ] = audioCtx.createBuffer( 1, totalSamples, sampleRate );
 			const channelData = buffer.getChannelData( 0 );
 			for ( let i = 0; i < totalSamples; i++ ) {
@@ -318,6 +319,9 @@
 						1 - ( ( i - attackSamples ) / decaySamples ),
 						decayExponent
 					);
+				}
+				if ( i >= totalSamples - fadeOutSamples ) {
+					amplitude *= ( totalSamples - i ) / fadeOutSamples;
 				}
 				channelData[ i ] = amplitude * instrumentFn( i * frequencyFactor );
 			}
