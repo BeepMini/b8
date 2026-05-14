@@ -133,7 +133,6 @@
 				return;
 			}
 
-			const match = line.match( trackLineRegex );
 			const instrumentId = parseInt( match[ 1 ], 10 );
 			const instrumentFn = instrumentMapping[ instrumentId ] || instrumentMapping[ 0 ];
 			/**
@@ -242,6 +241,8 @@
 			clearInterval( schedulerInterval );
 			schedulerInterval = null;
 		}
+		/**
+		 *
 		playingSources.forEach( source => source.stop() );
 		playingSources = [];
 	};
@@ -326,8 +327,16 @@
 		return buffer;
 	};
 
-	// Array to keep track of currently playing sources.
-	let playingSources = [];
+	/**
+	 * Keep track of currently playing sources.
+	 *
+	 * A Set is a better fit than an array here because sources are only
+	 * added, removed, and iterated. That avoids repeated array searches
+	 * as notes finish playing.
+	 *
+	 * @type {Set<AudioBufferSourceNode>}
+	 */
+	let playingSources = new Set();
 
 
 	/**
@@ -339,16 +348,13 @@
 
 		source.connect( masterGain );
 		source.start( when );
-		playingSources.push( source );
+		playingSources.add( source );
 
 		if ( stopImmediately ) {
 			source.stop();
 		}
 		source.onended = () => {
-			const index = playingSources.indexOf( source );
-			if ( index !== -1 ) {
-				playingSources.splice( index, 1 );
-			}
+			playingSources.delete( source );
 		};
 	};
 
