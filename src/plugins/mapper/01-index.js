@@ -12,6 +12,8 @@ const mapper = {
 	actions: {},
 	settings: {},
 	bg: {},
+	defaultGameName: null,
+	isGameOverPending: false,
 	lastPosition: null,
 
 	// The player entity ID.
@@ -90,27 +92,6 @@ const mapper = {
 	update: function( dt ) {
 
 		b8.ECS.run( dt );
-
-	},
-
-
-	/**
-	 * Draw an actor at its location with optional offsets.
-	 *
-	 * @param {Object} actor - The actor entity with properties: id, col, row, fg, bg, animation.
-	 * @returns {void}
-	 */
-	drawActor: function( actor ) {
-
-		const screenPosition = mapper.camera.getScreenPosition( actor.col, actor.row );
-
-		const actorX = actor.col - screenPosition.col;
-		const actorY = actor.row - screenPosition.row;
-
-		// Draw the actor at its position with the specified offset.
-		b8.locate( actorX + offsetX, actorY + offsetY );
-		b8.color( actor.fg, actor.bg );
-		b8.drawActor( actor.id, actor.animation );
 
 	},
 
@@ -242,36 +223,6 @@ const mapper = {
 			screenPosition.w,
 			screenPosition.h
 		);
-
-	},
-
-
-	/**
-	 * Set a tile at the specified coordinates in the current map.
-	 *
-	 * @param {number} x - The x-coordinate (column) of the tile to set.
-	 * @param {number} y - The y-coordinate (row) of the tile to set.
-	 * @param {string} tile - The tile character to set at the specified coordinates.
-	 * @returns {void}
-	 */
-	setTile: function( x, y, tile ) {
-
-		if ( !mapper.currentMap ) {
-			b8.Utilities.error( "No current map set." );
-			return;
-		}
-
-		if (
-			x < 0 ||
-			y < 0 ||
-			y >= mapper.currentMap.map.mapHeight ||
-			x >= mapper.currentMap.map.mapWidth
-		) {
-			b8.Utilities.error( "Mapper.setTile, coordinates out of bounds." );
-			return;
-		}
-
-		mapper.currentMap.map[ y ][ x ] = tile;
 
 	},
 
@@ -692,4 +643,3 @@ const mapper = {
 	},
 
 };
-

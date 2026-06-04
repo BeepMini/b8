@@ -10,9 +10,17 @@ mapper.load = function( mapData ) {
 	b8.ECS.reset();
 	mapper.maps = [];
 	mapper.settings = {};
+	mapper.bg = {};
 	mapper.currentMapId = null;
+	mapper.isGameOverPending = false;
 
 	b8.Utilities.checkObject( 'mapData', mapData );
+
+	// Capture the original engine name once so the loader can safely restore it
+	// when a map does not provide its own storage-friendly game name.
+	if ( mapper.defaultGameName === null ) {
+		mapper.defaultGameName = b8.CONFIG.NAME;
+	}
 
 	if ( mapData.version === 1 ) mapData = mapper.upgradeMapDataV1toV2( mapData );
 
@@ -51,10 +59,10 @@ mapper.load = function( mapData ) {
 	);
 
 	// Set game name.
-	// Some settings use this, for things like local storage keys.
-	if ( mapper.settings.gameName ) {
-		b8.CONFIG.NAME = mapper.settings.gameName;
-	}
+	// Some settings use this, for things like local storage keys. Reset back to
+	// the original engine name when the map does not define one so state does
+	// not leak between different games loaded in the same session.
+	b8.CONFIG.NAME = mapper.settings.gameName || mapper.defaultGameName;
 
 	// Setup player.
 	mapper.player = mapper.types.player.spawn();
