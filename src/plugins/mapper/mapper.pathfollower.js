@@ -49,8 +49,6 @@ mapper.pathFollower = {
 				.map( ( [ dir, v ] ) => [ `${v.dx},${v.dy}`, dir ] )
 		);
 
-		console.log( mapper.pathFollower.VEC_TO_DIR );
-
 	},
 
 

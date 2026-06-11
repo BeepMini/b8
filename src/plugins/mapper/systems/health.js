@@ -1,4 +1,4 @@
-mapper.systems.health = async function( dt ) {
+mapper.systems.health = async function() {
 
 	const entities = b8.ECS.query( 'Health' );
 
@@ -9,9 +9,6 @@ mapper.systems.health = async function( dt ) {
 		// The entity may already have been removed by another system earlier in
 		// the frame, so skip it if the component no longer exists.
 		if ( !health ) continue;
-
-		// Reduce cooldown timer.
-		health.cooldownTimer = Math.max( 0, health.cooldownTimer - dt );
 
 		if ( health.value > 0 ) continue;
 

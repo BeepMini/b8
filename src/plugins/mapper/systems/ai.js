@@ -1,10 +1,4 @@
-mapper.ai.updateTimer = 0;
-
-mapper.systems.ai = function( dt ) {
-
-	mapper.ai.updateTimer += dt;
-	if ( mapper.ai.updateTimer < mapper.CONFIG.aiUpdateDelay ) return;
-	mapper.ai.updateTimer = 0;
+mapper.systems.ai = function() {
 
 	const ids = b8.ECS.query( 'AI', 'Loc' );
 
@@ -13,6 +7,14 @@ mapper.systems.ai = function( dt ) {
 
 		const mode = mapper.ai.think( id );
 		const ai = b8.ECS.getComponent( id, 'AI' );
+		if ( !ai ) continue;
+
+		if ( ai.turnsUntilAct > 0 ) {
+			ai.turnsUntilAct--;
+			continue;
+		}
+
+		ai.turnsUntilAct = Math.max( 0, ( ai.tickRateTurns || mapper.CONFIG.aiTickRateTurns ) - 1 );
 
 		// If the AI mode has changed, update it.
 		if ( mode !== ai.mode ) {
@@ -114,8 +116,6 @@ mapper.systems.ai = function( dt ) {
 		 */
 		if ( mapper.ai.MODE.ATTACK === mode ) {
 
-			console.log( `Think ATTACK mode (${id})` );
-
 			mapper.doAttack( id, 'ButtonA' );
 
 		}
@@ -138,13 +138,9 @@ mapper.systems.ai = function( dt ) {
 
 		if ( mapper.ai.MODE.LOOT === mode ) {
 
-			console.log( `Think LOOT mode (${id})` );
-
 		}
 
 		if ( mapper.ai.MODE.IDLE === mode ) {
-
-			console.log( `Think IDLE mode (${id})` );
 
 		}
 

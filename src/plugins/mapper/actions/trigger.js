@@ -11,6 +11,7 @@
 mapper.actions.trigger = function( playerId ) {
 
 	const ids = mapper.entitiesAhead( playerId );
+	let didTrigger = false;
 
 	for ( const targetId of ids ) {
 
@@ -18,9 +19,11 @@ mapper.actions.trigger = function( playerId ) {
 
 		if ( mapper.types[ type.name ]?.triggerHandler ) {
 			mapper.types[ type.name ].triggerHandler( playerId, targetId );
+			didTrigger = true;
 		}
 
 	}
 
-};
+	return didTrigger;
 
+};

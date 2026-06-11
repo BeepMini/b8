@@ -9,9 +9,9 @@
  *
  * @param {number} col - The column to check.
  * @param {number} row - The row to check.
- * @returns {Promise<boolean>} True if portal handled, false otherwise.
+ * @returns {boolean} True if portal handled, false otherwise.
  */
-mapper.systems.tryPortal = async function( col, row ) {
+mapper.systems.tryPortal = function( col, row ) {
 
 	const id = b8.ECS.entitiesAt( col, row );
 
@@ -31,9 +31,9 @@ mapper.systems.tryPortal = async function( col, row ) {
  * Handle portal teleportation.
  *
  * @param {Object} portal - The portal component.
- * @returns {Promise<boolean>} True if portal handled, false otherwise.
+ * @returns {boolean} True if portal handled, false otherwise.
  */
-mapper.systems.handlePortal = async function( portal ) {
+mapper.systems.handlePortal = function( portal ) {
 
 	if ( !portal ) return false;
 	if ( '' === portal.target ) return false;
@@ -49,13 +49,12 @@ mapper.systems.handlePortal = async function( portal ) {
 
 	// Teleport player to target doorway.
 	if ( targetDoorway ) {
-		await b8.Async.wait( 0.1 );
 		mapper.setCurrentMap( targetDoorway.mapId );
 		mapper.lastPosition = { col: targetDoorway.x, row: targetDoorway.y, map: targetDoorway.mapId };
 		b8.ECS.setLoc( mapper.player, targetDoorway.x, targetDoorway.y );
+		return true;
 	}
 
 	return false; // Allow stepping onto the portal
 
 };
-

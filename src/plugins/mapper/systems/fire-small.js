@@ -1,7 +1,5 @@
 
-mapper.systems.fireSmall = async function( dt ) {
-
-	const damagePerSecond = mapper.types.fireSmall.damagePerSecond;
+mapper.systems.fireSmall = function() {
 
 	const smallFires = b8.ECS.query( 'FireSmall' );
 
@@ -31,15 +29,15 @@ mapper.systems.fireSmall = async function( dt ) {
 
 		// Damage the burning parent while it is still alive.
 		if ( parentHealth ) {
-			parentHealth.value -= damagePerSecond * dt;
+			parentHealth.value -= mapper.CONFIG.fireSmallDamagePerTurn;
 
 			// If parent dies, extinguish the small fire.
-			if ( parentHealth.value < 0 ) smallFire.duration = 0;
+			if ( parentHealth.value < 0 ) smallFire.durationTurns = 0;
 		}
 
 		// Reduce the fire's duration.
-		smallFire.duration -= dt;
-		if ( smallFire.duration > 0 ) continue;
+		smallFire.durationTurns--;
+		if ( smallFire.durationTurns > 0 ) continue;
 
 		b8.ECS.removeEntity( entityId );
 

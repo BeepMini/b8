@@ -1,4 +1,4 @@
-mapper.systems.fire = async function( dt ) {
+mapper.systems.fire = function() {
 
 	const fires = b8.ECS.query( 'Fire', 'Loc' );
 
@@ -11,11 +11,11 @@ mapper.systems.fire = async function( dt ) {
 		if ( !fire || !loc ) continue;
 
 		// Reduce the fire's duration.
-		if ( fire.duration !== Infinity ) {
+		if ( fire.lifeTurns !== Infinity ) {
 
-			fire.duration -= dt;
+			fire.lifeTurns--;
 
-			if ( fire.duration <= 0 ) {
+			if ( fire.lifeTurns <= 0 ) {
 				b8.ECS.removeEntity( fireId );
 				mapper.types.vfx.spawn(
 					loc.col, loc.row,
@@ -25,6 +25,12 @@ mapper.systems.fire = async function( dt ) {
 			}
 
 		}
+
+		if ( fire.turnsUntilSpread > 0 ) {
+			fire.turnsUntilSpread--;
+			continue;
+		}
+		fire.turnsUntilSpread = Math.max( 0, ( fire.spreadTickRateTurns || mapper.CONFIG.fireSpreadTurns ) - 1 );
 
 		// Entities standing directly on the fire can catch alight and trigger
 		// any immediate burn reactions.
@@ -52,7 +58,7 @@ mapper.systems.fire = async function( dt ) {
 				entityId,
 				{
 					sourceId: fireId,
-					heatAmount: 70 * dt,
+					heatAmount: mapper.CONFIG.fireHeatPerTurn,
 				}
 			);
 		}

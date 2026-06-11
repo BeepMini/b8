@@ -25,8 +25,8 @@ mapper.sceneGame = {
 	 */
 	update: function( dt ) {
 
-		// Update systems.
-		mapper.update( dt );
+		// Update frame-time systems.
+		mapper.updateFrame( dt );
 
 		mapper.sceneGame.moveDelay -= dt;
 		if ( mapper.sceneGame.moveDelay > 0 ) return;
@@ -43,8 +43,15 @@ mapper.sceneGame = {
 		else if ( b8.key( "ArrowDown" ) ) { dy = 1; keyPressed = true; }
 		else if ( b8.key( "ArrowLeft" ) ) { dx = -1; keyPressed = true; }
 		else if ( b8.key( "ArrowRight" ) ) { dx = 1; keyPressed = true; }
-		if ( b8.key( "ButtonA" ) ) { mapper.doAttack( mapper.player, 'ButtonA' ); keyPressed = true; }
-		if ( b8.key( "ButtonB" ) ) { mapper.doAction( mapper.player, 'ButtonB' ); keyPressed = true; }
+		let didAdvanceWorld = false;
+		if ( b8.key( "ButtonA" ) ) {
+			keyPressed = true;
+			didAdvanceWorld = mapper.doAttack( mapper.player, 'ButtonA' ) || didAdvanceWorld;
+		}
+		if ( b8.key( "ButtonB" ) ) {
+			keyPressed = true;
+			didAdvanceWorld = mapper.doAction( mapper.player, 'ButtonB' ) || didAdvanceWorld;
+		}
 
 		// Update move delay when a key is pressed.
 		if ( keyPressed ) mapper.updateMoveDelay();
@@ -52,6 +59,11 @@ mapper.sceneGame = {
 		// Move player.
 		if ( dx !== 0 || dy !== 0 ) {
 
+			// Capture the player's starting tile before any movement happens.
+			// b8.ECS.setLoc() mutates the existing Loc component in place, so we
+			// need stable copies here to detect whether the move really succeeded.
+			const startCol = loc.col;
+			const startRow = loc.row;
 			let newCol = loc.col + dx;
 			let newRow = loc.row + dy;
 
@@ -68,7 +80,17 @@ mapper.sceneGame = {
 
 			b8.ECS.setComponent( mapper.player, 'Direction', { dx, dy } );
 			b8.ECS.setLoc( mapper.player, newCol, newRow );
+			didAdvanceWorld = ( newCol !== startCol || newRow !== startRow ) || didAdvanceWorld;
 
+		}
+
+		if ( didAdvanceWorld ) {
+			mapper.doWorldTurn(
+				{
+					type: dx !== 0 || dy !== 0 ? 'move' : 'action',
+					actorId: mapper.player,
+				}
+			);
 		}
 
 	},

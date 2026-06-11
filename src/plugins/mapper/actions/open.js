@@ -1,4 +1,4 @@
-mapper.actions.open = async function( playerId ) {
+mapper.actions.open = function( playerId ) {
 
 	const entities = mapper.entitiesAhead( playerId );
 
@@ -31,7 +31,7 @@ mapper.actions.open = async function( playerId ) {
 			);
 
 			const message = mapper.helpers.processChatText( obj.message || '' );
-			await b8.Async.dialogTypewriter( message, [ "OK" ], 20 );
+			b8.Async.dialogTypewriter( message, [ "OK" ], 20 );
 		}
 
 		// Rewards.
@@ -52,8 +52,10 @@ mapper.actions.open = async function( playerId ) {
 
 		mapper.delayKeyPress( id );
 
-		return;
+		return true;
 
 	}
+
+	return false;
 
 };

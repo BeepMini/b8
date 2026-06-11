@@ -1,4 +1,4 @@
-mapper.systems.bomb = async function( dt ) {
+mapper.systems.bomb = async function() {
 
 	const bombs = b8.ECS.query( 'Bomb' );
 
@@ -10,25 +10,23 @@ mapper.systems.bomb = async function( dt ) {
 		const bomb = b8.ECS.getComponent( id, 'Bomb' );
 
 		// Skip if fuse not ignited.
-		if ( bomb.fuseTime === false ) continue;
+		if ( bomb.fuseTurns === false ) continue;
 
 		// Decrease fuse time.
-		bomb.fuseTime -= dt;
+		bomb.fuseTurns--;
 
 		// Make bomb flicker as fuse gets shorter.
 		const sprite = b8.ECS.getComponent( id, 'Sprite' );
-		if ( bomb.fuseTime > 5 ) {
+		if ( bomb.fuseTurns > 5 ) {
 			sprite.fg = color;
-		} else if ( bomb.fuseTime > 2.5 ) {
-			sprite.fg = ( Math.floor( bomb.fuseTime * 2 ) % 2 === 0 ) ? color : flickerColor;
-		} else if ( bomb.fuseTime > 1 ) {
-			sprite.fg = ( Math.floor( bomb.fuseTime * 4 ) % 2 === 0 ) ? color : flickerColor;
-		} else if ( bomb.fuseTime > 0 ) {
-			sprite.fg = ( Math.floor( bomb.fuseTime * 10 ) % 2 === 0 ) ? color : flickerColor;
+		} else if ( bomb.fuseTurns > 2 ) {
+			sprite.fg = ( bomb.fuseTurns % 2 === 0 ) ? color : flickerColor;
+		} else if ( bomb.fuseTurns > 0 ) {
+			sprite.fg = flickerColor;
 		}
 
 		// Explode bomb when fuse reaches zero.
-		if ( bomb.fuseTime <= 0 ) {
+		if ( bomb.fuseTurns <= 0 ) {
 
 			const bombLoc = b8.ECS.getComponent( id, 'Loc' );
 
@@ -49,6 +47,6 @@ mapper.systems.bomb = async function( dt ) {
 
 		}
 
-	};
+	}
 
 };

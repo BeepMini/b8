@@ -14,6 +14,7 @@ const mapper = {
 	bg: {},
 	defaultGameName: null,
 	isGameOverPending: false,
+	turnCount: 0,
 	lastPosition: null,
 
 	// The player entity ID.
@@ -89,9 +90,46 @@ const mapper = {
 	 * @param {number} dt - The delta time since the last update call.
 	 * @returns {void}
 	 */
-	update: function( dt ) {
+	updateFrame: function( dt ) {
+
+		const healthIds = b8.ECS.query( 'Health' );
+		for ( const id of healthIds ) {
+			const health = b8.ECS.getComponent( id, 'Health' );
+			if ( !health ) continue;
+			health.cooldownTimer = Math.max( 0, ( health.cooldownTimer || 0 ) - dt );
+		}
 
 		b8.ECS.run( dt );
+
+	},
+
+
+	/**
+	 * Advance the mapper world by one turn.
+	 *
+	 * @param {Object} turnContext Context describing why the turn occurred.
+	 * @returns {void}
+	 */
+	doWorldTurn: function( turnContext = {} ) {
+
+		mapper.turnCount++;
+
+		// Resolve on-tile interactions from the player's new location before
+		// autonomous world systems act.
+		mapper.systems.pickup();
+
+		// Hazards.
+		mapper.systems.fire();
+		mapper.systems.flammable();
+		mapper.systems.fireSmall();
+		mapper.systems.bomb();
+
+		// Moving objects and creatures.
+		mapper.systems.ai( turnContext );
+		mapper.systems.pathFollower();
+
+		// Resolve any defeats caused during the turn.
+		mapper.systems.health();
 
 	},
 
@@ -103,7 +141,6 @@ const mapper = {
 	 */
 	delayKeyPress: function( id ) {
 
-		console.log( `Key press delay for entity ${id}` );
 		b8.ECS.setComponent( id, 'ActionCooldown', { time: mapper.CONFIG.keyPressDelay } );
 
 	},
@@ -431,10 +468,10 @@ const mapper = {
 		}
 
 		const action = mapper.promptAhead( playerId, propertyName );
+		if ( !action || !mapper.actions[ action ] ) return false;
 
-		if ( action && mapper.actions[ action ] ) {
-			mapper.actions[ action ]( playerId );
-		}
+		const wasSuccessful = mapper.actions[ action ]( playerId ) !== false;
+		if ( !wasSuccessful ) return false;
 
 		mapper.delayKeyPress( playerId );
 
@@ -452,7 +489,7 @@ const mapper = {
 	 */
 	doAttack: ( playerId, propertyName ) => {
 
-		if ( !mapper.doAction( playerId, propertyName ) ) return;
+		if ( !mapper.doAction( playerId, propertyName ) ) return false;
 
 		const ahead = mapper.ahead( playerId );
 
@@ -461,6 +498,8 @@ const mapper = {
 			ahead.x, ahead.y,
 			{ id: 'swipe', fg: 15, bg: 0, type: 'vfx-outline' }
 		);
+
+		return true;
 
 	},
 
@@ -641,6 +680,7 @@ const mapper = {
 		if ( !flammable ) return false;
 
 		flammable.temperature = ( flammable.temperature || 0 ) + amount;
+		flammable.heatedThisTurn = true;
 
 		return true;
 
@@ -651,7 +691,7 @@ const mapper = {
 	 * Ignite a living entity by attaching a fire-small effect to it.
 	 *
 	 * @param {number} entityId - The entity to ignite.
-	 * @param {number} duration - How long the burn should last in seconds.
+	 * @param {number} duration - How long the burn should last in turns.
 	 * @returns {boolean} True if a fire effect was attached, false otherwise.
 	 */
 	igniteLivingEntity: function( entityId, duration = 3 ) {
@@ -738,11 +778,19 @@ const mapper = {
 	 */
 	handleFlammableIgnition: function( entityId, sourceId = null ) {
 
-		const shouldRemoveEntity = mapper.doHandler(
+		const type = b8.ECS.getComponent( entityId, 'Type' );
+		const handler = type && mapper.types[ type.name ];
+		const hasBurnHandler = !!handler?.burnHandler;
+
+		const handlerResult = mapper.doHandler(
 			entityId,
 			'burnHandler',
 			{ sourceId, ignition: true }
-		) !== false;
+		);
+
+		// Default flammables like crates should be removed and replaced with fire.
+		// Only keep the entity alive when a custom burn handler explicitly returns false.
+		const shouldRemoveEntity = !hasBurnHandler || handlerResult !== false;
 
 		if ( !shouldRemoveEntity ) return false;
 
@@ -750,7 +798,12 @@ const mapper = {
 		if ( location ) {
 			mapper.types.fire.spawn(
 				location.col,
-				location.row
+				location.row,
+				{
+					// Ignited crates and similar props should visually swap to
+					// fire immediately so there is no empty-tile flicker.
+					startDelayMs: 0,
+				}
 			);
 		}
 

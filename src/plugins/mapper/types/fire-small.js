@@ -1,7 +1,5 @@
 mapper.types.fireSmall = {
 
-	damagePerSecond: 0.75,
-
 	spawn: function( col, row, props = {} ) {
 
 		if ( !props.parent ) return;
@@ -20,7 +18,7 @@ mapper.types.fireSmall = {
 					depth: 100,
 				},
 				FireSmall: {
-					duration: props.duration || 3,
+					durationTurns: props.durationTurns || props.duration || mapper.CONFIG.fireSmallDurationTurns,
 					parent: props.parent,
 				},
 			}

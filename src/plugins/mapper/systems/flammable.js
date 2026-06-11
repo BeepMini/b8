@@ -1,4 +1,4 @@
-mapper.systems.flammable = async function( dt ) {
+mapper.systems.flammable = function() {
 
 	const flammables = b8.ECS.query( 'Flammable' );
 
@@ -11,12 +11,18 @@ mapper.systems.flammable = async function( dt ) {
 		if ( !flammable ) continue;
 
 		// Check if the flammable entity should catch fire.
-		if ( flammable.temperature >= 100 ) {
+		if ( flammable.temperature >= mapper.CONFIG.flammableIgniteThreshold ) {
 			mapper.handleFlammableIgnition( entityId );
 			continue;
 		}
 
+		// Do not cool an entity on the same turn it was heated by nearby fire.
+		if ( flammable.heatedThisTurn ) {
+			flammable.heatedThisTurn = false;
+			continue;
+		}
+
 		// Cool down flammable entities that are not on fire.
-		flammable.temperature = Math.max( 0, ( flammable.temperature || 0 ) - 10 * dt );
+		flammable.temperature = Math.max( 0, ( flammable.temperature || 0 ) - mapper.CONFIG.flammableCoolingPerTurn );
 	}
 };

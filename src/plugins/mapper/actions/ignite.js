@@ -1,6 +1,7 @@
 mapper.actions.ignite = function( playerId ) {
 
 	const ids = mapper.entitiesAhead( playerId );
+	let didIgnite = false;
 
 	for ( const targetId of ids ) {
 
@@ -10,10 +11,14 @@ mapper.actions.ignite = function( playerId ) {
 		// Ignite the bomb.
 		const bomb = b8.ECS.getComponent( targetId, 'Bomb' );
 		if ( !bomb ) continue;
+		if ( bomb.fuseTurns !== false ) continue;
 
 		// Start the fuse.
-		bomb.fuseTime = 5;
+		bomb.fuseTurns = mapper.CONFIG.bombFuseTurns;
+		didIgnite = true;
 
 	};
+
+	return didIgnite;
 
 };

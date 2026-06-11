@@ -1,6 +1,7 @@
 mapper.actions.attack = ( playerId ) => {
 
 	const ids = mapper.entitiesAhead( playerId );
+	let didAttack = false;
 
 	for ( const targetId of ids ) {
 
@@ -18,7 +19,10 @@ mapper.actions.attack = ( playerId ) => {
 		const playerAttack = b8.ECS.getComponent( playerId, 'Attack' ) || { value: 1 };
 		targetHealth.cooldownTimer = targetHealth.cooldown || mapper.CONFIG.healthCooldown;
 		targetHealth.value -= playerAttack.value;
+		didAttack = true;
 
 	}
+
+	return didAttack;
 
 };

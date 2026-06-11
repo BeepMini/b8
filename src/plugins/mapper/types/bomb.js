@@ -22,7 +22,7 @@ mapper.types.bomb = {
 					ButtonA: 'ignite'
 				},
 				Bomb: {
-					fuseTime: false,
+					fuseTurns: false,
 					radius: parseInt( props.radius ) || 1,
 					damage: 2,
 				},
@@ -66,9 +66,9 @@ mapper.types.bomb = {
 
 		const bomb = b8.ECS.getComponent( id, 'Bomb' );
 
-		if ( bomb.fuseTime !== false ) return;
+		if ( bomb.fuseTurns !== false ) return;
 
-		bomb.fuseTime = 2;
+		bomb.fuseTurns = 2;
 
 	},
 
