@@ -2,40 +2,41 @@ mapper.systems.health = async function( dt ) {
 
 	const entities = b8.ECS.query( 'Health' );
 
-	entities.forEach(
-		async ( entityId ) => {
+	for ( const entityId of entities ) {
 
-			const health = b8.ECS.getComponent( entityId, 'Health' );
+		const health = b8.ECS.getComponent( entityId, 'Health' );
 
-			// Reduce cooldown timer.
-			// If still in cooldown, skip further processing.
-			health.cooldownTimer = Math.max( 0, health.cooldownTimer - dt );
+		// The entity may already have been removed by another system earlier in
+		// the frame, so skip it if the component no longer exists.
+		if ( !health ) continue;
 
-			if ( health.value <= 0 ) {
+		// Reduce cooldown timer.
+		health.cooldownTimer = Math.max( 0, health.cooldownTimer - dt );
 
-				// Spawn defeat VFX.
-				const loc = b8.ECS.getComponent( entityId, 'Loc' );
-				if ( loc ) {
-					mapper.types.vfx.spawn(
-						loc.col, loc.row,
-						{ id: 'skull', fg: 2, bg: 0, offsetTime: 200 }
-					);
-				}
+		if ( health.value > 0 ) continue;
 
-				// Small pause on defeat.
-				// mapper.updateMoveDelay( 0.6 );
-
-				// Kill the entity unless it's the player.
-				if ( entityId !== mapper.player ) {
-					b8.ECS.removeEntity( entityId );
-				} else {
-					await b8.Async.wait( 1 );
-					b8.Scene.set( 'gameover' );
-				}
-
-			}
-
+		// Spawn defeat VFX.
+		const loc = b8.ECS.getComponent( entityId, 'Loc' );
+		if ( loc ) {
+			mapper.types.vfx.spawn(
+				loc.col, loc.row,
+				{ id: 'skull', fg: 2, bg: 0, offsetTime: 200 }
+			);
 		}
-	);
+
+		// Kill defeated enemies immediately, but only queue the player's game
+		// over flow once so repeated frames do not stack multiple waits/scenes.
+		if ( entityId !== mapper.player ) {
+			b8.ECS.removeEntity( entityId );
+			continue;
+		}
+
+		if ( mapper.isGameOverPending ) continue;
+
+		mapper.isGameOverPending = true;
+
+		await b8.Async.wait( 1 );
+		b8.Scene.set( 'gameover' );
+	}
 
 };

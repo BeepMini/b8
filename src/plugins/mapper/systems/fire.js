@@ -2,80 +2,60 @@ mapper.systems.fire = async function( dt ) {
 
 	const fires = b8.ECS.query( 'Fire', 'Loc' );
 
-	fires.forEach(
-		( fireId ) => {
+	for ( const fireId of fires ) {
 
-			const fire = b8.ECS.getComponent( fireId, 'Fire' );
-			const loc = b8.ECS.getComponent( fireId, 'Loc' );
+		const fire = b8.ECS.getComponent( fireId, 'Fire' );
+		const loc = b8.ECS.getComponent( fireId, 'Loc' );
 
-			// Reduce the fire's duration
-			if ( fire.duration !== Infinity ) {
+		// Another system may have already removed the fire entity this frame.
+		if ( !fire || !loc ) continue;
 
-				fire.duration -= dt;
+		// Reduce the fire's duration.
+		if ( fire.duration !== Infinity ) {
 
-				if ( fire.duration <= 0 ) {
-					b8.ECS.removeEntity( fireId ); // Extinguish the fire
-					mapper.types.vfx.spawn(
-						loc.col, loc.row,
-						{ id: 'shrink', fg: 9 }
-					);
-					return;
-				}
+			fire.duration -= dt;
 
+			if ( fire.duration <= 0 ) {
+				b8.ECS.removeEntity( fireId );
+				mapper.types.vfx.spawn(
+					loc.col, loc.row,
+					{ id: 'shrink', fg: 9 }
+				);
+				continue;
 			}
 
-			// Apply damage or custom burn behavior to entities at the fire's location
-			const entitiesAtLocation = b8.ECS.entitiesAt( loc.col, loc.row );
-			entitiesAtLocation.forEach(
-				( entityId ) => {
+		}
 
-					// Skip the fire itself
-					if ( entityId === fireId ) return;
+		// Entities standing directly on the fire can catch alight and trigger
+		// any immediate burn reactions.
+		const entitiesAtLocation = b8.ECS.entitiesAt( loc.col, loc.row ) || [];
+		for ( const entityId of entitiesAtLocation ) {
+			if ( entityId === fireId ) continue;
 
-					// Set entities on fire if they have a health component.
-					// This suggests they are living things that can burn (enemy/ player/ npc).
-					// We spawn a small fire effect on them to indicate this.
-					if ( b8.ECS.hasComponent( entityId, 'Health' ) ) {
-
-						// Only spawn a FireSmall if the entity doesn't already have one
-						if ( !b8.ECS.hasComponent( entityId, 'OnFire' ) ) {
-
-							mapper.types.fireSmall.spawn(
-								loc.col, loc.row,
-								{
-									parent: entityId,
-									duration: 3.0
-								}
-							);
-
-							b8.ECS.addComponent( entityId, 'OnFire' );
-
-						}
-
-					}
-
-					mapper.doHandler( entityId, 'burnHandler' );
-
-				}
-			);
-
-			// Heat up nearby flammable entities
-			const nearbyEntities = mapper.entitiesNextTo( fireId );
-			nearbyEntities.forEach(
-				( entityId ) => {
-
-					if ( entityId === fireId ) return; // Skip the fire itself
-
-					const flammable = b8.ECS.getComponent( entityId, 'Flammable' );
-					if ( flammable ) {
-						flammable.temperature = ( flammable.temperature || 0 ) + 70 * dt;
-					}
-
-					mapper.doHandler( entityId, 'burnHandler' );
-
+			mapper.applyFireToEntity(
+				entityId,
+				{
+					sourceId: fireId,
+					igniteLiving: true,
+					burnDuration: 3.0,
 				}
 			);
 		}
-	);
+
+		// Nearby entities are heated by the fire and may also react to it via
+		// their burn handlers, for example bombs starting their fuse.
+		const nearbyEntities = mapper.entitiesNextTo( fireId );
+		for ( const entityId of nearbyEntities ) {
+			if ( entityId === fireId ) continue;
+
+			mapper.applyFireToEntity(
+				entityId,
+				{
+					sourceId: fireId,
+					heatAmount: 70 * dt,
+				}
+			);
+		}
+	}
 
 };
