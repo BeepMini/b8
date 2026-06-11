@@ -9,6 +9,8 @@ const mapper = {
   actions: {},
   settings: {},
   bg: {},
+  defaultGameName: null,
+  isGameOverPending: false,
   lastPosition: null,
   // The player entity ID.
   player: null,
@@ -66,20 +68,6 @@ const mapper = {
     b8.ECS.run(dt);
   },
   /**
-   * Draw an actor at its location with optional offsets.
-   *
-   * @param {Object} actor - The actor entity with properties: id, col, row, fg, bg, animation.
-   * @returns {void}
-   */
-  drawActor: function(actor) {
-    const screenPosition = mapper.camera.getScreenPosition(actor.col, actor.row);
-    const actorX = actor.col - screenPosition.col;
-    const actorY = actor.row - screenPosition.row;
-    b8.locate(actorX + offsetX, actorY + offsetY);
-    b8.color(actor.fg, actor.bg);
-    b8.drawActor(actor.id, actor.animation);
-  },
-  /**
    * Set a delay for key presses to prevent rapid actions.
    *
    * @returns {void}
@@ -111,7 +99,7 @@ const mapper = {
    * @param {number} offsetY - Vertical offset for rendering.
    * @returns {void}
    */
-  render: function(offsetX2 = 0, offsetY2 = 0) {
+  render: function(offsetX = 0, offsetY = 0) {
     const list = [];
     for (const id of b8.ECS.query("Sprite", "Loc")) {
       const spr = b8.ECS.getComponent(id, "Sprite");
@@ -125,7 +113,7 @@ const mapper = {
       const pos = mapper.camera.getTilePosition(loc.col, loc.row);
       const nudgeCol = spr.nudgeCol || 0;
       const nudgeRow = spr.nudgeRow || 0;
-      b8.locate(pos.col + offsetX2, pos.row + offsetY2);
+      b8.locate(pos.col + offsetX, pos.row + offsetY);
       b8.color(spr.fg ?? 15, spr.bg ?? 0);
       switch (spr.type) {
         case "actor":
@@ -164,25 +152,6 @@ const mapper = {
       screenPosition.w,
       screenPosition.h
     );
-  },
-  /**
-   * Set a tile at the specified coordinates in the current map.
-   *
-   * @param {number} x - The x-coordinate (column) of the tile to set.
-   * @param {number} y - The y-coordinate (row) of the tile to set.
-   * @param {string} tile - The tile character to set at the specified coordinates.
-   * @returns {void}
-   */
-  setTile: function(x, y, tile) {
-    if (!mapper.currentMap) {
-      b8.Utilities.error("No current map set.");
-      return;
-    }
-    if (x < 0 || y < 0 || y >= mapper.currentMap.map.mapHeight || x >= mapper.currentMap.map.mapWidth) {
-      b8.Utilities.error("Mapper.setTile, coordinates out of bounds.");
-      return;
-    }
-    mapper.currentMap.map[y][x] = tile;
   },
   /**
    * Get the action verb for a given entity ID.
@@ -466,11 +435,109 @@ const mapper = {
    * @param {string} handlerName - The name of the handler function to invoke.
    * @returns {boolean} The result of the handler function, or false if not found.
    */
-  doHandler: function(entityId, handlerName) {
+  doHandler: function(entityId, handlerName, ...args) {
     const type = b8.ECS.getComponent(entityId, "Type");
     const handler = type && mapper.types[type.name];
-    if (handler?.[handlerName]) return handler[handlerName](entityId);
+    if (handler?.[handlerName]) return handler[handlerName](entityId, ...args);
     return false;
+  },
+  /**
+   * Apply heat to an entity if it supports the Flammable component.
+   *
+   * @param {number} entityId - The entity to heat up.
+   * @param {number} amount - How much heat to add this frame.
+   * @returns {boolean} True if heat was applied, false otherwise.
+   */
+  applyHeatToEntity: function(entityId, amount) {
+    const flammable = b8.ECS.getComponent(entityId, "Flammable");
+    if (!flammable) return false;
+    flammable.temperature = (flammable.temperature || 0) + amount;
+    return true;
+  },
+  /**
+   * Ignite a living entity by attaching a fire-small effect to it.
+   *
+   * @param {number} entityId - The entity to ignite.
+   * @param {number} duration - How long the burn should last in seconds.
+   * @returns {boolean} True if a fire effect was attached, false otherwise.
+   */
+  igniteLivingEntity: function(entityId, duration = 3) {
+    const health = b8.ECS.getComponent(entityId, "Health");
+    const loc = b8.ECS.getComponent(entityId, "Loc");
+    if (!health || !loc) return false;
+    if (b8.ECS.hasComponent(entityId, "OnFire")) return false;
+    mapper.types.fireSmall.spawn(
+      loc.col,
+      loc.row,
+      {
+        parent: entityId,
+        duration
+      }
+    );
+    b8.ECS.addComponent(entityId, "OnFire");
+    return true;
+  },
+  /**
+   * Apply a single fire interaction to an entity.
+   *
+   * @param {number} entityId - The entity being affected by fire.
+   * @param {Object} options - Fire interaction options.
+   * @param {number} [options.heatAmount=0] - Heat to add to Flammable entities.
+   * @param {boolean} [options.igniteLiving=false] - Whether living entities should catch fire.
+   * @param {number} [options.burnDuration=3] - Duration for attached fire-small effects.
+   * @param {number|null} [options.sourceId=null] - The fire entity causing the interaction.
+   * @returns {boolean} True when the entity reacted to the fire in any way.
+   */
+  applyFireToEntity: function(entityId, options = {}) {
+    if (typeof entityId !== "number") return false;
+    const {
+      heatAmount = 0,
+      igniteLiving = false,
+      burnDuration = 3,
+      sourceId = null
+    } = options;
+    let reacted = false;
+    if (heatAmount > 0) {
+      reacted = mapper.applyHeatToEntity(entityId, heatAmount) || reacted;
+    }
+    if (igniteLiving) {
+      reacted = mapper.igniteLivingEntity(entityId, burnDuration) || reacted;
+    }
+    const handlerResult = mapper.doHandler(
+      entityId,
+      "burnHandler",
+      {
+        sourceId,
+        heatAmount,
+        igniteLiving,
+        burnDuration
+      }
+    );
+    return handlerResult !== false || reacted;
+  },
+  /**
+   * Finalize what happens when a flammable entity ignites.
+   *
+   * @param {number} entityId - The flammable entity that reached ignition temperature.
+   * @param {number|null} sourceId - The entity that caused the ignition.
+   * @returns {boolean} True if the entity was removed, false if it stayed alive.
+   */
+  handleFlammableIgnition: function(entityId, sourceId = null) {
+    const shouldRemoveEntity = mapper.doHandler(
+      entityId,
+      "burnHandler",
+      { sourceId, ignition: true }
+    ) !== false;
+    if (!shouldRemoveEntity) return false;
+    const location = b8.ECS.getComponent(entityId, "Loc");
+    if (location) {
+      mapper.types.fire.spawn(
+        location.col,
+        location.row
+      );
+    }
+    b8.ECS.removeEntity(entityId);
+    return true;
   },
   /**
    * Repeat the last step of a path a specified number of times.
@@ -990,8 +1057,13 @@ mapper.load = function(mapData) {
   b8.ECS.reset();
   mapper.maps = [];
   mapper.settings = {};
+  mapper.bg = {};
   mapper.currentMapId = null;
+  mapper.isGameOverPending = false;
   b8.Utilities.checkObject("mapData", mapData);
+  if (mapper.defaultGameName === null) {
+    mapper.defaultGameName = b8.CONFIG.NAME;
+  }
   if (mapData.version === 1) mapData = mapper.upgradeMapDataV1toV2(mapData);
   mapper.settings = { ...mapData.settings };
   b8.Utilities.checkObject("mapper.settings", mapper.settings);
@@ -1018,9 +1090,7 @@ mapper.load = function(mapData) {
       );
     }
   );
-  if (mapper.settings.gameName) {
-    b8.CONFIG.NAME = mapper.settings.gameName;
-  }
+  b8.CONFIG.NAME = mapper.settings.gameName || mapper.defaultGameName;
   mapper.player = mapper.types.player.spawn();
   mapper.lastPosition = {
     col: 0,
@@ -1577,123 +1647,114 @@ mapper.systems.characterAnimation = function(dt) {
 mapper.systems.fireSmall = async function(dt) {
   const damagePerSecond = mapper.types.fireSmall.damagePerSecond;
   const smallFires = b8.ECS.query("FireSmall");
-  smallFires.forEach(
-    (entityId) => {
-      const smallFire = b8.ECS.getComponent(entityId, "FireSmall");
-      const loc = b8.ECS.getComponent(entityId, "Loc");
-      const parentLoc = b8.ECS.getComponent(smallFire.parent, "Loc");
-      if (parentLoc) {
-        loc.col = parentLoc.col;
-        loc.row = parentLoc.row;
-      }
-      const parentHealth = b8.ECS.getComponent(smallFire.parent, "Health");
-      if (parentHealth) {
-        parentHealth.value -= damagePerSecond * dt;
-        if (parentHealth.value < 0) smallFire.duration = 0;
-      }
-      smallFire.duration -= dt;
-      if (smallFire.duration <= 0) {
-        b8.ECS.removeEntity(entityId);
-        b8.ECS.removeComponent(smallFire.parent, "OnFire");
-        if (parentHealth) parentHealth.value = Math.floor(parentHealth.value);
-      }
+  for (const entityId of smallFires) {
+    const smallFire = b8.ECS.getComponent(entityId, "FireSmall");
+    const loc = b8.ECS.getComponent(entityId, "Loc");
+    if (!smallFire || !loc) continue;
+    const parentLoc = b8.ECS.getComponent(smallFire.parent, "Loc");
+    const parentHealth = b8.ECS.getComponent(smallFire.parent, "Health");
+    if (!parentLoc && !parentHealth) {
+      b8.ECS.removeEntity(entityId);
+      continue;
     }
-  );
+    if (parentLoc) {
+      loc.col = parentLoc.col;
+      loc.row = parentLoc.row;
+    }
+    if (parentHealth) {
+      parentHealth.value -= damagePerSecond * dt;
+      if (parentHealth.value < 0) smallFire.duration = 0;
+    }
+    smallFire.duration -= dt;
+    if (smallFire.duration > 0) continue;
+    b8.ECS.removeEntity(entityId);
+    if (parentLoc || parentHealth) {
+      b8.ECS.removeComponent(smallFire.parent, "OnFire");
+    }
+    if (parentHealth) {
+      parentHealth.value = Math.floor(parentHealth.value);
+    }
+  }
 };
 mapper.systems.fire = async function(dt) {
   const fires = b8.ECS.query("Fire", "Loc");
-  fires.forEach(
-    (fireId) => {
-      const fire = b8.ECS.getComponent(fireId, "Fire");
-      const loc = b8.ECS.getComponent(fireId, "Loc");
-      if (fire.duration !== Infinity) {
-        fire.duration -= dt;
-        if (fire.duration <= 0) {
-          b8.ECS.removeEntity(fireId);
-          mapper.types.vfx.spawn(
-            loc.col,
-            loc.row,
-            { id: "shrink", fg: 9 }
-          );
-          return;
-        }
+  for (const fireId of fires) {
+    const fire = b8.ECS.getComponent(fireId, "Fire");
+    const loc = b8.ECS.getComponent(fireId, "Loc");
+    if (!fire || !loc) continue;
+    if (fire.duration !== Infinity) {
+      fire.duration -= dt;
+      if (fire.duration <= 0) {
+        b8.ECS.removeEntity(fireId);
+        mapper.types.vfx.spawn(
+          loc.col,
+          loc.row,
+          { id: "shrink", fg: 9 }
+        );
+        continue;
       }
-      const entitiesAtLocation = b8.ECS.entitiesAt(loc.col, loc.row);
-      entitiesAtLocation.forEach(
-        (entityId) => {
-          if (entityId === fireId) return;
-          if (b8.ECS.hasComponent(entityId, "Health")) {
-            if (!b8.ECS.hasComponent(entityId, "OnFire")) {
-              mapper.types.fireSmall.spawn(
-                loc.col,
-                loc.row,
-                {
-                  parent: entityId,
-                  duration: 3
-                }
-              );
-              b8.ECS.addComponent(entityId, "OnFire");
-            }
-          }
-          mapper.doHandler(entityId, "burnHandler");
-        }
-      );
-      const nearbyEntities = mapper.entitiesNextTo(fireId);
-      nearbyEntities.forEach(
-        (entityId) => {
-          if (entityId === fireId) return;
-          const flammable = b8.ECS.getComponent(entityId, "Flammable");
-          if (flammable) {
-            flammable.temperature = (flammable.temperature || 0) + 70 * dt;
-          }
-          mapper.doHandler(entityId, "burnHandler");
+    }
+    const entitiesAtLocation = b8.ECS.entitiesAt(loc.col, loc.row) || [];
+    for (const entityId of entitiesAtLocation) {
+      if (entityId === fireId) continue;
+      mapper.applyFireToEntity(
+        entityId,
+        {
+          sourceId: fireId,
+          igniteLiving: true,
+          burnDuration: 3
         }
       );
     }
-  );
+    const nearbyEntities = mapper.entitiesNextTo(fireId);
+    for (const entityId of nearbyEntities) {
+      if (entityId === fireId) continue;
+      mapper.applyFireToEntity(
+        entityId,
+        {
+          sourceId: fireId,
+          heatAmount: 70 * dt
+        }
+      );
+    }
+  }
 };
 mapper.systems.flammable = async function(dt) {
   const flammables = b8.ECS.query("Flammable");
-  flammables.forEach(
-    (entityId) => {
-      const flammable = b8.ECS.getComponent(entityId, "Flammable");
-      if (flammable.temperature >= 100) {
-        const location = b8.ECS.getComponent(entityId, "Loc");
-        mapper.types.fire.spawn(
-          location.col,
-          location.row
-        );
-        b8.ECS.removeEntity(entityId);
-        return;
-      }
-      flammable.temperature = Math.max(0, (flammable.temperature || 0) - 10 * dt);
+  for (const entityId of flammables) {
+    const flammable = b8.ECS.getComponent(entityId, "Flammable");
+    if (!flammable) continue;
+    if (flammable.temperature >= 100) {
+      mapper.handleFlammableIgnition(entityId);
+      continue;
     }
-  );
+    flammable.temperature = Math.max(0, (flammable.temperature || 0) - 10 * dt);
+  }
 };
 mapper.systems.health = async function(dt) {
   const entities = b8.ECS.query("Health");
-  entities.forEach(
-    async (entityId) => {
-      const health = b8.ECS.getComponent(entityId, "Health");
-      health.cooldownTimer = Math.max(0, health.cooldownTimer - dt);
-      if (health.value <= 0) {
-        const loc = b8.ECS.getComponent(entityId, "Loc");
-        if (loc) {
-          mapper.types.vfx.spawn(
-            loc.col,
-            loc.row,
-            { id: "skull", fg: 2, bg: 0, offsetTime: 200 }
-          );
-        }
-        if (entityId !== mapper.player) {
-          b8.ECS.removeEntity(entityId);
-        } else {
-          await b8.Async.wait(1);
-          b8.Scene.set("gameover");
-        }
-      }
+  for (const entityId of entities) {
+    const health = b8.ECS.getComponent(entityId, "Health");
+    if (!health) continue;
+    health.cooldownTimer = Math.max(0, health.cooldownTimer - dt);
+    if (health.value > 0) continue;
+    const loc = b8.ECS.getComponent(entityId, "Loc");
+    if (loc) {
+      mapper.types.vfx.spawn(
+        loc.col,
+        loc.row,
+        { id: "skull", fg: 2, bg: 0, offsetTime: 200 }
+      );
     }
-  );
+    if (entityId !== mapper.player) {
+      b8.ECS.removeEntity(entityId);
+      continue;
+    }
+    if (mapper.isGameOverPending) continue;
+    mapper.isGameOverPending = true;
+    await b8.Async.wait(1);
+    b8.Scene.set("gameover");
+  }
 };
 mapper.systems.pathFollower = async function(dt) {
   const ids = b8.ECS.query("Loc", "PathFollower");

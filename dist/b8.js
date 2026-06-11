@@ -87,8 +87,9 @@ const b8 = {};
     // These are for the default font(s). If you use a different list you
     // will need to upate the font file to match.
     CHRS: `ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789*+=-<>_#&@%^~$\xA3\u20AC\xA5\xA2!?:;'"/\\()[]{}.,\xA9\xAE\u2122\u2022\u2026| `,
-    // Character size. The characters file's width must be
-    // 12 * CHR_WIDTH and the height must be 12 * CHR_HEIGHT.
+    // Size of each character tile in pixels.
+    // Font image width should be:
+    // charsPerRow * CHR_WIDTH
     CHR_WIDTH: 12,
     CHR_HEIGHT: 12,
     // Screen width and height in characters.
@@ -115,6 +116,7 @@ const b8 = {};
     // store a scaled copy of the characters image in memory, so more colors
     // = more memory.
     // You can redefine the colors at runtime with b8.redefineColors([]).
+    // Games on beepmini.com all use the default palette.
     COLORS: [
       "#0A0C1F",
       // 0. Very dark blue - almost black. The darkest colour.
@@ -448,7 +450,7 @@ const b8 = {};
   b82.saveScreen = function() {
     return b82.Core.saveScreen();
   };
-  b82.screenShake = function(duration) {
+  b82.screenShake = function(duration = 0.5) {
     b82.Utilities.checkNumber("duration", duration);
     return b82.Renderer.shakeScreen(duration);
   };
@@ -459,15 +461,6 @@ const b8 = {};
     b82.Utilities.checkString("text", text);
     b82.Utilities.checkNumber("maxWidth", maxWidth);
     return b82.TextRenderer.wrapText(text, maxWidth);
-  };
-  b82.addScene = function(name, update = {}) {
-    b82.Scene.add(name, update);
-  };
-  b82.switchScene = function(name) {
-    b82.Scene.set(name);
-  };
-  b82.getScene = function() {
-    return b82.Scene.get();
   };
   b82.speak = function(text, options = {}) {
     if (!window.speechSynthesis) return;
@@ -1426,216 +1419,423 @@ const b8 = {};
   }
 })(b8);
 (function(b82) {
+  b82.UI = {};
+  b82.UI.region = function(opts = {}) {
+    const rect = getCurrentRect_(opts);
+    if (rect.disabled) return false;
+    return consumeTapInRect_(rect);
+  };
+  b82.UI.textButton = function(opts = {}) {
+    const col = b82.Core.drawState.cursorCol;
+    const row = b82.Core.drawState.cursorRow;
+    const width = opts.width ?? 1;
+    const height = opts.height ?? 1;
+    const label = opts.label ?? "";
+    const style = opts.style ?? "plain";
+    const disabled = !!opts.disabled;
+    drawTextButton_(col, row, width, height, label, style, disabled);
+    return b82.UI.region(
+      {
+        width,
+        height,
+        disabled
+      }
+    );
+  };
+  b82.UI.iconButton = function(opts = {}) {
+    const col = b82.Core.drawState.cursorCol;
+    const row = b82.Core.drawState.cursorRow;
+    const width = opts.width ?? 1;
+    const height = opts.height ?? 1;
+    const icon = opts.icon ?? 0;
+    const style = opts.style ?? "plain";
+    const disabled = !!opts.disabled;
+    drawIconButton_(col, row, width, height, icon, style, disabled);
+    return b82.UI.region({
+      width,
+      height,
+      disabled
+    });
+  };
+  b82.UI.progressBar = function(length = 5, percent = 0) {
+    const col = b82.col();
+    const row = b82.row();
+    const pixelWidth = length * b82.CONFIG.CHR_WIDTH;
+    const oldFg = b82.Core.drawState.fgColor;
+    const oldBg = b82.Core.drawState.bgColor;
+    b82.color(oldBg);
+    b82.fillRect(
+      col * b82.CONFIG.CHR_WIDTH,
+      row * b82.CONFIG.CHR_HEIGHT,
+      pixelWidth,
+      b82.CONFIG.CHR_HEIGHT
+    );
+    if (percent <= 0) return;
+    if (percent > 1) percent = 1;
+    const filledPixels = Math.round(pixelWidth * percent);
+    b82.color(oldFg, oldBg);
+    b82.fillRect(
+      col * b82.CONFIG.CHR_WIDTH,
+      row * b82.CONFIG.CHR_HEIGHT,
+      filledPixels,
+      b82.CONFIG.CHR_HEIGHT
+    );
+  };
+  function getCurrentRect_(opts = {}) {
+    return {
+      col: b82.Core.drawState.cursorCol,
+      row: b82.Core.drawState.cursorRow,
+      width: opts.width ?? 1,
+      height: opts.height ?? 1,
+      disabled: !!opts.disabled
+    };
+  }
+  function consumeTapInRect_(rect) {
+    if (!b82.Input.hasTap()) return false;
+    const tap = b82.Input.tapTile();
+    const hit = tap.col >= rect.col && tap.col < rect.col + rect.width && tap.row >= rect.row && tap.row < rect.row + rect.height;
+    if (!hit) return false;
+    b82.Input.consumeTap();
+    return true;
+  }
+  function drawButtonBase_(width, height, style = "plain") {
+    const oldFg = b82.Core.drawState.fgColor;
+    const oldBg = b82.Core.drawState.bgColor;
+    b82.TextRenderer.printStyledBox(
+      width,
+      height,
+      {
+        style
+      }
+    );
+    return { oldFg, oldBg };
+  }
+  function drawTextButton_(col, row, width, height, label, style, disabled) {
+    const oldFg = b82.Core.drawState.fgColor;
+    const oldBg = b82.Core.drawState.bgColor;
+    drawButtonBase_(width, height, style);
+    const labelSize = b82.TextRenderer.measure(label);
+    const labelRow = row + height / 2 - labelSize.rows / 2;
+    b82.locate(col, labelRow);
+    if (disabled) {
+      b82.color(8, oldBg);
+    }
+    b82.printCentered(label, width);
+    b82.color(oldFg, oldBg);
+    b82.locate(col, row);
+  }
+  function drawIconButton_(col, row, width, height, icon, style, disabled) {
+    const oldFg = b82.Core.drawState.fgColor;
+    const oldBg = b82.Core.drawState.bgColor;
+    drawButtonBase_(width, height, style);
+    const iconCol = col + width / 2 - 0.5;
+    const iconRow = row + height / 2 - 0.5;
+    b82.locate(iconCol, iconRow);
+    if (disabled) {
+      b82.color(8, -1);
+    }
+    b82.printChar(icon);
+    b82.color(oldFg, oldBg);
+    b82.locate(col, row);
+  }
+})(b8);
+(function(b82) {
   b82.Tilemap = {};
   b82.Tilemap.MAP_CHAR = 0;
   b82.Tilemap.MAP_FG = 1;
   b82.Tilemap.MAP_BG = 2;
   b82.Tilemap.MAP_COLLISION = 3;
   b82.Tilemap.MAP_DATA = 4;
+  const WATER_TILES = [1, 188, 206];
   const wallTiles = {
     "solid": {
-      0: 1,
-      // wall_isolated.
-      1: 1,
-      // wall_end_bottom.
-      2: 1,
-      // wall_end_left.
-      3: 36,
-      // wall_corner_bottomLeft.
-      4: 1,
-      // wall_end_top.
-      5: 1,
-      // wall_vertical.
-      6: 18,
-      // wall_corner_topLeft.
-      7: 1,
-      // wall_t_right.
-      8: 1,
-      // wall_end_right.
-      9: 37,
-      // wall_corner_bottomRight.
-      10: 1,
-      // wall_horizontal.
-      11: 1,
-      // wall_t_bottom.
-      12: 19,
-      // wall_corner_topRight.
-      13: 1,
-      // wall_t_left.
-      14: 1,
-      // wall_t_top.
-      15: 1
-      // wall_cross.
+      tiles: {
+        0: 1,
+        // wall_isolated.
+        1: 1,
+        // wall_end_bottom.
+        2: 1,
+        // wall_end_left.
+        3: 36,
+        // wall_corner_bottomLeft.
+        4: 1,
+        // wall_end_top.
+        5: 1,
+        // wall_vertical.
+        6: 18,
+        // wall_corner_topLeft.
+        7: 1,
+        // wall_t_right.
+        8: 1,
+        // wall_end_right.
+        9: 37,
+        // wall_corner_bottomRight.
+        10: 1,
+        // wall_horizontal.
+        11: 1,
+        // wall_t_bottom.
+        12: 19,
+        // wall_corner_topRight.
+        13: 1,
+        // wall_t_left.
+        14: 1,
+        // wall_t_top.
+        15: 1
+        // wall_cross.
+      }
     },
     "rounded": {
-      0: 1,
-      // wall_isolated.
-      1: 42,
-      // wall_end_bottom.
-      2: 23,
-      // wall_end_left.
-      3: 36,
-      // wall_corner_bottomLeft.
-      4: 41,
-      // wall_end_top.
-      5: 1,
-      // wall_vertical.
-      6: 18,
-      // wall_corner_topLeft.
-      7: 1,
-      // wall_t_right.
-      8: 24,
-      // wall_end_right.
-      9: 37,
-      // wall_corner_bottomRight.
-      10: 1,
-      // wall_horizontal.
-      11: 1,
-      // wall_t_bottom.
-      12: 19,
-      // wall_corner_topRight.
-      13: 1,
-      // wall_t_left.
-      14: 1,
-      // wall_t_top.
-      15: 1
-      // wall_cross.
+      tiles: {
+        0: 1,
+        // wall_isolated.
+        1: 42,
+        // wall_end_bottom.
+        2: 23,
+        // wall_end_left.
+        3: 36,
+        // wall_corner_bottomLeft.
+        4: 41,
+        // wall_end_top.
+        5: 1,
+        // wall_vertical.
+        6: 18,
+        // wall_corner_topLeft.
+        7: 1,
+        // wall_t_right.
+        8: 24,
+        // wall_end_right.
+        9: 37,
+        // wall_corner_bottomRight.
+        10: 1,
+        // wall_horizontal.
+        11: 1,
+        // wall_t_bottom.
+        12: 19,
+        // wall_corner_topRight.
+        13: 1,
+        // wall_t_left.
+        14: 1,
+        // wall_t_top.
+        15: 1
+        // wall_cross.
+      }
     },
     "half": {
-      0: 128,
-      // wall_isolated.
-      1: 75,
-      // wall_end_bottom.
-      2: 58,
-      // wall_end_left.
-      3: 93,
-      // wall_corner_bottomLeft.
-      4: 75,
-      // wall_end_top.
-      5: 75,
-      // wall_vertical.
-      6: 57,
-      // wall_corner_topLeft.
-      7: 129,
-      // wall_t_right.
-      8: 58,
-      // wall_end_right.
-      9: 95,
-      // wall_corner_bottomRight.
-      10: 58,
-      // wall_horizontal.
-      11: 111,
-      // wall_t_bottom.
-      12: 59,
-      // wall_corner_topRight.
-      13: 130,
-      // wall_t_left.
-      14: 112,
-      // wall_t_top.
-      15: 113
-      // wall_cross.
+      tiles: {
+        0: 128,
+        // wall_isolated.
+        1: 75,
+        // wall_end_bottom.
+        2: 58,
+        // wall_end_left.
+        3: 93,
+        // wall_corner_bottomLeft.
+        4: 75,
+        // wall_end_top.
+        5: 75,
+        // wall_vertical.
+        6: 57,
+        // wall_corner_topLeft.
+        7: 129,
+        // wall_t_right.
+        8: 58,
+        // wall_end_right.
+        9: 95,
+        // wall_corner_bottomRight.
+        10: 58,
+        // wall_horizontal.
+        11: 111,
+        // wall_t_bottom.
+        12: 59,
+        // wall_corner_topRight.
+        13: 130,
+        // wall_t_left.
+        14: 112,
+        // wall_t_top.
+        15: 113
+        // wall_cross.
+      }
     },
     "half_rounded": {
-      0: 128,
-      // wall_isolated.
-      1: 148,
-      // wall_end_bottom.
-      2: 166,
-      // wall_end_left.
-      3: 93,
-      // wall_corner_bottomLeft.
-      4: 149,
-      // wall_end_top.
-      5: 75,
-      // wall_vertical.
-      6: 57,
-      // wall_corner_topLeft.
-      7: 129,
-      // wall_t_right.
-      8: 167,
-      // wall_end_right.
-      9: 95,
-      // wall_corner_bottomRight.
-      10: 58,
-      // wall_horizontal.
-      11: 111,
-      // wall_t_bottom.
-      12: 59,
-      // wall_corner_topRight.
-      13: 130,
-      // wall_t_left.
-      14: 112,
-      // wall_t_top.
-      15: 113
-      // wall_cross.
+      tiles: {
+        0: 128,
+        // wall_isolated.
+        1: 148,
+        // wall_end_bottom.
+        2: 166,
+        // wall_end_left.
+        3: 93,
+        // wall_corner_bottomLeft.
+        4: 149,
+        // wall_end_top.
+        5: 75,
+        // wall_vertical.
+        6: 57,
+        // wall_corner_topLeft.
+        7: 129,
+        // wall_t_right.
+        8: 167,
+        // wall_end_right.
+        9: 95,
+        // wall_corner_bottomRight.
+        10: 58,
+        // wall_horizontal.
+        11: 111,
+        // wall_t_bottom.
+        12: 59,
+        // wall_corner_topRight.
+        13: 130,
+        // wall_t_left.
+        14: 112,
+        // wall_t_top.
+        15: 113
+        // wall_cross.
+      }
     },
     "pipe": {
-      0: 128,
-      // wall_isolated.
-      1: 148,
-      // wall_end_bottom.
-      2: 166,
-      // wall_end_left.
-      3: 93,
-      // wall_corner_bottomLeft.
-      4: 149,
-      // wall_end_top.
-      5: [75, 77],
-      // wall_vertical.
-      6: 57,
-      // wall_corner_topLeft.
-      7: 129,
-      // wall_t_right.
-      8: 167,
-      // wall_end_right.
-      9: 95,
-      // wall_corner_bottomRight.
-      10: [58, 94],
-      // wall_horizontal.
-      11: 111,
-      // wall_t_bottom.
-      12: 59,
-      // wall_corner_topRight.
-      13: 130,
-      // wall_t_left.
-      14: 112,
-      // wall_t_top.
-      15: [113, 131, 76]
-      // wall_cross.
+      tiles: {
+        0: 128,
+        // wall_isolated.
+        1: 148,
+        // wall_end_bottom.
+        2: 166,
+        // wall_end_left.
+        3: 93,
+        // wall_corner_bottomLeft.
+        4: 149,
+        // wall_end_top.
+        5: [75, 77],
+        // wall_vertical.
+        6: 57,
+        // wall_corner_topLeft.
+        7: 129,
+        // wall_t_right.
+        8: 167,
+        // wall_end_right.
+        9: 95,
+        // wall_corner_bottomRight.
+        10: [58, 94],
+        // wall_horizontal.
+        11: 111,
+        // wall_t_bottom.
+        12: 59,
+        // wall_corner_topRight.
+        13: 130,
+        // wall_t_left.
+        14: 112,
+        // wall_t_top.
+        15: [113, 131, 76]
+        // wall_cross.
+      }
     },
     "thin": {
-      0: 110,
-      // wall_isolated.
-      1: 173,
-      // wall_end_bottom.
-      2: 172,
-      // wall_end_left.
-      3: 164,
-      // wall_corner_bottomLeft.
-      4: 154,
-      // wall_end_top.
-      5: 72,
-      // wall_vertical.
-      6: 146,
-      // wall_corner_topLeft.
-      7: 126,
-      // wall_t_right.
-      8: 155,
-      // wall_end_right.
-      9: 165,
-      // wall_corner_bottomRight.
-      10: 55,
-      // wall_horizontal.
-      11: 108,
-      // wall_t_bottom.
-      12: 147,
-      // wall_corner_topRight.
-      13: 127,
-      // wall_t_left.
-      14: 109,
-      // wall_t_top.
-      15: 73
-      // wall_cross.
+      tiles: {
+        0: 110,
+        // wall_isolated.
+        1: 173,
+        // wall_end_bottom.
+        2: 172,
+        // wall_end_left.
+        3: 164,
+        // wall_corner_bottomLeft.
+        4: 154,
+        // wall_end_top.
+        5: 72,
+        // wall_vertical.
+        6: 146,
+        // wall_corner_topLeft.
+        7: 126,
+        // wall_t_right.
+        8: 155,
+        // wall_end_right.
+        9: 165,
+        // wall_corner_bottomRight.
+        10: 55,
+        // wall_horizontal.
+        11: 108,
+        // wall_t_bottom.
+        12: 147,
+        // wall_corner_topRight.
+        13: 127,
+        // wall_t_left.
+        14: 109,
+        // wall_t_top.
+        15: 73
+        // wall_cross.
+      }
+    },
+    "barrier": {
+      tiles: {
+        0: 511,
+        // wall_isolated.
+        1: 493,
+        // wall_end_bottom.
+        2: 508,
+        // wall_end_left.
+        3: 490,
+        // wall_corner_bottomLeft.
+        4: 457,
+        // wall_end_top.
+        5: 475,
+        // wall_vertical.
+        6: 454,
+        // wall_corner_topLeft.
+        7: 472,
+        // wall_t_right.
+        8: 510,
+        // wall_end_right.
+        9: 492,
+        // wall_corner_bottomRight.
+        10: 509,
+        // wall_horizontal.
+        11: 491,
+        // wall_t_bottom.
+        12: 456,
+        // wall_corner_topRight.
+        13: 474,
+        // wall_t_left.
+        14: 455,
+        // wall_t_top.
+        15: 473
+        // wall_cross.
+      }
+    },
+    "water": {
+      edgeMode: "connect",
+      tiles: {
+        0: 519,
+        // wall_isolated.
+        1: 532,
+        // wall_end_bottom.
+        2: 535,
+        // wall_end_left.
+        3: [36, 178],
+        // wall_corner_bottomLeft.
+        4: 514,
+        // wall_end_top.
+        5: WATER_TILES,
+        // wall_vertical.
+        6: [18, 160],
+        // wall_corner_topLeft.
+        7: WATER_TILES,
+        // wall_t_right.
+        8: 536,
+        // wall_end_right.
+        9: [37, 179],
+        // wall_corner_bottomRight.
+        10: WATER_TILES,
+        // wall_horizontal.
+        11: WATER_TILES,
+        // wall_t_bottom.
+        12: [19, 161],
+        // wall_corner_topRight.
+        13: WATER_TILES,
+        // wall_t_left.
+        14: WATER_TILES,
+        // wall_t_top.
+        15: WATER_TILES
+        // wall_cross.
+      }
     }
   };
   b82.Tilemap.save = function(tilemap) {
@@ -1646,10 +1846,10 @@ const b8 = {};
     b82.Utilities.checkString("data", data);
     return b82.Utilities.decodeData(data);
   };
-  b82.Tilemap.draw = function(tilemap, tileXOffset = 0, tileYOffset = 0, width = null, height = null) {
+  b82.Tilemap.draw = function(tilemap, tileStartCol = 0, tileStartRow = 0, width = null, height = null) {
     b82.Utilities.checkArray("tilemap", tilemap);
-    b82.Utilities.checkInt("tileXOffset", tileXOffset);
-    b82.Utilities.checkInt("tileYOffset", tileYOffset);
+    b82.Utilities.checkInt("tileStartCol", tileStartCol);
+    b82.Utilities.checkInt("tileStartRow", tileStartRow);
     if (!width) {
       width = tilemap[0].length;
     }
@@ -1660,11 +1860,11 @@ const b8 = {};
     b82.Utilities.checkInt("height", height);
     const startRow = b82.Core.drawState.cursorRow;
     const startCol = b82.Core.drawState.cursorCol;
-    for (let y = tileYOffset; y < tileYOffset + height; y++) {
+    for (let y = tileStartRow; y < tileStartRow + height; y++) {
       const lx = 0 + startCol;
-      const ly = y - tileYOffset + startRow;
+      const ly = y - tileStartRow + startRow;
       b82.locate(lx, ly);
-      for (let x = tileXOffset; x < tileXOffset + width; x++) {
+      for (let x = tileStartCol; x < tileStartCol + width; x++) {
         if (!tilemap[y] || tilemap[y][x] == null) continue;
         const tile = tilemap[y][x];
         if (tile && tile.length >= 3) {
@@ -1737,6 +1937,41 @@ const b8 = {};
       // Data
     ];
   };
+  b82.Tilemap.setTile = function(tilemap, col, row, tile = null) {
+    b82.Utilities.checkArray("tilemap", tilemap);
+    b82.Utilities.checkInt("col", col);
+    b82.Utilities.checkInt("row", row);
+    if (!tile) {
+      b82.Utilities.fatal("Tile data is required.");
+    }
+    if (!tilemap[row]) {
+      b82.Utilities.fatal(`Row ${row} does not exist in the tilemap.`);
+    }
+    if (typeof tilemap[row][col] === "undefined") {
+      b82.Utilities.fatal(`Column ${col} does not exist in row ${row} of the tilemap.`);
+    }
+    tilemap[row][col] = b82.Tilemap.normaliseTile(tile);
+  };
+  b82.Tilemap.normaliseTile = function(tile) {
+    const newTile = b82.Tilemap.getDefaultTile();
+    if (Array.isArray(tile)) {
+      for (let i = 0; i < newTile.length; i++) {
+        if (typeof tile[i] !== "undefined") {
+          newTile[i] = tile[i];
+        }
+      }
+      return newTile;
+    }
+    if (tile && typeof tile === "object") {
+      if (typeof tile.t !== "undefined") newTile[0] = tile.t;
+      if (typeof tile.fg !== "undefined") newTile[1] = tile.fg;
+      if (typeof tile.bg !== "undefined") newTile[2] = tile.bg;
+      if (typeof tile.coll !== "undefined") newTile[3] = !!tile.coll;
+      if (typeof tile.data !== "undefined") newTile[4] = tile.data;
+      return newTile;
+    }
+    return newTile;
+  };
   b82.Tilemap.convertFromText = function(mapText) {
     b82.Utilities.checkString("text", mapText);
     const lines = mapText.split("\n");
@@ -1775,7 +2010,7 @@ const b8 = {};
         const tile = tilePattern[grid[y][x]];
         let tileId = tile.t;
         if (typeof tileId === "string" && tileId.startsWith("wall:")) {
-          tileId = b82.Tilemap.wallTile(x, y, grid, tileId);
+          tileId = pickWallTile(x, y, grid, tileId);
         }
         if (Array.isArray(tileId)) {
           tileId = b82.Random.pickWeighted(tileId);
@@ -1801,34 +2036,103 @@ const b8 = {};
     }
     return tilemap;
   };
-  b82.Tilemap.wallTile = function(col, row, grid, name = null) {
-    b82.Utilities.checkInt("col", col);
-    b82.Utilities.checkInt("row", row);
-    b82.Utilities.checkArray("grid", grid);
+  b82.Tilemap.addWallTileSet = function(name, tileSet) {
     b82.Utilities.checkString("name", name);
-    if (null === name) {
-      b82.Utilities.fatal("Wall tile name not given: " + name);
+    b82.Utilities.checkObject("tileSet", tileSet);
+    if (wallTiles[name]) {
+      b82.Utilities.fatal(`Wall tile set with name ${name} already exists.`);
     }
+    wallTiles[name] = normaliseWallTileSet(tileSet);
+  };
+  b82.Tilemap.getWallTileSet = function(name) {
+    b82.Utilities.checkString("name", name);
+    if (!wallTiles[name]) {
+      b82.Utilities.fatal(`Wall tile set with name ${name} does not exist.`);
+    }
+    return { ...wallTiles[name] };
+  };
+  function pickWallTile(col, row, grid, name = null) {
     const tileType = name.substring(5);
     if (!wallTiles[tileType]) {
       b82.Utilities.fatal("Wall tile type not found: " + tileType);
     }
-    const mask = computeBitmask(grid, col, row);
-    return wallTiles[tileType][mask];
-  };
-  function computeBitmask(grid, col, row) {
+    const wallTileSet = wallTiles[tileType];
+    const mask = computeBitmask(
+      grid,
+      col,
+      row,
+      wallTileSet.edgeMode || "open"
+    );
+    return wallTileSet.tiles[mask];
+  }
+  ;
+  function normaliseWallTileSet(tileSet) {
+    if (!tileSet.tiles) {
+      b82.Utilities.fatal("Wall tile set must include a tiles object.");
+    }
+    const defaultTileSet = wallTiles["solid"];
+    const normalisedTileSet = {
+      edgeMode: tileSet.edgeMode || "open",
+      tiles: {}
+    };
+    for (let i = 0; i < 16; i++) {
+      if (typeof tileSet.tiles[i] === "undefined") {
+        normalisedTileSet.tiles[i] = defaultTileSet.tiles[i];
+      } else {
+        normalisedTileSet.tiles[i] = tileSet.tiles[i];
+      }
+    }
+    return normalisedTileSet;
+  }
+  function computeBitmask(grid, col, row, edgeMode = "open") {
     let bitmask = 0;
     const tileId = grid[row][col];
-    if (row > 0 && grid[row - 1][col] === tileId) bitmask += 1;
-    if (col < grid[row].length - 1 && grid[row][col + 1] === tileId) bitmask += 2;
-    if (row < grid.length - 1 && grid[row + 1][col] === tileId) bitmask += 4;
-    if (col > 0 && grid[row][col - 1] === tileId) bitmask += 8;
+    if (matchesTile(grid, col, row - 1, tileId, edgeMode)) bitmask += 1;
+    if (matchesTile(grid, col + 1, row, tileId, edgeMode)) bitmask += 2;
+    if (matchesTile(grid, col, row + 1, tileId, edgeMode)) bitmask += 4;
+    if (matchesTile(grid, col - 1, row, tileId, edgeMode)) bitmask += 8;
     return bitmask;
+  }
+  function matchesTile(grid, col, row, tileId, edgeMode) {
+    if (edgeMode === "wrap") {
+      row = (row + grid.length) % grid.length;
+      col = (col + grid[row].length) % grid[row].length;
+    }
+    if (row < 0 || row >= grid.length || col < 0 || col >= grid[row].length) {
+      if (edgeMode === "connect") {
+        return true;
+      }
+      return false;
+    }
+    return grid[row][col] === tileId;
   }
 })(b8);
 (function(b82) {
   b82.TextRenderer = {};
   const charMap = [];
+  const BOX_STYLES_ = {
+    plain: {
+      fill: true,
+      borders: false,
+      borderChar: null
+    },
+    border: {
+      fill: true,
+      borderChar: b82.CONFIG.BORDER_CHAR
+    },
+    round: {
+      invertBorder: true,
+      fill: true,
+      borders: {
+        NW: 18,
+        NE: 19,
+        SW: 36,
+        SE: 37,
+        V: 1,
+        H: 1
+      }
+    }
+  };
   b82.TextRenderer.fonts_ = {};
   b82.TextRenderer.curFont_ = null;
   b82.TextRenderer.curTiles_ = null;
@@ -2095,44 +2399,70 @@ const b8 = {};
     b82.Utilities.checkNumber("height", height);
     b82.Utilities.checkBoolean("fill", fill);
     b82.Utilities.checkNumber("borderChar", borderChar);
-    const colCount = b82.TextRenderer.curTiles_.getColCount();
-    const borders = {
-      NW: borderChar,
-      NE: borderChar + 2,
-      SW: borderChar + colCount + colCount,
-      SE: borderChar + colCount + colCount + 2,
-      V: borderChar + colCount,
-      H: borderChar + 1
-    };
+    const borders = fromBorderChar_(borderChar);
     b82.TextRenderer.drawBox(width, height, fill, borders);
   };
-  b82.TextRenderer.drawBox = function(width, height, fill = true, borders = {}) {
+  b82.TextRenderer.drawBox = function(width, height, fill = true, borders = {}, fillChar = 0, options = {}) {
     const startCol = b82.Core.drawState.cursorCol;
     const startRow = b82.Core.drawState.cursorRow;
+    const oldFg = b82.Core.drawState.fgColor;
+    const oldBg = b82.Core.drawState.bgColor;
+    const borderFg = options.invertBorder ? oldBg : oldFg;
+    const borderBg = options.invertBorder ? oldFg : oldBg;
+    const fillFg = options.invertFill ? oldBg : oldFg;
+    const fillBg = options.invertFill ? oldFg : oldBg;
     for (let i = 0; i < height; i++) {
       b82.Core.drawState.cursorCol = startCol;
       b82.Core.drawState.cursorRow = startRow + i;
       if (i === 0) {
+        b82.color(borderFg, borderBg);
         b82.TextRenderer.printChar(borders.NW);
         b82.TextRenderer.printChar(borders.H, width - 2);
         b82.TextRenderer.printChar(borders.NE);
       } else if (i === height - 1) {
+        b82.color(borderFg, borderBg);
         b82.TextRenderer.printChar(borders.SW);
         b82.TextRenderer.printChar(borders.H, width - 2);
         b82.TextRenderer.printChar(borders.SE);
       } else {
+        b82.color(borderFg, borderBg);
         b82.TextRenderer.printChar(borders.V);
-        b82.Core.drawState.cursorCol = startCol + width - 1;
+        if (fill && width > 2) {
+          b82.color(fillFg, fillBg);
+          b82.TextRenderer.printChar(fillChar, width - 2);
+        } else {
+          b82.Core.drawState.cursorCol += width - 2;
+        }
+        b82.color(borderFg, borderBg);
         b82.TextRenderer.printChar(borders.V);
       }
     }
-    if (fill && width > 2 && height > 2) {
-      b82.Core.drawState.cursorCol = startCol + 1;
-      b82.Core.drawState.cursorRow = startRow + 1;
-      b82.TextRenderer.printRect(width - 2, height - 2, 0);
-    }
+    b82.color(oldFg, oldBg);
     b82.Core.drawState.cursorCol = startCol;
     b82.Core.drawState.cursorRow = startRow;
+  };
+  b82.TextRenderer.printStyledBox = function(width, height, options = {}) {
+    const style = resolveBoxStyle_(options.style || "plain");
+    const fill = options.fill ?? style.fill;
+    const fillChar = options.fillChar ?? style.fillChar;
+    const borders = options.borders ?? style.borders;
+    const invertBorder = options.invertBorder ?? style.invertBorder;
+    const invertFill = options.invertFill ?? style.invertFill;
+    if (!borders) {
+      b82.TextRenderer.printRect(width, height, fillChar);
+      return;
+    }
+    b82.TextRenderer.drawBox(
+      width,
+      height,
+      fill,
+      borders,
+      fillChar,
+      {
+        invertBorder,
+        invertFill
+      }
+    );
   };
   b82.TextRenderer.wrapText = function(text, maxWidth, font = null) {
     font = font || b82.TextRenderer.curFont_;
@@ -2262,6 +2592,27 @@ const b8 = {};
   b82.TextRenderer.regenColors = function() {
     Object.values(b82.TextRenderer.fonts_).forEach((f) => f.regenColors());
   };
+  function fromBorderChar_(borderChar) {
+    const colCount = b82.TextRenderer.curTiles_.getColCount();
+    return {
+      NW: borderChar,
+      NE: borderChar + 2,
+      SW: borderChar + colCount + colCount,
+      SE: borderChar + colCount + colCount + 2,
+      V: borderChar + colCount,
+      H: borderChar + 1
+    };
+  }
+  function resolveBoxStyle_(styleName) {
+    const style = BOX_STYLES_[styleName] || BOX_STYLES_.plain;
+    return {
+      fill: style.fill ?? true,
+      fillChar: style.fillChar ?? 0,
+      invertBorder: !!style.invertBorder,
+      invertFill: !!style.invertFill,
+      borders: style.borders ?? (style.borderChar != null ? fromBorderChar_(style.borderChar) : null)
+    };
+  }
 })(b8);
 (function(b82) {
   b82.Textmode = {};
@@ -3093,6 +3444,12 @@ const b8 = {};
     hash = hash.toUpperCase();
     return hash.substring(0, b82.Passcodes.codeLength);
   };
+  b82.Passcodes.listCodes = function(count) {
+    for (let l = 0; l < count; l++) {
+      const levelCode = b82.Passcodes.getCode(l);
+      console.log(`Level ${l + 1} Code: ${levelCode}`);
+    }
+  };
   b82.Passcodes.checkCode = function(id, code) {
     b82.Utilities.checkIsSet("id", id);
     b82.Utilities.checkString("code", code);
@@ -3261,86 +3618,198 @@ const b8 = {};
 })(b8);
 (function(b82) {
   b82.Music = {};
-  function times(n, fn) {
-    var result = [];
-    for (var i = 0; i < n; i++) {
-      result.push(fn(i));
-    }
-    return result;
-  }
   const p1Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-  function noteToMidi(note) {
-    var regex = /^([A-Ga-g])([#b]?)(\d)$/;
-    var match = note.match(regex);
-    if (!match) return null;
-    var letter = match[1].toUpperCase();
-    var accidental = match[2];
-    var octave = parseInt(match[3], 10);
-    var semitones = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[letter];
-    if (accidental === "#") {
-      semitones += 1;
-    } else if (accidental === "b") {
-      semitones -= 1;
+  const SONG_STYLES = {
+    calm: {
+      tempo: [50, 70, 100],
+      hold: [110, 120, 130, 140],
+      noteCount: [64, 96, 128],
+      chordLength: [8, 16],
+      channels: ["bass", "chords", "melody"],
+      melodyDensity: 2,
+      melodyNotes: [0, 0, 2],
+      chordDensity: 1,
+      bassInterval: [8, 16],
+      arpChance: 10,
+      drumDensity: [0]
+    },
+    arcade: {
+      tempo: [170, 200, 240],
+      hold: [50, 60, 70, 80],
+      noteCount: [48, 64, 96],
+      chordLength: [4, 8],
+      chordDensity: 4,
+      channels: ["bass", "arp", "melody", "drums"],
+      melodyDensity: 5,
+      melodyNotes: [0, 0, 1, 2, 2],
+      bassInterval: [4, 8],
+      arpChance: 50,
+      drumDensity: [2, 3]
+    },
+    busy: {
+      tempo: [180, 200, 220],
+      hold: [60, 70, 80],
+      noteCount: [64, 96],
+      chordLength: [4, 8],
+      channels: ["bass", "chords", "arp", "melody", "drums"],
+      melodyDensity: 6,
+      melodyNotes: [0, 1, 2, 2, 3],
+      chordDensity: 7,
+      bassInterval: [2, 4],
+      arpChance: 40,
+      drumDensity: [2, 3]
+    },
+    menu: {
+      tempo: [60, 70],
+      hold: [140, 160, 180],
+      noteCount: [64, 96, 128],
+      chordLength: [16, 32],
+      channels: ["bass", "chords"],
+      melodyDensity: 1,
+      melodyNotes: [0],
+      chordDensity: 1,
+      bassInterval: [16],
+      arpChance: 0,
+      drumDensity: [0]
+    },
+    adventure: {
+      tempo: [70, 85, 100],
+      hold: [120, 150, 180],
+      noteCount: [128, 160, 192],
+      chordLength: [16, 32],
+      chordDensity: 1,
+      channels: ["bass", "chords", "melody"],
+      melodyDensity: 3,
+      melodyNotes: [0, 1, 2, 2, 3],
+      bassInterval: [8, 16],
+      arpChance: 5,
+      drumDensity: [0]
+    },
+    puzzle: {
+      tempo: [130, 150, 170],
+      hold: [70, 80, 90],
+      noteCount: [80, 96, 128],
+      chordLength: [4, 8],
+      channels: ["bass", "arp", "melody", "drums"],
+      melodyDensity: 5,
+      melodyNotes: [0, 1, 2, 3],
+      chordDensity: 7,
+      bassInterval: [4, 8],
+      arpChance: 90,
+      drumDensity: [1, 2]
+    },
+    shooter: {
+      tempo: [175, 200, 225],
+      hold: [30, 40, 50, 60],
+      noteCount: [48, 64],
+      chordLength: [2],
+      channels: ["bass", "arp", "counter", "drums"],
+      melodyDensity: 9,
+      melodyNotes: [1, 2, 2, 3, 3],
+      chordDensity: 9,
+      bassInterval: [2],
+      arpChance: 95,
+      drumDensity: [4, 5]
+    },
+    triumphant: {
+      tempo: [100, 120, 140],
+      hold: [80, 90, 100],
+      noteCount: [64, 96],
+      chordLength: [8, 16],
+      channels: ["bass", "chords", "melody", "drums"],
+      melodyDensity: 5,
+      melodyNotes: [0, 0, 1, 2, 2],
+      // strong chord tones
+      chordDensity: 8,
+      bassInterval: [4, 8],
+      arpChance: 10,
+      drumDensity: [2, 3]
+    },
+    mysterious: {
+      tempo: [60, 75, 90],
+      hold: [130, 150, 170],
+      noteCount: [96, 128, 160],
+      chordLength: [16, 32],
+      channels: ["bass", "chords", "melody"],
+      melodyDensity: 2,
+      melodyNotes: [0, 1, 2, 3],
+      chordDensity: 2,
+      bassInterval: [8, 16],
+      arpChance: 15,
+      drumDensity: [0]
+    },
+    stealth: {
+      tempo: [85, 100, 115],
+      hold: [90, 110, 130],
+      noteCount: [64, 96, 128],
+      chordLength: [8, 16],
+      channels: ["bass", "chords", "counter"],
+      melodyDensity: 2,
+      melodyNotes: [0, 1, 2],
+      chordDensity: 2,
+      bassInterval: [8, 8, 16],
+      arpChance: 20,
+      drumDensity: [0, 1]
+    },
+    dreamy: {
+      tempo: [70, 90, 110],
+      hold: [110, 130, 150],
+      noteCount: [96, 128, 160],
+      chordLength: [8, 16, 32],
+      channels: ["bass", "chords", "counter", "melody"],
+      melodyDensity: 3,
+      melodyNotes: [0, 1, 2, 2, 3],
+      chordDensity: 2,
+      bassInterval: [8, 16],
+      arpChance: 25,
+      drumDensity: [0]
+    },
+    tense: {
+      tempo: [120, 140, 160],
+      hold: [70, 80, 90],
+      noteCount: [80, 96, 128],
+      chordLength: [4, 8],
+      channels: ["bass", "arp", "melody", "drums"],
+      melodyDensity: 5,
+      melodyNotes: [0, 1, 2, 3],
+      chordDensity: 6,
+      bassInterval: [4, 8],
+      arpChance: 70,
+      drumDensity: [1, 2]
+    },
+    march: {
+      tempo: [95, 110, 125],
+      hold: [70, 80, 90, 100],
+      noteCount: [64, 96, 128],
+      chordLength: [8, 16],
+      channels: ["bass", "chords", "melody", "drums"],
+      melodyDensity: 3,
+      melodyNotes: [0, 0, 1, 2],
+      chordDensity: 4,
+      bassInterval: [4, 8],
+      arpChance: 5,
+      drumDensity: [2, 3]
+    },
+    exploration: {
+      tempo: [80, 95, 110],
+      hold: [100, 120, 140],
+      noteCount: [96, 128, 160],
+      chordLength: [8, 16, 32],
+      channels: ["bass", "chords", "melody"],
+      melodyDensity: 3,
+      melodyNotes: [0, 1, 2, 2, 3],
+      chordDensity: 2,
+      bassInterval: [8, 16],
+      arpChance: 10,
+      drumDensity: [0, 1]
     }
-    return (octave + 1) * 12 + semitones;
-  }
-  function noteToP1(note) {
-    let midi = noteToMidi(note);
-    if (midi === null) return "?";
-    midi = b82.Utilities.clamp(midi, 36, 87);
-    return p1Alphabet.charAt(midi - 36);
-  }
-  function compressNotes(arr) {
-    if (arr.length === 0) return "";
-    var result = arr[0];
-    for (var i = 1; i < arr.length; i++) {
-      if (arr[i] === arr[i - 1] && arr[i] !== " " && arr[i] !== "|") {
-        result += "-";
-      } else {
-        result += arr[i];
-      }
-    }
-    return result;
-  }
-  function createRandomPattern(len, freq, interval, loop) {
-    var pattern = times(
-      len,
-      function() {
-        return false;
-      }
-    );
-    for (var i = 0; i < loop; i++) {
-      if (interval > len) break;
-      pattern = reversePattern(pattern, interval, freq);
-      interval *= 2;
-    }
-    return pattern;
-  }
-  function reversePattern(pattern, interval, freq) {
-    var pt = times(
-      interval,
-      function() {
-        return false;
-      }
-    );
-    for (var i = 0; i < freq; i++) {
-      pt[b82.Random.int(0, interval - 1)] = true;
-    }
-    return pattern.map(
-      function(p, i2) {
-        return pt[i2 % interval] ? !p : p;
-      }
-    );
-  }
-  const chords = [
-    ["I", "IIIm", "VIm"],
-    ["IV", "IIm"],
-    ["V", "VIIm"]
-  ];
-  const nextChordsIndex = [
-    [0, 1, 2],
-    [1, 2, 0],
-    [2, 0]
+  };
+  const PROGRESSIONS = [
+    ["I", "V", "VIm", "IV"],
+    ["I", "VIm", "IV", "V"],
+    ["VIm", "IV", "I", "V"],
+    ["I", "IV", "V", "I"],
+    ["I", "IIm", "V", "I"]
   ];
   const chordMap = {
     I: ["C4", "E4", "G4", "B4"],
@@ -3362,159 +3831,83 @@ const b8 = {};
   };
   const instrumentOptions = [0, 1, 2, 3, 4, 5];
   const drumOptions = [6, 7];
-  function getChordNotes(key, roman) {
-    const base = chordMap[roman] || chordMap.I;
-    const shift = keyShift[key] || 0;
-    return base.map(
-      function(note) {
-        return transpose(note, shift);
-      }
-    );
-  }
-  function transpose(note, shift) {
-    var midi = noteToMidi(note);
-    if (midi === null) {
-      return note;
+  const SONG_PROFILE_OPTIONS = {
+    phraseBarCount: [2, 2, 4, 4],
+    sectionForms: [
+      ["A", "A"],
+      ["A", "A_PRIME"],
+      ["A", "B"],
+      ["A", "B", "A"],
+      ["A", "A", "B", "A"],
+      ["A", "A_PRIME", "B", "A"],
+      ["A", "B", "A", "C"],
+      ["A", "B", "C", "A"]
+    ],
+    contourType: ["rise", "fall", "arch", "wave", "hover", "stair"],
+    cadenceTarget: ["root", "root", "third", "fifth"],
+    motifReuseChance: [50, 60, 70, 80],
+    progressionRotation: [1, 1, 2, 3],
+    altChordLengthBias: [0, 0, 1, -1],
+    registerShape: ["low", "mid", "high"],
+    arpeggioShape: [
+      [0, 1, 2, 1, 3, 2, 1, 2],
+      [0, 2, 1, 2, 0, 2, 3, 2],
+      [0, 1, 0, 2, 1, 2, 1, 3]
+    ]
+  };
+  const RHYTHM_TEMPLATE_PATTERNS = {
+    bass: {
+      fast: ["x.x.x.x.", "x.xx.x.x.", "xx.xx.x."],
+      medium: ["x...x...", "x.x.x...", "x..xx..."],
+      slow: ["x...x...", "x.....x.", "x...x..x"]
+    },
+    drums: {
+      light: ["x...x...", "x.....x."],
+      medium: ["x...x...", "x..xx..x", "x.x.x..."],
+      heavy: ["x.x.x.x.", "x.xx.x.x."]
+    },
+    arp: {
+      normal: ["xxxxxxxx", "x.x.x.x.", "xx.xxx.x"],
+      busy: ["xxxxxxxx", "x.xx.x.xx", "xx.xxx.x"]
+    },
+    chords: {
+      light: ["x...x...", "x.x.x.x.", "x..xx..x"],
+      dense: ["x.x.x.x.", "x..xx.x.", "xx..xx.."]
+    },
+    counter: {
+      light: ["x..x.x..", ".x.x.x.x", "x.x..x.."],
+      dense: ["x.xx.x.x", ".x.xx.x.", "x.x.x.x."]
+    },
+    melody: {
+      sparse: ["x...x...", "x..x....", "x.....x."],
+      normal: ["x.x.x...", "x..xx.x.", "x.x..x.x"],
+      dense: ["x.xxx.x.", "xx.xx.xx", "x.x.xx.x"]
     }
-    midi += shift;
-    var octave = Math.floor(midi / 12) - 1;
-    var index = midi % 12;
-    var noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-    return noteNames[index] + octave;
-  }
-  function generateChordProgression(len) {
-    var keys = ["C", "D", "Eb", "F", "G", "A", "Bb"];
-    var key = b82.Random.pick(keys);
-    var chordChangeInterval = 4;
-    var currentRoman = null;
-    var chordsIndex = 0;
-    var progression = [];
-    for (var i = 0; i < len; i++) {
-      if (i % chordChangeInterval === 0) {
-        if (i === 0) {
-          chordsIndex = b82.Random.int(0, chords.length - 1);
-          currentRoman = b82.Random.pick(chords[chordsIndex]);
-        } else if (b82.Random.num() < 0.8 - i / chordChangeInterval % 2 * 0.5) {
-          chordsIndex = b82.Random.pick(nextChordsIndex[chordsIndex]);
-          currentRoman = b82.Random.pick(chords[chordsIndex]);
-        }
-        var currentChord = getChordNotes(key, currentRoman);
-      }
-      progression.push(currentChord);
-    }
-    return progression;
-  }
-  function generateMelodyNote(noteCount, chordProgressionNotes) {
-    var notes = [b82.Random.pick(instrumentOptions), "|"];
-    var pattern = createRandomPattern(noteCount, 4, 8, 3);
-    var octaveOffset = b82.Random.int(-1, 1);
-    for (var i = 0; i < noteCount; i++) {
-      if (b82.Random.chance(10)) {
-        octaveOffset += b82.Random.int(-1, 1);
-      }
-      if (!pattern[i]) {
-        notes.push(" ");
-        continue;
-      }
-      var chordNotes = chordProgressionNotes[i];
-      var ns = chordNotes[b82.Random.int(0, chordNotes.length - 1)];
-      var baseOctave = parseInt(ns.slice(-1), 10);
-      var newOctave = b82.Utilities.clamp(baseOctave + octaveOffset, 3, 6);
-      var noteName = ns.slice(0, -1).toUpperCase();
-      var finalNote = noteName + newOctave;
-      var p1Note = noteToP1(finalNote);
-      notes.push(p1Note);
-    }
-    notes.push("|");
-    return compressNotes(notes);
-  }
-  function generateChordNote(noteCount, chordProgressionNotes) {
-    const notes = [b82.Random.pick(instrumentOptions), "|"];
-    var isArpeggio = b82.Random.chance(30);
-    var arpeggioInterval = b82.Random.pick([4, 8, 16]);
-    var arpeggioPattern = times(
-      arpeggioInterval,
-      function() {
-        return b82.Random.int(0, 3);
-      }
-    );
-    var interval = b82.Random.pick([2, 4, 8]);
-    var pattern = isArpeggio ? times(
-      noteCount,
-      function() {
-        return true;
-      }
-    ) : createRandomPattern(noteCount, b82.Random.pick([1, 1, interval / 2]), interval, 2);
-    var baseOctave = b82.Random.int(-1, 1);
-    var isReciprocatingOctave = b82.Random.chance(isArpeggio ? 30 : 80);
-    var octaveOffset = 0;
-    for (var i = 0; i < noteCount; i++) {
-      if (isReciprocatingOctave && i % interval === 0) {
-        octaveOffset = (octaveOffset + 1) % 2;
-      }
-      if (!pattern[i]) {
-        notes.push(" ");
-        continue;
-      }
-      var chordNotes = chordProgressionNotes[i];
-      var noteIndex = isArpeggio ? arpeggioPattern[i % arpeggioInterval] : 0;
-      var ns = chordNotes[noteIndex];
-      var baseOct = parseInt(ns.slice(-1), 10);
-      var newOct = b82.Utilities.clamp(baseOct + baseOctave + octaveOffset, 3, 6);
-      var noteName = ns.slice(0, -1).toUpperCase();
-      var finalNote = noteName + newOct;
-      var p1Note = noteToP1(finalNote);
-      notes.push(p1Note);
-    }
-    notes.push("|");
-    return compressNotes(notes);
-  }
-  function generateDrumNote(noteCount) {
-    const notes = [b82.Random.pick(drumOptions), "|"];
-    const pattern = createRandomPattern(
-      noteCount,
-      b82.Random.int(1, 3),
-      b82.Random.pick([4, 8]),
-      3
-    );
-    var drumHit = noteToP1("C4");
-    for (var i = 0; i < noteCount; i++) {
-      notes.push(pattern[i] ? drumHit : " ");
-    }
-    notes.push("|");
-    return compressNotes(notes);
-  }
+  };
+  let currentSong = null;
   b82.Music.generate = function(options) {
-    if (options && options.seed) {
+    if (options && typeof options.seed !== "undefined") {
       b82.Random.setSeed(options.seed);
     }
+    var styleName = options && options.style ? options.style : b82.Random.pick(Object.keys(SONG_STYLES));
+    var style = SONG_STYLES[styleName] || SONG_STYLES.arcade;
     const defaultOptions = {
       seed: b82.Random.int(1e4, 99999),
-      noteCount: b82.Random.pick([16, 32, 48, 64]),
-      channelCount: b82.Random.int(2, 5),
-      drumPartRatio: 0.3,
-      tempo: b82.Random.pick([70, 100, 140, 170, 200, 240, 280]),
-      // Default tempo (BPM).
-      hold: b82.Random.pick([40, 50, 60, 60, 70, 70, 70, 80, 80, 80, 80, 90, 90, 90, 100, 110, 120, 130, 140, 150])
-      // Default hold duration.
+      style: styleName,
+      noteCount: b82.Random.pick(style.noteCount || [32, 48, 64]),
+      channelCount: style.channels.length,
+      tempo: b82.Random.pick(style.tempo),
+      hold: b82.Random.pick(style.hold)
     };
     const opts = Object.assign({}, defaultOptions, options);
     b82.Music.currentSongProperties = opts;
     b82.Random.setSeed(opts.seed);
-    var chordProgressionNotes = generateChordProgression(opts.noteCount);
-    var parts = times(
-      opts.channelCount,
-      function() {
-        var isDrum = b82.Random.num() < opts.drumPartRatio;
-        if (isDrum) {
-          return generateDrumNote(opts.noteCount);
-        } else {
-          if (b82.Random.num() < 0.5) {
-            return generateMelodyNote(opts.noteCount, chordProgressionNotes);
-          } else {
-            return generateChordNote(opts.noteCount, chordProgressionNotes);
-          }
-        }
+    var songProfile = createSongProfile(opts.noteCount);
+    var progressionContext = generateChordProgression(opts.noteCount, style, songProfile);
+    var roles = style.channels.slice(0, opts.channelCount);
+    var parts = roles.map(
+      function(role) {
+        return generatePartByRole(role, opts.noteCount, progressionContext, style);
       }
     );
     if (opts.tempo !== null) {
@@ -3526,7 +3919,6 @@ const b8 = {};
     }
     return parts.join("\n");
   };
-  let currentSong = null;
   b82.Music.play = function(song) {
     p1(song);
     if (song) {
@@ -3562,12 +3954,886 @@ const b8 = {};
   b82.Music.isPlaying = function() {
     return p1.isPlaying();
   };
+  b82.Music.getStyleKeys = function() {
+    return Object.keys(SONG_STYLES);
+  };
   b82.Music.reset = function() {
     b82.Music.stop();
-    currentSong = null;
   };
   document.addEventListener("b8.pageVisibility.wake", b82.Music.resume);
   document.addEventListener("b8.pageVisibility.sleep", b82.Music.pause);
+  function noteToMidi(note) {
+    var regex = /^([A-Ga-g])([#b]?)(\d)$/;
+    var match = note.match(regex);
+    if (!match) return null;
+    var letter = match[1].toUpperCase();
+    var accidental = match[2];
+    var octave = parseInt(match[3], 10);
+    var semitones = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[letter];
+    if (accidental === "#") {
+      semitones += 1;
+    } else if (accidental === "b") {
+      semitones -= 1;
+    }
+    return (octave + 1) * 12 + semitones;
+  }
+  function noteToP1(note) {
+    let midi = noteToMidi(note);
+    if (midi === null) return "?";
+    midi = b82.Utilities.clamp(midi, 36, 87);
+    return p1Alphabet.charAt(midi - 36);
+  }
+  function midiToNote(midi) {
+    var octave = Math.floor(midi / 12) - 1;
+    var index = (midi % 12 + 12) % 12;
+    var noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+    return noteNames[index] + octave;
+  }
+  function compressNotes(arr) {
+    if (arr.length === 0) return "";
+    var result = arr[0];
+    for (var i = 1; i < arr.length; i++) {
+      if (arr[i] === arr[i - 1] && arr[i] !== " " && arr[i] !== "|") {
+        result += "-";
+      } else {
+        result += arr[i];
+      }
+    }
+    return result;
+  }
+  function times(n, fn) {
+    var result = [];
+    for (var i = 0; i < n; i++) {
+      result.push(fn(i));
+    }
+    return result;
+  }
+  function getChordNotes(key, roman) {
+    const base = chordMap[roman] || chordMap.I;
+    const shift = keyShift[key] || 0;
+    return base.map(
+      function(note) {
+        return transpose(note, shift);
+      }
+    );
+  }
+  function transpose(note, shift) {
+    var midi = noteToMidi(note);
+    if (midi === null) {
+      return note;
+    }
+    return midiToNote(midi + shift);
+  }
+  function getBarLength() {
+    return 8;
+  }
+  function getStepStrength(stepIndex) {
+    var stepInBar = stepIndex % getBarLength();
+    if (stepInBar === 0) return 0;
+    if (stepInBar === 4) return 1;
+    if (stepInBar === 2 || stepInBar === 6) return 2;
+    return 3;
+  }
+  function createSongProfile(noteCount) {
+    var totalBars = Math.max(1, Math.ceil(noteCount / getBarLength()));
+    var phraseBarCount = pickPhraseBarCount(totalBars);
+    var contourType = b82.Random.pick(SONG_PROFILE_OPTIONS.contourType);
+    var cadenceTarget = b82.Random.pick(SONG_PROFILE_OPTIONS.cadenceTarget);
+    var sectionForm = pickSectionForm(totalBars, phraseBarCount);
+    var phraseCount = Math.max(1, Math.ceil(totalBars / phraseBarCount));
+    return {
+      phraseBarCount,
+      sectionForm,
+      phraseCount,
+      contourType,
+      cadenceTarget,
+      motifReuseChance: b82.Random.pick(SONG_PROFILE_OPTIONS.motifReuseChance),
+      progressionRotation: b82.Random.pick(SONG_PROFILE_OPTIONS.progressionRotation),
+      altChordLengthBias: b82.Random.pick(SONG_PROFILE_OPTIONS.altChordLengthBias),
+      melodicFreedom: b82.Random.pick([15, 20, 25, 35]),
+      supportFreedom: b82.Random.pick([8, 12, 18, 24]),
+      rhythmFamily: {
+        bass: b82.Random.int(0, 2),
+        drums: b82.Random.int(0, 2),
+        arp: b82.Random.int(0, 2),
+        chords: b82.Random.int(0, 2),
+        melody: b82.Random.int(0, 2),
+        counter: b82.Random.int(0, 2)
+      },
+      registerShape: b82.Random.pick(SONG_PROFILE_OPTIONS.registerShape),
+      arpeggioShape: b82.Random.pick(SONG_PROFILE_OPTIONS.arpeggioShape)
+    };
+  }
+  function pickPhraseBarCount(totalBars) {
+    if (totalBars >= 16) {
+      return b82.Random.pick([4, 4, 8]);
+    }
+    if (totalBars >= 8) {
+      return b82.Random.pick([2, 4, 4]);
+    }
+    return b82.Random.pick([2, 2, 4]);
+  }
+  function pickSectionForm(totalBars, phraseBarCount) {
+    var phraseCapacity = Math.max(1, Math.floor(totalBars / phraseBarCount));
+    var availableForms = SONG_PROFILE_OPTIONS.sectionForms.filter(
+      function(form) {
+        return form.length <= phraseCapacity;
+      }
+    );
+    if (availableForms.length === 0) {
+      availableForms = [["A", "A"]];
+    }
+    if (phraseCapacity >= 4) {
+      availableForms = availableForms.filter(
+        function(form) {
+          return form.length >= 3;
+        }
+      );
+    }
+    if (availableForms.length === 0) {
+      availableForms = SONG_PROFILE_OPTIONS.sectionForms.filter(
+        function(form) {
+          return form.length <= phraseCapacity;
+        }
+      );
+    }
+    return b82.Random.pick(availableForms);
+  }
+  function generateChordProgression(noteCount, style, songProfile) {
+    var keys = ["C", "D", "Eb", "F", "G", "A", "Bb"];
+    var key = b82.Random.pick(keys);
+    var progression = b82.Random.pick(PROGRESSIONS).slice();
+    var chordLength = b82.Random.pick(style.chordLength || [4, 8, 8, 16]);
+    var altChordLength = adjustChordLength(chordLength, songProfile.altChordLengthBias);
+    var barLength = getBarLength();
+    var phraseLength = barLength * songProfile.phraseBarCount;
+    var scale = buildScaleMidi(key, 36, 87);
+    var chordSequence = [];
+    var steps = [];
+    for (var i = 0; i < noteCount; i++) {
+      var phraseIndex = Math.floor(i / phraseLength);
+      var sectionName = getSectionName(songProfile, phraseIndex);
+      var activeProgression = getSectionProgression(progression, songProfile, sectionName);
+      var activeChordLength = sectionName === "B" ? altChordLength : chordLength;
+      var sectionStepIndex = i % phraseLength;
+      var sequenceIndex = Math.floor(sectionStepIndex / activeChordLength) % activeProgression.length;
+      var roman = activeProgression[sequenceIndex];
+      var chordNotes = getChordNotes(key, roman);
+      var chordMidi = toMidiList(chordNotes);
+      chordSequence.push(roman);
+      steps.push({
+        index: i,
+        key,
+        scale,
+        roman,
+        sectionName,
+        chordNotes,
+        chordMidi,
+        chordStart: sectionStepIndex % activeChordLength === 0,
+        chordEnd: (sectionStepIndex + 1) % activeChordLength === 0 || i === noteCount - 1,
+        barStart: i % barLength === 0,
+        phraseStart: i % phraseLength === 0,
+        phraseEnd: (i + 1) % phraseLength === 0 || i === noteCount - 1,
+        stepStrength: getStepStrength(i)
+      });
+    }
+    return {
+      key,
+      scale,
+      chordLength,
+      altChordLength,
+      barLength,
+      phraseLength,
+      songProfile,
+      progression: chordSequence,
+      steps
+    };
+  }
+  function generatePartByRole(role, noteCount, progressionContext, style) {
+    switch (role) {
+      case "bass":
+        return generateBassNote(noteCount, progressionContext, style);
+      case "drums":
+        return generateDrumNote(noteCount, progressionContext, style);
+      case "arp":
+      case "chords":
+        return generateChordNote(role, noteCount, progressionContext, style);
+      case "counter":
+      case "melody":
+      default:
+        return generateMelodyNote(role, noteCount, progressionContext, style);
+    }
+  }
+  function generateBassNote(noteCount, progressionContext, style) {
+    var notes = [b82.Random.pick(instrumentOptions), "|"];
+    var pattern = getPartPattern("bass", noteCount, progressionContext, style);
+    var previousMidi = null;
+    for (var i = 0; i < noteCount; i++) {
+      var step = progressionContext.steps[i];
+      if (!pattern[i]) {
+        notes.push(" ");
+        continue;
+      }
+      var rootMidi = normalizeMidiToOctave(step.chordMidi[0], 2);
+      var fifthMidi = normalizeMidiToOctave(step.chordMidi[2] || step.chordMidi[0], 2);
+      var candidates = [rootMidi];
+      if (step.stepStrength > 0) {
+        candidates.push(fifthMidi);
+      }
+      if (step.chordEnd && i < noteCount - 1) {
+        var nextRoot = normalizeMidiToOctave(
+          progressionContext.steps[i + 1].chordMidi[0],
+          2
+        );
+        candidates.push(moveOneStepToward(rootMidi, nextRoot, progressionContext.scale));
+      }
+      var selectedMidi = chooseCandidateMidi(
+        uniqueNumbers(candidates),
+        previousMidi,
+        {
+          prefer: rootMidi,
+          maxLeap: 7
+        }
+      );
+      previousMidi = selectedMidi;
+      notes.push(noteToP1(midiToNote(selectedMidi)));
+    }
+    notes.push("|");
+    return compressNotes(notes);
+  }
+  function generateMelodyNote(role, noteCount, progressionContext, style) {
+    var notes = [b82.Random.pick(instrumentOptions), "|"];
+    var songProfile = progressionContext.songProfile;
+    var pattern = getPartPattern(role, noteCount, progressionContext, style);
+    var phraseLength = progressionContext.phraseLength;
+    var targetOctave = getRoleTargetOctave(role, songProfile);
+    var previousMidi = null;
+    var previousInterval = null;
+    var motifMemory = {};
+    for (var i = 0; i < noteCount; i++) {
+      var step = progressionContext.steps[i];
+      if (!pattern[i]) {
+        notes.push(" ");
+        continue;
+      }
+      var phraseStep = i % phraseLength;
+      var motifKey = step.sectionName + ":" + String(phraseStep) + ":" + String(step.stepStrength);
+      var candidates = gatherMelodyCandidates(
+        step,
+        progressionContext.scale,
+        targetOctave,
+        previousMidi,
+        previousInterval,
+        songProfile
+      );
+      var preferredMidi = getContourPreferredMidi(
+        step,
+        progressionContext.scale,
+        targetOctave,
+        songProfile,
+        phraseStep,
+        phraseLength
+      );
+      if (step.barStart || step.phraseEnd) {
+        preferredMidi = getCadenceMidi(step, targetOctave, songProfile);
+        candidates.push(preferredMidi);
+      } else if (motifMemory[motifKey] && b82.Random.chance(songProfile.motifReuseChance)) {
+        preferredMidi = motifMemory[motifKey];
+        candidates.push(preferredMidi);
+      }
+      var selectedMidi = chooseCandidateMidi(
+        uniqueNumbers(candidates),
+        previousMidi,
+        {
+          prefer: preferredMidi,
+          maxLeap: step.stepStrength <= 1 ? 7 : 5,
+          preferMotion: !step.barStart && !step.phraseEnd,
+          avoidRepeat: step.stepStrength >= 2,
+          explorationChance: step.stepStrength >= 2 ? songProfile.melodicFreedom : Math.max(5, songProfile.melodicFreedom - 10)
+        }
+      );
+      motifMemory[motifKey] = selectedMidi;
+      previousInterval = previousMidi === null ? null : selectedMidi - previousMidi;
+      previousMidi = selectedMidi;
+      notes.push(noteToP1(midiToNote(selectedMidi)));
+    }
+    notes.push("|");
+    return compressNotes(notes);
+  }
+  function generateChordNote(role, noteCount, progressionContext, style) {
+    var notes = [b82.Random.pick(instrumentOptions), "|"];
+    var songProfile = progressionContext.songProfile;
+    var harmonicRole = resolveHarmonicRole(role, style);
+    var isArpeggio = harmonicRole === "arp";
+    var pattern = getPartPattern(harmonicRole, noteCount, progressionContext, style);
+    var phraseLength = progressionContext.phraseLength;
+    var previousMidi = null;
+    var arpeggioShape = songProfile.arpeggioShape;
+    for (var i = 0; i < noteCount; i++) {
+      var step = progressionContext.steps[i];
+      if (!pattern[i]) {
+        notes.push(" ");
+        continue;
+      }
+      var targetOctave = getRoleTargetOctave(harmonicRole, songProfile);
+      var candidates = [];
+      var selectionOptions = null;
+      if (isArpeggio) {
+        var chordIndex = arpeggioShape[i % phraseLength % arpeggioShape.length];
+        candidates.push(
+          normalizeMidiToOctave(
+            step.chordMidi[chordIndex % step.chordMidi.length],
+            targetOctave
+          )
+        );
+        selectionOptions = {
+          prefer: candidates[0],
+          maxLeap: 8
+        };
+      } else {
+        candidates = getChordSupportCandidates(
+          step,
+          progressionContext.scale,
+          targetOctave,
+          previousMidi,
+          songProfile.supportFreedom
+        );
+        selectionOptions = {
+          prefer: getChordSupportPreferredMidi(step, targetOctave),
+          maxLeap: 5,
+          preferMotion: !step.chordStart,
+          avoidRepeat: !step.chordStart,
+          explorationChance: songProfile.supportFreedom
+        };
+      }
+      var selectedMidi = chooseCandidateMidi(
+        uniqueNumbers(candidates),
+        previousMidi,
+        selectionOptions
+      );
+      previousMidi = selectedMidi;
+      notes.push(noteToP1(midiToNote(selectedMidi)));
+    }
+    notes.push("|");
+    return compressNotes(notes);
+  }
+  function generateDrumNote(noteCount, progressionContext, style) {
+    var notes = [b82.Random.pick(drumOptions), "|"];
+    var pattern = getPartPattern("drums", noteCount, progressionContext, style);
+    var drumHit = noteToP1("C4");
+    for (var i = 0; i < noteCount; i++) {
+      notes.push(pattern[i] ? drumHit : " ");
+    }
+    notes.push("|");
+    return compressNotes(notes);
+  }
+  function getChordSupportCandidates(step, scale, targetOctave, previousMidi, freedom) {
+    var candidates = step.chordMidi.slice(0, 4).map(
+      function(midi) {
+        return normalizeMidiToOctave(midi, targetOctave);
+      }
+    );
+    if (step.chordStart) {
+      candidates.push(normalizeMidiToOctave(step.chordMidi[0], targetOctave));
+    }
+    if (previousMidi !== null) {
+      candidates = candidates.concat(
+        candidates.filter(
+          function(midi) {
+            return Math.abs(midi - previousMidi) <= 4;
+          }
+        )
+      );
+      if (b82.Random.chance(freedom)) {
+        candidates = candidates.concat(
+          getNearbyScaleCandidates(scale, previousMidi, 1, 2)
+        );
+      }
+    }
+    return uniqueNumbers(candidates);
+  }
+  function getChordSupportPreferredMidi(step, targetOctave) {
+    var preferredIndex = 0;
+    if (!step.chordStart) {
+      preferredIndex = step.stepStrength <= 1 ? 1 : 2;
+    }
+    return normalizeMidiToOctave(
+      step.chordMidi[preferredIndex] || step.chordMidi[0],
+      targetOctave
+    );
+  }
+  function createRolePattern(role, noteCount, style, songProfile, phraseLength) {
+    var templates = getRoleTemplates(role, style);
+    var barLength = getBarLength();
+    var pattern = [];
+    for (var start = 0; start < noteCount; start += phraseLength) {
+      var phraseIndex = Math.floor(start / phraseLength);
+      var sectionName = getSectionName(songProfile, phraseIndex);
+      var phrasePattern = [];
+      var baseTemplate = pickSeedTemplate(templates, role, songProfile, sectionName);
+      var barCount = Math.max(1, Math.ceil(phraseLength / barLength));
+      for (var barIndex = 0; barIndex < barCount; barIndex++) {
+        var barPattern = barIndex === 0 ? baseTemplate.slice() : mutateBarPattern(phrasePattern.slice(-barLength), role, style, songProfile, sectionName);
+        phrasePattern = phrasePattern.concat(barPattern);
+      }
+      pattern = pattern.concat(phrasePattern);
+    }
+    pattern = pattern.slice(0, noteCount);
+    if (pattern.length > 0) {
+      pattern[0] = true;
+      if (role !== "drums") {
+        pattern[pattern.length - 1] = true;
+      }
+    }
+    return pattern;
+  }
+  function getPartPattern(role, noteCount, progressionContext, style) {
+    return createRolePattern(
+      role,
+      noteCount,
+      style,
+      progressionContext.songProfile,
+      progressionContext.phraseLength
+    );
+  }
+  function resolveHarmonicRole(role, style) {
+    if (role === "arp") {
+      return "arp";
+    }
+    return b82.Random.chance(style.arpChance || 30) ? "arp" : "chords";
+  }
+  function parseRhythmTemplates(patterns) {
+    return patterns.map(parseRhythmPattern);
+  }
+  function parseRhythmPattern(pattern) {
+    return pattern.split("").map(
+      function(char) {
+        return char === "x";
+      }
+    );
+  }
+  function getRoleTemplates(role, style) {
+    if (role === "bass") {
+      return parseRhythmTemplates(
+        selectBassTemplatePatterns(style)
+      );
+    }
+    if (role === "drums") {
+      return parseRhythmTemplates(
+        selectDrumTemplatePatterns(style)
+      );
+    }
+    if (role === "arp") {
+      return parseRhythmTemplates(
+        selectArpTemplatePatterns(style)
+      );
+    }
+    if (role === "chords") {
+      return parseRhythmTemplates(
+        selectChordTemplatePatterns(style)
+      );
+    }
+    if (role === "counter") {
+      return parseRhythmTemplates(
+        selectCounterTemplatePatterns(style)
+      );
+    }
+    return parseRhythmTemplates(
+      selectMelodyTemplatePatterns(style)
+    );
+  }
+  function selectBassTemplatePatterns(style) {
+    var fastestBass = Math.min.apply(null, style.bassInterval || [4, 8]);
+    if (fastestBass <= 2) {
+      return RHYTHM_TEMPLATE_PATTERNS.bass.fast;
+    }
+    if (fastestBass <= 4) {
+      return RHYTHM_TEMPLATE_PATTERNS.bass.medium;
+    }
+    return RHYTHM_TEMPLATE_PATTERNS.bass.slow;
+  }
+  function selectDrumTemplatePatterns(style) {
+    var density = b82.Random.pick(style.drumDensity || [1, 2, 3]);
+    if (density >= 4) {
+      return RHYTHM_TEMPLATE_PATTERNS.drums.heavy;
+    }
+    if (density >= 2) {
+      return RHYTHM_TEMPLATE_PATTERNS.drums.medium;
+    }
+    return RHYTHM_TEMPLATE_PATTERNS.drums.light;
+  }
+  function selectArpTemplatePatterns(style) {
+    if ((style.arpChance || 0) >= 80) {
+      return RHYTHM_TEMPLATE_PATTERNS.arp.busy;
+    }
+    return RHYTHM_TEMPLATE_PATTERNS.arp.normal;
+  }
+  function selectChordTemplatePatterns(style) {
+    if ((style.chordDensity || 0) >= 6) {
+      return RHYTHM_TEMPLATE_PATTERNS.chords.dense;
+    }
+    return RHYTHM_TEMPLATE_PATTERNS.chords.light;
+  }
+  function selectCounterTemplatePatterns(style) {
+    if ((style.melodyDensity || 0) >= 6) {
+      return RHYTHM_TEMPLATE_PATTERNS.counter.dense;
+    }
+    return RHYTHM_TEMPLATE_PATTERNS.counter.light;
+  }
+  function selectMelodyTemplatePatterns(style) {
+    if ((style.melodyDensity || 0) <= 2) {
+      return RHYTHM_TEMPLATE_PATTERNS.melody.sparse;
+    }
+    if ((style.melodyDensity || 0) >= 7) {
+      return RHYTHM_TEMPLATE_PATTERNS.melody.dense;
+    }
+    return RHYTHM_TEMPLATE_PATTERNS.melody.normal;
+  }
+  function getRoleTargetOctave(role, songProfile) {
+    var registerOffset = {
+      low: -1,
+      mid: 0,
+      high: 1
+    }[songProfile.registerShape] || 0;
+    var defaults = {
+      bass: 2,
+      drums: 4,
+      arp: 4,
+      chords: 5,
+      counter: 4,
+      melody: 5
+    };
+    var baseOctave = defaults[role] || 5;
+    if (role === "bass" || role === "drums") {
+      registerOffset = 0;
+    }
+    return b82.Utilities.clamp(baseOctave + registerOffset, 2, 6);
+  }
+  function mutateBarPattern(pattern, role, style, songProfile, sectionName) {
+    var result = pattern.slice();
+    var candidateIndexes = role === "drums" ? [2, 3, 5, 6, 7] : [1, 2, 3, 5, 6, 7];
+    var changeCount = role === "arp" ? 1 : b82.Random.int(0, 1);
+    if (role === "melody" && (style.melodyDensity || 0) >= 7) {
+      changeCount = 1;
+    }
+    if (role === "chords" && (style.chordDensity || 0) >= 6) {
+      changeCount = 1;
+    }
+    if (sectionName === "B" || sectionName === "A_PRIME") {
+      changeCount += 1;
+    }
+    for (var i = 0; i < changeCount; i++) {
+      var familyOffset = songProfile.rhythmFamily[role] || 0;
+      var index = candidateIndexes[(familyOffset + i + b82.Random.int(0, candidateIndexes.length - 1)) % candidateIndexes.length];
+      result[index] = !result[index];
+    }
+    result[0] = pattern[0];
+    return result;
+  }
+  function pickSeedTemplate(templates, role, songProfile, sectionName) {
+    var familyIndex = songProfile.rhythmFamily[role] || 0;
+    var templateIndex = familyIndex % templates.length;
+    if (sectionName === "B") {
+      templateIndex = (templateIndex + 1) % templates.length;
+    } else if (sectionName === "A_PRIME") {
+      templateIndex = (templateIndex + templates.length - 1) % templates.length;
+    }
+    return templates[templateIndex];
+  }
+  function getSectionName(songProfile, phraseIndex) {
+    return songProfile.sectionForm[phraseIndex % songProfile.sectionForm.length];
+  }
+  function getSectionProgression(progression, songProfile, sectionName) {
+    if (sectionName === "B") {
+      return rotateArray(progression, songProfile.progressionRotation);
+    }
+    if (sectionName === "C") {
+      var contrasted = rotateArray(progression, songProfile.progressionRotation + 1);
+      contrasted[0] = "VIm";
+      contrasted[contrasted.length - 1] = "V";
+      return contrasted;
+    }
+    if (sectionName === "A_PRIME") {
+      var varied = progression.slice();
+      varied[varied.length - 2] = "V";
+      return varied;
+    }
+    return progression;
+  }
+  function rotateArray(values, amount) {
+    var result = [];
+    for (var i = 0; i < values.length; i++) {
+      result.push(values[(i + amount) % values.length]);
+    }
+    return result;
+  }
+  function adjustChordLength(chordLength, bias) {
+    var supported = [2, 4, 8, 16, 32];
+    var index = supported.indexOf(chordLength);
+    if (index === -1) {
+      return chordLength;
+    }
+    return supported[b82.Utilities.clamp(index + bias, 0, supported.length - 1)];
+  }
+  function buildScaleMidi(key, minMidi, maxMidi) {
+    var tonic = keyShift[key] || 0;
+    var majorScale = [0, 2, 4, 5, 7, 9, 11];
+    var pitchClasses = majorScale.map(
+      function(value) {
+        return (value + tonic) % 12;
+      }
+    );
+    var scale = [];
+    for (var midi = minMidi; midi <= maxMidi; midi++) {
+      if (pitchClasses.indexOf((midi % 12 + 12) % 12) !== -1) {
+        scale.push(midi);
+      }
+    }
+    return scale;
+  }
+  function toMidiList(notes) {
+    return notes.map(noteToMidi).filter(
+      function(midi) {
+        return midi !== null;
+      }
+    );
+  }
+  function normalizeMidiToOctave(midi, octave) {
+    var target = (octave + 1) * 12;
+    var pitchClass = (midi % 12 + 12) % 12;
+    return target + pitchClass;
+  }
+  function uniqueNumbers(values) {
+    return Array.from(new Set(values));
+  }
+  function moveOneStepToward(currentMidi, targetMidi, scale) {
+    var orderedScale = scale.slice().sort(
+      function(a, b) {
+        return a - b;
+      }
+    );
+    var currentIndex = findNearestIndex(orderedScale, currentMidi);
+    var targetIndex = findNearestIndex(orderedScale, targetMidi);
+    if (currentIndex === targetIndex) {
+      return orderedScale[currentIndex];
+    }
+    return orderedScale[currentIndex + (targetIndex > currentIndex ? 1 : -1)];
+  }
+  function findNearestIndex(values, target) {
+    var nearestIndex = 0;
+    var nearestDistance = Infinity;
+    for (var i = 0; i < values.length; i++) {
+      var distance = Math.abs(values[i] - target);
+      if (distance < nearestDistance) {
+        nearestIndex = i;
+        nearestDistance = distance;
+      }
+    }
+    return nearestIndex;
+  }
+  function gatherMelodyCandidates(step, scale, targetOctave, previousMidi, previousInterval, songProfile) {
+    var anchor = normalizeMidiToOctave(step.chordMidi[0], targetOctave);
+    var candidates = step.chordMidi.map(
+      function(midi) {
+        return normalizeMidiToOctave(midi, targetOctave);
+      }
+    );
+    if (step.stepStrength >= 2) {
+      candidates = candidates.concat(
+        scale.filter(
+          function(midi) {
+            return Math.abs(midi - anchor) <= 4;
+          }
+        )
+      );
+    }
+    if (step.phraseEnd) {
+      candidates.push(normalizeMidiToOctave(step.chordMidi[0], targetOctave));
+      candidates.push(normalizeMidiToOctave(step.chordMidi[1] || step.chordMidi[0], targetOctave));
+    }
+    candidates = candidates.concat(
+      getMelodicDecorationCandidates(
+        scale,
+        previousMidi,
+        previousInterval,
+        step.stepStrength
+      )
+    );
+    if (previousMidi !== null && b82.Random.chance(songProfile.melodicFreedom)) {
+      candidates = candidates.concat(
+        getNearbyScaleCandidates(
+          scale,
+          previousMidi,
+          1,
+          step.stepStrength >= 2 ? 2 : 1
+        )
+      );
+    }
+    return uniqueNumbers(candidates);
+  }
+  function getContourPreferredMidi(step, scale, targetOctave, songProfile, phraseStep, phraseLength) {
+    var anchorMidi = normalizeMidiToOctave(step.chordMidi[0], targetOctave);
+    var ratio = phraseLength <= 1 ? 0 : phraseStep / (phraseLength - 1);
+    var degreeOffset = 0;
+    switch (songProfile.contourType) {
+      case "rise":
+        degreeOffset = Math.round(ratio * 4);
+        break;
+      case "fall":
+        degreeOffset = Math.round((1 - ratio) * 4);
+        break;
+      case "arch":
+        degreeOffset = Math.round((1 - Math.abs(0.5 - ratio) * 2) * 4);
+        break;
+      case "wave":
+        degreeOffset = Math.round(Math.sin(ratio * Math.PI * 2) * 2) + 2;
+        break;
+      case "stair":
+        degreeOffset = Math.floor(ratio * 5);
+        break;
+      case "hover":
+      default:
+        degreeOffset = phraseStep % 2 === 0 ? 1 : 2;
+        break;
+    }
+    return findScaleNoteByDegreeOffset(scale, anchorMidi, degreeOffset);
+  }
+  function getMelodicDecorationCandidates(scale, previousMidi, previousInterval, stepStrength) {
+    if (previousMidi === null) {
+      return [];
+    }
+    var candidates = [];
+    if (stepStrength >= 2) {
+      candidates.push(moveByScaleDegrees(scale, previousMidi, 1));
+      candidates.push(moveByScaleDegrees(scale, previousMidi, -1));
+    }
+    if (previousInterval !== null && previousInterval !== 0) {
+      var direction = previousInterval > 0 ? 1 : -1;
+      candidates.push(moveByScaleDegrees(scale, previousMidi, direction));
+      candidates.push(moveByScaleDegrees(scale, previousMidi, -direction));
+    }
+    return uniqueNumbers(
+      candidates.filter(
+        function(midi) {
+          return midi !== null;
+        }
+      )
+    );
+  }
+  function getCadenceMidi(step, targetOctave, songProfile) {
+    var chordIndex = 0;
+    if (songProfile.cadenceTarget === "third") {
+      chordIndex = 1;
+    } else if (songProfile.cadenceTarget === "fifth") {
+      chordIndex = 2;
+    }
+    return normalizeMidiToOctave(
+      step.chordMidi[chordIndex] || step.chordMidi[0],
+      targetOctave
+    );
+  }
+  function findScaleNoteByDegreeOffset(scale, anchorMidi, degreeOffset) {
+    var orderedScale = scale.slice().sort(
+      function(a, b) {
+        return a - b;
+      }
+    );
+    var anchorIndex = findNearestIndex(orderedScale, anchorMidi);
+    var targetIndex = b82.Utilities.clamp(
+      anchorIndex + degreeOffset,
+      0,
+      orderedScale.length - 1
+    );
+    return orderedScale[targetIndex];
+  }
+  function moveByScaleDegrees(scale, midi, degreeOffset) {
+    if (degreeOffset === 0) {
+      return midi;
+    }
+    var orderedScale = scale.slice().sort(
+      function(a, b) {
+        return a - b;
+      }
+    );
+    var anchorIndex = findNearestIndex(orderedScale, midi);
+    var targetIndex = anchorIndex + degreeOffset;
+    if (targetIndex < 0 || targetIndex >= orderedScale.length) {
+      return null;
+    }
+    return orderedScale[targetIndex];
+  }
+  function getNearbyScaleCandidates(scale, midi, minDegrees, maxDegrees) {
+    var candidates = [];
+    for (var degrees = minDegrees; degrees <= maxDegrees; degrees++) {
+      candidates.push(moveByScaleDegrees(scale, midi, degrees));
+      candidates.push(moveByScaleDegrees(scale, midi, -degrees));
+    }
+    return candidates.filter(
+      function(candidate) {
+        return candidate !== null;
+      }
+    );
+  }
+  function chooseCandidateMidi(candidates, previousMidi, options) {
+    if (!candidates || candidates.length === 0) {
+      return null;
+    }
+    options = options || {};
+    var preferredMidi = typeof options.prefer === "number" ? options.prefer : null;
+    var maxLeap = typeof options.maxLeap === "number" ? options.maxLeap : 7;
+    var preferMotion = options.preferMotion === true;
+    var avoidRepeat = options.avoidRepeat === true;
+    var explorationChance = typeof options.explorationChance === "number" ? options.explorationChance : 0;
+    var bestScore = -Infinity;
+    var bestCandidates = [];
+    var scoredCandidates = [];
+    for (var i = 0; i < candidates.length; i++) {
+      var candidate = candidates[i];
+      var score = 0;
+      if (previousMidi !== null) {
+        var leap = Math.abs(candidate - previousMidi);
+        score -= leap;
+        if (leap === 0) {
+          score -= avoidRepeat ? 4 : 1;
+        } else if (leap <= 2) {
+          score += 5;
+        } else if (leap <= 4) {
+          score += 2;
+        } else if (leap > maxLeap) {
+          score -= 8;
+        }
+        if (preferMotion && leap > 0 && leap <= 2) {
+          score += 2;
+        }
+      }
+      if (preferredMidi !== null) {
+        score -= Math.abs(candidate - preferredMidi) * (preferMotion ? 0.35 : 0.75);
+      }
+      score += b82.Random.int(0, 2) * 0.25;
+      scoredCandidates.push({ candidate, score });
+      if (score > bestScore) {
+        bestScore = score;
+        bestCandidates = [candidate];
+      } else if (score === bestScore) {
+        bestCandidates.push(candidate);
+      }
+    }
+    if (explorationChance > 0 && b82.Random.chance(explorationChance)) {
+      var nearBestCandidates = scoredCandidates.filter(
+        function(entry) {
+          return entry.score >= bestScore - 2;
+        }
+      ).map(
+        function(entry) {
+          return entry.candidate;
+        }
+      );
+      if (nearBestCandidates.length > 0) {
+        return b82.Random.pick(uniqueNumbers(nearBestCandidates));
+      }
+    }
+    return b82.Random.pick(bestCandidates);
+  }
 })(b8);
 (function(b82) {
   b82.Menu = {};
@@ -3582,6 +4848,7 @@ const b8 = {};
         selBgColor: b82.Core.drawState.fgColor,
         selFgColor: b82.Core.drawState.bgColor,
         border: true,
+        style: "border",
         borderChar: b82.CONFIG.BORDER_CHAR,
         center: false,
         centerH: false,
@@ -3594,6 +4861,7 @@ const b8 = {};
     );
     let startCol = b82.Core.drawState.cursorCol;
     let startRow = b82.Core.drawState.cursorRow;
+    options.prompt = b82.wrapText(options.prompt, b82.CONFIG.SCREEN_COLS - 2 * options.padding - 2 * (options.border ? 1 : 0));
     const promptSize = b82.TextRenderer.measure(options.prompt);
     const prompt01 = options.prompt ? 1 : 0;
     const border01 = options.borderChar ? 1 : 0;
@@ -3615,13 +4883,23 @@ const b8 = {};
     }
     b82.Core.drawState.cursorCol = startCol;
     b82.Core.drawState.cursorRow = startRow;
-    if (options.border) {
+    if (options.style) {
+      b82.TextRenderer.printStyledBox(
+        totalCols,
+        totalRows,
+        {
+          style: options.style,
+          fill: true
+        }
+      );
+    }
+    if (!options.style && options.border) {
       b82.TextRenderer.printBox(totalCols, totalRows, true, options.borderChar);
-      if (options.title) {
-        const t = " " + options.title + " ";
-        b82.Core.drawState.cursorCol = startCol + Math.round((totalCols - t.length) / 2);
-        b82.TextRenderer.print(t);
-      }
+    }
+    if (options.title) {
+      const t = " " + options.title + " ";
+      b82.Core.drawState.cursorCol = startCol + 1;
+      b82.TextRenderer.print(t);
     }
     if (options.prompt) {
       b82.Core.drawState.cursorCol = promptSize.cols <= totalCols ? startCol + border01 + options.padding : startCol + Math.round((totalCols - promptSize.cols) / 2);
@@ -3635,7 +4913,11 @@ const b8 = {};
     let selIndex = options.selIndex;
     while (true) {
       b82.Core.drawState.cursorRow = startRow + border01 + options.padding + prompt01 * (promptSize.rows + 1);
-      b82.Core.drawState.cursorCol = promptSize.cols <= choicesCols ? startCol + border01 + options.padding : startCol + Math.round((totalCols - choicesCols) / 2);
+      if (promptSize.cols <= choicesCols) {
+        b82.Core.drawState.cursorCol = startCol + border01 + options.padding;
+      } else {
+        b82.Core.drawState.cursorCol = startCol + (totalCols - choicesCols) / 2;
+      }
       printChoices(choices, selIndex, options);
       const k = await b82.Input.readKeyAsync();
       if (k.includes("ArrowUp")) {
@@ -3769,21 +5051,52 @@ const b8 = {};
 })(b8);
 (function(b82) {
   b82.Input = {};
+  const KEY_ALIASES_ = {
+    W: ["W", "ArrowUp"],
+    A: ["A", "ArrowLeft"],
+    S: ["S", "ArrowDown"],
+    D: ["D", "ArrowRight"],
+    ENTER: ["Enter", "Escape"],
+    Z: ["Z", "ButtonA"],
+    N: ["N", "ButtonA"],
+    X: ["X", "ButtonB"],
+    M: ["M", "ButtonB"],
+    " ": [" ", "Space"]
+  };
   let keysHeldRaw_ = /* @__PURE__ */ new Set();
   let gameJustPressed_ = /* @__PURE__ */ new Set();
   const active_ = () => contexts_[contexts_.length - 1];
-  let contexts_ = [
-    { name: "game", capture: false, passthrough: true, queue: [] }
-  ];
+  let contexts_ = [createDefaultContext_()];
+  let pointer_ = createPointerState_();
+  b82.Input.pointerX = function() {
+    return pointer_.x;
+  };
+  b82.Input.pointerY = function() {
+    return pointer_.y;
+  };
+  b82.Input.pointerJustPressed = function() {
+    return pointer_.justPressed;
+  };
+  b82.Input.pointerJustReleased = function() {
+    return pointer_.justReleased;
+  };
+  b82.Input.pointerTile = function() {
+    return {
+      col: Math.floor(pointer_.x / b82.CONFIG.CHR_WIDTH),
+      row: Math.floor(pointer_.y / b82.CONFIG.CHR_HEIGHT)
+    };
+  };
   b82.Input.pushContext = function(name, opts = {}) {
-    contexts_.push({
-      name,
-      capture: !!opts.capture,
-      // if true, gameplay polling should be blocked
-      passthrough: opts.passthrough ?? false,
-      // if true, still allow gameplay justPressed
-      queue: []
-    });
+    contexts_.push(
+      {
+        name,
+        capture: !!opts.capture,
+        // if true, gameplay polling should be blocked
+        passthrough: opts.passthrough ?? false,
+        // if true, still allow gameplay justPressed
+        queue: []
+      }
+    );
   };
   b82.Input.popContext = function() {
     if (contexts_.length > 1) contexts_.pop();
@@ -3799,15 +5112,14 @@ const b8 = {};
   b82.Input.reset = function() {
     keysHeldRaw_ = /* @__PURE__ */ new Set();
     gameJustPressed_ = /* @__PURE__ */ new Set();
-    window.removeEventListener("keydown", b82.Input.onKeyDown);
-    window.removeEventListener("keyup", b82.Input.onKeyUp);
-    window.removeEventListener("pointerdown", b82.Input.onPointerDown);
+    contexts_ = [createDefaultContext_()];
+    pointer_ = createPointerState_();
+    unbindEvents_();
+    b82.Input.onEndFrame();
   };
   b82.Input.init = function() {
     b82.Input.reset();
-    window.addEventListener("keydown", b82.Input.onKeyDown);
-    window.addEventListener("keyup", b82.Input.onKeyUp);
-    window.addEventListener("pointerdown", b82.Input.onPointerDown);
+    bindEvents_();
   };
   b82.Input.keyHeld = function(keyName) {
     return keysHeldRaw_.has(keyName.toUpperCase());
@@ -3820,27 +5132,21 @@ const b8 = {};
   };
   b82.Input.onEndFrame = function() {
     gameJustPressed_.clear();
+    pointer_.justPressed = false;
+    pointer_.justReleased = false;
   };
   b82.Input.onKeyDown = function(e) {
-    const key = e.key;
-    const keys = b82.Input.getKeys(key);
-    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(key)) {
-      e.preventDefault();
-    }
-    for (const k of keys) {
-      keysHeldRaw_.add(k.toUpperCase());
-    }
+    const keys = b82.Input.getKeys(e.key);
     const ctx = active_();
+    preventDefaultKeyBehaviour_(e);
+    addKeysToSet_(keysHeldRaw_, keys);
     if (!ctx.capture || ctx.passthrough) {
-      for (const k of keys) {
-        gameJustPressed_.add(k.toUpperCase());
-      }
+      addKeysToSet_(gameJustPressed_, keys);
     }
     if (ctx.capture) {
       ctx.queue.push(keys);
       if (b82.Core.hasPendingAsync("b8.Async.key")) {
-        const next = ctx.queue.shift();
-        b82.Core.resolveAsync("b8.Async.key", next);
+        b82.Core.resolveAsync("b8.Async.key", ctx.queue.shift());
       }
       return;
     }
@@ -3848,17 +5154,9 @@ const b8 = {};
       b82.Core.resolveAsync("b8.Async.key", keys);
     }
   };
-  b82.Input.onPointerDown = function(e) {
-    if (b82.Core.hasPendingAsync("b8.Async.pointer")) {
-      b82.Core.resolveAsync("b8.Async.pointer", { x: e.clientX, y: e.clientY });
-    }
-  };
   b82.Input.onKeyUp = function(e) {
     if (!e.key) return;
-    const keys = b82.Input.getKeys(e.key);
-    for (const k of keys) {
-      keysHeldRaw_.delete(k.toUpperCase());
-    }
+    removeKeysFromSet_(keysHeldRaw_, b82.Input.getKeys(e.key));
   };
   b82.Input.readKeyAsync = function() {
     const ctx = active_();
@@ -3879,33 +5177,56 @@ const b8 = {};
     );
   };
   b82.Input.getKeys = function(key) {
-    let keys = [key];
-    switch (key.toUpperCase()) {
-      case "W":
-        keys.push("ArrowUp");
-        break;
-      case "A":
-        keys.push("ArrowLeft");
-        break;
-      case "S":
-        keys.push("ArrowDown");
-        break;
-      case "D":
-        keys.push("ArrowRight");
-        break;
-      case "Enter":
-        keys.push("Escape");
-        break;
-      case "Z":
-      case "N":
-        keys.push("ButtonA");
-        break;
-      case "X":
-      case "M":
-        keys.push("ButtonB");
-        break;
+    return KEY_ALIASES_[key.toUpperCase()] || [key];
+  };
+  b82.Input.onPointerDown = function(e) {
+    const pos = b82.Core.clientToCanvas(e.clientX, e.clientY);
+    pointer_.x = pos.x;
+    pointer_.y = pos.y;
+    pointer_.pressX = pos.x;
+    pointer_.pressY = pos.y;
+    pointer_.isDown = true;
+    pointer_.justPressed = true;
+    b82.Core.realCanvas.setPointerCapture(e.pointerId);
+    if (b82.Core.hasPendingAsync("b8.Async.pointer")) {
+      b82.Core.resolveAsync("b8.Async.pointer", pos);
     }
-    return keys;
+  };
+  b82.Input.onPointerUp = function(e) {
+    const pos = b82.Core.clientToCanvas(e.clientX, e.clientY);
+    pointer_.x = pos.x;
+    pointer_.y = pos.y;
+    pointer_.isDown = false;
+    pointer_.justReleased = true;
+    pointer_.tapX = pos.x;
+    pointer_.tapY = pos.y;
+  };
+  b82.Input.onPointerMove = function(e) {
+    const pos = b82.Core.clientToCanvas(e.clientX, e.clientY);
+    pointer_.x = pos.x;
+    pointer_.y = pos.y;
+  };
+  b82.Input.onPointerCancel = function() {
+    pointer_.isDown = false;
+    pointer_.justPressed = false;
+    pointer_.justReleased = false;
+  };
+  b82.Input.pointerHeld = function() {
+    return !!pointer_.isDown;
+  };
+  b82.Input.hasTap = function() {
+    return pointer_.tapX !== null && pointer_.tapY !== null;
+  };
+  b82.Input.tapTile = function() {
+    if (pointer_.tapX === null || pointer_.tapY === null) return null;
+    return {
+      col: Math.floor(pointer_.tapX / b82.CONFIG.CHR_WIDTH),
+      row: Math.floor(pointer_.tapY / b82.CONFIG.CHR_HEIGHT)
+    };
+  };
+  b82.Input.consumeTap = function() {
+    pointer_.tapX = null;
+    pointer_.tapY = null;
   };
   b82.Input.readLine = async function(prompt2 = "Enter text:", initString = "", maxLen = 100, maxWidth = -1) {
     return b82.Input.withContext("text", { capture: true }, async () => {
@@ -3986,6 +5307,60 @@ const b8 = {};
     } while (valid === false);
     return textInput;
   };
+  function createDefaultContext_() {
+    return {
+      name: "game",
+      capture: false,
+      passthrough: true,
+      queue: []
+    };
+  }
+  function createPointerState_() {
+    return {
+      x: 0,
+      y: 0,
+      isDown: false,
+      justPressed: false,
+      justReleased: false,
+      pressX: 0,
+      pressY: 0,
+      tapX: null,
+      tapY: null
+    };
+  }
+  function bindEvents_() {
+    window.addEventListener("keydown", b82.Input.onKeyDown);
+    window.addEventListener("keyup", b82.Input.onKeyUp);
+    const canvas = b82.Core.realCanvas;
+    canvas?.addEventListener("pointerdown", b82.Input.onPointerDown);
+    canvas?.addEventListener("pointerup", b82.Input.onPointerUp);
+    canvas?.addEventListener("pointermove", b82.Input.onPointerMove);
+    canvas?.addEventListener("pointercancel", b82.Input.onPointerCancel);
+  }
+  function unbindEvents_() {
+    window.removeEventListener("keydown", b82.Input.onKeyDown);
+    window.removeEventListener("keyup", b82.Input.onKeyUp);
+    const canvas = b82.Core.realCanvas;
+    canvas?.removeEventListener("pointerdown", b82.Input.onPointerDown);
+    canvas?.removeEventListener("pointerup", b82.Input.onPointerUp);
+    canvas?.removeEventListener("pointermove", b82.Input.onPointerMove);
+    canvas?.removeEventListener("pointercancel", b82.Input.onPointerCancel);
+  }
+  function addKeysToSet_(set, keys) {
+    for (const key of keys) {
+      set.add(key.toUpperCase());
+    }
+  }
+  function removeKeysFromSet_(set, keys) {
+    for (const key of keys) {
+      set.delete(key.toUpperCase());
+    }
+  }
+  function preventDefaultKeyBehaviour_(e) {
+    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(e.key)) {
+      e.preventDefault();
+    }
+  }
 })(b8);
 (function(b82) {
   b82.Image = b82.Image || {};
@@ -4561,7 +5936,7 @@ const b8 = {};
     }
   };
   b82.Core.cls = function(bgColor = void 0) {
-    bgColor = bgColor || b82.Core.drawState.bgColor;
+    bgColor = bgColor === void 0 ? b82.Core.drawState.bgColor : bgColor;
     b82.Utilities.checkNumber("bgColor", bgColor);
     b82.Core.offCtx.fillStyle = b82.Core.getColorHex(bgColor);
     b82.Core.offCtx.fillRect(0, 0, b82.Core.offCanvas.width, b82.Core.offCanvas.height);
@@ -4659,23 +6034,23 @@ const b8 = {};
     );
   };
   b82.Core.drawRect = function(x, y, width, height, lineWidth = 1) {
-    b82.Utilities.checkNumber("x", x);
-    b82.Utilities.checkNumber("y", y);
-    b82.Utilities.checkNumber("width", width);
-    b82.Utilities.checkNumber("height", height);
-    b82.Utilities.checkNumber("lineWidth", lineWidth);
-    const oldStrokeStyle = b82.Core.offCtx.strokeStyle;
-    const oldLineWidth = b82.Core.offCtx.lineWidth;
-    b82.Core.offCtx.strokeStyle = b82.Core.getColorHex(b82.Core.drawState.fgColor);
-    b82.Core.offCtx.lineWidth = lineWidth;
-    b82.Core.offCtx.strokeRect(
-      Math.round(x),
-      Math.round(y),
-      Math.round(width),
-      Math.round(height)
-    );
-    b82.Core.offCtx.strokeStyle = oldStrokeStyle;
-    b82.Core.offCtx.lineWidth = oldLineWidth;
+    b82.Utilities.checkInt("x", x);
+    b82.Utilities.checkInt("y", y);
+    b82.Utilities.checkInt("width", width);
+    b82.Utilities.checkInt("height", height);
+    b82.Utilities.checkInt("lineWidth", lineWidth);
+    x = Math.round(x);
+    y = Math.round(y);
+    width = Math.round(width);
+    height = Math.round(height);
+    lineWidth = Math.min(lineWidth, Math.floor(width / 2), Math.floor(height / 2));
+    const oldFillStyle = b82.Core.offCtx.fillStyle;
+    b82.Core.offCtx.fillStyle = b82.Core.getColorHex(b82.Core.drawState.fgColor);
+    b82.Core.offCtx.fillRect(x, y, width, lineWidth);
+    b82.Core.offCtx.fillRect(x, y + height - lineWidth, width, lineWidth);
+    b82.Core.offCtx.fillRect(x, y, lineWidth, height);
+    b82.Core.offCtx.fillRect(x + width - lineWidth, y, lineWidth, height);
+    b82.Core.offCtx.fillStyle = oldFillStyle;
   };
   b82.Core.fillRect = function(x, y, width, height) {
     b82.Utilities.checkNumber("x", x);
@@ -4684,10 +6059,10 @@ const b8 = {};
     b82.Utilities.checkNumber("height", height);
     b82.Core.offCtx.fillStyle = b82.Core.getColorHex(b82.Core.drawState.fgColor);
     b82.Core.offCtx.fillRect(
-      Math.round(x) + 0.5,
-      Math.round(y) + 0.5,
-      Math.round(width) - 1,
-      Math.round(height) - 1
+      Math.round(x),
+      Math.round(y),
+      Math.round(width),
+      Math.round(height)
     );
   };
   b82.Core.initScreenshot = function() {
@@ -4752,6 +6127,15 @@ const b8 = {};
     b82.Core.realCanvas.width = b82.CONFIG.SCREEN_REAL_WIDTH;
     b82.Core.realCanvas.height = b82.CONFIG.SCREEN_REAL_HEIGHT;
     b82.Core.container.style.aspectRatio = `${b82.CONFIG.SCREEN_COLS} / ${b82.CONFIG.SCREEN_ROWS}`;
+  };
+  b82.Core.clientToCanvas = function(clientX, clientY) {
+    const rect = b82.Core.realCanvas.getBoundingClientRect();
+    const scaleX = b82.Core.realCanvas.width / rect.width;
+    const scaleY = b82.Core.realCanvas.height / rect.height;
+    return {
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY
+    };
   };
   b82.Core.handleCrash = function(error = "Fatal error") {
     if (b82.Core.crashed || b82.Core.crashing) return;
@@ -5272,14 +6656,19 @@ const zzfxG = (
 (function() {
   const audioCtx = new AudioContext();
   const masterGain = audioCtx.createGain();
-  masterGain.gain.value = 1;
+  masterGain.gain.value = 0.8;
   masterGain.connect(audioCtx.destination);
   let noteBuffers = {};
+  let noteBufferKeys = [];
+  const maxNoteBuffers = 200;
   let schedulerInterval = null;
   let schedules = [];
   let schedulePointers = [];
+  let songLengthInSteps = 0;
   let playbackStartTime = 0;
   let tempo = 125;
+  const defaultTempo = 125;
+  const stepsPerBeat = 4;
   const lookaheadTime = 0.5;
   const schedulerIntervalMs = 50;
   const volumeMultiplier = 0.1;
@@ -5329,15 +6718,10 @@ const zzfxG = (
       p12.stop();
       return;
     }
-    if (noteBuffers.length > 200) {
-      console.warn("b8.Music: Note buffers exceeded limit, clearing old buffers.");
-      noteBuffers = {};
-    }
-    tempo = 125;
+    tempo = defaultTempo;
     let baseNoteDuration = 0.5;
     schedules = [];
     const rawLines = params.split("\n").map((line) => line.trim());
-    let noteInterval = tempo / 1e3;
     const trackLineRegex = /^([0-9])\|(.*)\|$/;
     rawLines.forEach((line) => {
       if (!line) return;
@@ -5345,17 +6729,16 @@ const zzfxG = (
         const timing = line.replace(/[\[\]]/g, "").split(".");
         tempo = parseFloat(timing[0]) || tempo;
         baseNoteDuration = (parseFloat(timing[1]) || 50) / 100;
-        noteInterval = tempo / 1e3;
-        return;
-      }
-      if (!trackLineRegex.test(line)) {
-        console.error("Track lines must be in the format 'instrument|track data|': " + line);
         return;
       }
       const match = line.match(trackLineRegex);
+      if (!match) {
+        console.error("Track lines must be in the format 'instrument|track data|': " + line);
+        return;
+      }
       const instrumentId = parseInt(match[1], 10);
       const instrumentFn = instrumentMapping[instrumentId] || instrumentMapping[0];
-      const trackData = match[2].trim();
+      const trackData = match[2];
       let events = [];
       for (let i = 0; i < trackData.length; i++) {
         const char = trackData[i];
@@ -5363,21 +6746,23 @@ const zzfxG = (
         while (i + dashCount < trackData.length && trackData[i + dashCount] === "-") {
           dashCount++;
         }
-        let eventTime = i * noteInterval;
         if (char === " ") {
-          events.push({ startTime: eventTime, noteBuffer: null });
+          events.push(null);
           i += dashCount - 1;
           continue;
         }
         let noteValue = char.charCodeAt(0);
         noteValue -= noteValue > 90 ? 71 : 65;
-        let noteDuration = dashCount * baseNoteDuration * (tempo / 125);
-        let noteBuffer = createNoteBuffer(noteValue, noteDuration, 44100, instrumentFn);
-        events.push({ startTime: eventTime, noteBuffer });
+        let noteDuration = dashCount * baseNoteDuration * (defaultTempo / tempo);
+        let noteBuffer = createNoteBuffer(noteValue, noteDuration, audioCtx.sampleRate, instrumentFn, instrumentId);
+        events.push(noteBuffer);
         i += dashCount - 1;
       }
       schedules.push(events);
     });
+    songLengthInSteps = schedules.reduce((longestTrack, events) => {
+      return Math.max(longestTrack, events.length);
+    }, 0);
     schedulePointers = schedules.map(() => 0);
     playbackStartTime = audioCtx.currentTime + 0.1;
     p12.stop();
@@ -5385,25 +6770,27 @@ const zzfxG = (
   }
   function schedulerFunction() {
     const currentTime = audioCtx.currentTime;
-    const noteInterval = tempo / 1e3;
+    const noteInterval = getNoteInterval();
     const effectiveLookahead = Math.max(lookaheadTime, noteInterval);
     schedules.forEach((events, trackIndex) => {
-      let pointer = schedulePointers[trackIndex];
       const trackLength = events.length;
-      if (trackLength === 0) return;
-      const step = pointer % trackLength;
-      const loopCount = Math.floor(pointer / trackLength);
-      const eventTime = playbackStartTime + step * noteInterval + loopCount * trackLength * noteInterval;
-      if (eventTime < currentTime + effectiveLookahead) {
-        const event = events[step];
-        if (event.noteBuffer) {
-          playNoteBuffer(event.noteBuffer, audioCtx, eventTime);
+      if (songLengthInSteps === 0) return;
+      while (true) {
+        let pointer = schedulePointers[trackIndex];
+        const step = pointer % songLengthInSteps;
+        const eventTime = playbackStartTime + pointer * noteInterval;
+        if (eventTime >= currentTime + effectiveLookahead) {
+          break;
+        }
+        const noteBuffer = step < trackLength ? events[step] : null;
+        if (noteBuffer) {
+          playNoteBuffer(noteBuffer, audioCtx, eventTime);
         }
         schedulePointers[trackIndex]++;
       }
     });
     if (!p12.loop) {
-      const done = schedules.every((events, i) => schedulePointers[i] >= events.length);
+      const done = schedulePointers.every((pointer) => pointer >= songLengthInSteps);
       if (done) {
         p12.stop();
       }
@@ -5415,35 +6802,38 @@ const zzfxG = (
       schedulerInterval = null;
     }
     playingSources.forEach((source) => source.stop());
-    playingSources = [];
+    playingSources.clear();
   };
   p12.isPlaying = function() {
     return schedulerInterval !== null;
   };
   p12.setTempo = function(newTempo) {
     if (newTempo < 50) newTempo = 50;
-    const oldNoteInterval = tempo / 1e3;
-    const newNoteInterval = newTempo / 1e3;
+    const oldNoteInterval = getNoteInterval();
+    tempo = newTempo;
+    const newNoteInterval = getNoteInterval();
     const elapsed = audioCtx.currentTime - playbackStartTime;
     const currentIndex = elapsed / oldNoteInterval;
     playbackStartTime = audioCtx.currentTime - currentIndex * newNoteInterval;
-    tempo = newTempo;
   };
   p12.setVolume = function(value) {
     masterGain.gain.value = Math.min(1, Math.max(0, value));
   };
   p12.clearCache = function() {
     noteBuffers = {};
+    noteBufferKeys = [];
   };
   p12.loop = true;
-  const createNoteBuffer = (note, durationSeconds, sampleRate, instrumentFn) => {
-    const key = note + "-" + durationSeconds + "-" + instrumentFn.name;
+  const createNoteBuffer = (note, durationSeconds, sampleRate, instrumentFn, instrumentId) => {
+    const key = note + "-" + durationSeconds + "-" + instrumentId;
     let buffer = noteBuffers[key];
     if (note >= 0 && !buffer) {
       const frequencyFactor = 65.406 * Math.pow(1.06, note) / sampleRate;
       const totalSamples = Math.floor(sampleRate * durationSeconds);
       const attackSamples = 88;
       const decaySamples = sampleRate * (durationSeconds - 2e-3);
+      const decayExponent = Math.pow(Math.log(1e4 * frequencyFactor) / 2, 2);
+      const fadeOutSamples = Math.min(32, totalSamples);
       buffer = noteBuffers[key] = audioCtx.createBuffer(1, totalSamples, sampleRate);
       const channelData = buffer.getChannelData(0);
       for (let i = 0; i < totalSamples; i++) {
@@ -5453,8 +6843,11 @@ const zzfxG = (
         } else {
           amplitude = Math.pow(
             1 - (i - attackSamples) / decaySamples,
-            Math.pow(Math.log(1e4 * frequencyFactor) / 2, 2)
+            decayExponent
           );
+        }
+        if (i >= totalSamples - fadeOutSamples) {
+          amplitude *= (totalSamples - i) / fadeOutSamples;
         }
         channelData[i] = amplitude * instrumentFn(i * frequencyFactor);
       }
@@ -5462,26 +6855,30 @@ const zzfxG = (
         playNoteBuffer(buffer, audioCtx, audioCtx.currentTime, true);
         unlocked = true;
       }
+      noteBufferKeys.push(key);
+      if (noteBufferKeys.length > maxNoteBuffers) {
+        delete noteBuffers[noteBufferKeys.shift()];
+      }
     }
     return buffer;
   };
-  let playingSources = [];
+  let playingSources = /* @__PURE__ */ new Set();
   const playNoteBuffer = (buffer, context, when, stopImmediately = false) => {
     const source = context.createBufferSource();
     source.buffer = buffer;
     source.connect(masterGain);
     source.start(when);
-    playingSources.push(source);
+    playingSources.add(source);
     if (stopImmediately) {
       source.stop();
     }
     source.onended = () => {
-      const index = playingSources.indexOf(source);
-      if (index !== -1) {
-        playingSources.splice(index, 1);
-      }
+      playingSources.delete(source);
     };
   };
+  function getNoteInterval() {
+    return 60 / tempo / stepsPerBeat;
+  }
   window.p1 = p12;
 })();
 class MinHeap {
