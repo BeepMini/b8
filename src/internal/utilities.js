@@ -431,6 +431,19 @@
 
 
 	/**
+	 * Clamps a number between 0 and 1.
+	 *
+	 * @param {number} x - The number to clamp.
+	 * @returns {number} The clamped number.
+	 */
+	b8.Utilities.clamp01 = function( x ) {
+
+		return b8.Utilities.clamp( x, 0, 1 );
+
+	}
+
+
+	/**
 	 * Converts a hex color string to an RGB object.
 	 *
 	 * @param {string} hex - The hex color string (e.g., "#ff0000").
