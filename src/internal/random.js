@@ -81,7 +81,7 @@
 	 * @param {number} max - The maximum value (inclusive).
 	 * @returns {number} A random number between min and max.
 	 */
-	b8.Random.range = function( min, max ) {
+	b8.Random.range = function( min = 0, max = 1 ) {
 
 		b8.Utilities.checkNumber( "min", min );
 		b8.Utilities.checkNumber( "max", max );
