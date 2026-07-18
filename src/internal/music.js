@@ -357,16 +357,15 @@
 
 
 	/**
-	 * Seed-profile option pools used to build a song blueprint.
+ * Seed-plan options used to build a song blueprint.
 	 *
 	 * Keeping these lists in one place makes the high-level musical choices
 	 * easier to scan and tweak without digging through the generator logic.
 	 *
 	 * @type {Object<string, Array<any>>}
 	 */
-	const SONG_PROFILE_OPTIONS = {
-		phraseBarCount: [ 2, 2, 4, 4 ],
-		sectionForms: [
+const SONG_PLAN_OPTIONS = {
+	sectionForms: [
 			[ "A", "A" ],
 			[ "A", "A_PRIME" ],
 			[ "A", "B" ],
@@ -376,35 +375,41 @@
 			[ "A", "B", "A", "C" ],
 			[ "A", "B", "C", "A" ]
 		],
-		contourType: [ "rise", "fall", "arch", "wave", "hover", "stair" ],
-		cadenceTarget: [ "root", "root", "third", "fifth" ],
-		motifReuseChance: [ 50, 60, 70, 80 ],
-		progressionRotation: [ 1, 1, 2, 3 ],
-		altChordLengthBias: [ 0, 0, 1, -1 ],
-		// Major remains the common home base, while the other palettes provide
-		// predictable but noticeably different moods for some seeds.
-		tonalPalette: [ "major", "major", "major", "naturalMinor", "dorian", "mixolydian", "pentatonic" ],
-		registerShape: [ "low", "mid", "high" ],
+	contours: [ "rise", "fall", "arch", "wave", "hover", "stair" ],
+	cadenceTarget: [ "root", "root", "third", "fifth" ],
+	// Major remains the common home base, while the other palettes provide
+	// predictable but noticeably different moods for some seeds.
+	palettes: [ "major", "major", "major", "naturalMinor", "dorian", "mixolydian", "pentatonic" ],
 	arrangements: [
 		{
 			name: "build",
-			sections: { A: 0.45, A_PRIME: 0.7, B: 0.8, C: 1 }
+			roles: {
+				A: [ "bass", "chords" ],
+				A_PRIME: [ "bass", "chords", "melody" ],
+				B: [ "bass", "chords", "arp", "melody" ],
+				C: [ "bass", "chords", "arp", "melody", "counter", "drums" ]
+			}
 		},
 		{
 			name: "wave",
-			sections: { A: 0.75, A_PRIME: 0.85, B: 0.5, C: 1 }
+			roles: {
+				A: [ "bass", "chords", "melody" ],
+				A_PRIME: [ "bass", "chords", "arp", "melody" ],
+				B: [ "bass", "chords", "counter" ],
+				C: [ "bass", "chords", "arp", "melody", "counter", "drums" ]
+			}
 		},
 		{
 			name: "spotlight",
-			sections: { A: 0.55, A_PRIME: 0.75, B: 1, C: 0.9 }
+			roles: {
+				A: [ "bass", "chords", "counter" ],
+				A_PRIME: [ "bass", "chords", "melody" ],
+				B: [ "bass", "chords", "arp", "melody", "drums" ],
+				C: [ "bass", "chords", "arp", "melody", "counter", "drums" ]
+			}
 		}
-	],
-		arpeggioShape: [
-			[ 0, 1, 2, 1, 3, 2, 1, 2 ],
-			[ 0, 2, 1, 2, 0, 2, 3, 2 ],
-			[ 0, 1, 0, 2, 1, 2, 1, 3 ]
-		]
-	};
+	]
+};
 
 
 	/**
@@ -496,8 +501,8 @@
 
 		b8.Random.setSeed( opts.seed );
 
-		var songProfile = createSongProfile( opts.noteCount );
-		var progressionContext = generateChordProgression( opts.noteCount, style, songProfile );
+		var songPlan = createSongPlan( opts.noteCount );
+		var progressionContext = generateChordProgression( opts.noteCount, style, songPlan );
 		var roles = style.channels.slice( 0, opts.channelCount );
 
 		var parts = roles.map(
@@ -859,7 +864,7 @@
 
 
 	/**
-	 * Creates a seed-derived song profile.
+ * Creates a seed-derived song plan.
 	 *
 	 * The profile acts as the musical blueprint for a seed. Styles then interpret
 	 * that blueprint with their own density and instrumentation settings, which
@@ -867,69 +872,45 @@
 	 * diverge more clearly.
 	 *
 	 * @param {number} noteCount - Number of note positions in the song.
-	 * @returns {Object} Song profile used across the generator.
-	 */
-	function createSongProfile( noteCount ) {
+ * @returns {Object} Song plan used across the generator.
+ */
+function createSongPlan( noteCount ) {
 
-		var totalBars = Math.max( 1, Math.ceil( noteCount / getBarLength() ) );
-		// The profile is the "composer's sketch". Everything later reads from
-		// these choices so the seed creates a recognisable musical identity.
-		var phraseBarCount = pickPhraseBarCount( totalBars );
-		var contourType = b8.Random.pick( SONG_PROFILE_OPTIONS.contourType );
-		var cadenceTarget = b8.Random.pick( SONG_PROFILE_OPTIONS.cadenceTarget );
-		var sectionForm = pickSectionForm( totalBars, phraseBarCount );
-		var tonalPaletteName = b8.Random.pick( SONG_PROFILE_OPTIONS.tonalPalette );
-	var arrangement = b8.Random.pick( SONG_PROFILE_OPTIONS.arrangements );
-		var phraseCount = Math.max( 1, Math.ceil( totalBars / phraseBarCount ) );
+	var totalBars = Math.max( 1, Math.ceil( noteCount / getBarLength() ) );
+	// The plan is the complete high-level identity of the song. Every later
+	// generator reads these four decisions instead of making structural choices.
+	var sectionForm = pickSectionForm( totalBars );
 
-		return {
-			phraseBarCount: phraseBarCount,
-			sectionForm: sectionForm,
-			phraseCount: phraseCount,
-			contourType: contourType,
-			cadenceTarget: cadenceTarget,
-			tonalPaletteName: tonalPaletteName,
-		arrangement: arrangement,
-			motifReuseChance: b8.Random.pick( SONG_PROFILE_OPTIONS.motifReuseChance ),
-			progressionRotation: b8.Random.pick( SONG_PROFILE_OPTIONS.progressionRotation ),
-			altChordLengthBias: b8.Random.pick( SONG_PROFILE_OPTIONS.altChordLengthBias ),
-			melodicFreedom: b8.Random.pick( [ 15, 20, 25, 35 ] ),
-			supportFreedom: b8.Random.pick( [ 8, 12, 18, 24 ] ),
-			rhythmFamily: {
-				bass: b8.Random.int( 0, 2 ),
-				drums: b8.Random.int( 0, 2 ),
-				arp: b8.Random.int( 0, 2 ),
-				chords: b8.Random.int( 0, 2 ),
-				melody: b8.Random.int( 0, 2 ),
-				counter: b8.Random.int( 0, 2 )
-			},
-			registerShape: b8.Random.pick( SONG_PROFILE_OPTIONS.registerShape ),
-			arpeggioShape: b8.Random.pick( SONG_PROFILE_OPTIONS.arpeggioShape )
-		};
+	return {
+		sectionForm: sectionForm,
+		phraseBarCount: getPhraseBarCount( totalBars, sectionForm ),
+		contour: b8.Random.pick( SONG_PLAN_OPTIONS.contours ),
+		cadenceTarget: b8.Random.pick( SONG_PLAN_OPTIONS.cadenceTarget ),
+		tonalPaletteName: b8.Random.pick( SONG_PLAN_OPTIONS.palettes ),
+		arrangement: b8.Random.pick( SONG_PLAN_OPTIONS.arrangements )
+	};
 
 	}
 
 
 	/**
-	 * Picks a phrase size that fits the available song length.
+ * Derives a phrase size that fits the available song length and form.
 	 *
 	 * Longer songs are allowed broader phrases, while shorter songs stay more
 	 * compact so the structure remains audible.
 	 *
 	 * @param {number} totalBars - Total bar count for the song.
-	 * @returns {number} Phrase size in bars.
-	 */
-	function pickPhraseBarCount( totalBars ) {
+ * @param {Array<string>} sectionForm - Chosen section form for the song.
+ * @returns {number} Phrase size in bars.
+ */
+function getPhraseBarCount( totalBars, sectionForm ) {
 
-		if ( totalBars >= 16 ) {
-			return b8.Random.pick( [ 4, 4, 8 ] );
-		}
+	var barsPerSection = Math.max( 2, Math.floor( totalBars / sectionForm.length ) );
 
-		if ( totalBars >= 8 ) {
-			return b8.Random.pick( [ 2, 4, 4 ] );
-		}
+	if ( barsPerSection >= 8 ) return 8;
+	if ( barsPerSection >= 4 ) return 4;
 
-		return b8.Random.pick( [ 2, 2, 4 ] );
+	return 2;
 
 	}
 
@@ -942,13 +923,12 @@
 	 * over-composed.
 	 *
 	 * @param {number} totalBars - Total bar count for the song.
-	 * @param {number} phraseBarCount - Number of bars in each phrase.
-	 * @returns {Array<string>} Section form such as A-B-A or A-A-B-A.
-	 */
-	function pickSectionForm( totalBars, phraseBarCount ) {
+ * @returns {Array<string>} Section form such as A-B-A or A-A-B-A.
+ */
+function pickSectionForm( totalBars ) {
 
-		var phraseCapacity = Math.max( 1, Math.floor( totalBars / phraseBarCount ) );
-		var availableForms = SONG_PROFILE_OPTIONS.sectionForms.filter(
+	var phraseCapacity = Math.max( 1, Math.floor( totalBars / 2 ) );
+	var availableForms = SONG_PLAN_OPTIONS.sectionForms.filter(
 			function( form ) {
 				return form.length <= phraseCapacity;
 			}
@@ -967,7 +947,7 @@
 		}
 
 		if ( availableForms.length === 0 ) {
-			availableForms = SONG_PROFILE_OPTIONS.sectionForms.filter(
+			availableForms = SONG_PLAN_OPTIONS.sectionForms.filter(
 				function( form ) {
 					return form.length <= phraseCapacity;
 				}
@@ -988,19 +968,18 @@
 	 *
 	 * @param {number} noteCount - Number of note positions to generate chord data for.
 	 * @param {Object} style - The song style object containing chord length options.
-	 * @param {Object} songProfile - Seed-derived musical blueprint for the song.
+	 * @param {Object} songPlan - Seed-derived musical plan for the song.
 	 * @returns {Object} Progression context used by part generators.
 	 */
-	function generateChordProgression( noteCount, style, songProfile ) {
+	function generateChordProgression( noteCount, style, songPlan ) {
 
 		var keys = [ "C", "D", "Eb", "F", "G", "A", "Bb" ];
 		var key = b8.Random.pick( keys );
 		var progression = b8.Random.pick( PROGRESSIONS ).slice();
 		var chordLength = b8.Random.pick( style.chordLength || [ 4, 8, 8, 16 ] );
-		var altChordLength = adjustChordLength( chordLength, songProfile.altChordLengthBias );
 		var barLength = getBarLength();
-		var phraseLength = barLength * songProfile.phraseBarCount;
-		var tonalPalette = TONAL_PALETTES[ songProfile.tonalPaletteName ] || TONAL_PALETTES.major;
+		var phraseLength = barLength * songPlan.phraseBarCount;
+		var tonalPalette = TONAL_PALETTES[ songPlan.tonalPaletteName ] || TONAL_PALETTES.major;
 		// The selected palette supplies both the notes melodies may use and the
 		// chord qualities the progression is built from.
 		var scale = buildScaleMidi( key, tonalPalette.scaleIntervals, 36, 87 );
@@ -1011,9 +990,9 @@
 			// We work out where we are in the larger form first, then derive the
 			// local harmony from that section and phrase position.
 			var phraseIndex = Math.floor( i / phraseLength );
-			var sectionName = getSectionName( songProfile, phraseIndex );
-			var activeProgression = getSectionProgression( progression, songProfile, sectionName );
-			var activeChordLength = sectionName === "B" ? altChordLength : chordLength;
+			var sectionName = getSectionName( songPlan, phraseIndex );
+			var activeProgression = getSectionProgression( progression, sectionName );
+			var activeChordLength = chordLength;
 			var sectionStepIndex = i % phraseLength;
 			var sequenceIndex = Math.floor( sectionStepIndex / activeChordLength ) % activeProgression.length;
 			var roman = activeProgression[ sequenceIndex ];
@@ -1025,7 +1004,7 @@
 			steps.push( {
 				index: i,
 				key: key,
-				tonalPaletteName: songProfile.tonalPaletteName,
+				tonalPaletteName: songPlan.tonalPaletteName,
 				scale: scale,
 				roman: roman,
 				sectionName: sectionName,
@@ -1044,10 +1023,9 @@
 			key: key,
 			scale: scale,
 			chordLength: chordLength,
-			altChordLength: altChordLength,
 			barLength: barLength,
 			phraseLength: phraseLength,
-			songProfile: songProfile,
+			songPlan: songPlan,
 			progression: chordSequence,
 			steps: steps
 		};
@@ -1103,46 +1081,28 @@
 
 		var notes = [ b8.Random.pick( instrumentOptions ), "|" ];
 		var pattern = getPartPattern( "bass", noteCount, progressionContext, style );
-		var previousMidi = null;
 
 		for ( var i = 0; i < noteCount; i++ ) {
 			var step = progressionContext.steps[ i ];
 
-			if ( !pattern[ i ] || !shouldPlayRoleAtStep( "bass", step, progressionContext.songProfile ) ) {
+			if ( !pattern[ i ] || !isRoleActiveInSection( "bass", step.sectionName, progressionContext.songPlan ) ) {
 				notes.push( " " );
 				continue;
 			}
 
 			var rootMidi = normalizeMidiToOctave( step.chordMidi[ 0 ], 2 );
 			var fifthMidi = normalizeMidiToOctave( step.chordMidi[ 2 ] || step.chordMidi[ 0 ], 2 );
-			var candidates = [ rootMidi ];
+			var selectedMidi = step.stepStrength > 0 ? fifthMidi : rootMidi;
 
-			// Bass mostly states the root, but weaker beats can lean on the fifth
-			// so the line feels like accompaniment instead of a metronome.
-			if ( step.stepStrength > 0 ) {
-				candidates.push( fifthMidi );
-			}
-
-			// Near the end of a chord we also allow a short approach move toward
-			// the next root, which gives the bass a small sense of direction.
+			// A chord change is announced by its root. Just before one, the bass
+			// walks one scale step toward the next root instead of guessing a note.
 			if ( step.chordEnd && i < noteCount - 1 ) {
 				var nextRoot = normalizeMidiToOctave(
 					progressionContext.steps[ i + 1 ].chordMidi[ 0 ],
 					2
 				);
-				candidates.push( moveOneStepToward( rootMidi, nextRoot, progressionContext.scale ) );
+				selectedMidi = moveOneStepToward( rootMidi, nextRoot, progressionContext.scale );
 			}
-
-			var selectedMidi = chooseCandidateMidi(
-				uniqueNumbers( candidates ),
-				previousMidi,
-				{
-					prefer: rootMidi,
-					maxLeap: 7
-				}
-			);
-
-			previousMidi = selectedMidi;
 			notes.push( noteToP1( midiToNote( selectedMidi ) ) );
 		}
 
@@ -1168,71 +1128,35 @@
 	function generateMelodyNote( role, noteCount, progressionContext, style ) {
 
 		var notes = [ b8.Random.pick( instrumentOptions ), "|" ];
-		var songProfile = progressionContext.songProfile;
 		var pattern = getPartPattern( role, noteCount, progressionContext, style );
 		var phraseLength = progressionContext.phraseLength;
-		var targetOctave = getRoleTargetOctave( role, songProfile );
+		var targetOctave = getRoleTargetOctave( role );
 		var previousMidi = null;
-		var previousInterval = null;
-		var motifMemory = {};
 
 		for ( var i = 0; i < noteCount; i++ ) {
 			var step = progressionContext.steps[ i ];
 
-			if ( !pattern[ i ] || !shouldPlayRoleAtStep( role, step, songProfile ) ) {
+			if ( !pattern[ i ] || !isRoleActiveInSection( role, step.sectionName, progressionContext.songPlan ) ) {
 				notes.push( " " );
 				continue;
 			}
 
-			var phraseStep = i % phraseLength;
-			var motifKey = step.sectionName + ":" + String( phraseStep ) + ":" + String( step.stepStrength );
-			// The candidate pool mixes harmony-safe notes, decorative motion, and
-			// contour guidance. The picker then decides which one sounds best here.
-			var candidates = gatherMelodyCandidates(
+			var contourTarget = getContourTargetMidi(
 				step,
 				progressionContext.scale,
 				targetOctave,
-				previousMidi,
-				previousInterval,
-				songProfile
-			);
-			var preferredMidi = getContourPreferredMidi(
-				step,
-				progressionContext.scale,
-				targetOctave,
-				songProfile,
-				phraseStep,
+				progressionContext.songPlan,
+				i % phraseLength,
 				phraseLength
 			);
-
-			if ( step.barStart || step.phraseEnd ) {
-				// Phrase edges should feel grounded, so we bias hard toward a
-				// cadential chord tone instead of a freer passing note.
-				preferredMidi = getCadenceMidi( step, targetOctave, songProfile );
-				candidates.push( preferredMidi );
-			} else if ( motifMemory[ motifKey ] && b8.Random.chance( songProfile.motifReuseChance ) ) {
-				// Reusing an earlier phrase slot keeps the tune singable even when
-				// the surrounding decoration changes.
-				preferredMidi = motifMemory[ motifKey ];
-				candidates.push( preferredMidi );
-			}
-
-			var selectedMidi = chooseCandidateMidi(
-				uniqueNumbers( candidates ),
+			var selectedMidi = getMelodyStepMidi(
+				step,
 				previousMidi,
-				{
-					prefer: preferredMidi,
-					maxLeap: step.stepStrength <= 1 ? 7 : 5,
-					preferMotion: !step.barStart && !step.phraseEnd,
-					avoidRepeat: step.stepStrength >= 2,
-					explorationChance: step.stepStrength >= 2
-						? songProfile.melodicFreedom
-						: Math.max( 5, songProfile.melodicFreedom - 10 )
-				}
+				contourTarget,
+				progressionContext.scale,
+				targetOctave,
+				progressionContext.songPlan
 			);
-
-			motifMemory[ motifKey ] = selectedMidi;
-			previousInterval = previousMidi === null ? null : selectedMidi - previousMidi;
 			previousMidi = selectedMidi;
 			notes.push( noteToP1( midiToNote( selectedMidi ) ) );
 		}
@@ -1256,66 +1180,35 @@
 	function generateChordNote( role, noteCount, progressionContext, style ) {
 
 		var notes = [ b8.Random.pick( instrumentOptions ), "|" ];
-		var songProfile = progressionContext.songProfile;
-		var harmonicRole = resolveHarmonicRole( role, style );
+		var harmonicRole = role;
 		var isArpeggio = harmonicRole === "arp";
 		var pattern = getPartPattern( harmonicRole, noteCount, progressionContext, style );
-		var phraseLength = progressionContext.phraseLength;
-		var previousMidi = null;
-		var arpeggioShape = songProfile.arpeggioShape;
 
 		for ( var i = 0; i < noteCount; i++ ) {
 			var step = progressionContext.steps[ i ];
 
-			if ( !pattern[ i ] || !shouldPlayRoleAtStep( harmonicRole, step, songProfile ) ) {
+			if ( !pattern[ i ] || !isRoleActiveInSection( harmonicRole, step.sectionName, progressionContext.songPlan ) ) {
 				notes.push( " " );
 				continue;
 			}
 
-			var targetOctave = getRoleTargetOctave( harmonicRole, songProfile );
-			var candidates = [];
-			var selectionOptions = null;
+			var targetOctave = getRoleTargetOctave( harmonicRole );
+			var chordIndex = 0;
 
 			if ( isArpeggio ) {
-				// Arpeggios follow a seed-shaped pattern so they feel deliberate and
-				// related across styles using the same song blueprint.
-				var chordIndex = arpeggioShape[ i % phraseLength % arpeggioShape.length ];
-				candidates.push(
-					normalizeMidiToOctave(
-						step.chordMidi[ chordIndex % step.chordMidi.length ],
-						targetOctave
-					)
-				);
-				selectionOptions = {
-					prefer: candidates[ 0 ],
-					maxLeap: 8
-				};
+				// This fixed shape makes arpeggios recognisable without a second set
+				// of seed settings: root, third, fifth, then a gentle way back down.
+				chordIndex = [ 0, 1, 2, 1, 3, 2, 1, 2 ][ i % 8 ];
 			} else {
-				// Sustained support parts choose from the current chord plus a few
-				// nearby colour notes so slow styles do not get stuck on one pitch.
-				candidates = getChordSupportCandidates(
-					step,
-					progressionContext.scale,
-					targetOctave,
-					previousMidi,
-					songProfile.supportFreedom
-				);
-				selectionOptions = {
-					prefer: getChordSupportPreferredMidi( step, targetOctave ),
-					maxLeap: 5,
-					preferMotion: !step.chordStart,
-					avoidRepeat: !step.chordStart,
-					explorationChance: songProfile.supportFreedom
-				};
+				// Held accompaniment alternates through chord tones between chord
+				// changes, which prevents slow songs from sitting on one note.
+				chordIndex = step.chordStart ? 0 : step.stepStrength <= 1 ? 1 : 2;
 			}
 
-			var selectedMidi = chooseCandidateMidi(
-				uniqueNumbers( candidates ),
-				previousMidi,
-				selectionOptions
+			var selectedMidi = normalizeMidiToOctave(
+				step.chordMidi[ chordIndex % step.chordMidi.length ],
+				targetOctave
 			);
-
-			previousMidi = selectedMidi;
 			notes.push( noteToP1( midiToNote( selectedMidi ) ) );
 		}
 
@@ -1342,10 +1235,8 @@
 
 		for ( var i = 0; i < noteCount; i++ ) {
 			var step = progressionContext.steps[ i ];
-			var shouldPlay = pattern[ i ] && shouldPlayRoleAtStep(
-				"drums",
-				step,
-				progressionContext.songProfile
+			var shouldPlay = pattern[ i ] && isRoleActiveInSection(
+				"drums", step.sectionName, progressionContext.songPlan
 			);
 			notes.push( shouldPlay ? drumHit : " " );
 		}
@@ -1358,167 +1249,22 @@
 
 
 	/**
-	 * Decides whether a role should play at this point in the current section.
+	 * Decides whether a role belongs in the current section.
 	 *
-	 * The rhythm pattern decides where a part may play. This arrangement layer
-	 * decides how present that part is in each section, creating introductions,
-	 * builds, breakdowns, and fuller climactic moments from the same material.
-	 *
-	 * @param {string} role - Musical role being considered.
-	 * @param {Object} step - Current harmonic and phrase position.
-	 * @param {Object} songProfile - Seed-derived blueprint for the song.
-	 * @returns {boolean} Whether this role should play at the current step.
-	 */
-	function shouldPlayRoleAtStep( role, step, songProfile ) {
-
-		var activityChance = getRoleActivityChance( role, step.sectionName, songProfile );
-
-		// Preserve the harmonic floor of sparse sections. A bass downbeat and a
-		// fresh chord attack make the arrangement feel intentional, not empty.
-		if ( role === "bass" && step.stepStrength === 0 ) {
-			return true;
-		}
-
-		if ( role === "chords" && step.chordStart && activityChance >= 0.55 ) {
-			return true;
-		}
-
-		// A non-drum phrase ending is a useful place to let an active role finish
-		// its thought, even if the rest of the phrase has been thinned out.
-		if ( role !== "drums" && step.phraseEnd && activityChance >= 0.4 ) {
-			return true;
-		}
-
-		return b8.Random.chance( activityChance * 100 );
-
-	}
-
-
-	/**
-	 * Calculates a role's likelihood of playing in a named section.
+	 * Rhythm patterns decide individual hits; this list decides which instruments
+	 * are present at all. Reading the chosen arrangement tells us the song's
+	 * build immediately, without translating probability ranges.
 	 *
 	 * @param {string} role - Musical role being considered.
-	 * @param {string} sectionName - Current section name such as A, B, or C.
-	 * @param {Object} songProfile - Seed-derived blueprint for the song.
-	 * @returns {number} Activity chance from 0 to 1.
+	 * @param {string} sectionName - Current section name.
+	 * @param {Object} songPlan - Seed-derived musical plan.
+	 * @returns {boolean} Whether the role belongs in this section.
 	 */
-	function getRoleActivityChance( role, sectionName, songProfile ) {
+	function isRoleActiveInSection( role, sectionName, songPlan ) {
 
-		var intensityPlan = songProfile.arrangement.sections;
-		var intensity = typeof intensityPlan[ sectionName ] === "number"
-			? intensityPlan[ sectionName ]
-			: intensityPlan.A;
-		var range = getRoleActivityRange( role );
+		var roles = songPlan.arrangement.roles[ sectionName ] || songPlan.arrangement.roles.A;
 
-		return range.min + ( range.max - range.min ) * intensity;
-
-	}
-
-
-	/**
-	 * Returns the quietest and fullest activity levels for a role.
-	 *
-	 * Keeping these ranges beside the calculation makes the arrangement rule
-	 * easier to understand than a second configuration table at the top of the
-	 * file. Bass and chord support stay dependable; decorative roles vary most.
-	 *
-	 * @param {string} role - Musical role being considered.
-	 * @returns {{min: number, max: number}} Activity range from 0 to 1.
-	 */
-	function getRoleActivityRange( role ) {
-
-		switch ( role ) {
-			case "bass":
-				return { min: 0.75, max: 1 };
-
-			case "chords":
-				return { min: 0.55, max: 1 };
-
-			case "counter":
-				return { min: 0.05, max: 0.85 };
-
-			case "arp":
-			case "drums":
-				return { min: 0.1, max: 1 };
-
-			case "melody":
-			default:
-				return { min: 0.25, max: 1 };
-		}
-
-	}
-
-
-	/**
-	 * Collects accompaniment chord-tone candidates for non-arpeggiated support.
-	 *
-	 * Slow support parts such as the menu style sound better when they can move
-	 * around the current chord instead of sitting on one repeated pitch.
-	 *
-	 * @param {Object} step - Current progression step.
-	 * @param {Array<number>} scale - MIDI notes in the key.
-	 * @param {number} targetOctave - Preferred accompaniment octave.
-	 * @param {number|null} previousMidi - Previously selected accompaniment note.
-	 * @param {number} freedom - Chance of adding extra colour-note options.
-	 * @returns {Array<number>} Candidate accompaniment notes.
-	 */
-	function getChordSupportCandidates( step, scale, targetOctave, previousMidi, freedom ) {
-
-		var candidates = step.chordMidi.slice( 0, 4 ).map(
-			function( midi ) {
-				return normalizeMidiToOctave( midi, targetOctave );
-			}
-		);
-
-		if ( step.chordStart ) {
-			candidates.push( normalizeMidiToOctave( step.chordMidi[ 0 ], targetOctave ) );
-		}
-
-		// When we are staying on the same harmony, allow a nearby chord neighbour
-		// so slow accompaniment parts keep breathing instead of freezing in place.
-		if ( previousMidi !== null ) {
-			candidates = candidates.concat(
-				candidates.filter(
-					function( midi ) {
-						return Math.abs( midi - previousMidi ) <= 4;
-					}
-				)
-			);
-
-			if ( b8.Random.chance( freedom ) ) {
-				candidates = candidates.concat(
-					getNearbyScaleCandidates( scale, previousMidi, 1, 2 )
-				);
-			}
-		}
-
-		return uniqueNumbers( candidates );
-
-	}
-
-
-	/**
-	 * Returns the preferred chord tone for non-arpeggiated accompaniment.
-	 *
-	 * Strong beats favour the root. Other beats lean toward the third or fifth so
-	 * support parts vary their colour while staying harmonically stable.
-	 *
-	 * @param {Object} step - Current progression step.
-	 * @param {number} targetOctave - Preferred accompaniment octave.
-	 * @returns {number} Preferred accompaniment note.
-	 */
-	function getChordSupportPreferredMidi( step, targetOctave ) {
-
-		var preferredIndex = 0;
-
-		if ( !step.chordStart ) {
-			preferredIndex = step.stepStrength <= 1 ? 1 : 2;
-		}
-
-		return normalizeMidiToOctave(
-			step.chordMidi[ preferredIndex ] || step.chordMidi[ 0 ],
-			targetOctave
-		);
+		return roles.indexOf( role ) !== -1;
 
 	}
 
@@ -1529,11 +1275,11 @@
 	 * @param {string} role - The part role to generate a pattern for.
 	 * @param {number} noteCount - Number of note positions to fill.
 	 * @param {Object} style - Style information that can influence density.
-	 * @param {Object} songProfile - Seed-derived musical blueprint for the song.
+	 * @param {Object} songPlan - Seed-derived musical plan for the song.
 	 * @param {number} phraseLength - Number of note positions in one phrase.
 	 * @returns {Array<boolean>} The generated rhythmic pattern.
 	 */
-	function createRolePattern( role, noteCount, style, songProfile, phraseLength ) {
+	function createRolePattern( role, noteCount, style, songPlan, phraseLength ) {
 
 		var templates = getRoleTemplates( role, style );
 		var barLength = getBarLength();
@@ -1541,17 +1287,17 @@
 
 		for ( var start = 0; start < noteCount; start += phraseLength ) {
 			var phraseIndex = Math.floor( start / phraseLength );
-			var sectionName = getSectionName( songProfile, phraseIndex );
+			var sectionName = getSectionName( songPlan, phraseIndex );
 			var phrasePattern = [];
 			// The first bar states the groove clearly, then later bars mutate it so
 			// the phrase feels related rather than freshly random.
-			var baseTemplate = pickSeedTemplate( templates, role, songProfile, sectionName );
+			var baseTemplate = pickSectionTemplate( templates, sectionName );
 			var barCount = Math.max( 1, Math.ceil( phraseLength / barLength ) );
 
 			for ( var barIndex = 0; barIndex < barCount; barIndex++ ) {
 				var barPattern = barIndex === 0
 					? baseTemplate.slice()
-					: mutateBarPattern( phrasePattern.slice( -barLength ), role, style, songProfile, sectionName );
+					: mutateBarPattern( phrasePattern.slice( -barLength ), role, style, sectionName );
 				phrasePattern = phrasePattern.concat( barPattern );
 			}
 
@@ -1590,27 +1336,9 @@
 			role,
 			noteCount,
 			style,
-			progressionContext.songProfile,
+			progressionContext.songPlan,
 			progressionContext.phraseLength
 		);
-
-	}
-
-
-	/**
-	 * Resolves whether a harmonic role should behave as chords or arpeggio.
-	 *
-	 * @param {string} role - Requested role.
-	 * @param {Object} style - Style information that can influence arpeggio use.
-	 * @returns {string} Either "arp" or "chords".
-	 */
-	function resolveHarmonicRole( role, style ) {
-
-		if ( role === "arp" ) {
-			return "arp";
-		}
-
-		return b8.Random.chance( style.arpChance || 30 ) ? "arp" : "chords";
 
 	}
 
@@ -1708,22 +1436,12 @@
 
 
 	/**
-	 * Returns the preferred octave for a musical role and song profile.
-	 *
-	 * Seed-based register planning helps songs differ more clearly across seeds
-	 * while keeping related styles in recognisably similar ranges.
+	 * Returns the preferred octave for a musical role.
 	 *
 	 * @param {string} role - The role being generated.
-	 * @param {Object} songProfile - Seed-derived musical blueprint for the song.
 	 * @returns {number} Preferred octave number.
 	 */
-	function getRoleTargetOctave( role, songProfile ) {
-
-		var registerOffset = {
-			low: -1,
-			mid: 0,
-			high: 1
-		}[ songProfile.registerShape ] || 0;
+	function getRoleTargetOctave( role ) {
 		var defaults = {
 			bass: 2,
 			drums: 4,
@@ -1732,13 +1450,7 @@
 			counter: 4,
 			melody: 5
 		};
-		var baseOctave = defaults[ role ] || 5;
-
-		if ( role === "bass" || role === "drums" ) {
-			registerOffset = 0;
-		}
-
-		return b8.Utilities.clamp( baseOctave + registerOffset, 2, 6 );
+		return defaults[ role ] || 5;
 
 	}
 
@@ -1749,11 +1461,10 @@
 	 * @param {Array<boolean>} pattern - The source pattern to vary.
 	 * @param {string} role - The part role being mutated.
 	 * @param {Object} style - Style information that can influence variation.
-	 * @param {Object} songProfile - Seed-derived musical blueprint for the song.
 	 * @param {string} sectionName - Current section name such as A or B.
 	 * @returns {Array<boolean>} The gently varied pattern.
 	 */
-	function mutateBarPattern( pattern, role, style, songProfile, sectionName ) {
+	function mutateBarPattern( pattern, role, style, sectionName ) {
 
 		var result = pattern.slice();
 		var candidateIndexes = role === "drums"
@@ -1776,10 +1487,7 @@
 		}
 
 		for ( var i = 0; i < changeCount; i++ ) {
-			var familyOffset = songProfile.rhythmFamily[ role ] || 0;
-			// The family offset nudges each role toward a repeatable mutation style
-			// for the current seed instead of fully independent random flips.
-			var index = candidateIndexes[ ( familyOffset + i + b8.Random.int( 0, candidateIndexes.length - 1 ) ) % candidateIndexes.length ];
+			var index = candidateIndexes[ b8.Random.int( 0, candidateIndexes.length - 1 ) ];
 			result[ index ] = !result[ index ];
 		}
 
@@ -1791,21 +1499,15 @@
 
 
 	/**
-	 * Picks a base rhythm template using the seed-derived rhythm family.
-	 *
-	 * This keeps songs with the same seed in the same rhythmic neighbourhood,
-	 * while still allowing section B to branch to a related family member.
+	 * Picks a base rhythm template, with related sections using nearby templates.
 	 *
 	 * @param {Array<Array<boolean>>} templates - Templates available for the role.
-	 * @param {string} role - The role being generated.
-	 * @param {Object} songProfile - Seed-derived musical blueprint for the song.
 	 * @param {string} sectionName - Current section name.
 	 * @returns {Array<boolean>} The selected bar template.
 	 */
-	function pickSeedTemplate( templates, role, songProfile, sectionName ) {
+	function pickSectionTemplate( templates, sectionName ) {
 
-		var familyIndex = songProfile.rhythmFamily[ role ] || 0;
-		var templateIndex = familyIndex % templates.length;
+		var templateIndex = b8.Random.int( 0, templates.length - 1 );
 
 		if ( sectionName === "B" ) {
 			templateIndex = ( templateIndex + 1 ) % templates.length;
@@ -1819,15 +1521,15 @@
 
 
 	/**
-	 * Gets the section name for a phrase index using the song profile.
+	 * Gets the section name for a phrase index using the song plan.
 	 *
-	 * @param {Object} songProfile - Seed-derived musical blueprint for the song.
+	 * @param {Object} songPlan - Seed-derived musical plan for the song.
 	 * @param {number} phraseIndex - Phrase index in the song.
 	 * @returns {string} The section name.
 	 */
-	function getSectionName( songProfile, phraseIndex ) {
+	function getSectionName( songPlan, phraseIndex ) {
 
-		return songProfile.sectionForm[ phraseIndex % songProfile.sectionForm.length ];
+		return songPlan.sectionForm[ phraseIndex % songPlan.sectionForm.length ];
 
 	}
 
@@ -1835,26 +1537,24 @@
 	/**
 	 * Returns the progression to use for the current section.
 	 *
-	 * Section B rotates the progression so different seeds can have stronger
-	 * contrast between sections without losing the harmonic family.
+	 * Each named section has one understandable harmonic variation.
 	 *
 	 * @param {Array<string>} progression - Base progression.
-	 * @param {Object} songProfile - Seed-derived musical blueprint for the song.
 	 * @param {string} sectionName - Current section name.
 	 * @returns {Array<string>} Progression for the current section.
 	 */
-	function getSectionProgression( progression, songProfile, sectionName ) {
+	function getSectionProgression( progression, sectionName ) {
 
 		if ( sectionName === "B" ) {
 			// Section B keeps the same harmonic family but starts from a different
 			// point, which usually feels like motion without sounding unrelated.
-			return rotateArray( progression, songProfile.progressionRotation );
+			return rotateArray( progression, 1 );
 		}
 
 		if ( sectionName === "C" ) {
 			// Section C is the most contrasting section: we rotate further and push
 			// the start and end toward tension so it feels like a new chapter.
-			var contrasted = rotateArray( progression, songProfile.progressionRotation + 1 );
+			var contrasted = rotateArray( progression, 2 );
 			contrasted[ 0 ] = "VIm";
 			contrasted[ contrasted.length - 1 ] = "V";
 			return contrasted;
@@ -1887,27 +1587,6 @@
 		}
 
 		return result;
-
-	}
-
-
-	/**
-	 * Adjusts a chord length by one musical step while staying in the supported set.
-	 *
-	 * @param {number} chordLength - Original chord length.
-	 * @param {number} bias - Signed shift amount.
-	 * @returns {number} Adjusted chord length.
-	 */
-	function adjustChordLength( chordLength, bias ) {
-
-		var supported = [ 2, 4, 8, 16, 32 ];
-		var index = supported.indexOf( chordLength );
-
-		if ( index === -1 ) {
-			return chordLength;
-		}
-
-		return supported[ b8.Utilities.clamp( index + bias, 0, supported.length - 1 ) ];
 
 	}
 
@@ -1977,19 +1656,6 @@
 
 
 	/**
-	 * Returns a de-duplicated copy of a numeric array.
-	 *
-	 * @param {Array<number>} values - Values to de-duplicate.
-	 * @returns {Array<number>} Unique numeric values.
-	 */
-	function uniqueNumbers( values ) {
-
-		return Array.from( new Set( values ) );
-
-	}
-
-
-	/**
 	 * Moves one step through the supplied scale toward a target MIDI note.
 	 *
 	 * @param {number} currentMidi - Current MIDI note.
@@ -2043,73 +1709,6 @@
 
 
 	/**
-	 * Collects melody candidates for the current harmonic moment.
-	 *
-	 * Strong beats favour chord tones. Weak beats can also use passing tones from
-	 * the current scale as long as they stay near the current melodic register.
-	 *
-	 * @param {Object} step - Current progression step.
-	 * @param {Array<number>} scale - MIDI notes in the key.
-	 * @param {number} targetOctave - Preferred melodic octave.
-	 * @param {number|null} previousMidi - Previously selected melody note.
-	 * @param {number|null} previousInterval - Previous melodic interval in semitones.
-	 * @param {Object} songProfile - Seed-derived musical blueprint for the song.
-	 * @returns {Array<number>} Candidate melody notes.
-	 */
-	function gatherMelodyCandidates( step, scale, targetOctave, previousMidi, previousInterval, songProfile ) {
-
-		var anchor = normalizeMidiToOctave( step.chordMidi[ 0 ], targetOctave );
-		var candidates = step.chordMidi.map(
-			function( midi ) {
-				return normalizeMidiToOctave( midi, targetOctave );
-			}
-		);
-
-		// Strong beats lean toward harmony. Weak beats are where we allow more
-		// passing colour so the melody can weave between the chord tones.
-		if ( step.stepStrength >= 2 ) {
-			candidates = candidates.concat(
-				scale.filter(
-					function( midi ) {
-						return Math.abs( midi - anchor ) <= 4;
-					}
-				)
-			);
-		}
-
-		if ( step.phraseEnd ) {
-			candidates.push( normalizeMidiToOctave( step.chordMidi[ 0 ], targetOctave ) );
-			candidates.push( normalizeMidiToOctave( step.chordMidi[ 1 ] || step.chordMidi[ 0 ], targetOctave ) );
-		}
-
-		candidates = candidates.concat(
-			getMelodicDecorationCandidates(
-				scale,
-				previousMidi,
-				previousInterval,
-				step.stepStrength
-			)
-		);
-
-		if ( previousMidi !== null && b8.Random.chance( songProfile.melodicFreedom ) ) {
-			// This is the main "pleasant surprise" path: occasionally reaching for
-			// a nearby scale tone that is good enough, even if not the safest pick.
-			candidates = candidates.concat(
-				getNearbyScaleCandidates(
-					scale,
-					previousMidi,
-					1,
-					step.stepStrength >= 2 ? 2 : 1
-				)
-			);
-		}
-
-		return uniqueNumbers( candidates );
-
-	}
-
-
-	/**
 	 * Returns the preferred melodic target for a phrase step.
 	 *
 	 * Each contour type maps the phrase onto a different high-level shape so
@@ -2118,18 +1717,18 @@
 	 * @param {Object} step - Current progression step.
 	 * @param {Array<number>} scale - MIDI notes in the key.
 	 * @param {number} targetOctave - Preferred melodic octave.
-	 * @param {Object} songProfile - Seed-derived musical blueprint for the song.
+	 * @param {Object} songPlan - Seed-derived musical plan for the song.
 	 * @param {number} phraseStep - Step index within the phrase.
 	 * @param {number} phraseLength - Total steps in the phrase.
 	 * @returns {number} Preferred MIDI note.
 	 */
-	function getContourPreferredMidi( step, scale, targetOctave, songProfile, phraseStep, phraseLength ) {
+	function getContourTargetMidi( step, scale, targetOctave, songPlan, phraseStep, phraseLength ) {
 
 		var anchorMidi = normalizeMidiToOctave( step.chordMidi[ 0 ], targetOctave );
 		var ratio = phraseLength <= 1 ? 0 : phraseStep / ( phraseLength - 1 );
 		var degreeOffset = 0;
 
-		switch ( songProfile.contourType ) {
+		switch ( songPlan.contour ) {
 			case "rise":
 				degreeOffset = Math.round( ratio * 4 );
 				break;
@@ -2162,45 +1761,55 @@
 
 
 	/**
-	 * Adds small melodic decoration candidates around the previous note.
+	 * Returns the next melody note from a short, predictable set of rules.
 	 *
-	 * This creates more motion inside a contour by offering passing tones,
-	 * neighbour tones, and gentle continuation notes on weaker beats.
+	 * Phrase endings settle on a chord tone. A new bar starts near the harmony.
+	 * Other notes take one scale step toward the phrase contour.
 	 *
+	 * @param {Object} step - Current progression step.
+	 * @param {number|null} previousMidi - Previously played melodic note.
+	 * @param {number} contourTarget - Pitch the contour is heading toward.
 	 * @param {Array<number>} scale - MIDI notes in the key.
-	 * @param {number|null} previousMidi - Previously selected melody note.
-	 * @param {number|null} previousInterval - Previous melodic interval.
-	 * @param {number} stepStrength - Strength of the current rhythmic position.
-	 * @returns {Array<number>} Decoration candidates.
+	 * @param {number} targetOctave - Preferred melodic octave.
+	 * @param {Object} songPlan - Seed-derived musical plan.
+	 * @returns {number} The selected MIDI note.
 	 */
-	function getMelodicDecorationCandidates( scale, previousMidi, previousInterval, stepStrength ) {
+	function getMelodyStepMidi( step, previousMidi, contourTarget, scale, targetOctave, songPlan ) {
 
-		if ( previousMidi === null ) {
-			return [];
+		if ( step.phraseEnd ) {
+			return getCadenceMidi( step, targetOctave, songPlan );
 		}
 
-		var candidates = [];
-
-		// Weak beats are the best place for passing notes and neighbour notes.
-		if ( stepStrength >= 2 ) {
-			candidates.push( moveByScaleDegrees( scale, previousMidi, 1 ) );
-			candidates.push( moveByScaleDegrees( scale, previousMidi, -1 ) );
+		if ( previousMidi === null || step.barStart ) {
+			return getNearestChordMidi( step, contourTarget, targetOctave );
 		}
 
-		// If we already moved, allow a small continuation or a step back.
-		if ( previousInterval !== null && previousInterval !== 0 ) {
-			var direction = previousInterval > 0 ? 1 : -1;
-			candidates.push( moveByScaleDegrees( scale, previousMidi, direction ) );
-			candidates.push( moveByScaleDegrees( scale, previousMidi, -direction ) );
+		return moveOneStepToward( previousMidi, contourTarget, scale );
+
+	}
+
+
+	/**
+	 * Finds the current chord tone nearest to a target pitch.
+	 *
+	 * @param {Object} step - Current progression step.
+	 * @param {number} targetMidi - Pitch to compare chord tones against.
+	 * @param {number} targetOctave - Preferred melodic octave.
+	 * @returns {number} Nearest chord-tone MIDI note.
+	 */
+	function getNearestChordMidi( step, targetMidi, targetOctave ) {
+
+		var nearestMidi = normalizeMidiToOctave( step.chordMidi[ 0 ], targetOctave );
+
+		for ( var i = 1; i < step.chordMidi.length; i++ ) {
+			var candidate = normalizeMidiToOctave( step.chordMidi[ i ], targetOctave );
+
+			if ( Math.abs( candidate - targetMidi ) < Math.abs( nearestMidi - targetMidi ) ) {
+				nearestMidi = candidate;
+			}
 		}
 
-		return uniqueNumbers(
-			candidates.filter(
-				function( midi ) {
-					return midi !== null;
-				}
-			)
-		);
+		return nearestMidi;
 
 	}
 
@@ -2210,16 +1819,16 @@
 	 *
 	 * @param {Object} step - Current progression step.
 	 * @param {number} targetOctave - Preferred melodic octave.
-	 * @param {Object} songProfile - Seed-derived musical blueprint for the song.
+	 * @param {Object} songPlan - Seed-derived musical plan for the song.
 	 * @returns {number} Cadential MIDI note.
 	 */
-	function getCadenceMidi( step, targetOctave, songProfile ) {
+	function getCadenceMidi( step, targetOctave, songPlan ) {
 
 		var chordIndex = 0;
 
-		if ( songProfile.cadenceTarget === "third" ) {
+		if ( songPlan.cadenceTarget === "third" ) {
 			chordIndex = 1;
-		} else if ( songProfile.cadenceTarget === "fifth" ) {
+		} else if ( songPlan.cadenceTarget === "fifth" ) {
 			chordIndex = 2;
 		}
 
