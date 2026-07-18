@@ -385,7 +385,20 @@
 		// predictable but noticeably different moods for some seeds.
 		tonalPalette: [ "major", "major", "major", "naturalMinor", "dorian", "mixolydian", "pentatonic" ],
 		registerShape: [ "low", "mid", "high" ],
-		arrangementShape: [ "build", "build", "wave", "spotlight" ],
+	arrangements: [
+		{
+			name: "build",
+			sections: { A: 0.45, A_PRIME: 0.7, B: 0.8, C: 1 }
+		},
+		{
+			name: "wave",
+			sections: { A: 0.75, A_PRIME: 0.85, B: 0.5, C: 1 }
+		},
+		{
+			name: "spotlight",
+			sections: { A: 0.55, A_PRIME: 0.75, B: 1, C: 0.9 }
+		}
+	],
 		arpeggioShape: [
 			[ 0, 1, 2, 1, 3, 2, 1, 2 ],
 			[ 0, 2, 1, 2, 0, 2, 3, 2 ],
@@ -430,39 +443,6 @@
 			normal: [ "x.x.x...", "x..xx.x.", "x.x..x.x" ],
 			dense: [ "x.xxx.x.", "xx.xx.xx", "x.x.xx.x" ]
 		}
-	};
-
-
-	/**
-	 * Section intensity plans used to shape a song's arrangement.
-	 *
-	 * Values run from 0 to 1. Higher intensity makes optional roles play more
-	 * often, so sections can grow and contract without changing the public API.
-	 *
-	 * @type {Object<string, Object<string, number>>}
-	 */
-	const ARRANGEMENT_INTENSITIES = {
-		build: { A: 0.45, A_PRIME: 0.7, B: 0.8, C: 1 },
-		wave: { A: 0.75, A_PRIME: 0.85, B: 0.5, C: 1 },
-		spotlight: { A: 0.55, A_PRIME: 0.75, B: 1, C: 0.9 }
-	};
-
-
-	/**
-	 * Per-role activity ranges for the arrangement layer.
-	 *
-	 * Bass and chord support remain comparatively dependable, while melody,
-	 * counterpoint, arpeggios, and drums provide most of the sectional contrast.
-	 *
-	 * @type {Object<string, {min: number, max: number}>}
-	 */
-	const ROLE_ACTIVITY_RANGES = {
-		bass: { min: 0.75, max: 1 },
-		chords: { min: 0.55, max: 1 },
-		arp: { min: 0.1, max: 1 },
-		melody: { min: 0.25, max: 1 },
-		counter: { min: 0.05, max: 0.85 },
-		drums: { min: 0.1, max: 1 }
 	};
 
 
@@ -899,7 +879,7 @@
 		var cadenceTarget = b8.Random.pick( SONG_PROFILE_OPTIONS.cadenceTarget );
 		var sectionForm = pickSectionForm( totalBars, phraseBarCount );
 		var tonalPaletteName = b8.Random.pick( SONG_PROFILE_OPTIONS.tonalPalette );
-		var arrangementShape = b8.Random.pick( SONG_PROFILE_OPTIONS.arrangementShape );
+	var arrangement = b8.Random.pick( SONG_PROFILE_OPTIONS.arrangements );
 		var phraseCount = Math.max( 1, Math.ceil( totalBars / phraseBarCount ) );
 
 		return {
@@ -909,7 +889,7 @@
 			contourType: contourType,
 			cadenceTarget: cadenceTarget,
 			tonalPaletteName: tonalPaletteName,
-			arrangementShape: arrangementShape,
+		arrangement: arrangement,
 			motifReuseChance: b8.Random.pick( SONG_PROFILE_OPTIONS.motifReuseChance ),
 			progressionRotation: b8.Random.pick( SONG_PROFILE_OPTIONS.progressionRotation ),
 			altChordLengthBias: b8.Random.pick( SONG_PROFILE_OPTIONS.altChordLengthBias ),
@@ -1424,14 +1404,47 @@
 	 */
 	function getRoleActivityChance( role, sectionName, songProfile ) {
 
-		var intensityPlan = ARRANGEMENT_INTENSITIES[ songProfile.arrangementShape ]
-			|| ARRANGEMENT_INTENSITIES.build;
+		var intensityPlan = songProfile.arrangement.sections;
 		var intensity = typeof intensityPlan[ sectionName ] === "number"
 			? intensityPlan[ sectionName ]
 			: intensityPlan.A;
-		var range = ROLE_ACTIVITY_RANGES[ role ] || ROLE_ACTIVITY_RANGES.melody;
+		var range = getRoleActivityRange( role );
 
 		return range.min + ( range.max - range.min ) * intensity;
+
+	}
+
+
+	/**
+	 * Returns the quietest and fullest activity levels for a role.
+	 *
+	 * Keeping these ranges beside the calculation makes the arrangement rule
+	 * easier to understand than a second configuration table at the top of the
+	 * file. Bass and chord support stay dependable; decorative roles vary most.
+	 *
+	 * @param {string} role - Musical role being considered.
+	 * @returns {{min: number, max: number}} Activity range from 0 to 1.
+	 */
+	function getRoleActivityRange( role ) {
+
+		switch ( role ) {
+			case "bass":
+				return { min: 0.75, max: 1 };
+
+			case "chords":
+				return { min: 0.55, max: 1 };
+
+			case "counter":
+				return { min: 0.05, max: 0.85 };
+
+			case "arp":
+			case "drums":
+				return { min: 0.1, max: 1 };
+
+			case "melody":
+			default:
+				return { min: 0.25, max: 1 };
+		}
 
 	}
 
@@ -1644,157 +1657,52 @@
 	 */
 	function getRoleTemplates( role, style ) {
 
-		if ( role === "bass" ) {
-			return parseRhythmTemplates(
-				selectBassTemplatePatterns( style )
-			);
-		}
-
-		if ( role === "drums" ) {
-			return parseRhythmTemplates(
-				selectDrumTemplatePatterns( style )
-			);
-		}
-
-		if ( role === "arp" ) {
-			return parseRhythmTemplates(
-				selectArpTemplatePatterns( style )
-			);
-		}
-
-		if ( role === "chords" ) {
-			return parseRhythmTemplates(
-				selectChordTemplatePatterns( style )
-			);
-		}
-
-		if ( role === "counter" ) {
-			return parseRhythmTemplates(
-				selectCounterTemplatePatterns( style )
-			);
-		}
+		var templateRole = RHYTHM_TEMPLATE_PATTERNS[ role ] ? role : "melody";
+		var templateFamily = getRhythmTemplateFamily( templateRole, style );
 
 		return parseRhythmTemplates(
-			selectMelodyTemplatePatterns( style )
+			RHYTHM_TEMPLATE_PATTERNS[ templateRole ][ templateFamily ]
 		);
 
 	}
 
 
 	/**
-	 * Selects bass template patterns based on bass speed.
+	 * Selects the named rhythm-template family for a role.
 	 *
-	 * @param {Object} style - Style information that influences bass density.
-	 * @returns {Array<string>} Compact rhythm patterns.
-	 */
-	function selectBassTemplatePatterns( style ) {
-
-		var fastestBass = Math.min.apply( null, style.bassInterval || [ 4, 8 ] );
-
-		if ( fastestBass <= 2 ) {
-			return RHYTHM_TEMPLATE_PATTERNS.bass.fast;
-		}
-
-		if ( fastestBass <= 4 ) {
-			return RHYTHM_TEMPLATE_PATTERNS.bass.medium;
-		}
-
-		return RHYTHM_TEMPLATE_PATTERNS.bass.slow;
-
-	}
-
-
-	/**
-	 * Selects drum template patterns based on drum density.
+	 * This is the single bridge from broad style settings to the compact rhythm
+	 * data above. Keeping the decision here prevents each role from needing a
+	 * separate near-identical selector function.
 	 *
-	 * @param {Object} style - Style information that influences drum density.
-	 * @returns {Array<string>} Compact rhythm patterns.
+	 * @param {string} role - The role whose rhythm templates are needed.
+	 * @param {Object} style - Style information that controls rhythm density.
+	 * @returns {string} Key of the template family to use.
 	 */
-	function selectDrumTemplatePatterns( style ) {
+	function getRhythmTemplateFamily( role, style ) {
 
-		var density = b8.Random.pick( style.drumDensity || [ 1, 2, 3 ] );
+		switch ( role ) {
+			case "bass":
+				var fastestBass = Math.min.apply( null, style.bassInterval || [ 4, 8 ] );
+				return fastestBass <= 2 ? "fast" : fastestBass <= 4 ? "medium" : "slow";
 
-		if ( density >= 4 ) {
-			return RHYTHM_TEMPLATE_PATTERNS.drums.heavy;
+			case "drums":
+				var drumDensity = b8.Random.pick( style.drumDensity || [ 1, 2, 3 ] );
+				return drumDensity >= 4 ? "heavy" : drumDensity >= 2 ? "medium" : "light";
+
+			case "arp":
+				return ( style.arpChance || 0 ) >= 80 ? "busy" : "normal";
+
+			case "chords":
+				return ( style.chordDensity || 0 ) >= 6 ? "dense" : "light";
+
+			case "counter":
+				return ( style.melodyDensity || 0 ) >= 6 ? "dense" : "light";
+
+			case "melody":
+			default:
+				if ( ( style.melodyDensity || 0 ) <= 2 ) return "sparse";
+				return ( style.melodyDensity || 0 ) >= 7 ? "dense" : "normal";
 		}
-
-		if ( density >= 2 ) {
-			return RHYTHM_TEMPLATE_PATTERNS.drums.medium;
-		}
-
-		return RHYTHM_TEMPLATE_PATTERNS.drums.light;
-
-	}
-
-
-	/**
-	 * Selects arpeggio template patterns based on arpeggio intensity.
-	 *
-	 * @param {Object} style - Style information that influences arpeggio use.
-	 * @returns {Array<string>} Compact rhythm patterns.
-	 */
-	function selectArpTemplatePatterns( style ) {
-
-		if ( ( style.arpChance || 0 ) >= 80 ) {
-			return RHYTHM_TEMPLATE_PATTERNS.arp.busy;
-		}
-
-		return RHYTHM_TEMPLATE_PATTERNS.arp.normal;
-
-	}
-
-
-	/**
-	 * Selects chord template patterns based on chord density.
-	 *
-	 * @param {Object} style - Style information that influences chord density.
-	 * @returns {Array<string>} Compact rhythm patterns.
-	 */
-	function selectChordTemplatePatterns( style ) {
-
-		if ( ( style.chordDensity || 0 ) >= 6 ) {
-			return RHYTHM_TEMPLATE_PATTERNS.chords.dense;
-		}
-
-		return RHYTHM_TEMPLATE_PATTERNS.chords.light;
-
-	}
-
-
-	/**
-	 * Selects counter-melody template patterns based on melody density.
-	 *
-	 * @param {Object} style - Style information that influences melody density.
-	 * @returns {Array<string>} Compact rhythm patterns.
-	 */
-	function selectCounterTemplatePatterns( style ) {
-
-		if ( ( style.melodyDensity || 0 ) >= 6 ) {
-			return RHYTHM_TEMPLATE_PATTERNS.counter.dense;
-		}
-
-		return RHYTHM_TEMPLATE_PATTERNS.counter.light;
-
-	}
-
-
-	/**
-	 * Selects melody template patterns based on melody density.
-	 *
-	 * @param {Object} style - Style information that influences melody density.
-	 * @returns {Array<string>} Compact rhythm patterns.
-	 */
-	function selectMelodyTemplatePatterns( style ) {
-
-		if ( ( style.melodyDensity || 0 ) <= 2 ) {
-			return RHYTHM_TEMPLATE_PATTERNS.melody.sparse;
-		}
-
-		if ( ( style.melodyDensity || 0 ) >= 7 ) {
-			return RHYTHM_TEMPLATE_PATTERNS.melody.dense;
-		}
-
-		return RHYTHM_TEMPLATE_PATTERNS.melody.normal;
 
 	}
 
