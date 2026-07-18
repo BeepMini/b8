@@ -268,10 +268,67 @@
 
 
 	/**
-	 * Mapping of key shifts for transposition.
+	 * Tonal palettes used to give songs different harmonic colours.
 	 *
-	 * @type {Object<string, number>}
+	 * Each palette provides scale intervals relative to its tonic. Most palettes
+	 * also provide their own diatonic chord map. The pentatonic palette keeps the
+	 * familiar major harmony while restricting melodic movement to five notes.
+	 *
+	 * @type {Object<string, {scaleIntervals: Array<number>, chordMap: Object<string, Array<string>>}>}
 	 */
+	const TONAL_PALETTES = {
+		major: {
+			scaleIntervals: [ 0, 2, 4, 5, 7, 9, 11 ],
+			chordMap: chordMap
+		},
+		naturalMinor: {
+			scaleIntervals: [ 0, 2, 3, 5, 7, 8, 10 ],
+			chordMap: {
+				I: [ "C4", "Eb4", "G4", "Bb4" ],
+				IIIm: [ "Eb4", "G4", "Bb4", "D5" ],
+				VIm: [ "Ab3", "C4", "Eb4", "G4" ],
+				IV: [ "F4", "Ab4", "C5", "Eb5" ],
+				IIm: [ "D4", "F4", "Ab4", "C5" ],
+				V: [ "G3", "Bb3", "D4", "F4" ],
+				VIIm: [ "Bb3", "D4", "F4", "Ab4" ]
+			}
+		},
+		dorian: {
+			scaleIntervals: [ 0, 2, 3, 5, 7, 9, 10 ],
+			chordMap: {
+				I: [ "C4", "Eb4", "G4", "Bb4" ],
+				IIIm: [ "Eb4", "G4", "Bb4", "D5" ],
+				VIm: [ "A3", "C4", "Eb4", "G4" ],
+				IV: [ "F4", "A4", "C5", "Eb5" ],
+				IIm: [ "D4", "F4", "A4", "C5" ],
+				V: [ "G3", "Bb3", "D4", "F4" ],
+				VIIm: [ "Bb3", "D4", "F4", "A4" ]
+			}
+		},
+		mixolydian: {
+			scaleIntervals: [ 0, 2, 4, 5, 7, 9, 10 ],
+			chordMap: {
+				I: [ "C4", "E4", "G4", "Bb4" ],
+				IIIm: [ "E4", "G4", "Bb4", "D5" ],
+				VIm: [ "A3", "C4", "E4", "G4" ],
+				IV: [ "F4", "A4", "C5", "E5" ],
+				IIm: [ "D4", "F4", "A4", "C5" ],
+				V: [ "G3", "Bb3", "D4", "F4" ],
+				VIIm: [ "Bb3", "D4", "F4", "A4" ]
+			}
+		},
+		pentatonic: {
+			scaleIntervals: [ 0, 2, 4, 7, 9 ],
+			chordMap: chordMap
+		}
+	};
+
+
+	/**
+	 * Mapping of key shifts for transposition.
+		 *
+		 * @type {Object<string, number>}
+		 */
 	const keyShift = {
 		C: 0,
 		D: 2,
@@ -324,7 +381,11 @@
 		motifReuseChance: [ 50, 60, 70, 80 ],
 		progressionRotation: [ 1, 1, 2, 3 ],
 		altChordLengthBias: [ 0, 0, 1, -1 ],
+		// Major remains the common home base, while the other palettes provide
+		// predictable but noticeably different moods for some seeds.
+		tonalPalette: [ "major", "major", "major", "naturalMinor", "dorian", "mixolydian", "pentatonic" ],
 		registerShape: [ "low", "mid", "high" ],
+		arrangementShape: [ "build", "build", "wave", "spotlight" ],
 		arpeggioShape: [
 			[ 0, 1, 2, 1, 3, 2, 1, 2 ],
 			[ 0, 2, 1, 2, 0, 2, 3, 2 ],
@@ -369,6 +430,39 @@
 			normal: [ "x.x.x...", "x..xx.x.", "x.x..x.x" ],
 			dense: [ "x.xxx.x.", "xx.xx.xx", "x.x.xx.x" ]
 		}
+	};
+
+
+	/**
+	 * Section intensity plans used to shape a song's arrangement.
+	 *
+	 * Values run from 0 to 1. Higher intensity makes optional roles play more
+	 * often, so sections can grow and contract without changing the public API.
+	 *
+	 * @type {Object<string, Object<string, number>>}
+	 */
+	const ARRANGEMENT_INTENSITIES = {
+		build: { A: 0.45, A_PRIME: 0.7, B: 0.8, C: 1 },
+		wave: { A: 0.75, A_PRIME: 0.85, B: 0.5, C: 1 },
+		spotlight: { A: 0.55, A_PRIME: 0.75, B: 1, C: 0.9 }
+	};
+
+
+	/**
+	 * Per-role activity ranges for the arrangement layer.
+	 *
+	 * Bass and chord support remain comparatively dependable, while melody,
+	 * counterpoint, arpeggios, and drums provide most of the sectional contrast.
+	 *
+	 * @type {Object<string, {min: number, max: number}>}
+	 */
+	const ROLE_ACTIVITY_RANGES = {
+		bass: { min: 0.75, max: 1 },
+		chords: { min: 0.55, max: 1 },
+		arp: { min: 0.1, max: 1 },
+		melody: { min: 0.25, max: 1 },
+		counter: { min: 0.05, max: 0.85 },
+		drums: { min: 0.1, max: 1 }
 	};
 
 
@@ -708,15 +802,19 @@
 
 
 	/**
-	 * Gets the chord notes for a given key and Roman numeral.
-	 *
-	 * @param {string} key - The musical key (e.g., "C").
-	 * @param {string} roman - The Roman numeral chord identifier (e.g., "I", "IIIm").
-	 * @returns {Array<string>} An array of chord note strings.
-	 */
-	function getChordNotes( key, roman ) {
+ * Gets the chord notes for a given key, Roman numeral, and tonal palette.
+ *
+ * @param {string} key - The musical key (e.g., "C").
+ * @param {string} roman - The Roman numeral chord identifier (e.g., "I", "IIIm").
+ * @param {Object} tonalPalette - Palette containing the chord qualities to use.
+ * @returns {Array<string>} An array of chord note strings.
+ */
+	function getChordNotes( key, roman, tonalPalette ) {
 
-		const base = chordMap[ roman ] || chordMap.I;
+		const paletteChordMap = tonalPalette && tonalPalette.chordMap
+			? tonalPalette.chordMap
+			: chordMap;
+		const base = paletteChordMap[ roman ] || paletteChordMap.I;
 		const shift = keyShift[ key ] || 0;
 
 		return base.map(
@@ -800,6 +898,8 @@
 		var contourType = b8.Random.pick( SONG_PROFILE_OPTIONS.contourType );
 		var cadenceTarget = b8.Random.pick( SONG_PROFILE_OPTIONS.cadenceTarget );
 		var sectionForm = pickSectionForm( totalBars, phraseBarCount );
+		var tonalPaletteName = b8.Random.pick( SONG_PROFILE_OPTIONS.tonalPalette );
+		var arrangementShape = b8.Random.pick( SONG_PROFILE_OPTIONS.arrangementShape );
 		var phraseCount = Math.max( 1, Math.ceil( totalBars / phraseBarCount ) );
 
 		return {
@@ -808,6 +908,8 @@
 			phraseCount: phraseCount,
 			contourType: contourType,
 			cadenceTarget: cadenceTarget,
+			tonalPaletteName: tonalPaletteName,
+			arrangementShape: arrangementShape,
 			motifReuseChance: b8.Random.pick( SONG_PROFILE_OPTIONS.motifReuseChance ),
 			progressionRotation: b8.Random.pick( SONG_PROFILE_OPTIONS.progressionRotation ),
 			altChordLengthBias: b8.Random.pick( SONG_PROFILE_OPTIONS.altChordLengthBias ),
@@ -918,7 +1020,10 @@
 		var altChordLength = adjustChordLength( chordLength, songProfile.altChordLengthBias );
 		var barLength = getBarLength();
 		var phraseLength = barLength * songProfile.phraseBarCount;
-		var scale = buildScaleMidi( key, 36, 87 );
+		var tonalPalette = TONAL_PALETTES[ songProfile.tonalPaletteName ] || TONAL_PALETTES.major;
+		// The selected palette supplies both the notes melodies may use and the
+		// chord qualities the progression is built from.
+		var scale = buildScaleMidi( key, tonalPalette.scaleIntervals, 36, 87 );
 		var chordSequence = [];
 		var steps = [];
 
@@ -932,7 +1037,7 @@
 			var sectionStepIndex = i % phraseLength;
 			var sequenceIndex = Math.floor( sectionStepIndex / activeChordLength ) % activeProgression.length;
 			var roman = activeProgression[ sequenceIndex ];
-			var chordNotes = getChordNotes( key, roman );
+			var chordNotes = getChordNotes( key, roman, tonalPalette );
 			var chordMidi = toMidiList( chordNotes );
 
 			chordSequence.push( roman );
@@ -940,6 +1045,7 @@
 			steps.push( {
 				index: i,
 				key: key,
+				tonalPaletteName: songProfile.tonalPaletteName,
 				scale: scale,
 				roman: roman,
 				sectionName: sectionName,
@@ -1022,7 +1128,7 @@
 		for ( var i = 0; i < noteCount; i++ ) {
 			var step = progressionContext.steps[ i ];
 
-			if ( !pattern[ i ] ) {
+			if ( !pattern[ i ] || !shouldPlayRoleAtStep( "bass", step, progressionContext.songProfile ) ) {
 				notes.push( " " );
 				continue;
 			}
@@ -1093,7 +1199,7 @@
 		for ( var i = 0; i < noteCount; i++ ) {
 			var step = progressionContext.steps[ i ];
 
-			if ( !pattern[ i ] ) {
+			if ( !pattern[ i ] || !shouldPlayRoleAtStep( role, step, songProfile ) ) {
 				notes.push( " " );
 				continue;
 			}
@@ -1181,7 +1287,7 @@
 		for ( var i = 0; i < noteCount; i++ ) {
 			var step = progressionContext.steps[ i ];
 
-			if ( !pattern[ i ] ) {
+			if ( !pattern[ i ] || !shouldPlayRoleAtStep( harmonicRole, step, songProfile ) ) {
 				notes.push( " " );
 				continue;
 			}
@@ -1255,12 +1361,77 @@
 		var drumHit = noteToP1( "C4" );
 
 		for ( var i = 0; i < noteCount; i++ ) {
-			notes.push( pattern[ i ] ? drumHit : " " );
+			var step = progressionContext.steps[ i ];
+			var shouldPlay = pattern[ i ] && shouldPlayRoleAtStep(
+				"drums",
+				step,
+				progressionContext.songProfile
+			);
+			notes.push( shouldPlay ? drumHit : " " );
 		}
 
 		notes.push( "|" );
 
 		return compressNotes( notes );
+
+	}
+
+
+	/**
+	 * Decides whether a role should play at this point in the current section.
+	 *
+	 * The rhythm pattern decides where a part may play. This arrangement layer
+	 * decides how present that part is in each section, creating introductions,
+	 * builds, breakdowns, and fuller climactic moments from the same material.
+	 *
+	 * @param {string} role - Musical role being considered.
+	 * @param {Object} step - Current harmonic and phrase position.
+	 * @param {Object} songProfile - Seed-derived blueprint for the song.
+	 * @returns {boolean} Whether this role should play at the current step.
+	 */
+	function shouldPlayRoleAtStep( role, step, songProfile ) {
+
+		var activityChance = getRoleActivityChance( role, step.sectionName, songProfile );
+
+		// Preserve the harmonic floor of sparse sections. A bass downbeat and a
+		// fresh chord attack make the arrangement feel intentional, not empty.
+		if ( role === "bass" && step.stepStrength === 0 ) {
+			return true;
+		}
+
+		if ( role === "chords" && step.chordStart && activityChance >= 0.55 ) {
+			return true;
+		}
+
+		// A non-drum phrase ending is a useful place to let an active role finish
+		// its thought, even if the rest of the phrase has been thinned out.
+		if ( role !== "drums" && step.phraseEnd && activityChance >= 0.4 ) {
+			return true;
+		}
+
+		return b8.Random.chance( activityChance * 100 );
+
+	}
+
+
+	/**
+	 * Calculates a role's likelihood of playing in a named section.
+	 *
+	 * @param {string} role - Musical role being considered.
+	 * @param {string} sectionName - Current section name such as A, B, or C.
+	 * @param {Object} songProfile - Seed-derived blueprint for the song.
+	 * @returns {number} Activity chance from 0 to 1.
+	 */
+	function getRoleActivityChance( role, sectionName, songProfile ) {
+
+		var intensityPlan = ARRANGEMENT_INTENSITIES[ songProfile.arrangementShape ]
+			|| ARRANGEMENT_INTENSITIES.build;
+		var intensity = typeof intensityPlan[ sectionName ] === "number"
+			? intensityPlan[ sectionName ]
+			: intensityPlan.A;
+		var range = ROLE_ACTIVITY_RANGES[ role ] || ROLE_ACTIVITY_RANGES.melody;
+
+		return range.min + ( range.max - range.min ) * intensity;
 
 	}
 
@@ -1834,18 +2005,18 @@
 
 
 	/**
-	 * Collects scale notes for a key across a MIDI range.
-	 *
-	 * @param {string} key - Musical key.
-	 * @param {number} minMidi - Minimum MIDI value.
-	 * @param {number} maxMidi - Maximum MIDI value.
-	 * @returns {Array<number>} MIDI notes that belong to the scale.
-	 */
-	function buildScaleMidi( key, minMidi, maxMidi ) {
+ * Collects tonal-palette notes for a key across a MIDI range.
+ *
+ * @param {string} key - Musical key.
+ * @param {Array<number>} scaleIntervals - Semitone offsets that define the palette.
+ * @param {number} minMidi - Minimum MIDI value.
+ * @param {number} maxMidi - Maximum MIDI value.
+ * @returns {Array<number>} MIDI notes that belong to the tonal palette.
+ */
+	function buildScaleMidi( key, scaleIntervals, minMidi, maxMidi ) {
 
 		var tonic = keyShift[ key ] || 0;
-		var majorScale = [ 0, 2, 4, 5, 7, 9, 11 ];
-		var pitchClasses = majorScale.map(
+		var pitchClasses = scaleIntervals.map(
 			function( value ) {
 				return ( value + tonic ) % 12;
 			}
