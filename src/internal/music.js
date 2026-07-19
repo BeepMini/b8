@@ -357,59 +357,63 @@
 
 
 	/**
- * Seed-plan options used to build a song blueprint.
+	 * Seed-plan options used to build a song blueprint.
 	 *
 	 * Keeping these lists in one place makes the high-level musical choices
 	 * easier to scan and tweak without digging through the generator logic.
 	 *
 	 * @type {Object<string, Array<any>>}
 	 */
-const SONG_PLAN_OPTIONS = {
-	sectionForms: [
-			[ "A", "A" ],
+	const SONG_PLAN_OPTIONS = {
+		sectionForms: [
 			[ "A", "A_PRIME" ],
 			[ "A", "B" ],
 			[ "A", "B", "A" ],
-			[ "A", "A", "B", "A" ],
+			[ "A", "B", "A_PRIME" ],
+			[ "A", "B", "C" ],
 			[ "A", "A_PRIME", "B", "A" ],
+			[ "A", "A_PRIME", "B", "C" ],
+			[ "A", "B", "A_PRIME", "C" ],
 			[ "A", "B", "A", "C" ],
-			[ "A", "B", "C", "A" ]
+			[ "A", "B", "C", "A" ],
+			[ "A", "B", "A_PRIME", "B", "C" ],
+			[ "A", "A_PRIME", "B", "A_PRIME", "C" ]
 		],
-	contours: [ "rise", "fall", "arch", "wave", "hover", "stair" ],
-	cadenceTarget: [ "root", "root", "third", "fifth" ],
-	// Major remains the common home base, while the other palettes provide
-	// predictable but noticeably different moods for some seeds.
-	palettes: [ "major", "major", "major", "naturalMinor", "dorian", "mixolydian", "pentatonic" ],
-	arrangements: [
-		{
-			name: "build",
-			roles: {
-				A: [ "bass", "chords" ],
-				A_PRIME: [ "bass", "chords", "melody" ],
-				B: [ "bass", "chords", "arp", "melody" ],
-				C: [ "bass", "chords", "arp", "melody", "counter", "drums" ]
+		contours: [ "rise", "fall", "arch", "wave", "hover", "stair" ],
+		cadenceTarget: [ "root", "root", "third", "fifth" ],
+		// Major remains the common home base, while the other palettes provide
+		// predictable but noticeably different moods for some seeds.
+		palettes: [ "major", "major", "major", "naturalMinor", "dorian", "mixolydian", "pentatonic" ],
+		arrangements: [
+			{
+				name: "build",
+				roles: {
+					A: [ "bass", "chords" ],
+					A_PRIME: [ "bass", "chords", "melody" ],
+					B: [ "bass", "chords", "arp", "melody" ],
+					C: [ "bass", "chords", "arp", "melody", "counter", "drums" ]
+				}
+			},
+			{
+				name: "wave",
+				roles: {
+					A: [ "bass", "chords", "melody" ],
+					A_PRIME: [ "bass", "chords", "arp", "melody" ],
+					B: [ "bass", "chords", "counter" ],
+					C: [ "bass", "chords", "arp", "melody", "counter", "drums" ]
+				}
+			},
+			{
+				name: "spotlight",
+				roles: {
+					A: [ "bass", "chords", "counter" ],
+					A_PRIME: [ "bass", "chords", "melody" ],
+					B: [ "bass", "chords", "arp", "melody", "drums" ],
+					C: [ "bass", "chords", "arp", "melody", "counter", "drums" ]
+				}
 			}
-		},
-		{
-			name: "wave",
-			roles: {
-				A: [ "bass", "chords", "melody" ],
-				A_PRIME: [ "bass", "chords", "arp", "melody" ],
-				B: [ "bass", "chords", "counter" ],
-				C: [ "bass", "chords", "arp", "melody", "counter", "drums" ]
-			}
-		},
-		{
-			name: "spotlight",
-			roles: {
-				A: [ "bass", "chords", "counter" ],
-				A_PRIME: [ "bass", "chords", "melody" ],
-				B: [ "bass", "chords", "arp", "melody", "drums" ],
-				C: [ "bass", "chords", "arp", "melody", "counter", "drums" ]
-			}
-		}
-	]
-};
+		]
+	};
 
 
 	/**
@@ -874,21 +878,21 @@ const SONG_PLAN_OPTIONS = {
 	 * @param {number} noteCount - Number of note positions in the song.
  * @returns {Object} Song plan used across the generator.
  */
-function createSongPlan( noteCount ) {
+	function createSongPlan( noteCount ) {
 
-	var totalBars = Math.max( 1, Math.ceil( noteCount / getBarLength() ) );
-	// The plan is the complete high-level identity of the song. Every later
-	// generator reads these four decisions instead of making structural choices.
-	var sectionForm = pickSectionForm( totalBars );
+		var totalBars = Math.max( 1, Math.ceil( noteCount / getBarLength() ) );
+		// The plan is the complete high-level identity of the song. Every later
+		// generator reads these four decisions instead of making structural choices.
+		var sectionForm = pickSectionForm( totalBars );
 
-	return {
-		sectionForm: sectionForm,
-		phraseBarCount: getPhraseBarCount( totalBars, sectionForm ),
-		contour: b8.Random.pick( SONG_PLAN_OPTIONS.contours ),
-		cadenceTarget: b8.Random.pick( SONG_PLAN_OPTIONS.cadenceTarget ),
-		tonalPaletteName: b8.Random.pick( SONG_PLAN_OPTIONS.palettes ),
-		arrangement: b8.Random.pick( SONG_PLAN_OPTIONS.arrangements )
-	};
+		return {
+			sectionForm: sectionForm,
+			phraseBarCount: getPhraseBarCount( totalBars, sectionForm ),
+			contour: b8.Random.pick( SONG_PLAN_OPTIONS.contours ),
+			cadenceTarget: b8.Random.pick( SONG_PLAN_OPTIONS.cadenceTarget ),
+			tonalPaletteName: b8.Random.pick( SONG_PLAN_OPTIONS.palettes ),
+			arrangement: b8.Random.pick( SONG_PLAN_OPTIONS.arrangements )
+		};
 
 	}
 
@@ -903,14 +907,14 @@ function createSongPlan( noteCount ) {
  * @param {Array<string>} sectionForm - Chosen section form for the song.
  * @returns {number} Phrase size in bars.
  */
-function getPhraseBarCount( totalBars, sectionForm ) {
+	function getPhraseBarCount( totalBars, sectionForm ) {
 
-	var barsPerSection = Math.max( 2, Math.floor( totalBars / sectionForm.length ) );
+		var barsPerSection = Math.max( 2, Math.floor( totalBars / sectionForm.length ) );
 
-	if ( barsPerSection >= 8 ) return 8;
-	if ( barsPerSection >= 4 ) return 4;
+		if ( barsPerSection >= 8 ) return 8;
+		if ( barsPerSection >= 4 ) return 4;
 
-	return 2;
+		return 2;
 
 	}
 
@@ -925,17 +929,17 @@ function getPhraseBarCount( totalBars, sectionForm ) {
 	 * @param {number} totalBars - Total bar count for the song.
  * @returns {Array<string>} Section form such as A-B-A or A-A-B-A.
  */
-function pickSectionForm( totalBars ) {
+	function pickSectionForm( totalBars ) {
 
-	var phraseCapacity = Math.max( 1, Math.floor( totalBars / 2 ) );
-	var availableForms = SONG_PLAN_OPTIONS.sectionForms.filter(
+		var phraseCapacity = Math.max( 1, Math.floor( totalBars / 2 ) );
+		var availableForms = SONG_PLAN_OPTIONS.sectionForms.filter(
 			function( form ) {
 				return form.length <= phraseCapacity;
 			}
 		);
 
 		if ( availableForms.length === 0 ) {
-			availableForms = [ [ "A", "A" ] ];
+			availableForms = [ [ "A", "B" ] ];
 		}
 
 		if ( phraseCapacity >= 4 ) {
