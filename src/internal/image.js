@@ -36,18 +36,25 @@
 	 * Loads an image asynchronously.
 	 *
 	 * @param {string} src - The source URL of the image.
-	 * @returns {Promise<HTMLImageElement>} A promise that resolves to the loaded image.
+	 * @returns {Promise<HTMLImageElement>} A promise that resolves to the loaded image,
+	 * or rejects after reporting a fatal error if the image cannot load.
 	 */
 	b8.Image.loadImageAsync = async function( src ) {
 
 		return new Promise(
-			( resolver ) => {
+			( resolve, reject ) => {
 				const img = new Image();
 				img.crossOrigin = "anonymous";
+				// Attach handlers before starting the request, including cached loads.
+				img.onload = () => resolve( img );
+				img.onerror = () => reject( new Error( `Failed to load image: ${src}` ) );
 				img.src = src;
-				img.onload = () => resolver( img );
 			}
-		);
+		).catch( ( error ) => {
+			// Report outside the event handler so fatal's exception also rejects
+			// the loading promise instead of leaving awaiting callers pending.
+			b8.Utilities.fatal( error );
+		} );
 
 	}
 
