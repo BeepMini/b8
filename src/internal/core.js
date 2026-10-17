@@ -805,11 +805,11 @@
 	 */
 	b8.Core.drawRect = function( x, y, width, height, lineWidth = 1 ) {
 
-		b8.Utilities.checkInt( "x", x );
-		b8.Utilities.checkInt( "y", y );
-		b8.Utilities.checkInt( "width", width );
-		b8.Utilities.checkInt( "height", height );
-		b8.Utilities.checkInt( "lineWidth", lineWidth );
+		b8.Utilities.checkNumber( "x", x );
+		b8.Utilities.checkNumber( "y", y );
+		b8.Utilities.checkNumber( "width", width );
+		b8.Utilities.checkNumber( "height", height );
+		b8.Utilities.checkNumber( "lineWidth", lineWidth );
 
 		x = Math.round( x );
 		y = Math.round( y );
