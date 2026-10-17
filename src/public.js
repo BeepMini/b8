@@ -570,14 +570,17 @@
 
 
 	/**
-	 * Draws a sprite on the screen.
+	 * Draws a sprite, optionally rotated clockwise around its centre.
+	 * Coordinates locate its top-left corner before rotation. Rotation disables
+	 * image smoothing, though arbitrary angles may still have antialiased edges.
 	 *
 	 * @param {number|string} ch - The character code of the sprite.
 	 * @param {number} x - The X position at which to draw.
 	 * @param {number} y - The Y position at which to draw.
+	 * @param {number} [degrees=0] - Clockwise rotation in degrees.
 	 * @returns {void}
 	 */
-	b8.spr = function( ch, x, y ) {
+	b8.spr = function( ch, x, y, degrees = 0 ) {
 
 		ch = b8.convChar( ch );
 
@@ -585,7 +588,10 @@
 		b8.Utilities.checkNumber( "x", x );
 		b8.Utilities.checkNumber( "y", y );
 
-		b8.TextRenderer.spr( ch, x, y );
+		b8.Utilities.checkNumber( "degrees", degrees );
+
+		// The renderer keeps zero-degree drawing on the normal sprite path.
+		b8.TextRenderer.sprRotated( ch, x, y, degrees );
 
 	}
 

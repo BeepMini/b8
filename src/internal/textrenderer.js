@@ -498,6 +498,47 @@
 
 
 	/**
+	 * Rotates a tile about its centre using the canvas's native image renderer.
+	 * Reuses sprite drawing so palette colours and transparent backgrounds work.
+	 *
+	 * @param {number} ch - The tile character code.
+	 * @param {number} x - The unrotated left edge in pixels.
+	 * @param {number} y - The unrotated top edge in pixels.
+	 * @param {number} degrees - Clockwise rotation in degrees.
+	 * @returns {void}
+	 */
+	b8.TextRenderer.sprRotated = function( ch, x, y, degrees ) {
+
+		const font = b8.TextRenderer.curTiles_;
+		const width = font.getCharWidth();
+		const height = font.getCharHeight();
+		const ctx = b8.Core.offCtx;
+
+		// Preserve the normal sprite path for full turns and avoid extra transforms.
+		if ( degrees % 360 === 0 ) {
+			b8.TextRenderer.spr( ch, x, y );
+			return;
+		}
+
+		ctx.save();
+		try {
+			ctx.imageSmoothingEnabled = false;
+			ctx.translate( Math.round( x ) + width / 2, Math.round( y ) + height / 2 );
+			ctx.rotate( ( degrees % 360 ) * Math.PI / 180 );
+
+			// Move the tile back around the pivot; putxy_ rounds its coordinates,
+			// so use a translation to preserve half-pixel centres for odd tile sizes.
+			ctx.translate( -width / 2, -height / 2 );
+			b8.TextRenderer.spr( ch, 0, 0 );
+		} finally {
+			// Restore even if drawing fails, so later sprites are never rotated.
+			ctx.restore();
+		}
+
+	}
+
+
+	/**
 	 * Draws text at the given pixel coordinates, with no cursor movement.
 	 *
 	 * @param {number} x - The x-coordinate.
