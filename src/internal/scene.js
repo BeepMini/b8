@@ -38,7 +38,7 @@
 	 * }
 	 *
 	 * @param {string} name - The name of the scene.
-	 * @param {object} gameObject - An object that includes init, update, and
+	 * @param {object|null} [gameObject=null] - An optional object that includes init, update, and
 	 * render methods as well as other properties for the scene. If update and
 	 * render are set then these will be passed to `b8.frame`.
 	 * @param {number} frameRate - The frame rate at which to update and render
@@ -52,6 +52,9 @@
 		}
 
 		b8.Utilities.checkInt( 'frameRate', frameRate );
+
+		// An omitted or null object registers an empty scene with no callbacks.
+		gameObject = gameObject || {};
 
 		const init = gameObject.init || null;
 		const update = gameObject.update || null;
@@ -110,6 +113,12 @@
 		// If there's an init method, call it.
 		if ( currentScene.init ) {
 			currentScene.init();
+		}
+
+		// Init may switch scenes or reset the manager. Only start this scene's
+		// loop if it is still active after initialization finishes.
+		if ( activeScene !== name ) {
+			return;
 		}
 
 		// If there's an update or render method, call frame to create a synchronous game.
