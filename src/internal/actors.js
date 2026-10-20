@@ -2,6 +2,19 @@
 
 	b8.Actors = {};
 
+	/**
+	 * Selects a loaded font as the actor sheet. Each row is one actor and
+	 * each column is an animation frame. Use "actors" to restore the default.
+	 *
+	 * @param {string} fontName - The ID returned by b8.Async.loadFont.
+	 * @returns {void}
+	 */
+	b8.Actors.setFont = function( fontName ) {
+
+		b8.TextRenderer.curActors_ = b8.TextRenderer.getFontByName( fontName );
+
+	};
+
 
 	/**
 	 * The default animations for the actors.
@@ -75,19 +88,63 @@
 
 
 	/**
+	 * Adds an animation or replaces an existing animation's frames.
+	 * Omitted options keep existing settings; new animations default to 4 fps
+	 * and looping. Negative frame numbers mirror the corresponding frame.
+	 *
+	 * @param {string} name - The animation name used by Actors.draw and Actors.spr.
+	 * @param {number[]} frames - A non-empty sequence of integer frame indices.
+	 * @param {object} [options={}] - Optional playback settings.
+	 * @param {number} [options.fps] - A positive number of frames per second.
+	 * @param {boolean} [options.loop] - Whether playback repeats.
+	 * @returns {void}
+	 */
+	b8.Actors.setAnimation = function( name, frames, options = {} ) {
+
+		b8.Utilities.checkString( "name", name );
+		b8.Utilities.checkArray( "frames", frames );
+		b8.Utilities.assert( frames.length > 0, "Actor animation must contain at least one frame." );
+		b8.Utilities.checkObject( "options", options );
+
+		// Validate every slot, including holes, before changing the animation.
+		for ( let i = 0; i < frames.length; i++ ) {
+			b8.Utilities.checkInt( `frames[${i}]`, frames[ i ] );
+		}
+
+		const existing = Object.prototype.hasOwnProperty.call( b8.Actors.animations, name )
+			? b8.Actors.animations[ name ] : null;
+		const fps = options.fps !== undefined ? options.fps : ( existing ? existing.fps || 1 : 4 );
+		// Existing animations without a loop flag are treated as non-looping.
+		const loop = options.loop !== undefined ? options.loop : ( existing ? existing.loop ?? false : true );
+		b8.Utilities.checkNumber( "fps", fps );
+		b8.Utilities.assert( fps > 0, "Actor animation fps must be greater than zero." );
+		b8.Utilities.checkBoolean( "loop", loop );
+
+		// Copy the frames so later changes to the caller's array cannot alter playback.
+		// Defining an own property also allows names such as "__proto__" safely.
+		Object.defineProperty( b8.Actors.animations, name, {
+			value: { frames: frames.slice(), fps, loop },
+			writable: true, enumerable: true, configurable: true
+		} );
+
+	};
+
+
+	/**
 	 * Draw an actor at the specified x, y position.
 	 *
 	 * @param {number} ch - The character to draw.
-	 * @param {string} animation - The animation to draw.
+	 * @param {number} frame - The already calculated animation frame, including its flip sign.
 	 * @param {number} x - The x coordinate to draw the actor at.
 	 * @param {number} y - The y coordinate to draw the actor at.
 	 * @param {number} direction - The direction to draw the actor in. 0 = right, 1 = left.
 	 * @returns {void}
 	 */
-	const drawActor = function( ch, animation, x, y, direction ) {
+	const drawActor = function( ch, frame, x, y, direction ) {
 
 		const font = b8.TextRenderer.curActors_;
-		const chrIndex = ( ch * font.getColCount() ) + Math.abs( b8.Animation.frame( animation ) );
+		// Reuse the caller's frame so explicit animation start times are respected.
+		const chrIndex = ( ch * font.getColCount() ) + Math.abs( frame );
 
 		b8.TextRenderer.spr(
 			chrIndex,
@@ -123,7 +180,7 @@
 		const direction = frame >= 0 ? 0 : 1;
 
 		drawActor(
-			ch, anim,
+			ch, frame,
 			( b8.Core.drawState.cursorCol + offsetCol ) * b8.CONFIG.CHR_WIDTH,
 			( b8.Core.drawState.cursorRow + offsetRow ) * b8.CONFIG.CHR_HEIGHT,
 			direction || 0
@@ -171,7 +228,7 @@
 
 		if ( !b8.Animation.shouldLoop( anim, startTime ) ) return false;
 
-		drawActor( ch, anim, x, y, direction || 0 );
+		drawActor( ch, frame, x, y, direction || 0 );
 
 		// The animation is still playing.
 		return true;

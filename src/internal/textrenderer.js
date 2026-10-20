@@ -111,14 +111,15 @@
 	 * @param {string} fontImageFile - The URL of the image file for the font.
 	 * @param {number} [tileSizeWidthMultiplier=1] - The tile size width multiplier for the font.
 	 * @param {number} [tileSizeHeightMultiplier=1] - The tile size height multiplier for the font.
+	 * @param {object} [options={}] - Options passed to TextRendererFont.
 	 * @returns {Promise<void>}
 	 */
-	b8.TextRenderer.loadFontAsync = async function( fontName, fontImageFile, tileSizeWidthMultiplier = 1, tileSizeHeightMultiplier = 1 ) {
+	b8.TextRenderer.loadFontAsync = async function( fontName, fontImageFile, tileSizeWidthMultiplier = 1, tileSizeHeightMultiplier = 1, options = {} ) {
 
 		b8.Utilities.checkString( "fontName", fontName );
 		b8.Utilities.checkString( "fontImageFile", fontImageFile );
 
-		const font = new b8.TextRendererFont( fontName, fontImageFile, tileSizeWidthMultiplier, tileSizeHeightMultiplier );
+		const font = new b8.TextRendererFont( fontName, fontImageFile, tileSizeWidthMultiplier, tileSizeHeightMultiplier, options );
 		await font.initAsync();
 
 		b8.TextRenderer.fonts_[ fontName ] = font;
@@ -575,8 +576,15 @@
 
 			} else {
 
+				// Font images follow CHRS order, not Unicode character codes.
+				// Match print(): skip unsupported characters without advancing.
+				const chIndex = charMap.indexOf( ch );
+				if ( chIndex < 0 ) {
+					continue;
+				}
+
 				putxy_(
-					ch,
+					chIndex,
 					x, y,
 					b8.Core.drawState.fgColor,
 					b8.Core.drawState.bgColor,
@@ -899,13 +907,13 @@
 		// Draw the background.
 		// If bgColor is -1 then don't draw the background.
 		// Or make the background transparent.
-		if ( bgColor >= 0 ) {
+		if ( !font.multicolor_ && bgColor >= 0 ) {
 			b8.Core.offCtx.fillStyle = b8.Core.getColorHex( bgColor );
 			b8.Core.offCtx.fillRect( x, y, chrW, chrH );
 		}
 
 		// Foreground and background are the same so don't draw anything else.
-		if ( b8.CONFIG.SCREEN_COLORS === 1 && bgColor === fgColor ) {
+		if ( !font.multicolor_ && b8.CONFIG.SCREEN_COLORS === 1 && bgColor === fgColor ) {
 			return;
 		}
 
@@ -935,7 +943,8 @@
 
 		}
 
-		const color = b8.Utilities.clamp( fgColor, 0, b8.CONFIG.COLORS.length - 1 );
+		// Multicolour fonts have one image and ignore the drawing colours.
+		const color = font.multicolor_ ? 0 : b8.Utilities.clamp( fgColor, 0, b8.CONFIG.COLORS.length - 1 );
 		const img = font.getImageForColor( color );
 
 		b8.Core.offCtx.drawImage(

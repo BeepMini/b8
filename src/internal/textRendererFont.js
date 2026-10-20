@@ -14,15 +14,21 @@
 		 * @param {string} fontImageFile - The URL of the image file for the font.
 		 * @param {number} [tileWidthMultiplier=1] - The tile width multiplier for the font.
 		 * @param {number} [tileHeightMultiplier=1] - The tile height multiplier for the font.
+		 * @param {object} [options={}] - Font loading options.
+		 * @param {boolean} [options.multicolor=false] - Use one palette-matched image with its original alpha transparency.
 		 */
-		constructor( fontName, fontImageFile, tileWidthMultiplier = 1, tileHeightMultiplier = 1 ) {
+		constructor( fontName, fontImageFile, tileWidthMultiplier = 1, tileHeightMultiplier = 1, options = {} ) {
 
 			b8.Utilities.checkString( "fontName", fontName );
 			b8.Utilities.checkString( "fontImageFile", fontImageFile );
+			b8.Utilities.checkObject( "options", options );
+			b8.Utilities.checkBoolean( "options.multicolor", options.multicolor ?? false );
 
 			this.fontName_ = fontName;
 			this.fontImageFile_ = fontImageFile;
 			this.origImg_ = null;
+			// Multicolour sheets use PNG alpha, rather than magenta transparency.
+			this.multicolor_ = options.multicolor ?? false;
 			this.chrImages_ = [];
 			this.imageWidth_ = 0;
 			this.imageHeight_ = 0;
@@ -39,9 +45,9 @@
 
 
 		/**
-		 * Sets up this font from the given character image file. It's assumed to contain the
-		 * glyphs arranged in a 16x16 grid, so we will deduce the character size by dividing the
-		 * width and height by 16.
+		 * Sets up this font from an image containing a regular grid of frames.
+		 * Frame size is the engine character size multiplied by the supplied size
+		 * multipliers; the image dimensions determine its row and column counts.
 		 *
 		 * @returns {Promise<void>}
 		 */
@@ -58,7 +64,9 @@
 				`${this.origImg_.width}x${this.origImg_.height}.`
 			);
 
-			this.origImg_ = await b8.Utilities.makeColorTransparent( this.origImg_ );
+			if ( !this.multicolor_ ) {
+				this.origImg_ = await b8.Utilities.makeColorTransparent( this.origImg_ );
+			}
 
 			this.charWidth_ = imageCharWidth;
 			this.charHeight_ = imageCharHeight;
@@ -149,14 +157,15 @@
 
 
 		/**
-		 * Returns the image for a given color number.
+		 * Returns the image for a given color number, or the single multicolour image.
 		 *
 		 * @param {number} colorNumber - The color number.
-		 * @returns {HTMLImageElement} The image for the specified color.
+		 * @returns {HTMLCanvasElement} The image for the specified color.
 		 */
 		getImageForColor( colorNumber ) {
 
-			return this.chrImages_[ colorNumber ];
+			// All foreground colours share the one multicolour sheet.
+			return this.chrImages_[ this.multicolor_ ? 0 : colorNumber ];
 
 		}
 
@@ -167,6 +176,22 @@
 		 * @returns {Promise<void>}
 		 */
 		async regenColors() {
+
+			if ( this.multicolor_ ) {
+				// Match the current palette without dithering or changing alpha.
+				// Keep the original image so palette changes can be reapplied cleanly.
+				const canvas = document.createElement( 'canvas' );
+				canvas.width = this.origImg_.width;
+				canvas.height = this.origImg_.height;
+				const ctx = canvas.getContext( '2d' );
+				ctx.drawImage( this.origImg_, 0, 0 );
+				const pixels = ctx.getImageData( 0, 0, canvas.width, canvas.height );
+				const lookup = b8.Image.generateColorLookupTable( b8.CONFIG.COLORS );
+				b8.Image.quantiseImageData( pixels, lookup );
+				ctx.putImageData( pixels, 0, 0 );
+				this.chrImages_ = [ canvas ];
+				return;
+			}
 
 			this.chrImages_ = [];
 

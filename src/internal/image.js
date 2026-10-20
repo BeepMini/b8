@@ -83,9 +83,10 @@
 
 
 	// Cache the color lookup table to avoid recomputing it.
-	// Only generated when an image is loaded externally.
-	// Font images are not loaded this way.
+	// Shared by regular images and multicolour fonts.
 	const colorLookupTable = {};
+	// A palette change or different bucket size needs a fresh lookup table.
+	let colorLookupKey = null;
 
 
 	/**
@@ -97,9 +98,14 @@
 	 */
 	b8.Image.generateColorLookupTable = function( palette, bucketSize = 4 ) {
 
-		if ( Object.keys( colorLookupTable ).length !== 0 ) {
+		const lookupKey = JSON.stringify( [ palette, bucketSize ] );
+		if ( colorLookupKey === lookupKey ) {
 			return colorLookupTable;
 		}
+		for ( const key of Object.keys( colorLookupTable ) ) {
+			delete colorLookupTable[ key ];
+		}
+		colorLookupKey = lookupKey;
 
 		// Convert hex palette to rgb palette.
 		const rgbPalette = palette.map( color => b8.Utilities.hexToRgb( color ) );
