@@ -11,6 +11,10 @@
 	 * [2] = background color code.
 	 * [3] = collision flag.
 	 * [4] = additional data.
+	 * [5] = wall connectivity mask (north=1, east=2, south=4, west=8),
+	 *       or null for ordinary tiles. Zero means an isolated wall.
+	 * Masks describe connectivity when the map is created; editing tiles does
+	 * not automatically recalculate their neighbours' masks.
 	 */
 	b8.Tilemap = {};
 
@@ -19,6 +23,56 @@
 	b8.Tilemap.MAP_BG = 2;
 	b8.Tilemap.MAP_COLLISION = 3;
 	b8.Tilemap.MAP_DATA = 4;
+	// Connected neighbours, independent of the game's collision rules.
+	b8.Tilemap.MAP_WALL_MASK = 5;
+
+	/**
+	 * Direction bits for wall connectivity and exposed-edge checks.
+	 * Combine directions with | to check several sides at once.
+	 * @type {Readonly<{N: number, E: number, S: number, W: number}>}
+	 */
+	b8.Tilemap.WALL_DIRECTION = Object.freeze( { N: 1, E: 2, S: 4, W: 8 } );
+
+
+	/**
+	 * Checks whether a wall connects to neighbours in all requested directions.
+	 * Ordinary tiles, including older tiles without a mask, return false.
+	 *
+	 * @param {Array} tile - A tile array from the tilemap.
+	 * @param {number} direction - One or more WALL_DIRECTION bits (1–15).
+	 * @returns {boolean} Whether every requested side has a connected neighbour.
+	 */
+	b8.Tilemap.hasWallConnection = function( tile, direction ) {
+
+		b8.Utilities.checkArray( "tile", tile );
+		b8.Utilities.checkInt( "direction", direction, 1, 15 );
+
+		const mask = tile[ b8.Tilemap.MAP_WALL_MASK ];
+		// Do not let JavaScript treat a missing mask as an isolated wall.
+		return mask !== null && mask !== undefined && ( mask & direction ) === direction;
+
+	};
+
+
+	/**
+	 * Checks whether a wall has exposed edges in all requested directions.
+	 * An exposed edge has no connected neighbour; this does not imply collision.
+	 * Ordinary tiles, including older tiles without a mask, return false.
+	 *
+	 * @param {Array} tile - A tile array from the tilemap.
+	 * @param {number} direction - One or more WALL_DIRECTION bits (1–15).
+	 * @returns {boolean} Whether every requested side is exposed.
+	 */
+	b8.Tilemap.hasWallEdge = function( tile, direction ) {
+
+		b8.Utilities.checkArray( "tile", tile );
+		b8.Utilities.checkInt( "direction", direction, 1, 15 );
+
+		const mask = tile[ b8.Tilemap.MAP_WALL_MASK ];
+		// A zero mask is a wall with four exposed edges, unlike null or undefined.
+		return mask !== null && mask !== undefined && ( mask & direction ) === 0;
+
+	};
 
 	const WATER_TILES = [ 1, 188, 206 ];
 
@@ -29,13 +83,13 @@
 			tiles: {
 				0: 1,  // wall_isolated.
 				1: 1,  // wall_end_bottom.
-				2: 1,  // wall_end_left.
+				2: 1,  // wall_end_right.
 				3: 36,  // wall_corner_bottomLeft.
 				4: 1,  // wall_end_top.
 				5: 1,  // wall_vertical.
 				6: 18,  // wall_corner_topLeft.
 				7: 1,  // wall_t_right.
-				8: 1,  // wall_end_right.
+				8: 1,  // wall_end_left.
 				9: 37,  // wall_corner_bottomRight.
 				10: 1, // wall_horizontal.
 				11: 1, // wall_t_bottom.
@@ -49,13 +103,13 @@
 			tiles: {
 				0: 1,  // wall_isolated.
 				1: 42,  // wall_end_bottom.
-				2: 23,  // wall_end_left.
+				2: 23,  // wall_end_right.
 				3: 36,  // wall_corner_bottomLeft.
 				4: 41,  // wall_end_top.
 				5: 1,  // wall_vertical.
 				6: 18,  // wall_corner_topLeft.
 				7: 1,  // wall_t_right.
-				8: 24,  // wall_end_right.
+				8: 24,  // wall_end_left.
 				9: 37,  // wall_corner_bottomRight.
 				10: 1, // wall_horizontal.
 				11: 1, // wall_t_bottom.
@@ -69,13 +123,13 @@
 			tiles: {
 				0: 128,  // wall_isolated.
 				1: 75,  // wall_end_bottom.
-				2: 58,  // wall_end_left.
+				2: 58,  // wall_end_right.
 				3: 93,  // wall_corner_bottomLeft.
 				4: 75,  // wall_end_top.
 				5: 75,  // wall_vertical.
 				6: 57,  // wall_corner_topLeft.
 				7: 129,  // wall_t_right.
-				8: 58,  // wall_end_right.
+				8: 58,  // wall_end_left.
 				9: 95,  // wall_corner_bottomRight.
 				10: 58, // wall_horizontal.
 				11: 111, // wall_t_bottom.
@@ -222,16 +276,23 @@
 
 
 	/**
-	 * Draw a tilemap array to the screen.
+	 * Visit every drawable tile in an area of a tilemap.
+	 *
+	 * Tilemaps can be placed on either the character grid or the pixel grid, but
+	 * their source selection and tile colour rules are identical. Keeping those
+	 * rules here prevents the public renderers from drifting apart.
 	 *
 	 * @param {Array} tilemap The tilemap array to draw.
-	 * @param {number} [tileStartCol=0] Tile column to start drawing from.
-	 * @param {number} [tileStartRow=0] Tile row to start drawing from.
-	 * @param {number} [width=null] The width of the tilemap to draw.
-	 * @param {number} [height=null] The height of the tilemap to draw.
+	 * @param {number} tileStartCol Tile column to start drawing from.
+	 * @param {number} tileStartRow Tile row to start drawing from.
+	 * @param {number|null} width The width of the tilemap area to draw, in tiles.
+	 * @param {number|null} height The height of the tilemap area to draw, in tiles.
+	 * @param {Function} drawSprite Draws a normal tile at its position relative to the selected area.
+	 * @param {Function} drawVfx Draws a visual-effect tile at its position relative to the selected area.
+	 * @param {Function|null} [startDrawRow=null] Runs before each tilemap row is drawn.
 	 * @returns {void}
 	 */
-	b8.Tilemap.draw = function( tilemap, tileStartCol = 0, tileStartRow = 0, width = null, height = null ) {
+	const drawTilemap_ = function( tilemap, tileStartCol, tileStartRow, width, height, drawSprite, drawVfx, startDrawRow = null ) {
 
 		b8.Utilities.checkArray( "tilemap", tilemap );
 		b8.Utilities.checkInt( "tileStartCol", tileStartCol );
@@ -248,41 +309,119 @@
 		b8.Utilities.checkInt( "width", width );
 		b8.Utilities.checkInt( "height", height );
 
+		for ( let tileRow = tileStartRow; tileRow < tileStartRow + height; tileRow++ ) {
+			if ( startDrawRow ) startDrawRow( tileRow - tileStartRow );
+
+			for ( let tileCol = tileStartCol; tileCol < tileStartCol + width; tileCol++ ) {
+
+				if ( !tilemap[ tileRow ] || tilemap[ tileRow ][ tileCol ] == null ) continue;
+
+				const tile = tilemap[ tileRow ][ tileCol ];
+
+				// Saved maps may contain numeric placeholders for empty cells. Only
+				// complete tile arrays have character and colour data to render.
+				if ( !Array.isArray( tile ) || tile.length < 3 ) continue;
+
+				b8.color(
+					tile[ b8.Tilemap.MAP_FG ],
+					tile[ b8.Tilemap.MAP_BG ]
+				);
+
+				const tileChar = tile[ b8.Tilemap.MAP_CHAR ];
+				const col = tileCol - tileStartCol;
+				const row = tileRow - tileStartRow;
+
+				if ( typeof tileChar === 'string' && tileChar.startsWith( 'vfx:' ) ) {
+					drawVfx( tileChar.substring( 4 ), col, row );
+					continue;
+				}
+
+				drawSprite( tileChar, col, row );
+
+			}
+		}
+
+	};
+
+
+	/**
+	 * Draw a tilemap array to the screen.
+	 *
+	 * @param {Array} tilemap The tilemap array to draw.
+	 * @param {number} [tileStartCol=0] Tile column to start drawing from.
+	 * @param {number} [tileStartRow=0] Tile row to start drawing from.
+	 * @param {number} [width=null] The width of the tilemap to draw.
+	 * @param {number} [height=null] The height of the tilemap to draw.
+	 * @returns {void}
+	 */
+	b8.Tilemap.draw = function( tilemap, tileStartCol = 0, tileStartRow = 0, width = null, height = null ) {
+
 		const startRow = b8.Core.drawState.cursorRow;
 		const startCol = b8.Core.drawState.cursorCol;
 
-		for ( let y = tileStartRow; y < tileStartRow + height; y++ ) {
+		drawTilemap_( tilemap, tileStartCol, tileStartRow, width, height, function( tileChar, col, row ) {
+			// Position each tile explicitly so skipped cells retain their space.
+			b8.locate( startCol + col, startRow + row );
+			b8.printChar( tileChar );
+		}, function( animationName, col, row ) {
 
-			// Position the cursor at the start of the row.
-			const lx = 0 + startCol;
-			const ly = y - tileStartRow + startRow;
-			b8.locate( lx, ly );
+			// Effects use the same source-grid positions as ordinary tiles.
+			b8.locate( startCol + col, startRow + row );
+			b8.Vfx.draw( animationName, b8.Core.startTime );
 
-			for ( let x = tileStartCol; x < tileStartCol + width; x++ ) {
+		}, function( row ) {
 
-				if ( !tilemap[ y ] || tilemap[ y ][ x ] == null ) continue;
+			// Position the cursor at the start of each tilemap row.
+			b8.locate( startCol, startRow + row );
 
-				const tile = tilemap[ y ][ x ];
-				if ( tile && tile.length >= 3 ) {
+		} );
 
-					b8.color(
-						tile[ b8.Tilemap.MAP_FG ],
-						tile[ b8.Tilemap.MAP_BG ]
-					);
+	};
 
-					const tileChar = tile[ b8.Tilemap.MAP_CHAR ];
 
-					if ( typeof tileChar === 'string' && tileChar.startsWith( 'vfx:' ) ) {
-						const animationName = tileChar.substring( 4 );
-						b8.Vfx.draw( animationName, b8.Core.startTime );
-						continue;
-					}
+	/**
+	 * Draw a tilemap at an arbitrary pixel position.
+	 *
+	 * This uses the same tilemap data as b8.Tilemap.draw, so maps returned by
+	 * b8.Tilemap.load and b8.Tilemap.createFromArray need no conversion. The
+	 * x and y coordinates position the top-left corner of the selected map area;
+	 * each following tile is placed one tile-width or tile-height farther along.
+	 * Unlike b8.Tilemap.draw, this function does not move the text cursor.
+	 *
+	 * @param {Array} tilemap The tilemap array to draw.
+	 * @param {number} x The pixel x-coordinate at which to draw the map.
+	 * @param {number} y The pixel y-coordinate at which to draw the map.
+	 * @param {number} [tileStartCol=0] Tile column to start drawing from.
+	 * @param {number} [tileStartRow=0] Tile row to start drawing from.
+	 * @param {number} [width=null] The width of the tilemap area to draw, in tiles.
+	 * @param {number} [height=null] The height of the tilemap area to draw, in tiles.
+	 * @returns {void}
+	 */
+	b8.Tilemap.drawAt = function( tilemap, x, y, tileStartCol = 0, tileStartRow = 0, width = null, height = null ) {
 
-					b8.printChar( tileChar );
+		b8.Utilities.checkNumber( "x", x );
+		b8.Utilities.checkNumber( "y", y );
+		drawTilemap_( tilemap, tileStartCol, tileStartRow, width, height, function( tileChar, col, row ) {
 
-				}
-			}
-		}
+			const tileX = x + col * b8.CONFIG.CHR_WIDTH;
+			const tileY = y + row * b8.CONFIG.CHR_HEIGHT;
+
+			b8.spr( tileChar, tileX, tileY );
+
+		}, function( animationName, col, row ) {
+
+			const tileX = x + col * b8.CONFIG.CHR_WIDTH;
+			const tileY = y + row * b8.CONFIG.CHR_HEIGHT;
+			const cursorCol = b8.Core.drawState.cursorCol;
+			const cursorRow = b8.Core.drawState.cursorRow;
+
+			// Vfx.spr shares its renderer with cursor-based drawing, so keep this
+			// pixel renderer from changing the caller's cursor position.
+			b8.Vfx.spr( animationName, b8.Core.startTime, tileX, tileY );
+			b8.Core.drawState.cursorCol = cursorCol;
+			b8.Core.drawState.cursorRow = cursorRow;
+
+		} );
 
 	};
 
@@ -389,7 +528,8 @@
 			15, // Fg
 			0, // Bg
 			false, // Collision
-			{} // Data
+			{}, // Data
+			null // Wall mask: ordinary tiles have no wall connectivity data.
 		];
 
 	};
@@ -433,6 +573,7 @@
 	 *
 	 * The tile definition can be an array or an object with properties.
 	 * This function ensures that the tile array is in the correct format and all properties are set.
+	 * Object definitions may include wallMask; old five-slot arrays default to null.
 	 *
 	 * @param {Array|Object} tile The tile definition to convert. t.t = tile id, t.fg = foreground color, t.bg = background color, t.coll = collision flag, t.data = additional 	data.
 	 * @returns {Array} The converted tile array.
@@ -457,6 +598,7 @@
 			if ( typeof tile.bg !== "undefined" ) newTile[ 2 ] = tile.bg;
 			if ( typeof tile.coll !== "undefined" ) newTile[ 3 ] = !!tile.coll;
 			if ( typeof tile.data !== "undefined" ) newTile[ 4 ] = tile.data;
+			if ( typeof tile.wallMask !== "undefined" ) newTile[ b8.Tilemap.MAP_WALL_MASK ] = tile.wallMask;
 
 			return newTile;
 		}
@@ -570,10 +712,14 @@
 
 				// Tile character code.
 				let tileId = tile.t;
+				let wallMask = null;
 
 				// If tileId is a string and begins with "wall:" then compute bitmask.
 				if ( typeof tileId === "string" && tileId.startsWith( "wall:" ) ) {
-					tileId = pickWallTile( x, y, grid, tileId );
+					// Keep the same mask used to choose the artwork, including edgeMode.
+					const wall = pickWallTile( x, y, grid, tileId );
+					tileId = wall.tileId;
+					wallMask = wall.mask;
 				}
 
 				// If is an array of ids then do a weighted pick from those.
@@ -601,6 +747,7 @@
 					bg,
 					tile.coll || false,
 					tile.data || {},
+					wallMask,
 				];
 
 			}
@@ -673,7 +820,7 @@
 	 * @param {number} y The y coordinate of the tile.
 	 * @param {Array} grid The 2D array of tile ids.
 	 * @param {string} name The name of the wall tile to select. Picked from the default lists of wall patterns.
-	 * @returns {number} The selected wall tile id.
+	 * @returns {{tileId: number|Array, mask: number}} The artwork choice and its connectivity mask.
 	 */
 	function pickWallTile( col, row, grid, name = null ) {
 
@@ -692,7 +839,7 @@
 			wallTileSet.edgeMode || "open"
 		);
 
-		return wallTileSet.tiles[ mask ];
+		return { tileId: wallTileSet.tiles[ mask ], mask };
 
 	};
 
@@ -707,7 +854,7 @@
 	function normaliseWallTileSet( tileSet ) {
 
 		if ( !tileSet.tiles ) {
-			b8.Utilities.fatal( "Wall tile set must include a tiles object." );
+			b8.Utilities.fatal( "Wall tile set must include a tiles object. eg { tiles: { 0: 1, 1: 2, ... } }" );
 		}
 
 		const defaultTileSet = wallTiles[ 'solid' ];
