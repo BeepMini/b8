@@ -1,4 +1,10 @@
-mapper.systems.bomb = async function() {
+/**
+ * Advance active bomb fuses using real time.
+ *
+ * @param {number} dt - Seconds elapsed since the previous frame.
+ * @returns {Promise<void>} Resolves after any explosions have been handled.
+ */
+mapper.systems.bomb = async function( dt ) {
 
 	const bombs = b8.ECS.query( 'Bomb' );
 
@@ -10,23 +16,25 @@ mapper.systems.bomb = async function() {
 		const bomb = b8.ECS.getComponent( id, 'Bomb' );
 
 		// Skip if fuse not ignited.
-		if ( bomb.fuseTurns === false ) continue;
+		if ( bomb.fuseTime === false ) continue;
 
-		// Decrease fuse time.
-		bomb.fuseTurns--;
+		// Decrease the fuse by the elapsed frame time.
+		bomb.fuseTime -= dt;
 
 		// Make bomb flicker as fuse gets shorter.
 		const sprite = b8.ECS.getComponent( id, 'Sprite' );
-		if ( bomb.fuseTurns > 5 ) {
+		if ( bomb.fuseTime > 5 ) {
 			sprite.fg = color;
-		} else if ( bomb.fuseTurns > 2 ) {
-			sprite.fg = ( bomb.fuseTurns % 2 === 0 ) ? color : flickerColor;
-		} else if ( bomb.fuseTurns > 0 ) {
-			sprite.fg = flickerColor;
+		} else if ( bomb.fuseTime > 2.5 ) {
+			sprite.fg = ( Math.floor( bomb.fuseTime * 2 ) % 2 === 0 ) ? color : flickerColor;
+		} else if ( bomb.fuseTime > 1 ) {
+			sprite.fg = ( Math.floor( bomb.fuseTime * 4 ) % 2 === 0 ) ? color : flickerColor;
+		} else if ( bomb.fuseTime > 0 ) {
+			sprite.fg = ( Math.floor( bomb.fuseTime * 10 ) % 2 === 0 ) ? color : flickerColor;
 		}
 
 		// Explode bomb when fuse reaches zero.
-		if ( bomb.fuseTurns <= 0 ) {
+		if ( bomb.fuseTime <= 0 ) {
 
 			const bombLoc = b8.ECS.getComponent( id, 'Loc' );
 

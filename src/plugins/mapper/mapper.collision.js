@@ -23,7 +23,14 @@ mapper.collision = {
 	 */
 	isSafe: ( col, row ) => {
 
-		return !b8.ECS.entitiesAt( col, row ).some( id => b8.ECS.hasComponent( id, 'Fire' ) );
+		return !b8.ECS.entitiesAt( col, row ).some(
+			( id ) => {
+				const fire = b8.ECS.getComponent( id, 'Fire' );
+				// Fires saved before switch support did not have an active flag and
+				// must remain hazardous when loaded.
+				return fire?.active !== false;
+			}
+		);
 
 	},
 

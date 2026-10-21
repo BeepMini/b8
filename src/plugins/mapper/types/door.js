@@ -71,6 +71,18 @@ mapper.types.door = {
 	 */
 	openDoor: function( id, sprite ) {
 
+		if ( !sprite ) {
+			sprite = b8.ECS.getComponent( id, 'Sprite' );
+		}
+
+		if ( !sprite ) return;
+
+		// Ignore already-open doors so repeated trigger checks do not cause
+		// extra state churn or sound spam.
+		if ( sprite.tile === mapper.types.door.TILE_DOOR_OPEN && !b8.ECS.hasComponent( id, 'Solid' ) ) {
+			return;
+		}
+
 		sprite.tile = mapper.types.door.TILE_DOOR_OPEN;
 
 		// Remove solid component.
@@ -88,6 +100,52 @@ mapper.types.door = {
 			loc.row,
 			'door',
 			'doorOpen'
+		);
+
+	},
+
+
+	/**
+	 * Close an open door by restoring its default tile and solid collision.
+	 *
+	 * This is mainly used by hold-style switches and pressure plates.
+	 *
+	 * @param {number} id - The entity ID of the door.
+	 * @returns {void}
+	 */
+	closeDoor: function( id ) {
+
+		const sprite = b8.ECS.getComponent( id, 'Sprite' );
+		const loc = b8.ECS.getComponent( id, 'Loc' );
+
+		if ( !sprite || !loc ) return;
+		if ( b8.ECS.hasComponent( id, 'Solid' ) ) return;
+
+		const currentMap = mapper.getCurrentMap();
+		const mapObject = currentMap.objects.find(
+			( object ) => object.x === loc.col && object.y === loc.row && object.type.startsWith( 'door' )
+		);
+
+		const closedIcon = parseInt( mapObject?.props?.icon ) || mapper.types.door.TILE_DOOR_DEFAULT;
+
+		sprite.tile = closedIcon;
+		b8.ECS.addComponent( id, 'Solid', {} );
+
+		if ( mapper.types.door.FLAMMABLE_DOOR_TILES.includes( closedIcon ) ) {
+			b8.ECS.addComponent(
+				id,
+				'Flammable',
+				{
+					temperature: 0,
+				}
+			);
+		}
+
+		mapper.changeObjectTypeAt(
+			loc.col,
+			loc.row,
+			'door',
+			'door'
 		);
 
 	},

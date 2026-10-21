@@ -1,4 +1,10 @@
-mapper.systems.fire = function() {
+/**
+ * Update fire lifetime and continuously heat nearby entities.
+ *
+ * @param {number} dt - Seconds elapsed since the previous frame.
+ * @returns {void}
+ */
+mapper.systems.fire = function( dt ) {
 
 	const fires = b8.ECS.query( 'Fire', 'Loc' );
 
@@ -10,12 +16,16 @@ mapper.systems.fire = function() {
 		// Another system may have already removed the fire entity this frame.
 		if ( !fire || !loc ) continue;
 
+		// Switches can extinguish a named fire without deleting it. Keeping the
+		// entity lets another switch, or a released pressure plate, relight it.
+		if ( fire.active === false ) continue;
+
 		// Reduce the fire's duration.
-		if ( fire.lifeTurns !== Infinity ) {
+		if ( fire.duration !== Infinity ) {
 
-			fire.lifeTurns--;
+			fire.duration -= dt;
 
-			if ( fire.lifeTurns <= 0 ) {
+			if ( fire.duration <= 0 ) {
 				b8.ECS.removeEntity( fireId );
 				mapper.types.vfx.spawn(
 					loc.col, loc.row,
@@ -25,12 +35,6 @@ mapper.systems.fire = function() {
 			}
 
 		}
-
-		if ( fire.turnsUntilSpread > 0 ) {
-			fire.turnsUntilSpread--;
-			continue;
-		}
-		fire.turnsUntilSpread = Math.max( 0, ( fire.spreadTickRateTurns || mapper.CONFIG.fireSpreadTurns ) - 1 );
 
 		// Entities standing directly on the fire can catch alight and trigger
 		// any immediate burn reactions.
@@ -58,7 +62,7 @@ mapper.systems.fire = function() {
 				entityId,
 				{
 					sourceId: fireId,
-					heatAmount: mapper.CONFIG.fireHeatPerTurn,
+					heatAmount: mapper.CONFIG.fireHeatPerSecond * dt,
 				}
 			);
 		}

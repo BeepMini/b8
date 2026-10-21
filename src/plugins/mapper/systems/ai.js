@@ -1,4 +1,17 @@
-mapper.systems.ai = function() {
+// Accumulate frame time so AI decisions happen at a deliberate cadence.
+mapper.ai.updateTimer = 0;
+
+/**
+ * Update enemy decision making at the configured real-time interval.
+ *
+ * @param {number} dt - Seconds elapsed since the previous frame.
+ * @returns {void}
+ */
+mapper.systems.ai = function( dt ) {
+
+	mapper.ai.updateTimer += dt;
+	if ( mapper.ai.updateTimer < mapper.CONFIG.aiUpdateDelay ) return;
+	mapper.ai.updateTimer = 0;
 
 	const ids = b8.ECS.query( 'AI', 'Loc' );
 
@@ -8,13 +21,6 @@ mapper.systems.ai = function() {
 		const mode = mapper.ai.think( id );
 		const ai = b8.ECS.getComponent( id, 'AI' );
 		if ( !ai ) continue;
-
-		if ( ai.turnsUntilAct > 0 ) {
-			ai.turnsUntilAct--;
-			continue;
-		}
-
-		ai.turnsUntilAct = Math.max( 0, ( ai.tickRateTurns || mapper.CONFIG.aiTickRateTurns ) - 1 );
 
 		// If the AI mode has changed, update it.
 		if ( mode !== ai.mode ) {

@@ -14,7 +14,6 @@ const mapper = {
 	bg: {},
 	defaultGameName: null,
 	isGameOverPending: false,
-	turnCount: 0,
 	lastPosition: null,
 
 	// The player entity ID.
@@ -90,46 +89,11 @@ const mapper = {
 	 * @param {number} dt - The delta time since the last update call.
 	 * @returns {void}
 	 */
-	updateFrame: function( dt ) {
+	update: function( dt ) {
 
-		const healthIds = b8.ECS.query( 'Health' );
-		for ( const id of healthIds ) {
-			const health = b8.ECS.getComponent( id, 'Health' );
-			if ( !health ) continue;
-			health.cooldownTimer = Math.max( 0, ( health.cooldownTimer || 0 ) - dt );
-		}
-
+		// The ECS owns both gameplay and presentation updates. Every registered
+		// system receives frame delta time, so the world continues while idle.
 		b8.ECS.run( dt );
-
-	},
-
-
-	/**
-	 * Advance the mapper world by one turn.
-	 *
-	 * @param {Object} turnContext Context describing why the turn occurred.
-	 * @returns {void}
-	 */
-	doWorldTurn: function( turnContext = {} ) {
-
-		mapper.turnCount++;
-
-		// Resolve on-tile interactions from the player's new location before
-		// autonomous world systems act.
-		mapper.systems.pickup();
-
-		// Hazards.
-		mapper.systems.fire();
-		mapper.systems.flammable();
-		mapper.systems.fireSmall();
-		mapper.systems.bomb();
-
-		// Moving objects and creatures.
-		mapper.systems.ai( turnContext );
-		mapper.systems.pathFollower();
-
-		// Resolve any defeats caused during the turn.
-		mapper.systems.health();
 
 	},
 
@@ -195,6 +159,10 @@ const mapper = {
 
 		// Draw
 		for ( const { spr, loc, anim } of list ) {
+
+			// Some entities, such as an extinguished named fire, remain in the
+			// world so they can be switched on again but should not be drawn.
+			if ( spr.visible === false ) continue;
 
 			const pos = mapper.camera.getTilePosition( loc.col, loc.row );
 			const nudgeCol = spr.nudgeCol || 0;

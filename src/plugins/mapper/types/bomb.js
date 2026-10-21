@@ -22,7 +22,8 @@ mapper.types.bomb = {
 					ButtonA: 'ignite'
 				},
 				Bomb: {
-					fuseTurns: false,
+					// false means unlit; a number stores seconds remaining.
+					fuseTime: false,
 					radius: parseInt( props.radius ) || 1,
 					damage: 2,
 				},
@@ -66,9 +67,10 @@ mapper.types.bomb = {
 
 		const bomb = b8.ECS.getComponent( id, 'Bomb' );
 
-		if ( bomb.fuseTurns !== false ) return;
+		if ( bomb.fuseTime !== false ) return;
 
-		bomb.fuseTurns = 2;
+		// Fire-lit bombs use a shorter fuse than manually ignited bombs.
+		bomb.fuseTime = 2;
 
 	},
 

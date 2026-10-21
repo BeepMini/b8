@@ -1,4 +1,10 @@
-mapper.systems.health = async function() {
+/**
+ * Resolve health cooldowns and deaths every frame.
+ *
+ * @param {number} dt - Seconds elapsed since the previous frame.
+ * @returns {Promise<void>} Resolves after any game-over transition is queued.
+ */
+mapper.systems.health = async function( dt ) {
 
 	const entities = b8.ECS.query( 'Health' );
 
@@ -9,6 +15,9 @@ mapper.systems.health = async function() {
 		// The entity may already have been removed by another system earlier in
 		// the frame, so skip it if the component no longer exists.
 		if ( !health ) continue;
+
+		// Damage immunity is a real-time effect, independent of player actions.
+		health.cooldownTimer = Math.max( 0, ( health.cooldownTimer || 0 ) - dt );
 
 		if ( health.value > 0 ) continue;
 

@@ -16,44 +16,35 @@ mapper.CONFIG = {
 	// helps stop held buttons from firing interaction logic every frame.
 	keyPressDelay: 0.25,
 
-	// Legacy real-time AI delay. The turn-based mapper now uses
-	// aiTickRateTurns instead, but this remains for backward compatibility.
+	// Time in seconds between enemy AI decisions, such as choosing a patrol,
+	// chase, or attack intent.
 	aiUpdateDelay: 0.5,
 
-	// Number of world turns between enemy AI decisions and movement.
-	aiTickRateTurns: 1,
+	// Time in seconds between automatic path follower tile steps.
+	pathFollowerStepDelay: 0.4,
 
-	// Number of world turns between automatic path follower steps.
-	pathFollowerTickRateTurns: 1,
+	// Time in seconds for a manually lit bomb fuse before it explodes.
+	bombFuseSeconds: 5,
 
-	// Number of world turns a bomb fuse lasts before exploding.
-	bombFuseTurns: 5,
+	// Time in seconds a regular fire survives before burning out. This keeps the
+	// recently increased fire lifetime while allowing it to expire in real time.
+	fireLifetimeSeconds: 10,
 
-	// Number of successful player actions a regular fire survives for before it
-	// burns out.
-	fireLifeTurns: 10,
+	// Heat gained per second by an entity next to a fire. With the default
+	// threshold and cooling values, a crate ignites after roughly 1.7 seconds.
+	fireHeatPerSecond: 70,
 
-	// Number of world turns between each fire spread attempt.
-	fireSpreadTurns: 1,
-
-	// Amount of heat a nearby fire adds to a flammable entity each world turn.
-	// With the default ignite threshold of 100 this makes crates ignite after
-	// two adjacent turns.
-	fireHeatPerTurn: 50,
-
-	// Amount of heat a flammable entity loses on turns where it was not heated
-	// by nearby fire.
-	flammableCoolingPerTurn: 10,
+	// Heat lost per second by a flammable entity that is not being heated.
+	flammableCoolingPerSecond: 10,
 
 	// Temperature at which a flammable entity ignites and runs its burn logic.
 	flammableIgniteThreshold: 100,
 
-	// Number of world turns a fire-small effect stays attached to a burning
-	// living entity.
-	fireSmallDurationTurns: 3,
+	// Time in seconds a fire-small effect stays attached to a burning entity.
+	fireSmallDurationSeconds: 3,
 
-	// Damage dealt per world turn by a fire-small effect.
-	fireSmallDamagePerTurn: 1,
+	// Damage dealt per second by a fire-small effect.
+	fireSmallDamagePerSecond: 0.75,
 
 	/**
 	 * Horizontal tile offset applied when drawing the map and entities.

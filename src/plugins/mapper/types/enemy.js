@@ -33,8 +33,6 @@ mapper.types.enemy = {
 				mode: mapper.ai.MODE.NONE,		// current intent: patrol|chase|attack|flee|loot|idle
 				startLoc: { col, row },			// starting location for patrols
 				targetId: mapper.player,		// entity id (player, item, etc)
-				tickRateTurns: parseInt( props.tickRateTurns ) || mapper.CONFIG.aiTickRateTurns,
-				turnsUntilAct: 0,
 				props: {
 					canLoot: false,
 					canDrop: false,
@@ -106,8 +104,8 @@ mapper.types.enemy = {
 				index,
 				mode: animationMode,
 				dirStep: 1,
-				tickRateTurns: mapper.CONFIG.pathFollowerTickRateTurns,
-				turnsUntilStep: 0,
+				// A new path can begin on the next frame.
+				timer: 0,
 				startDir: 'D',
 			}
 		);

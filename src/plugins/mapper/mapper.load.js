@@ -13,7 +13,6 @@ mapper.load = function( mapData ) {
 	mapper.bg = {};
 	mapper.currentMapId = null;
 	mapper.isGameOverPending = false;
-	mapper.turnCount = 0;
 
 	b8.Utilities.checkObject( 'mapData', mapData );
 
@@ -87,12 +86,23 @@ mapper.load = function( mapData ) {
 
 	// Add systems.
 
-	// Frame-time systems only. World-step gameplay systems are run explicitly
-	// through mapper.doWorldTurn() after successful player actions.
+	// AI runs first so it can select an intent before path following moves it.
+	b8.ECS.addSystem( 'ai', mapper.systems.ai );
+
+	// These systems all receive frame delta time and keep the world alive even
+	// while the player is standing still.
 	b8.ECS.addSystem( 'action-cooldown', mapper.systems.actionCooldown );
 	b8.ECS.addSystem( 'characterAnimation', mapper.systems.characterAnimation );
+	b8.ECS.addSystem( 'pathFollower', mapper.systems.pathFollower );
+	b8.ECS.addSystem( 'pressurePlate', mapper.systems.pressurePlate );
 	b8.ECS.addSystem( 'sprite', mapper.systems.sprite );
+	b8.ECS.addSystem( 'pickup', mapper.systems.pickup );
 	b8.ECS.addSystem( 'vfx', mapper.systems.vfx );
+	b8.ECS.addSystem( 'health', mapper.systems.health );
+	b8.ECS.addSystem( 'bomb', mapper.systems.bomb );
+	b8.ECS.addSystem( 'fire', mapper.systems.fire );
+	b8.ECS.addSystem( 'fireSmall', mapper.systems.fireSmall );
+	b8.ECS.addSystem( 'flammable', mapper.systems.flammable );
 
 	// Play music.
 	if ( mapper.settings.bgm ) b8.Music.play( mapper.settings.bgm );

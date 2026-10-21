@@ -11,10 +11,10 @@ mapper.actions.ignite = function( playerId ) {
 		// Ignite the bomb.
 		const bomb = b8.ECS.getComponent( targetId, 'Bomb' );
 		if ( !bomb ) continue;
-		if ( bomb.fuseTurns !== false ) continue;
+		if ( bomb.fuseTime !== false ) continue;
 
 		// Start the fuse.
-		bomb.fuseTurns = mapper.CONFIG.bombFuseTurns;
+		bomb.fuseTime = mapper.CONFIG.bombFuseSeconds;
 		didIgnite = true;
 
 	};

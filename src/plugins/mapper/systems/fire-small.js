@@ -1,5 +1,11 @@
 
-mapper.systems.fireSmall = function() {
+/**
+ * Update burning-character effects using real time.
+ *
+ * @param {number} dt - Seconds elapsed since the previous frame.
+ * @returns {void}
+ */
+mapper.systems.fireSmall = function( dt ) {
 
 	const smallFires = b8.ECS.query( 'FireSmall' );
 
@@ -29,15 +35,15 @@ mapper.systems.fireSmall = function() {
 
 		// Damage the burning parent while it is still alive.
 		if ( parentHealth ) {
-			parentHealth.value -= mapper.CONFIG.fireSmallDamagePerTurn;
+			parentHealth.value -= mapper.CONFIG.fireSmallDamagePerSecond * dt;
 
 			// If parent dies, extinguish the small fire.
-			if ( parentHealth.value < 0 ) smallFire.durationTurns = 0;
+			if ( parentHealth.value < 0 ) smallFire.duration = 0;
 		}
 
 		// Reduce the fire's duration.
-		smallFire.durationTurns--;
-		if ( smallFire.durationTurns > 0 ) continue;
+		smallFire.duration -= dt;
+		if ( smallFire.duration > 0 ) continue;
 
 		b8.ECS.removeEntity( entityId );
 

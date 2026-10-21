@@ -3,7 +3,13 @@
  *
  * Moves entities along predefined paths based on their PathFollower component.
  */
-mapper.systems.pathFollower = function() {
+/**
+ * Move entities along paths at a fixed real-time cadence.
+ *
+ * @param {number} dt - Seconds elapsed since the previous frame.
+ * @returns {void}
+ */
+mapper.systems.pathFollower = function( dt ) {
 
 	const ids = b8.ECS.query( "Loc", "PathFollower" );
 
@@ -15,12 +21,10 @@ mapper.systems.pathFollower = function() {
 		// Skip if no steps defined.
 		if ( !pf || !pf.steps.length ) continue;
 
-		// Update turn countdown.
-		if ( pf.turnsUntilStep > 0 ) {
-			pf.turnsUntilStep--;
-			continue;
-		}
-		pf.turnsUntilStep = Math.max( 0, ( pf.tickRateTurns || mapper.CONFIG.pathFollowerTickRateTurns ) - 1 );
+		// Wait until the next scheduled real-time path step.
+		pf.timer -= dt;
+		if ( pf.timer > 0 ) continue;
+		pf.timer = mapper.CONFIG.pathFollowerStepDelay;
 
 		// Check if step is a pause (stay in place).
 		const step = pf.steps[ pf.index ];

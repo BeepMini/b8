@@ -18,7 +18,8 @@ mapper.types.fireSmall = {
 					depth: 100,
 				},
 				FireSmall: {
-					durationTurns: props.durationTurns || props.duration || mapper.CONFIG.fireSmallDurationTurns,
+					// Store duration in seconds so the effect continues while idle.
+					duration: props.duration || mapper.CONFIG.fireSmallDurationSeconds,
 					parent: props.parent,
 				},
 			}
