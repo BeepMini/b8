@@ -1,3 +1,6 @@
+/**
+ * @file Define directional collision bit flags used by tile and movement code.
+ */
 ( function( b8 ) {
 
 	b8.Collision = {};

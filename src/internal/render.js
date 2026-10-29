@@ -1,3 +1,6 @@
+/**
+ * @file Present the offscreen canvas with scaling and screen effects.
+ */
 ( function( b8 ) {
 
 	// Define the Renderer object inside b8.
@@ -119,7 +122,7 @@
 		applyScanlines();
 		applyVignette();
 
-	}
+	};
 
 
 	/**
@@ -132,7 +135,7 @@
 		dirty = false;
 		screenshakeDuration = 0;
 
-	}
+	};
 
 
 	/**
@@ -178,7 +181,7 @@
 	/**
 	 * Triggers the screenshake effect.
 	 *
-	 * @param {number} durationSeconds - The duration of the screenshake effect in seconds.
+	 * @param {number} [durationSeconds=0.25] - The duration of the screenshake effect in seconds.
 	 * @returns {boolean} Returns true if the screenshake effect was successfully triggered.
 	 */
 	b8.Renderer.shakeScreen = function( durationSeconds = 0.25 ) {
@@ -194,7 +197,7 @@
 
 		return true;
 
-	}
+	};
 
 
 	/**
@@ -211,7 +214,7 @@
 		dirty = true;
 		setTimeout( b8.Renderer.render, 1 );
 
-	}
+	};
 
 
 } )( b8 );

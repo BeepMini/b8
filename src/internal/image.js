@@ -1,3 +1,6 @@
+/**
+ * @file Load images, cache palette lookups, and apply quantisation or ordered dithering.
+ */
 ( function( b8 ) {
 
 
@@ -9,7 +12,7 @@
 	 * Returns the same ImageData for chaining.
 	 *
 	 * @param {ImageData} imageData - The ImageData to quantise.
-	 * @param {object} lookupTable - The color lookup table.
+	 * @param {Object} lookupTable - The color lookup table.
 	 * @returns {ImageData} The quantised ImageData.
 	 */
 	b8.Image.quantiseImageData = function( imageData, lookupTable ) {
@@ -29,7 +32,7 @@
 
 		return imageData;
 
-	}
+	};
 
 
 	/**
@@ -56,7 +59,7 @@
 			b8.Utilities.fatal( error );
 		} );
 
-	}
+	};
 
 
 
@@ -66,8 +69,9 @@
 	 * @param {number} r - The red component (0-255).
 	 * @param {number} g - The green component (0-255).
 	 * @param {number} b - The blue component (0-255).
-	 * @param {string[]} palette - The color palette (array of hex strings).
-	 * @returns {string} The closest color in hex format.
+	 * @param {Object<string, Object>} lookupTable - RGB buckets from generateColorLookupTable.
+	 * @param {number} [bucketSize=4] - Bucket size used when generating the table.
+	 * @returns {{r:number,g:number,b:number}|undefined} The palette RGB value for the bucket.
 	 */
 	b8.Image.findClosestColorUsingLookup = function( r, g, b, lookupTable, bucketSize = 4 ) {
 
@@ -79,7 +83,7 @@
 		const key = `${roundedR},${roundedG},${roundedB}`;
 		return lookupTable[ key ];
 
-	}
+	};
 
 
 	// Cache the color lookup table to avoid recomputing it.
@@ -94,7 +98,7 @@
 	 *
 	 * @param {string[]} palette - The color palette (array of hex strings).
 	 * @param {number} [bucketSize=4] - The size of the color buckets.
-	 * @returns {object} The color lookup table.
+	 * @returns {Object} The color lookup table.
 	 */
 	b8.Image.generateColorLookupTable = function( palette, bucketSize = 4 ) {
 
@@ -121,7 +125,7 @@
 
 		return colorLookupTable;
 
-	}
+	};
 
 
 	/**
@@ -134,8 +138,8 @@
 	 * @param {number} r - The red component of the input color (0-255).
 	 * @param {number} g - The green component of the input color (0-255).
 	 * @param {number} b - The blue component of the input color (0-255).
-	 * @param {object[]} palette - The color palette, an array of objects with {r, g, b} properties.
-	 * @returns {object} The closest color in the palette, as an object {r, g, b}.
+	 * @param {Object[]} palette - The color palette, an array of objects with {r, g, b} properties.
+	 * @returns {Object} The closest color in the palette, as an object {r, g, b}.
 	 */
 	function findClosestColor( r, g, b, palette ) {
 
@@ -171,7 +175,7 @@
 	 * Bayer matrices (normalised to [-0.5, +0.5])
 	 * Used for ordered dithering.
 	 *
-	 * @type {object}
+	 * @type {Object}
 	 * @private
 	 */
 	const _bayer = {
@@ -223,7 +227,7 @@
 	 *
 	 * @param {ImageData} imageData - The ImageData to dither.
 	 * @param {function} mapFn - The function to map RGB values to the nearest palette color.
-	 * @param {object} [opts={}] - The options for dithering.
+	 * @param {Object} [opts={}] - The options for dithering.
 	 * @param {number} [opts.size=4] - The size of the Bayer matrix (2, 4, or 8).
 	 * @param {number} [opts.strength=0.5] - The strength of the dithering effect (0 to 1).
 	 * @param {number} [opts.amplitude=24] - The maximum bias in RGB units (0 to 255).
@@ -243,6 +247,13 @@
 		const w = imageData.width;
 		const h = imageData.height;
 
+		/**
+		 * Find the first channel of a pixel in the flat RGBA buffer.
+		 *
+		 * @param {number} x Pixel column.
+		 * @param {number} y Pixel row.
+		 * @returns {number} Red-channel buffer index.
+		 */
 		const idx = ( x, y ) => 4 * ( y * w + x );
 		const scale = amplitude * strength; // final scale in RGB units
 
@@ -268,7 +279,7 @@
 
 		return imageData;
 
-	}
+	};
 
 
 }( b8 ) );

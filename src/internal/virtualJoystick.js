@@ -1,3 +1,6 @@
+/**
+ * @file Create touch controls and translate their presses into engine input events.
+ */
 ( function( b8 ) {
 
 	/**
@@ -236,7 +239,7 @@
 
 		setTimeout( b8.Joystick.continueSetup, 10 );
 
-	}
+	};
 
 
 	/**
@@ -259,7 +262,7 @@
 		// context menus, selecting stuff, etc).
 		document.body.addEventListener( "touchstart", e => e.preventDefault() );
 
-	}
+	};
 
 
 	/**
@@ -317,7 +320,7 @@
 			( e ) => e.preventDefault()
 		);
 
-	}
+	};
 
 
 	/**
@@ -381,6 +384,6 @@
 
 		evt.preventDefault();
 
-	}
+	};
 
 } )( b8 );

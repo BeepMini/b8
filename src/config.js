@@ -1,3 +1,6 @@
+/**
+ * @file Default engine settings, palette, assets, input, and text rendering options.
+ */
 ( function( b8 ) {
 
 	// User config passed to b8.init() is merged with this object.

@@ -1,3 +1,6 @@
+/**
+ * @file Convert symbol maps, apply decoration rules, resolve autotiles, and draw tile data.
+ */
 ( function( b8 ) {
 
 	/**
@@ -275,7 +278,7 @@
 
 		return b8.Utilities.encodeData( tilemap );
 
-	}
+	};
 
 
 	/**
@@ -290,7 +293,7 @@
 
 		return b8.Utilities.decodeData( data );
 
-	}
+	};
 
 
 	/**
@@ -587,7 +590,7 @@
 	 * @param {Array} tilemap The tilemap array to modify.
 	 * @param {number} col The x coordinate of the tile to set.
 	 * @param {number} row The y coordinate of the tile to set.
-	 * @param {Array|Object} tile The tile data to set at the specified coordinates.
+	 * @param {Array|Object} [tile=null] The tile data to set at the specified coordinates.
 	 * @returns {void}
 	 */
 	b8.Tilemap.setTile = function( tilemap, col, row, tile = null ) {
@@ -748,7 +751,7 @@
 
 		return map;
 
-	}
+	};
 
 
 	/**
@@ -856,7 +859,7 @@
 	/**
 	 * Check the validity of the encoded tilemap data.
 	 *
-	 * The checks are simple, but reduces liklihood of invalid data being used.
+	 * The checks are simple, but reduces likelihood of invalid data being used.
 	 *
 	 * @param {string} mapText The encoded tilemap data.
 	 * @returns {boolean} True if the tilemap is valid, false otherwise.
@@ -879,7 +882,7 @@
 
 		return true;
 
-	}
+	};
 
 
 	/**
@@ -982,7 +985,7 @@
 
 		return tilemap;
 
-	}
+	};
 
 
 	/**
@@ -1024,7 +1027,7 @@
 	 * @param {string} name The unprefixed set name, e.g. 'brick' for 'auto:brick'.
 	 * @param {Object} tileSet The autotile set definition. Also available via wall:brick.
 	 * @param {Object} tileSet.tiles The tile ids for each bitmask value.
-	 * @param {Object} [tileSet.colours] Optional {fg, bg} entries keyed by mask; colors is an alias.
+	 * @param {Object} [tileSet.colours] Optional foreground/background entries keyed by mask; colors is an alias.
 	 * Each channel can be a number or a weighted random array. Missing/null
 	 * colours fall back to the map tile's normal foreground/background.
 	 * @param {string} [tileSet.edgeMode="open"] How map edges are handled: "open", "connect", or "wrap".
@@ -1041,7 +1044,7 @@
 
 		autotileSets[ name ] = normaliseAutotileSet( tileSet );
 
-	}
+	};
 
 
 	/**
@@ -1060,18 +1063,18 @@
 
 		return { ...autotileSets[ name ] };
 
-	}
+	};
 
 
 	/**
-	 * Select an autotile tile from a predefined list based on the surrounding tiles.
+	 * Select an autotile from a predefined list based on the surrounding tiles.
 	 * The grid is the 2D array of tile ids.
 	 * The x and y are the coordinates of the tile to check.
 	 *
-	 * @param {number} x The x coordinate of the tile.
-	 * @param {number} y The y coordinate of the tile.
+	 * @param {number} col The column coordinate of the tile.
+	 * @param {number} row The row coordinate of the tile.
 	 * @param {Array} grid The 2D array of tile ids.
-	 * @param {string} name The name of the autotile tile to select. Picked from the default lists of autotile patterns.
+	 * @param {string} [name=null] The name of the autotile to select. Picked from the default lists of autotile patterns.
 	 * @param {Function} [getType] Read autotile identity from a source character or resolved cell.
 	 * @returns {{tileId: number|Array, mask: number, colours: Object|undefined}} Artwork, connectivity and optional colours.
 	 */
@@ -1099,7 +1102,7 @@
 
 
 	/**
-	 * Normalise an autotile tile set to ensure it has 16 entries, one for each bitmask value.
+	 * Normalise an autotile set to ensure it has 16 entries, one for each bitmask value.
 	 * If any entries are missing, they will be filled in with the corresponding entry from the default "solid" tile set.
 	 *
 	 * @param {Object} tileSet The autotile set to normalise.
@@ -1133,7 +1136,7 @@
 
 
 	/**
-	 * Compute a 4-bit bitmask for an autotile tile based on its surrounding tiles.
+	 * Compute a 4-bit bitmask for an autotile based on its surrounding tiles.
 	 *
 	 * The bitmask checks the four adjacent tiles: north, east, south, and west.
 	 * If an adjacent tile matches the current autotile type, the corresponding

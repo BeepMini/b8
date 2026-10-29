@@ -1,3 +1,6 @@
+/**
+ * @file Create, update, and draw short-lived square particles in pixel coordinates.
+ */
 ( function( b8 ) {
 
 	/**
@@ -18,9 +21,11 @@
 	 * - life: remaining life time (seconds, default=1),
 	 * - size: square size (pixels, default=1),
 	 * - color: fill color (a b8 palette id, default=15).
-	 * - gravity: gravity (pixels per second, default=0).
+	 * - gravity: vertical acceleration (pixels per second squared, default=0).
 	 *
-	 * @param {object} particle - The particle object to add.
+	 * @param {number} x - Initial horizontal position in pixels.
+	 * @param {number} y - Initial vertical position in pixels.
+	 * @param {Object} props - Particle options merged over the defaults above.
 	 * @returns {void}
 	 */
 	b8.Particles.add = function( x, y, props ) {
@@ -66,7 +71,7 @@
 
 		b8.Particles.clearAll();
 
-	}
+	};
 
 
 	/**
@@ -79,12 +84,12 @@
 	 * - color: The color of the particles (a b8 palette id, default=fgColor).
 	 * - life: The life of the particles (in seconds, default=2).
 	 * - speed: The speed of the particles (in pixels per second, default=25).
-	 * - gravity: The gravity of the particles (in pixels per second, default=0).
+	 * - gravity: Vertical acceleration (in pixels per second squared, default=0).
 	 *
 	 * @param {number} x - The x position of the explosion.
 	 * @param {number} y - The y position of the explosion.
-	 * @param {number} count - The number of particles to add.
-	 * @param {object} props - The properties of the explosion.
+	 * @param {number} [count=10] - The number of particles to add.
+	 * @param {Object} [props={}] - The properties of the explosion.
 	 * @returns {void}
 	 */
 	b8.Particles.createExplosion = function( x, y, count = 10, props = {} ) {

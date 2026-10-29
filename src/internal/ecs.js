@@ -1,3 +1,6 @@
+/**
+ * @file Store entity components, index tile locations, and run ordered gameplay systems.
+ */
 ( function( b8 ) {
 	'use strict';
 
@@ -77,6 +80,7 @@
 	 * @param {string} name Unique system name
 	 * @param {Function} fn System function (dt)=>void
 	 * @param {number} [order=100] Lower numbers run first
+	 * @returns {void}
 	 */
 	b8.ECS.addSystem = function( name, fn, order = 100 ) {
 
@@ -92,12 +96,13 @@
 
 
 	/**
-	 * Add a system a single time. Don't overwite existing systems or add multiple copies.
+	 * Add a system a single time. Don't overwrite existing systems or add multiple copies.
 	 *
 	 * @param {string} name Unique system name
 	 * @param {Function} fn System function (dt)=>void
 	 * @param {number} [order=0] Lower numbers run first
 	 * @note The previous (fn, name, order) argument order is also supported.
+	 * @returns {void}
 	 */
 	b8.ECS.addSystemOnce = function( name, fn, order = 0 ) {
 
@@ -119,6 +124,7 @@
 	 * Remove a previously-registered system.
 	 *
 	 * @param {string} name
+	 * @returns {void}
 	 */
 	b8.ECS.removeSystem = function( name ) {
 
@@ -132,7 +138,8 @@
 	 * Optionally pass a filter:  (name)=>boolean
 	 *
 	 * @param {number} dt Delta-time in seconds
-	 * @param {(name:string)=>boolean=} filter Skip systems that return false
+	 * @param {(name:string)=>boolean=} [filter] Skip systems that return false
+	 * @returns {void}
 	 */
 	b8.ECS.run = function( dt, filter = () => true ) {
 
@@ -155,7 +162,7 @@
 	 * for spatial queries using b8.ECS.setLoc().
 	 *
 	 * @param {number} id Entity ID
-	 * @param {string} name Component name
+	 * @param {string} [name=null] Component name
 	 * @param {Object} [data={}] Component data (stored by reference)
 	 * @returns {void}
 	 */
@@ -179,7 +186,7 @@
 
 	/**
 	 * Set a component on an entity, overwriting any existing data.
-	 * This is a convenience method for add().
+	 * This is a convenience method for addComponent().
 	 *
 	 * @param {number} id Entity ID
 	 * @param {string} name Component name
@@ -253,7 +260,7 @@
 	 * Return *all* components for a given entity.
 	 *
 	 * @param {number} id Entity ID
-	 * @returns {Map<string, Object>} Map of name → data
+	 * @returns {Object<string, Object>} Component names mapped to their stored data.
 	 */
 	b8.ECS.getEntity = function( id ) {
 

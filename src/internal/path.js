@@ -1,3 +1,6 @@
+/**
+ * @file Parse compact movement commands into tile-coordinate paths.
+ */
 ( function( b8 ) {
 
 	b8.Path = {};
@@ -39,9 +42,9 @@
 	 * "R5P" - right 5, pause 1
 	 *
 	 * @param {string} code - The path code string.
-	 * @param {number} startCol - The starting column position.
-	 * @param {number} startRow - The starting row position.
-	 * @param {string} initialDir - The initial facing direction ('U', 'D', 'L', 'R').
+	 * @param {number} [startCol=0] - The starting column position.
+	 * @param {number} [startRow=0] - The starting row position.
+	 * @param {string} [initialDir='D'] - The initial facing direction ('U', 'D', 'L', 'R').
 	 * @returns {Array} Array of steps with col, row, and dir properties.
 	 */
 	b8.Path.parseCode = function( code, startCol = 0, startRow = 0, initialDir = 'D' ) {
@@ -123,7 +126,7 @@
 
 		return steps;
 
-	}
+	};
 
 
 	/**
@@ -163,7 +166,7 @@
 
 		return true;
 
-	}
+	};
 
 
 	/**
@@ -193,8 +196,9 @@
 	 * @param {Array} steps - The array to store steps.
 	 * @param {number} col - The x-coordinate of the step.
 	 * @param {number} row - The y-coordinate of the step.
-	 * @param {string|null} dir - The direction of the step.
-	 * @param {number} count - The number of steps to push.
+	 * @param {string|null} [dir=null] - The direction of the step.
+	 * @param {number} [count=1] - The number of steps to push.
+	 * @returns {void}
 	 */
 	function _pushStep( steps, col, row, dir = null, count = 1 ) {
 

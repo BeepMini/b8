@@ -1,3 +1,6 @@
+/**
+ * @file Generate seeded random values, weighted choices, shuffles, and coordinate noise.
+ */
 ( function( b8 ) {
 
 	b8.Random = {};
@@ -14,7 +17,7 @@
 	 * Sets the seed for the random number generator.
 	 * If the seed is null, the random number generator will reset to use the current time.
 	 *
-	 * @param {number|string} seed - The seed to use for the random number generator.
+	 * @param {number|string} [seed=null] - The seed to use for the random number generator.
 	 * @returns {void}
 	 */
 	b8.Random.setSeed = function( seed = null ) {
@@ -41,7 +44,7 @@
 			b8.Random.num();
 		}
 
-	}
+	};
 
 
 	/**
@@ -53,7 +56,7 @@
 
 		return randomSeed;
 
-	}
+	};
 
 
 	/**
@@ -71,14 +74,14 @@
 
 		return randomSeed / m;
 
-	}
+	};
 
 
 	/**
 	 * Returns a random number (float) in the given closed interval.
 	 *
-	 * @param {number} min - The minimum value (inclusive).
-	 * @param {number} max - The maximum value (inclusive).
+	 * @param {number} [min=0] - The minimum value (inclusive).
+	 * @param {number} [max=1] - The maximum value (inclusive).
 	 * @returns {number} A random number between min and max.
 	 */
 	b8.Random.range = function( min = 0, max = 1 ) {
@@ -95,7 +98,7 @@
 
 		return min + b8.Random.num() * ( max - min );
 
-	}
+	};
 
 
 	/**
@@ -113,7 +116,7 @@
 		const randomValue = b8.Random.range( min, max );
 		return Math.round( randomValue );
 
-	}
+	};
 
 
 	/**
@@ -131,7 +134,7 @@
 
 		return array[ index ];
 
-	}
+	};
 
 
 	const weightedArrayCache = new Map();
@@ -141,7 +144,7 @@
 	 * Returns a randomly picked element of the given array, with a weighted probability.
 	 *
 	 * @param {Array} array - The array to pick from, with each element repeated a number of times.
-	 * @param {number} decayFactor - The decay factor for the weighted array.
+	 * @param {number} [decayFactor=0.2] - The decay factor for the weighted array.
 	 * @returns {any} A randomly picked element of the array, or null if the array is empty.
 	 */
 	b8.Random.pickWeighted = function( array, decayFactor = 0.2 ) {
@@ -186,7 +189,7 @@
 
 		return array;
 
-	}
+	};
 
 
 	/**
@@ -201,7 +204,7 @@
 
 		return b8.Random.num() <= ( probability / 100 );
 
-	}
+	};
 
 
 	/**
@@ -209,7 +212,7 @@
 	 * The array uses a decay factor to determine the number of times each element should be repeated.
 	 *
 	 * @param {Array} array - The array to weight.
-	 * @param {number} decayFactor - The decay factor for the weighted array.
+	 * @param {number} [decayFactor=0.2] - The decay factor for the weighted array.
 	 * @returns {Array} The weighted array.
 	 */
 	b8.Random.weightedArray = function( array, decayFactor = 0.2 ) {
@@ -227,7 +230,7 @@
 
 		return weightedArray;
 
-	}
+	};
 
 
 	/**
@@ -248,7 +251,7 @@
 		h ^= h >>> 16;
 		return ( h >>> 0 ) / 4294967296;
 
-	}
+	};
 
 
 	/**
@@ -257,8 +260,8 @@
 	 *
 	 * @param {number} x - The x coordinate.
 	 * @param {number} y - The y coordinate.
-	 * @param {number} seed - The seed value.
-	 * @param {number} freq - The frequency of the noise.
+	 * @param {number} [seed=0] - The seed value.
+	 * @param {number} [freq=1] - The frequency of the noise.
 	 * @returns {number} A smooth noise value between 0 and 1.
 	 */
 	b8.Random.smooth2D = function( x, y, seed = 0, freq = 1 ) {
@@ -287,7 +290,7 @@
 		const i2 = b8.Math.lerp( v01, v11, u );
 		return b8.Math.lerp( i1, i2, v );
 
-	}
+	};
 
 
 	/**
@@ -303,9 +306,8 @@
 
 		b8.Random.setSeed();
 
-	}
+	};
 
 
 
 } )( b8 );
-

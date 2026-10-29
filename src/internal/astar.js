@@ -1,3 +1,6 @@
+/**
+ * @file Find four-directional tile paths with A* and a Manhattan-distance heuristic.
+ */
 ( function( b8 ) {
 
 	b8.AStar = {};
@@ -220,6 +223,6 @@
 
 		return null; // No path found
 
-	}
+	};
 
 } )( b8 );

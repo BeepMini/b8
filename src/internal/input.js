@@ -1,3 +1,6 @@
+/**
+ * @file Track keyboard and pointer input with separate gameplay and modal input contexts.
+ */
 ( function( b8 ) {
 
 	/**
@@ -203,7 +206,7 @@
 	 */
 	b8.Input.pointerX = function() {
 		return pointer_.x;
-	}
+	};
 
 
 	/**
@@ -213,7 +216,7 @@
 	 */
 	b8.Input.pointerY = function() {
 		return pointer_.y;
-	}
+	};
 
 
 	/**
@@ -223,7 +226,7 @@
 	 */
 	b8.Input.pointerJustPressed = function() {
 		return pointer_.justPressed;
-	}
+	};
 
 
 	/**
@@ -233,7 +236,7 @@
 	 */
 	b8.Input.pointerJustReleased = function() {
 		return pointer_.justReleased;
-	}
+	};
 
 
 	/**
@@ -248,7 +251,7 @@
 			row: Math.floor( pointer_.y / b8.CONFIG.CHR_HEIGHT ),
 		};
 
-	}
+	};
 
 
 	/**
@@ -258,6 +261,7 @@
 	 * @param {Object} [opts={}] - Options for the context.
 	 * @param {boolean} [opts.capture=false] - If true, gameplay polling is blocked.
 	 * @param {boolean} [opts.passthrough=false] - If true, allows gameplay justPressed events even when capturing.
+	 * @returns {void}
 	 */
 	b8.Input.pushContext = function( name, opts = {} ) {
 
@@ -270,19 +274,20 @@
 			}
 		);
 
-	}
+	};
 
 
 	/**
 	 * Pops the most recent input context from the stack.
 	 *
 	 * Ensures that at least one context (the default "game" context) remains on the stack.
+	 * @returns {void}
 	 */
 	b8.Input.popContext = function() {
 
 		if ( contexts_.length > 1 ) contexts_.pop();
 
-	}
+	};
 
 
 	/**
@@ -304,7 +309,7 @@
 			b8.Input.popContext();
 		}
 
-	}
+	};
 
 
 	/**
@@ -324,7 +329,7 @@
 		unbindEvents_();
 		b8.Input.onEndFrame();
 
-	}
+	};
 
 
 	/**
@@ -337,7 +342,7 @@
 		b8.Input.reset();
 		bindEvents_();
 
-	}
+	};
 
 
 	/**
@@ -350,7 +355,7 @@
 
 		return keysHeldRaw_.has( keyName.toUpperCase() );
 
-	}
+	};
 
 
 	/**
@@ -368,7 +373,7 @@
 
 		return gameJustPressed_.has( key );
 
-	}
+	};
 
 
 	/**
@@ -384,7 +389,7 @@
 		pointer_.justPressed = false;
 		pointer_.justReleased = false;
 
-	}
+	};
 
 
 	/**
@@ -420,7 +425,7 @@
 			b8.Core.resolveAsync( "b8.Async.key", keys );
 		}
 
-	}
+	};
 
 
 	/**
@@ -435,7 +440,7 @@
 
 		removeKeysFromSet_( keysHeldRaw_, b8.Input.getKeys( e.key ) );
 
-	}
+	};
 
 
 	/**
@@ -462,7 +467,7 @@
 			}
 		);
 
-	}
+	};
 
 
 	/**
@@ -479,7 +484,7 @@
 			}
 		);
 
-	}
+	};
 
 
 	/**
@@ -493,7 +498,7 @@
 
 		return KEY_ALIASES_[ key.toUpperCase() ] || [ key ];
 
-	}
+	};
 
 
 	/**
@@ -502,6 +507,7 @@
 	 * Marks the pointer as pressed and updates position.
 	 *
 	 * @param {PointerEvent} e
+	 * @returns {void}
 	 */
 	b8.Input.onPointerDown = function( e ) {
 
@@ -520,7 +526,7 @@
 			b8.Core.resolveAsync( "b8.Async.pointer", pos );
 		}
 
-	}
+	};
 
 
 	/**
@@ -529,6 +535,7 @@
 	 * Marks the pointer as released.
 	 *
 	 * @param {PointerEvent} e
+	 * @returns {void}
 	 */
 	b8.Input.onPointerUp = function( e ) {
 
@@ -542,7 +549,7 @@
 		pointer_.tapX = pos.x;
 		pointer_.tapY = pos.y;
 
-	}
+	};
 
 
 	/**
@@ -551,7 +558,7 @@
 	 * This is used for hover states and dragging, but does not trigger any immediate-mode UI interactions on its own.
 	 *
 	 * @param {PointerEvent} e
-	 * @return {void}
+	 * @returns {void}
 	 */
 	b8.Input.onPointerMove = function( e ) {
 
@@ -559,7 +566,7 @@
 		pointer_.x = pos.x;
 		pointer_.y = pos.y;
 
-	}
+	};
 
 
 	/**
@@ -575,7 +582,7 @@
 		pointer_.justPressed = false;
 		pointer_.justReleased = false;
 
-	}
+	};
 
 
 	/**
@@ -587,7 +594,7 @@
 
 		return !!pointer_.isDown;
 
-	}
+	};
 
 
 	/**
@@ -603,7 +610,7 @@
 
 		return pointer_.tapX !== null && pointer_.tapY !== null;
 
-	}
+	};
 
 
 	/**
@@ -622,7 +629,7 @@
 			col: Math.floor( pointer_.tapX / b8.CONFIG.CHR_WIDTH ),
 			row: Math.floor( pointer_.tapY / b8.CONFIG.CHR_HEIGHT ),
 		};
-	}
+	};
 
 
 	/**
@@ -637,7 +644,7 @@
 		pointer_.tapX = null;
 		pointer_.tapY = null;
 
-	}
+	};
 
 
 	/**

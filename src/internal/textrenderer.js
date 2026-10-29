@@ -1,3 +1,6 @@
+/**
+ * @file Lay out and draw text, boxes, fonts, and sprite characters on the offscreen canvas.
+ */
 ( function( b8 ) {
 
 	b8.TextRenderer = {};
@@ -74,7 +77,7 @@
 			charMap.push( charString[ i ].charCodeAt( 0 ) );
 		}
 
-	}
+	};
 
 
 	/**
@@ -101,7 +104,7 @@
 		// Prepare the charMap array.
 		b8.TextRenderer.prepareCharMap();
 
-	}
+	};
 
 
 	/**
@@ -111,7 +114,7 @@
 	 * @param {string} fontImageFile - The URL of the image file for the font.
 	 * @param {number} [tileSizeWidthMultiplier=1] - The tile size width multiplier for the font.
 	 * @param {number} [tileSizeHeightMultiplier=1] - The tile size height multiplier for the font.
-	 * @param {object} [options={}] - Options passed to TextRendererFont.
+	 * @param {Object} [options={}] - Options passed to TextRendererFont.
 	 * @returns {Promise<void>}
 	 */
 	b8.TextRenderer.loadFontAsync = async function( fontName, fontImageFile, tileSizeWidthMultiplier = 1, tileSizeHeightMultiplier = 1, options = {} ) {
@@ -126,7 +129,7 @@
 
 		return font;
 
-	}
+	};
 
 
 	/**
@@ -144,7 +147,7 @@
 			b8.TextRenderer.curFont_ = font;
 		}
 
-	}
+	};
 
 
 	/**
@@ -156,7 +159,7 @@
 
 		return b8.TextRenderer.curFont_;
 
-	}
+	};
 
 
 	/**
@@ -173,7 +176,7 @@
 			b8.TextRenderer.curTiles_ = font;
 		}
 
-	}
+	};
 
 
 	/**
@@ -194,7 +197,7 @@
 
 		return font;
 
-	}
+	};
 
 
 	/**
@@ -271,7 +274,7 @@
 
 		b8.Renderer.markDirty();
 
-	}
+	};
 
 
 	/**
@@ -320,7 +323,7 @@
 
 		}
 
-	}
+	};
 
 
 	/**
@@ -367,7 +370,7 @@
 		// Reset cursor position.
 		b8.Core.drawState.cursorCol = col;
 
-	}
+	};
 
 
 	/**
@@ -416,7 +419,7 @@
 		// Reset cursor position.
 		b8.Core.drawState.cursorCol = col;
 
-	}
+	};
 
 
 	/**
@@ -464,7 +467,7 @@
 
 		b8.Renderer.markDirty();
 
-	}
+	};
 
 
 	/**
@@ -495,7 +498,7 @@
 			direction
 		);
 
-	}
+	};
 
 
 	/**
@@ -536,7 +539,7 @@
 			ctx.restore();
 		}
 
-	}
+	};
 
 
 	/**
@@ -597,7 +600,7 @@
 
 		}
 
-	}
+	};
 
 
 	/**
@@ -640,7 +643,7 @@
 
 		return { cols, rows };
 
-	}
+	};
 
 
 	/**
@@ -669,7 +672,7 @@
 		b8.Core.drawState.cursorCol = startCol;
 		b8.Core.drawState.cursorRow = startRow;
 
-	}
+	};
 
 
 	/**
@@ -678,7 +681,7 @@
 	 * @param {number} width - The width of the box.
 	 * @param {number} height - The height of the box.
 	 * @param {boolean} [fill=true] - Whether to fill the box.
-	 * @param {number} [borderCh=b8.CONFIG.BORDER_CHAR] - The character to use for the border.
+	 * @param {number} [borderChar=b8.CONFIG.BORDER_CHAR] - The character to use for the border.
 	 * @returns {void}
 	 */
 	b8.TextRenderer.printBox = function( width, height, fill = true, borderChar = b8.CONFIG.BORDER_CHAR ) {
@@ -692,7 +695,7 @@
 
 		b8.TextRenderer.drawBox( width, height, fill, borders );
 
-	}
+	};
 
 
 	/**
@@ -701,13 +704,17 @@
 	 * @param {number} width - The width of the box.
 	 * @param {number} height - The height of the box.
 	 * @param {boolean} [fill=true] - Whether to fill the box.
-	 * @param {Object} [borders] - The borders to use.
+	 * @param {Object} [borders={}] - The borders to use.
 	 * @param {number} [borders.NW] - The top-left corner character.
 	 * @param {number} [borders.NE] - The top-right corner character.
 	 * @param {number} [borders.SW] - The bottom-left corner character.
 	 * @param {number} [borders.SE] - The bottom-right corner character.
 	 * @param {number} [borders.V] - The vertical border character.
 	 * @param {number} [borders.H] - The horizontal border character.
+	 * @param {number} [fillChar=0] - Character used inside a filled box.
+	 * @param {Object} [options={}] - Independent colour inversion settings.
+	 * @param {boolean} [options.invertBorder=false] - Swap border foreground and background.
+	 * @param {boolean} [options.invertFill=false] - Swap fill foreground and background.
 	 * @returns {void}
 	 */
 	b8.TextRenderer.drawBox = function(
@@ -805,7 +812,7 @@
 			}
 		);
 
-	}
+	};
 
 
 	/**
@@ -813,7 +820,7 @@
 	 *
 	 * @param {string} text - The text to wrap.
 	 * @param {number} maxWidth - The width to wrap the text to.
-	 * @param {b8.TextRendererFont} fontName - The font to use.
+	 * @param {b8.TextRendererFont|null} [font=null] - Font instance; null uses the current font.
 	 * @returns {string} The wrapped text.
 	 */
 	b8.TextRenderer.wrapText = function( text, maxWidth, font = null ) {
@@ -855,7 +862,7 @@
 
 		return wrappedLines.join( "\n" );
 
-	}
+	};
 
 
 	/**
@@ -1077,7 +1084,7 @@
 		// Tell all the fonts to regenerate their glyph images.
 		Object.values( b8.TextRenderer.fonts_ ).forEach( f => f.regenColors() );
 
-	}
+	};
 
 
 	/**

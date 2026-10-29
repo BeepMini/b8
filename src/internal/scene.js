@@ -1,3 +1,6 @@
+/**
+ * @file Register scenes and switch, pause, or resume their frame callbacks.
+ */
 ( function( b8 ) {
 
 	/**
@@ -38,10 +41,11 @@
 	 * }
 	 *
 	 * @param {string} name - The name of the scene.
-	 * @param {object|null} [gameObject=null] - An optional object that includes init, update, and
+	 * @param {Object|null} [gameObject=null] - An optional object that includes init, update, and
 	 * render methods as well as other properties for the scene. If update and
 	 * render are set then these will be passed to `b8.frame`.
-	 * @param {number} frameRate - The frame rate at which to update and render
+	 * @param {number} [frameRate=30] - The frame rate at which to update and render
+	 * @returns {void}
 	 */
 	b8.Scene.add = function( name, gameObject = null, frameRate = 30 ) {
 
@@ -66,7 +70,7 @@
 
 
 	/**
-	 * Removes a scene by name.
+	 * Removes all registered scenes and clears the active scene name.
 	 *
 	 * @returns {void}
 	 */
@@ -87,6 +91,7 @@
 	 * Switches to a specified scene by name.
 	 *
 	 * @param {string} name - The name of the scene to switch to.
+	 * @returns {void}
 	 */
 	b8.Scene.set = function( name ) {
 

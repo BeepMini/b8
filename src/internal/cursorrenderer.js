@@ -1,3 +1,6 @@
+/**
+ * @file Draw and animate the text cursor without changing the underlying character grid.
+ */
 ( function( b8 ) {
 
 	/**
@@ -40,7 +43,7 @@
 			);
 		}
 
-	}
+	};
 
 
 	/**
@@ -72,7 +75,7 @@
 			font.charWidth_ - 2, font.charHeight_ - 2
 		);
 
-	}
+	};
 
 
 	/**

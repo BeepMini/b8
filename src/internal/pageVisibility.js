@@ -1,3 +1,6 @@
+/**
+ * @file Emit sleep and wake events when browser focus or document visibility changes.
+ */
 ( function( b8 ) {
 
 	let timeHidden = 0;

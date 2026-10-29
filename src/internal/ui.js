@@ -1,3 +1,6 @@
+/**
+ * @file Draw text and icon buttons and consume pointer taps within tile-grid regions.
+ */
 ( function( b8 ) {
 
 	/**
@@ -23,7 +26,7 @@
 	 * - A tap persists until consumed
 	 * - Only one region can consume a tap
 	 *
-	 * @param {Object} opts
+	 * @param {Object} [opts={}]
 	 * @param {number} [opts.width=1] Width in tiles
 	 * @param {number} [opts.height=1] Height in tiles
 	 * @param {boolean} [opts.disabled=false] Whether the region is inactive
@@ -43,7 +46,7 @@
 	/**
 	 * Draws a simple text button at the current cursor position.
 	 *
-	 * @param {Object} opts
+	 * @param {Object} [opts={}]
 	 * @param {number} [opts.width=1]
 	 * @param {number} [opts.height=1]
 	 * @param {string} [opts.label=""]
@@ -77,7 +80,7 @@
 	/**
 	 * Draws a simple icon button at the current cursor position.
 	 *
-	 * @param {Object} opts
+	 * @param {Object} [opts={}]
 	 * @param {number} [opts.width=1]
 	 * @param {number} [opts.height=1]
 	 * @param {number} opts.icon Character / tile index
@@ -102,7 +105,7 @@
 			disabled,
 		} );
 
-	}
+	};
 
 
 	/**
@@ -111,7 +114,7 @@
 	 *
 	 * @param {number} [length=5] - The length of the progress bar.
 	 * @param {number} [percent=0] - The percentage of the progress bar to fill.
-	 * @return {void}
+	 * @returns {void}
 	 */
 	b8.UI.progressBar = function( length = 5, percent = 0 ) {
 
@@ -147,13 +150,13 @@
 			b8.CONFIG.CHR_HEIGHT
 		);
 
-	}
+	};
 
 
 	/**
 	 * Builds a rectangle from the current cursor position.
 	 *
-	 * @param {Object} opts
+	 * @param {Object} [opts={}]
 	 * @returns {{col:number,row:number,width:number,height:number,disabled:boolean}}
 	 */
 	function getCurrentRect_( opts = {} ) {
@@ -203,11 +206,10 @@
 	/**
 	 * Draws the base button background.
 	 *
-	 * @param {number} col
-	 * @param {number} row
 	 * @param {number} width
 	 * @param {number} height
-	 * @returns {{fg:number,bg:number}} Previous colours
+	 * @param {string} [style="plain"] Box style passed to printStyledBox.
+	 * @returns {{oldFg:number,oldBg:number}} Previous palette colours.
 	 */
 	function drawButtonBase_( width, height, style = "plain" ) {
 
@@ -273,7 +275,8 @@
 	 * @param {number} row
 	 * @param {number} width
 	 * @param {number} height
-	 * @param {number} char Tile index / character code
+	 * @param {number} icon Tile index / character code
+	 * @param {string} style Box style passed to printStyledBox.
 	 * @param {boolean} disabled
 	 * @returns {void}
 	 */

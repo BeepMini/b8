@@ -1,3 +1,6 @@
+/**
+ * @file Track item counts and progression flags inside persistent game state.
+ */
 ( function( b8 ) {
 
 	b8.Inventory = {};
@@ -41,7 +44,7 @@
 
 		return b8.data.inventory.counts[ id ] ?? 0;
 
-	}
+	};
 
 
 	/**
@@ -52,13 +55,14 @@
 	 * @param {string} id The item ID to add.
 	 * @param {number} [amount=1] The amount to add (default: 1).
 	 * @param {number} [max=Infinity] The maximum amount allowed (default: Infinity).
+	 * @returns {void}
 	 */
 	b8.Inventory.add = function( id, amount = 1, max = Infinity ) {
 
 		const current = b8.Inventory.getCount( id );
 		b8.data.inventory.counts[ id ] = Math.min( current + amount, max );
 
-	}
+	};
 
 
 	/**
@@ -68,13 +72,14 @@
 	 *
 	 * @param {string} id The item ID to remove.
 	 * @param {number} [amount=1] The amount to remove (default: 1).
+	 * @returns {void}
 	 */
 	b8.Inventory.remove = function( id, amount = 1 ) {
 
 		const current = b8.Inventory.getCount( id );
 		b8.data.inventory.counts[ id ] = Math.max( current - amount, 0 );
 
-	}
+	};
 
 
 	/**
@@ -88,7 +93,7 @@
 
 		return b8.Inventory.getCount( id ) >= amount;
 
-	}
+	};
 
 
 	/**
@@ -98,12 +103,13 @@
 	 *
 	 * @param {string} flag The flag name to set.
 	 * @param {boolean} [value=true] The value to set the flag to (default: true).
+	 * @returns {void}
 	 */
 	b8.Inventory.setFlag = function( flag, value = true ) {
 
 		b8.data.inventory.flags[ flag ] = value;
 
-	}
+	};
 
 
 	/**
@@ -120,7 +126,7 @@
 
 		return !!b8.data.inventory.flags[ flag ];
 
-	}
+	};
 
 
 	/**
@@ -171,7 +177,7 @@
 
 		return out;
 
-	}
+	};
 
 
 

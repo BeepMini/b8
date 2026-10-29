@@ -1,3 +1,6 @@
+/**
+ * @file Validate arguments and provide shared data, colour, event, and encoding helpers.
+ */
 ( function( b8 ) {
 
 	b8.Utilities = {};
@@ -24,7 +27,7 @@
 
 		throw new Error( error );
 
-	}
+	};
 
 
 	/**
@@ -42,7 +45,7 @@
 
 		return cond;
 
-	}
+	};
 
 
 	/**
@@ -66,7 +69,7 @@
 
 		return cond;
 
-	}
+	};
 
 
 	/**
@@ -85,7 +88,7 @@
 
 		return actual;
 
-	}
+	};
 
 
 	/**
@@ -107,7 +110,7 @@
 
 		return varValue;
 
-	}
+	};
 
 
 	/**
@@ -141,7 +144,7 @@
 
 		return varValue;
 
-	}
+	};
 
 
 	/**
@@ -163,7 +166,7 @@
 
 		return varValue;
 
-	}
+	};
 
 
 	/**
@@ -177,7 +180,7 @@
 
 		return b8.Utilities.checkType( varName, varValue, "string" );
 
-	}
+	};
 
 
 	/**
@@ -191,7 +194,7 @@
 
 		return b8.Utilities.checkType( varName, varValue, "boolean" );
 
-	}
+	};
 
 
 	/**
@@ -209,7 +212,7 @@
 
 		return b8.Utilities.checkType( varName, varValue, "function" );
 
-	}
+	};
 
 
 	/**
@@ -227,7 +230,7 @@
 
 		return b8.Utilities.checkType( varName, varValue, "object" );
 
-	}
+	};
 
 
 	/**
@@ -247,7 +250,7 @@
 
 		return varValue;
 
-	}
+	};
 
 
 	/**
@@ -266,7 +269,7 @@
 
 		return varValue;
 
-	}
+	};
 
 
 	/**
@@ -286,7 +289,7 @@
 
 		return varValue;
 
-	}
+	};
 
 	/**
 	 * Prints a log to the console if b8.CONFIG.DEBUG is true.
@@ -300,7 +303,7 @@
 			console.log( msg );
 		}
 
-	}
+	};
 
 
 	/**
@@ -313,7 +316,7 @@
 
 		console.warn( msg );
 
-	}
+	};
 
 
 	/**
@@ -326,7 +329,7 @@
 
 		console.error( msg );
 
-	}
+	};
 
 
 	/**
@@ -339,8 +342,8 @@
 	 * compression.
 	 *
 	 * @param {HTMLImageElement} img - The image to process.
-	 * @param {array} color - The color to make transparent. By default this is pure magenta [255,0,255].
-	 * @param {number} range - The range of RGB values to consider as the target color.
+	 * @param {array} [color=[ 255, 0, 255 ]] - The color to make transparent. By default this is pure magenta [255,0,255].
+	 * @param {number} [range=5] - The range of RGB values to consider as the target color.
 	 * @returns {Promise<HTMLCanvasElement>} The processed image.
 	 */
 	b8.Utilities.makeColorTransparent = async function( img, color = [ 255, 0, 255 ], range = 5 ) {
@@ -381,7 +384,7 @@
 
 		return canvas;
 
-	}
+	};
 
 
 	/**
@@ -416,7 +419,7 @@
 
 		);
 
-	}
+	};
 
 
 	/**
@@ -431,7 +434,7 @@
 
 		return Math.min( Math.max( x, lo ), hi );
 
-	}
+	};
 
 
 	/**
@@ -444,14 +447,14 @@
 
 		return b8.Utilities.clamp( x, 0, 1 );
 
-	}
+	};
 
 
 	/**
 	 * Converts a hex color string to an RGB object.
 	 *
 	 * @param {string} hex - The hex color string (e.g., "#ff0000").
-	 * @returns {object} An object with r, g, b properties.
+	 * @returns {Object} An object with r, g, b properties.
 	 */
 	b8.Utilities.hexToRgb = function( hex ) {
 
@@ -467,7 +470,7 @@
 			b: bigint & 255          // Extract blue
 		};
 
-	}
+	};
 
 
 	/**
@@ -510,7 +513,7 @@
 
 		return false;
 
-	}
+	};
 
 
 	/**
@@ -580,7 +583,7 @@
 
 		return true;
 
-	}
+	};
 
 	const intersectRects_xint = {};
 	const intersectRects_yint = {};
@@ -615,7 +618,7 @@
 
 		return str;
 
-	}
+	};
 
 
 	/**
@@ -623,7 +626,7 @@
 	 * objects (immutable) and merges arrays via concatenation.
 	 *
 	 * @param {...object} objects - Objects to merge
-	 * @returns {object} New object with merged key/values
+	 * @returns {Object} New object with merged key/values
 	 */
 	b8.Utilities.deepMerge = function( ...objects ) {
 
@@ -654,7 +657,7 @@
 			{}
 		);
 
-	}
+	};
 
 
 	/**
@@ -662,7 +665,7 @@
 	 * Merges arrays by index.
 	 *
 	 * @param {...object} objects - Objects to merge
-	 * @returns {object} New object with merged key/values
+	 * @returns {Object} New object with merged key/values
 	 */
 	b8.Utilities.deepMergeByIndex = function( ...objects ) {
 
@@ -714,7 +717,7 @@
 
 		return number.toString().padStart( length, '0' );
 
-	}
+	};
 
 
 	/**
@@ -763,8 +766,8 @@
 	/**
 	 * Downloads a file using a URL or data URI.
 	 *
-	 * @param {string} filename - The filename to save as.
-	 * @param {string} src - The file URL, blob URL, or data URI.
+	 * @param {string} [filename=''] - The filename to save as.
+	 * @param {string} [src=''] - The file URL, blob URL, or data URI.
 	 * @returns {void}
 	 */
 	b8.Utilities.downloadFile = function( filename = '', src = '' ) {
@@ -834,11 +837,10 @@
 
 
 	/**
-	 * Merges two arrays by index, filling in missing indices with values from
-	 * the default array.
+	 * Copies incoming array values by index, preserving trailing target values.
 	 *
-	 * @param {Array} targetArr - The target array to merge into.
-	 * @param {Array} defaultArr - The default array to merge from.
+	 * @param {Array} Arr1 - The target array, modified in place.
+	 * @param {Array} Arr2 - Incoming values that overwrite matching indices.
 	 * @returns {Array} The merged array.
 	 */
 	function mergeArraysByIndex( Arr1, Arr2 ) {

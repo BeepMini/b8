@@ -1,3 +1,6 @@
+/**
+ * @file Embed encoded game data in PNG trailers and validate it when loading cartridges.
+ */
 ( function( b8 ) {
 
 	b8.Cart = {};
@@ -38,7 +41,7 @@
 		// Save the resulting Blob as a file (requires FileSaver.js)
 		saveAs( cartBlob, filename );
 
-	}
+	};
 
 
 	/**
@@ -93,7 +96,7 @@
 		// Decode and return the payload as a JSON object
 		return JSON.parse( new TextDecoder().decode( payload ) );
 
-	}
+	};
 
 
 	/**

@@ -1,3 +1,6 @@
+/**
+ * @file Choose animation frames and determine whether an animation is still active.
+ */
 ( function( b8 ) {
 
 	b8.Animation = {};
@@ -6,10 +9,10 @@
 	/**
 	 * Get the current frame of an animation.
 	 * This is used internally to automatically determine what frame to draw.
-	 * This uses delta time to determine the current frame.
+	 * This uses elapsed engine time to determine the current frame.
 	 *
-	 * @param {string} animation The animation to get the frame for.
-	 * @param {number|null} startTime The start time of the animation. If null, uses the core start time.
+	 * @param {Object} anim The animation definition with frames and optional fps.
+	 * @param {number|null} [startTime=null] The animation start timestamp in milliseconds from Core.getNow(). If null, uses the core start time.
 	 * @returns {number} The frame to draw for the animation.
 	 */
 	b8.Animation.frame = function( anim, startTime = null ) {
@@ -43,8 +46,8 @@
 			const FPS = anim.fps || 1;
 			const frameDuration = 1000 / FPS;
 
-			// Dividing totalTime by 1000 to convert ms to seconds.
-			// Dividing by frameDuration to get the current frame.
+			// Both elapsedTime and frameDuration are in milliseconds.
+			// Divide by frameDuration to get the current frame.
 			// Modulo frameCount to loop the animation.
 			const frameIndex = Math.floor( elapsedTime / frameDuration ) % frameCount;
 
@@ -61,7 +64,8 @@
 	 * Get animation by id.
 	 *
 	 * @param {string} animation The animation id.
-	 * @returns {Object|undefined} The animation object, or undefined if not found.
+	 * @returns {Object} The animation definition.
+	 * @throws {Error} If the animation ID is not registered.
 	 */
 	b8.Animation.get = function( animation ) {
 
@@ -78,8 +82,8 @@
 	/**
 	 * Checks if the animation has finished looping.
 	 *
-	 * @param {Object} anim - The animation object.
-	 * @param {number} startTime - The start time of the animation.
+	 * @param {string|Object} anim - The animation object.
+	 * @param {number} startTime - The animation start timestamp in milliseconds from Core.getNow().
 	 * @returns {boolean} - Returns true if the animation should continue, false if it has finished looping.
 	 */
 	b8.Animation.shouldLoop = function( anim, startTime ) {

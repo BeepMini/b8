@@ -1,3 +1,6 @@
+/**
+ * @file Define and play named sound effects through the bundled sound synthesizer.
+ */
 ( function( b8 ) {
 
 	b8.Sfx = {};
@@ -210,7 +213,7 @@
 	/**
 	 * Play a named sound effect.
 	 *
-	 * @param {string} sfx - The name of the sound effect to play.
+	 * @param {string} [sfx=''] - The name of the sound effect to play.
 	 * @throws {Error} If the sfx is not found.
 	 * @returns	{void}
 	 */
@@ -229,7 +232,7 @@
 
 		b8.Sfx.playFromArray( b8.Sfx.library[ sfx ] );
 
-	}
+	};
 
 
 	/**
@@ -239,7 +242,7 @@
 	 *
 	 * @see https://killedbyapixel.github.io/ZzFX/
 	 *
-	 * @param {Array} sfxArray - The sound effect array to play.
+	 * @param {Array} [sfxArray=[]] - The sound effect array to play.
 	 * @returns {void}
 	 */
 	b8.Sfx.playFromArray = function( sfxArray = [] ) {
@@ -249,7 +252,7 @@
 
 		// Play the raw sound effect.
 		zzfx( ...sfxArray );
-	}
+	};
 
 
 	/**
@@ -259,7 +262,7 @@
 	 * @param {Array} sfxArray The sound effect array.
 	 * @throws {Error} If the sfxName is not a string.
 	 * @throws {Error} If the sfxArray is not an array.
-	 * @return {void}
+	 * @returns {void}
 	 */
 	b8.Sfx.add = function( sfxName, sfxArray ) {
 
@@ -268,18 +271,18 @@
 
 		b8.Sfx.library[ sfxName ] = sfxArray;
 
-	}
+	};
 
 
 	/**
 	 * Get the list of sfx from the library.
 	 *
-	 * @return {Array} The list of sfx.
+	 * @returns {Array} The list of sfx.
 	 */
 	b8.Sfx.get = function() {
 
 		return Object.keys( b8.Sfx.library );
 
-	}
+	};
 
 } )( b8 );

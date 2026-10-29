@@ -1,3 +1,6 @@
+/**
+ * @file Initialize the engine, manage canvases and timing, and coordinate async operations.
+ */
 ( function( b8 ) {
 
 	b8.Core = {};
@@ -49,7 +52,7 @@
 	 *
 	 * @param {Function} callback - The function to call when the engine is initialized.
 	 * @param {Object} [options={}] - Optional configuration overrides.
-	 * @return {void}
+	 * @returns {void}
 	 */
 	b8.Core.init = function( callback, options = {} ) {
 
@@ -83,7 +86,7 @@
 
 		b8.Utilities.event( 'initComplete' );
 
-	}
+	};
 
 
 	/**
@@ -101,7 +104,7 @@
 			}
 		}
 
-	}
+	};
 
 
 	/**
@@ -131,7 +134,7 @@
 
 		b8.Core.stopFrame();
 
-	}
+	};
 
 
 	/**
@@ -143,7 +146,7 @@
 
 		return initDone;
 
-	}
+	};
 
 
 	/**
@@ -152,7 +155,7 @@
 	 * This function sets up the canvas, initializes subsystems, and then calls
 	 * the callback function if it's set.
 	 *
-	 * @param {Function} callback - The function to call when the engine is initialized.
+	 * @param {Function} [callback=null] - The function to call when the engine is initialized.
 	 * @returns {void}
 	 */
 	b8.Core.asyncInit = async function( callback = null ) {
@@ -235,7 +238,7 @@
 			await callback();
 		}
 
-	}
+	};
 
 
 	/**
@@ -277,7 +280,7 @@
 
 		return container;
 
-	}
+	};
 
 
 	/**
@@ -317,7 +320,7 @@
 
 		}
 
-	}
+	};
 
 
 	/**
@@ -351,13 +354,13 @@
 
 		b8.Renderer.render();
 
-	}
+	};
 
 
 	/**
 	 * Checks if there is a pending asynchronous operation.
 	 *
-	 * @param {string} asyncMethodName - The name of the asynchronous method.
+	 * @param {string} [asyncMethodName=null] - The name of the asynchronous method.
 	 * @returns {boolean} True if there is a pending asynchronous operation.
 	 */
 	b8.Core.hasPendingAsync = function( asyncMethodName = null ) {
@@ -368,7 +371,7 @@
 
 		return pendingAsync && pendingAsync.name === asyncMethodName;
 
-	}
+	};
 
 
 	/**
@@ -396,7 +399,7 @@
 		pendingAsync = null;
 		fun( result );
 
-	}
+	};
 
 
 	/**
@@ -412,7 +415,7 @@
 
 		b8.Core.endAsyncImpl( asyncMethodName, false, result );
 
-	}
+	};
 
 
 	/**
@@ -426,14 +429,14 @@
 
 		b8.Core.endAsyncImpl( asyncMethodName, true, error );
 
-	}
+	};
 
 
 	/**
 	 * Set the update and render callbacks for the game loop.
 	 *
-	 * @param {Function|null} renderCallback - The render function.
-	 * @param {Function|null} updateCallback - The update function. Optional.
+	 * @param {Function|null} [renderCallback=null] - The render function.
+	 * @param {Function|null} [updateCallback=null] - The update function. Optional.
 	 * @param {number} [targetFps=30] - Target frames per second.
 	 * @returns {void}
 	 */
@@ -452,7 +455,7 @@
 
 		animationFrameId = window.requestAnimationFrame( b8.Core.doFrame );
 
-	}
+	};
 
 
 	/**
@@ -517,7 +520,7 @@
 
 		animationFrameId = window.requestAnimationFrame( b8.Core.doFrame );
 
-	}
+	};
 
 
 	/**
@@ -533,7 +536,7 @@
 			animationFrameId = null;
 		}
 
-	}
+	};
 
 
 	/**
@@ -542,7 +545,7 @@
 	 * It will optionally also set the background colour. By default it uses the
 	 * specified background but you can override this yourself.
 	 *
-	 * @param {number} [bgColor] - Optional background color index.
+	 * @param {number} [bgColor=undefined] - Optional background color index.
 	 * @returns {void}
 	 */
 	b8.Core.cls = function( bgColor = undefined ) {
@@ -558,7 +561,7 @@
 		b8.Core.setCursorLocation( 0, 0 );
 		b8.Renderer.markDirty();
 
-	}
+	};
 
 
 	/**
@@ -574,7 +577,7 @@
 		b8.CONFIG.COLORS = colors.slice();
 		b8.TextRenderer.regenColors();
 
-	}
+	};
 
 
 	/**
@@ -594,7 +597,7 @@
 			b8.Core.drawState.bgColor = Math.round( bg );
 		}
 
-	}
+	};
 
 
 	/**
@@ -623,7 +626,7 @@
 			b8.Core.drawState.cursorRow = Math.round( row * 2 ) / 2;
 		}
 
-	}
+	};
 
 
 	/**
@@ -640,7 +643,7 @@
 
 		b8.Core.setCursorLocation( currentCursorCol + 1, currentCursorRow );
 
-	}
+	};
 
 
 	/**
@@ -663,7 +666,7 @@
 
 		return b8.CONFIG.COLORS[ c ];
 
-	}
+	};
 
 
 	/**
@@ -684,7 +687,7 @@
 
 		return new Date().getTime();
 
-	}
+	};
 
 
 	/**
@@ -722,7 +725,7 @@
 			b8.Core.offCtx.drawImage( img, x, y );
 		}
 
-	}
+	};
 
 
 	/**
@@ -735,6 +738,11 @@
 	 * longer it will take to process.
 	 *
 	 * @param {string} url - The URL of the image to load.
+	 * @param {Object} [options={ dither: 'ordered' }] - Palette conversion options.
+	 * @param {string} [options.dither='ordered'] - 'ordered' applies dithering; other values quantise directly.
+	 * @param {number} [options.size=4] - Ordered dithering matrix size.
+	 * @param {number} [options.strength=0.5] - Ordered dithering strength.
+	 * @param {number} [options.amplitude=16] - Ordered dithering colour offset.
 	 * @returns {Promise<HTMLImageElement>} The loaded image.
 	 */
 	b8.Core.loadImage = async function( url, options = { dither: 'ordered' } ) {
@@ -756,6 +764,14 @@
 		// Precompute once
 		const lookupTable = b8.Image.generateColorLookupTable( b8.CONFIG.COLORS );
 
+		/**
+		 * Map one RGB sample through the cached palette buckets.
+		 *
+		 * @param {number} r Red channel, 0–255.
+		 * @param {number} g Green channel, 0–255.
+		 * @param {number} b Blue channel, 0–255.
+		 * @returns {{r:number,g:number,b:number}} Closest palette RGB value.
+		 */
 		const mapFn = ( r, g, b ) => b8.Image.findClosestColorUsingLookup( r, g, b, lookupTable );
 
 		if ( mode === 'ordered' ) {
@@ -787,7 +803,7 @@
 			}
 		);
 
-	}
+	};
 
 
 	/**
@@ -801,6 +817,7 @@
 	 * @param {number} y - The y-coordinate of the upper-left corner of the rectangle.
 	 * @param {number} width - The width of the rectangle.
 	 * @param {number} height - The height of the rectangle.
+	 * @param {number} [lineWidth=1] - Border thickness in pixels, clamped to fit the rectangle.
 	 * @returns {void}
 	 */
 	b8.Core.drawRect = function( x, y, width, height, lineWidth = 1 ) {
@@ -863,7 +880,7 @@
 			Math.round( width ), Math.round( height )
 		);
 
-	}
+	};
 
 
 	/**
@@ -881,7 +898,7 @@
 		document.addEventListener( 'pointerup', _takeScreenshot );
 		document.addEventListener( 'keyup', _takeScreenshot );
 
-	}
+	};
 
 
 	/**
@@ -896,7 +913,7 @@
 			b8.Core.offCanvas.width, b8.Core.offCanvas.height
 		);
 
-	}
+	};
 
 
 	/**
@@ -913,7 +930,7 @@
 		// Save as a file.
 		b8.Utilities.downloadFile( "b8-screenshot.png", dataUrl );
 
-	}
+	};
 
 	let offscreenCanvas = null;
 
@@ -945,7 +962,7 @@
 		// Get the data URL
 		return offscreenCanvas.toDataURL( mimeType, quality );
 
-	}
+	};
 
 
 	/**
@@ -959,7 +976,7 @@
 		b8.Utilities.checkInstanceOf( "screenData", screenData, ImageData );
 		b8.Core.offCtx.putImageData( screenData, 0, 0 );
 
-	}
+	};
 
 
 	/**
@@ -976,7 +993,7 @@
 			b8.Renderer.render();
 		}
 
-	}
+	};
 
 
 	/**
@@ -1010,7 +1027,7 @@
 
 		b8.Core.container.style.aspectRatio = `${b8.CONFIG.SCREEN_COLS} / ${b8.CONFIG.SCREEN_ROWS}`;
 
-	}
+	};
 
 
 	/**
@@ -1035,7 +1052,7 @@
 			y: ( clientY - rect.top ) * scaleY,
 		};
 
-	}
+	};
 
 
 	/**
@@ -1068,7 +1085,7 @@
 		b8.Core.crashing = false;
 		b8.Core.crashed = true;
 
-	}
+	};
 
 
 	/**
@@ -1080,7 +1097,7 @@
 
 		return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
 
-	}
+	};
 
 
 	/**
@@ -1092,7 +1109,7 @@
 
 		return b8.Core.isIOS() || b8.Core.isAndroid() || b8.Core.isTouchDevice();
 
-	}
+	};
 
 
 	/**
@@ -1104,7 +1121,7 @@
 
 		return /(ipad|ipod|iphone)/i.test( navigator.userAgent );
 
-	}
+	};
 
 
 	/**
@@ -1116,13 +1133,13 @@
 
 		return /android/i.test( navigator.userAgent );
 
-	}
+	};
 
 
 	/**
 	 * Handles window resize events.
 	 *
-	 * @return {void}
+	 * @returns {void}
 	 */
 	function _resizeHandler() {
 
@@ -1135,7 +1152,7 @@
 	 * Handles screenshot taking events.
 	 *
 	 * @param {KeyboardEvent|PointerEvent} e - The event object.
-	 * @return {void}
+	 * @returns {void}
 	 */
 	function _takeScreenshot( e ) {
 

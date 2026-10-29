@@ -1,3 +1,6 @@
+/**
+ * @file Register and invoke ordered actions and value-transforming filters.
+ */
 ( function( b8 ) {
 
 	b8.Hooks = {};
@@ -40,7 +43,7 @@
 		for ( const key in actions ) delete actions[ key ];
 		for ( const key in filters ) delete filters[ key ];
 
-	}
+	};
 
 
 	/**
@@ -57,7 +60,7 @@
 
 		_add( actions, hookName, callback, priority );
 
-	}
+	};
 
 
 	/**
@@ -79,7 +82,7 @@
 			callback( ...args );
 		}
 
-	}
+	};
 
 
 	/**
@@ -96,7 +99,7 @@
 
 		_add( filters, hookName, callback, priority );
 
-	}
+	};
 
 
 	/**
@@ -110,7 +113,7 @@
 	 * @param {string} hookName - The name of the filter hook to apply.
 	 * @param {*} value - The initial value to filter.
 	 * @param {...*} args - Additional arguments to pass to the filter callbacks.
-	 * @return {*} The modified value after all filters have been applied.
+	 * @returns {*} The modified value after all filters have been applied.
 	 */
 	b8.Hooks.applyFilters = function( hookName, value, ...args ) {
 
@@ -123,7 +126,7 @@
 
 		return result;
 
-	}
+	};
 
 
 	/**
@@ -138,7 +141,7 @@
 
 		actions[ hookName ] = ( actions[ hookName ] || [] ).filter( h => h.callback !== callback );
 
-	}
+	};
 
 
 	/**
@@ -153,7 +156,7 @@
 
 		filters[ hookName ] = ( filters[ hookName ] || [] ).filter( h => h.callback !== callback );
 
-	}
+	};
 
 
 } )( b8 );

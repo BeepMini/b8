@@ -1,3 +1,6 @@
+/**
+ * @file Persist game data and emit stateChange events through reactive object proxies.
+ */
 ( function( b8 ) {
 
 	b8.State = b8.State || {};
@@ -18,7 +21,7 @@
 
 
 	/**
-	 * Sets the storage key from the b8 config or defaults to 'b8.state'.
+	 * Builds the storage key from the configured game name.
 	 *
 	 * @returns {void}
 	 */
@@ -86,7 +89,8 @@
 	/**
 	 * Saves the current state to localStorage using CBOR and base64.
 	 *
-	 * @param {string} [key='b8.state'] - Optional localStorage key.
+	 * @param {string} [key=STORAGE_KEY] - Storage key; defaults to the key derived from the game name.
+	 * @returns {void}
 	 */
 	b8.State.save = function( key = STORAGE_KEY ) {
 
@@ -101,11 +105,11 @@
 
 		b8.State.lastSave = Date.now();
 
-	}
+	};
 
 
 	/**
-	 * Resets the state to an empty object and re-initializes it.
+	 * Re-initializes state using the current game name, restoring any saved values.
 	 * This does not clear localStorage.
 	 *
 	 * @returns {void}
@@ -122,9 +126,10 @@
 
 
 	/**
-	 * Loads state from localStorage, replacing State.data.
+	 * Loads saved values into reactive b8.data and restores the last-save timestamp.
 	 *
-	 * @param {string} [key='b8.state'] - Optional localStorage key.
+	 * @param {string} [key=STORAGE_KEY] - Storage key; defaults to the key derived from the game name.
+	 * @returns {void}
 	 */
 	b8.State.load = function( key = STORAGE_KEY ) {
 
@@ -144,7 +149,7 @@
 			b8.State.lastSave = rawState.time;
 		}
 
-	}
+	};
 
 
 	/**
@@ -152,6 +157,7 @@
 	 * Does not overwrite existing values.
 	 *
 	 * @param {Object} defaults - An object containing default key/value pairs.
+	 * @returns {void}
 	 */
 	b8.State.init = function( defaults ) {
 
@@ -169,14 +175,14 @@
 
 		b8.Utilities.log( 'State initialized:', b8.data );
 
-	}
+	};
 
 
 	/**
 	 * Resets the state to its initial values.
 	 * This is useful for starting a new game or resetting the application.
 	 *
-	 * @param {string} [key='b8.state'] - Optional localStorage key.
+	 * @param {string} [key=STORAGE_KEY] - Storage key; defaults to the key derived from the game name.
 	 * @returns {void}
 	 */
 	b8.State.clear = function( key = STORAGE_KEY ) {
@@ -186,7 +192,7 @@
 		localStorage.removeItem( key );
 		b8.data = createProxy( {} );
 
-	}
+	};
 
 
 } )( b8 );

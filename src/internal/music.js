@@ -1,4 +1,7 @@
 /**
+ * @file Generate and play procedural songs using the bundled p1 synthesizer.
+ */
+/**
  * b8 Music Module.
  *
  * This module handles the creation, manipulation, and playback of procedurally generated music.

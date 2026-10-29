@@ -1,3 +1,6 @@
+/**
+ * @file Display the built-in loading screen and dismissible splash screen.
+ */
 ( function( b8 ) {
 
 	b8.Intro = {};
@@ -22,13 +25,12 @@
 
 		await b8.Async.wait( 0.4 );
 
-	}
+	};
 
 
 	/**
 	 * Display a splash screen.
 	 *
-	 * @param {string} [name="b8 Project"] The name of the project.
 	 * @returns {Promise<void>} A promise that resolves when the splash screen is dismissed.
 	 */
 	b8.Intro.splash = async function() {
@@ -54,7 +56,7 @@
 		b8.color( 15, 0 );
 		b8.cls();
 
-	}
+	};
 
 
 } )( b8 );

@@ -1,3 +1,6 @@
+/**
+ * @file Load font sheets and prepare palette-specific or multicolour image variants.
+ */
 ( function( b8 ) {
 
 	/**
@@ -14,7 +17,7 @@
 		 * @param {string} fontImageFile - The URL of the image file for the font.
 		 * @param {number} [tileWidthMultiplier=1] - The tile width multiplier for the font.
 		 * @param {number} [tileHeightMultiplier=1] - The tile height multiplier for the font.
-		 * @param {object} [options={}] - Font loading options.
+		 * @param {Object} [options={}] - Font loading options.
 		 * @param {boolean} [options.multicolor=false] - Use one palette-matched image with its original alpha transparency.
 		 */
 		constructor( fontName, fontImageFile, tileWidthMultiplier = 1, tileHeightMultiplier = 1, options = {} ) {

@@ -1,3 +1,6 @@
+/**
+ * @file Load actor sheets and draw named character animations with palette colours.
+ */
 ( function( b8 ) {
 
 	b8.Actors = {};
@@ -94,7 +97,7 @@
 	 *
 	 * @param {string} name - The animation name used by Actors.draw and Actors.spr.
 	 * @param {number[]} frames - A non-empty sequence of integer frame indices.
-	 * @param {object} [options={}] - Optional playback settings.
+	 * @param {Object} [options={}] - Optional playback settings.
 	 * @param {number} [options.fps] - A positive number of frames per second.
 	 * @param {boolean} [options.loop] - Whether playback repeats.
 	 * @returns {void}
@@ -153,7 +156,7 @@
 			direction || 0
 		);
 
-	}
+	};
 
 
 	/**
@@ -208,7 +211,7 @@
 	 * @param {string} animation The animation to draw.
 	 * @param {number} x The x coordinate to draw the actor at.
 	 * @param {number} y The y coordinate to draw the actor at.
-	 * @param {number} [startTime=null] The time the animation started.
+	 * @param {number} [startTime=null] The animation start timestamp in milliseconds from Core.getNow().
 	 * @returns {boolean} True if the animation is still playing, false if it has finished.
 	 */
 	b8.Actors.spr = function( ch, animation, x, y, startTime = null ) {

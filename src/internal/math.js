@@ -1,3 +1,6 @@
+/**
+ * @file Provide distance, interpolation, and easing helpers for game logic.
+ */
 ( function( b8 ) {
 
 	b8.Math = {};
@@ -24,7 +27,7 @@
 
 		return Math.sqrt( dx * dx + dy * dy );
 
-	}
+	};
 
 
 	// Alias dist2d to dist2D for consistency.
@@ -64,7 +67,7 @@
 
 		return a + ( b - a ) * t;
 
-	}
+	};
 
 
 	/**
@@ -81,7 +84,7 @@
 
 		return t * t * t * ( t * ( t * 6 - 15 ) + 10 );
 
-	}
+	};
 
 
 	/**
@@ -98,10 +101,15 @@
 
 		return t * t * ( 3 - 2 * t );
 
-	}
+	};
 
 
-	// Ken Perlin's quintic fade (smoother than smoothstep)
+	/**
+	 * Evaluate Ken Perlin's quintic fade, smoother than smoothstep.
+	 *
+	 * @param {number} t Interpolation factor, normally between 0 and 1.
+	 * @returns {number} The smoothed interpolation factor.
+	 */
 	function fade( t ) {
 
 		return t * t * t * ( t * ( t * 6 - 15 ) + 10 );

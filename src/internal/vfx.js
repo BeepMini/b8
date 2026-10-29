@@ -1,3 +1,6 @@
+/**
+ * @file Define and draw named effect animations using the shared animation clock.
+ */
 ( function( b8 ) {
 
 	b8.Vfx = {};
@@ -73,7 +76,7 @@
 	 * @param {Object} animation The animation to draw.
 	 * @param {number} x The x position to draw the Vfx.
 	 * @param {number} y The y position to draw the Vfx.
-	 * @param {number} startTime The start time of the animation.
+	 * @param {number} startTime The animation start timestamp in milliseconds from Core.getNow().
 	 * @returns {void}
 	 */
 	const drawVfx = function( animation, x, y, startTime ) {
@@ -102,7 +105,7 @@
 	 * @param {Object} animation The animation to draw.
 	 * @param {number} x The x position to draw the Vfx.
 	 * @param {number} y The y position to draw the Vfx.
-	 * @param {number} startTime The start time of the animation.
+	 * @param {number} startTime The animation start timestamp in milliseconds from Core.getNow().
 	 * @returns {void}
 	 */
 	const drawVfxOutline = function( animation, x, y, startTime ) {
@@ -147,10 +150,10 @@
 	 * Draw Vfx at the current cursor position.
 	 *
 	 * @param {string} animation The animation to draw.
-	 * @param {number} startTime The start time of the animation. If null, uses the core start time. If startTime is in the future, the animation will delayed until startTime.
+	 * @param {number} startTime The animation start timestamp in milliseconds from Core.getNow(). If null, uses the core start time. If startTime is in the future, the animation will be delayed until startTime.
 	 * @param {number} [offsetCol=0] The x offset to apply to the drawing position.
 	 * @param {number} [offsetRow=0] The y offset to apply to the drawing position.
-	 * @return {boolean} Returns true if the animation is still playing, false if it has finished.
+	 * @returns {boolean} Returns true if the animation is still playing, false if it has finished.
 	 */
 	b8.Vfx.draw = function( animation, startTime, offsetCol = 0, offsetRow = 0 ) {
 
@@ -174,10 +177,10 @@
 	 * The Vfx will have a transparent background with the border in the background colour.
 	 *
 	 * @param {string} animation The animation to draw.
-	 * @param {number} startTime The start time of the animation. If null, uses the core start time. If startTime is in the future, the animation will delayed until startTime.
+	 * @param {number} startTime The animation start timestamp in milliseconds from Core.getNow(). If null, uses the core start time. If startTime is in the future, the animation will be delayed until startTime.
 	 * @param {number} [offsetCol=0] The x offset to apply to the drawing position.
 	 * @param {number} [offsetRow=0] The y offset to apply to the drawing position.
-	 * @return {boolean} Returns true if the animation is still playing, false if it has finished.
+	 * @returns {boolean} Returns true if the animation is still playing, false if it has finished.
 	 */
 	b8.Vfx.drawOutline = function( animation, startTime, offsetCol = 0, offsetRow = 0 ) {
 
@@ -199,7 +202,7 @@
 	 * Draw Vfx at a specific x, y position.
 	 *
 	 * @param {string} animation The animation to draw.
-	 * @param {number|null} startTime The start time of the animation. If null, uses the core start time. If startTime is in the future, the animation will delayed until startTime.
+	 * @param {number|null} startTime The animation start timestamp in milliseconds from Core.getNow(). If null, uses the core start time. If startTime is in the future, the animation will be delayed until startTime.
 	 * @param {number} x The x position to draw the Vfx.
 	 * @param {number} y The y position to draw the Vfx.
 	 * @returns {boolean} Returns true if the animation is still playing, false if it has finished.
@@ -233,7 +236,7 @@
 	 * The Vfx will have a transparent background with the border in the background colour.
 	 *
 	 * @param {string} animation The animation to draw.
-	 * @param {number|null} startTime The start time of the animation. If null, uses the core start time. If startTime is in the future, the animation will delayed until startTime.
+	 * @param {number|null} startTime The animation start timestamp in milliseconds from Core.getNow(). If null, uses the core start time. If startTime is in the future, the animation will be delayed until startTime.
 	 * @param {number} x The x position to draw the Vfx.
 	 * @param {number} y The y position to draw the Vfx.
 	 * @returns {boolean} Returns true if the animation is still playing, false if it has finished.
@@ -265,7 +268,8 @@
 	 * Get Vfx animation by id.
 	 *
 	 * @param {string} animation The animation id.
-	 * @returns {Object|undefined} The Vfx animation object, or undefined if not found.
+	 * @returns {Object} The registered effect animation.
+	 * @throws {Error} If the animation ID is not registered.
 	 */
 	b8.Vfx.get = function( animation ) {
 
@@ -282,8 +286,8 @@
 	/**
 	 * Checks if the Vfx animation has finished looping.
 	 *
-	 * @param {string|Object} animation The animation to check.
-	 * @param {number} startTime The start time of the animation.
+	 * @param {string|Object} anim The animation to check.
+	 * @param {number} startTime The animation start timestamp in milliseconds from Core.getNow().
 	 * @returns {boolean} Returns true if the animation should continue, false if it has finished looping.
 	 */
 	b8.Vfx.shouldLoop = function( anim, startTime ) {

@@ -1,3 +1,6 @@
+/**
+ * @file Encode small game states into validated, human-readable passcodes.
+ */
 ( function( b8 ) {
 
 	b8.Passcodes = {};
@@ -35,7 +38,7 @@
 		// Return the first 'codeLength' characters.
 		return hash.substring( 0, b8.Passcodes.codeLength );
 
-	}
+	};
 
 
 	/**
@@ -53,7 +56,7 @@
 
 		}
 
-	}
+	};
 
 
 	/**
@@ -71,7 +74,7 @@
 		const generatedCode = b8.Passcodes.getCode( id );
 		return generatedCode === code;
 
-	}
+	};
 
 
 	/**
@@ -95,7 +98,7 @@
 		// Return null if no match is found.
 		return null;
 
-	}
+	};
 
 
 	/**
@@ -127,7 +130,7 @@
 
 		return value;
 
-	}
+	};
 
 
 	/**

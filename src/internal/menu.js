@@ -1,3 +1,6 @@
+/**
+ * @file Render selectable text menus and wait for navigation and confirmation input.
+ */
 ( function( b8 ) {
 
 	b8.Menu = {};
@@ -26,7 +29,7 @@
 	 * - options.typewriter - display the prompt as a typewriter effect.
 	 *
 	 * @param {string[]} choices - The choices to display.
-	 * @param {object} [options] - Options for the menu.
+	 * @param {Object} [options] - Options for the menu.
 	 * @returns {Promise<number>} A promise that resolves to the index of the selected choice.
 	 */
 	b8.Menu.display = async function( choices, options ) {
@@ -175,7 +178,7 @@
 
 		}
 
-	}
+	};
 
 
 	/**
@@ -187,7 +190,7 @@
 	 *
 	 * @param {string[]} choices - The choices to print.
 	 * @param {number} selIndex - The index of the selected choice.
-	 * @param {object} options - Options for the menu.
+	 * @param {Object} options - Options for the menu.
 	 * @returns {void}
 	 */
 	const printChoices = function( choices, selIndex, options ) {
