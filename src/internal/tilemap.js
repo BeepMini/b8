@@ -11,10 +11,10 @@
 	 * [2] = background color code.
 	 * [3] = collision flag.
 	 * [4] = additional data.
-	 * [5] = wall connectivity mask (north=1, east=2, south=4, west=8),
-	 *       or null for ordinary tiles. Zero means an isolated wall.
-	 * Masks describe connectivity when the map is created; editing tiles does
-	 * not automatically recalculate their neighbours' masks.
+	 * [5] = autotile connectivity mask (north=1, east=2, south=4, west=8),
+	 *       or null for ordinary tiles. Zero means an isolated autotile.
+	 * [6] = autotile definition and colour overrides, or null for ordinary tiles.
+	 * setTile updates connectivity and artwork for the edited cell and neighbours.
 	 */
 	b8.Tilemap = {};
 
@@ -24,52 +24,54 @@
 	b8.Tilemap.MAP_COLLISION = 3;
 	b8.Tilemap.MAP_DATA = 4;
 	// Connected neighbours, independent of the game's collision rules.
-	b8.Tilemap.MAP_WALL_MASK = 5;
+	b8.Tilemap.MAP_AUTOTILE_MASK = 5;
+	// Retain autotile identity after its character has been resolved to artwork.
+	b8.Tilemap.MAP_AUTOTILE = 6;
 
 	/**
-	 * Direction bits for wall connectivity and exposed-edge checks.
+	 * Direction bits for autotile connectivity and exposed-edge checks.
 	 * Combine directions with | to check several sides at once.
 	 * @type {Readonly<{N: number, E: number, S: number, W: number}>}
 	 */
-	b8.Tilemap.WALL_DIRECTION = Object.freeze( { N: 1, E: 2, S: 4, W: 8 } );
+	b8.Tilemap.AUTOTILE_DIRECTION = Object.freeze( { N: 1, E: 2, S: 4, W: 8 } );
 
 
 	/**
-	 * Checks whether a wall connects to neighbours in all requested directions.
+	 * Checks whether an autotile connects to neighbours in all requested directions.
 	 * Ordinary tiles, including older tiles without a mask, return false.
 	 *
 	 * @param {Array} tile - A tile array from the tilemap.
-	 * @param {number} direction - One or more WALL_DIRECTION bits (1–15).
+	 * @param {number} direction - One or more AUTOTILE_DIRECTION bits (1–15).
 	 * @returns {boolean} Whether every requested side has a connected neighbour.
 	 */
-	b8.Tilemap.hasWallConnection = function( tile, direction ) {
+	b8.Tilemap.hasAutotileConnection = function( tile, direction ) {
 
 		b8.Utilities.checkArray( "tile", tile );
 		b8.Utilities.checkInt( "direction", direction, 1, 15 );
 
-		const mask = tile[ b8.Tilemap.MAP_WALL_MASK ];
-		// Do not let JavaScript treat a missing mask as an isolated wall.
+		const mask = tile[ b8.Tilemap.MAP_AUTOTILE_MASK ];
+		// Do not let JavaScript treat a missing mask as an isolated autotile.
 		return mask !== null && mask !== undefined && ( mask & direction ) === direction;
 
 	};
 
 
 	/**
-	 * Checks whether a wall has exposed edges in all requested directions.
+	 * Checks whether an autotile has exposed edges in all requested directions.
 	 * An exposed edge has no connected neighbour; this does not imply collision.
 	 * Ordinary tiles, including older tiles without a mask, return false.
 	 *
 	 * @param {Array} tile - A tile array from the tilemap.
-	 * @param {number} direction - One or more WALL_DIRECTION bits (1–15).
+	 * @param {number} direction - One or more AUTOTILE_DIRECTION bits (1–15).
 	 * @returns {boolean} Whether every requested side is exposed.
 	 */
-	b8.Tilemap.hasWallEdge = function( tile, direction ) {
+	b8.Tilemap.hasAutotileEdge = function( tile, direction ) {
 
 		b8.Utilities.checkArray( "tile", tile );
 		b8.Utilities.checkInt( "direction", direction, 1, 15 );
 
-		const mask = tile[ b8.Tilemap.MAP_WALL_MASK ];
-		// A zero mask is a wall with four exposed edges, unlike null or undefined.
+		const mask = tile[ b8.Tilemap.MAP_AUTOTILE_MASK ];
+		// A zero mask is an autotile with four exposed edges, unlike null or undefined.
 		return mask !== null && mask !== undefined && ( mask & direction ) === 0;
 
 	};
@@ -77,8 +79,24 @@
 	const WATER_TILES = [ 1, 188, 206 ];
 
 
+	/**
+	 * Read an autotile identity, accepting wall: as a compatibility alias.
+	 * Canonical identities let mixed prefixes and previously saved maps connect.
+	 * Other special types, such as vfx:, remain outside autotile handling.
+	 *
+	 * @param {*} value A tile ID or a stored autotile identity.
+	 * @returns {string|null} The canonical auto:name identity, or null.
+	 */
+	function autotileType_( value ) {
+		if ( typeof value !== 'string' ) return null;
+		if ( value.startsWith( 'auto:' ) ) return value;
+		if ( value.startsWith( 'wall:' ) ) return 'auto:' + value.substring( 5 );
+		return null;
+	}
+
+
 	// Define a mapping from bitmask value to your desired tile name or index.
-	const wallTiles = {
+	const autotileSets = {
 		'solid': {
 			tiles: {
 				0: 1,  // wall_isolated.
@@ -427,6 +445,29 @@
 
 
 	/**
+	 * Draw one resolved tile at a pixel position using its stored colours.
+	 * Accepts a tile array from a loaded or generated map, not a raw tile ID.
+	 * Animated vfx tiles are supported, and the text cursor is left unchanged.
+	 * As with drawAt, the tile's colours become the current drawing colours.
+	 *
+	 * @param {Array} tile The resolved tile array, including character, fg and bg.
+	 * @param {number} x The pixel x-coordinate of the tile's top-left corner.
+	 * @param {number} y The pixel y-coordinate of the tile's top-left corner.
+	 * @returns {void}
+	 */
+	b8.Tilemap.drawTile = function( tile, x, y ) {
+
+		b8.Utilities.checkArray( "tile", tile );
+		b8.Utilities.assert( tile.length >= 3, "drawTile requires a resolved tile with character, foreground and background." );
+
+		// Treat this as a one-cell map so colours, sprites and effects always use
+		// the same rendering rules as drawAt, including future improvements.
+		b8.Tilemap.drawAt( [ [ tile ] ], x, y, 0, 0, 1, 1 );
+
+	};
+
+
+	/**
 	 * Create an empty tilemap array of the specified size.
 	 *
 	 * @param {number} width The width of the tilemap.
@@ -529,7 +570,8 @@
 			0, // Bg
 			false, // Collision
 			{}, // Data
-			null // Wall mask: ordinary tiles have no wall connectivity data.
+			null, // Autotile mask: ordinary tiles have no autotile connectivity data.
+			null // Autotile definition, retained for subsequent edits and serialization.
 		];
 
 	};
@@ -538,11 +580,14 @@
 	/**
 	 * Set a tile in the tilemap array at the specified coordinates.
 	 * This function modifies the tilemap array in place.
+	 * Autotile definitions such as { t: 'auto:pipe' } also refresh adjacent tiles.
+	 * The wall: prefix remains an interchangeable alias for auto:.
+	 * Only changed masks select new artwork; distant tiles are never scanned.
 	 *
 	 * @param {Array} tilemap The tilemap array to modify.
 	 * @param {number} col The x coordinate of the tile to set.
 	 * @param {number} row The y coordinate of the tile to set.
-	 * @param {Array} tile The tile data to set at the specified coordinates.
+	 * @param {Array|Object} tile The tile data to set at the specified coordinates.
 	 * @returns {void}
 	 */
 	b8.Tilemap.setTile = function( tilemap, col, row, tile = null ) {
@@ -563,7 +608,35 @@
 			b8.Utilities.fatal( `Column ${col} does not exist in row ${row} of the tilemap.` );
 		}
 
-		tilemap[ row ][ col ] = b8.Tilemap.normaliseTile( tile );
+		const oldType = autotileType_( tilemap[ row ][ col ]?.[ b8.Tilemap.MAP_AUTOTILE ]?.type );
+		const newTile = b8.Tilemap.normaliseTile( tile );
+		const newType = autotileType_( newTile[ b8.Tilemap.MAP_AUTOTILE ]?.type );
+		// Reject unknown autotile definitions before changing the caller's map.
+		if ( newType && !autotileSets[ newType.substring( 5 ) ] ) {
+			b8.Utilities.fatal( 'Autotile tile type not found: ' + newType.substring( 5 ) );
+		}
+		tilemap[ row ][ col ] = newTile;
+		if ( !oldType && !newType ) return;
+		refreshAutotile_( tilemap, col, row, true );
+
+		// Four-way masks depend on identity, not artwork, so changes cannot
+		// propagate beyond these neighbours. This bounds the work to five cells.
+		const visited = new Set( [ newTile ] );
+		for ( const [ dx, dy ] of [ [ 0, -1 ], [ 1, 0 ], [ 0, 1 ], [ -1, 0 ] ] ) {
+			const y = ( row + dy + tilemap.length ) % tilemap.length;
+			const width = tilemap[ y ]?.length;
+			if ( !width ) continue;
+			const x = ( col + dx + width ) % width;
+			const neighbour = tilemap[ y ][ x ];
+			const autotile = neighbour?.[ b8.Tilemap.MAP_AUTOTILE ];
+			if ( !autotile || visited.has( neighbour ) ) continue;
+			// Opposite-edge cells are candidates only when their autotile wraps.
+			if ( ( x !== col + dx || y !== row + dy ) && autotileSets[ autotile.type.substring( 5 ) ].edgeMode !== 'wrap' ) continue;
+			const neighbourType = autotileType_( autotile.type );
+			if ( neighbourType !== oldType && neighbourType !== newType ) continue;
+			visited.add( neighbour );
+			refreshAutotile_( tilemap, x, y );
+		}
 
 	};
 
@@ -573,7 +646,8 @@
 	 *
 	 * The tile definition can be an array or an object with properties.
 	 * This function ensures that the tile array is in the correct format and all properties are set.
-	 * Object definitions may include wallMask; old five-slot arrays default to null.
+	 * Object definitions may include autotileMask; old five-slot arrays default to null.
+	 * Autotile names retain their definition in MAP_AUTOTILE for resolution by setTile.
 	 *
 	 * @param {Array|Object} tile The tile definition to convert. t.t = tile id, t.fg = foreground color, t.bg = background color, t.coll = collision flag, t.data = additional 	data.
 	 * @returns {Array} The converted tile array.
@@ -588,6 +662,10 @@
 					newTile[ i ] = tile[ i ];
 				}
 			}
+			// Raw arrays may use an autotile name too; resolved arrays already carry metadata.
+			if ( autotileType_( newTile[ 0 ] ) ) {
+				newTile[ b8.Tilemap.MAP_AUTOTILE ] = { type: autotileType_( newTile[ 0 ] ), fg: newTile[ 1 ], bg: newTile[ 2 ] };
+			}
 
 			return newTile;
 		}
@@ -598,7 +676,10 @@
 			if ( typeof tile.bg !== "undefined" ) newTile[ 2 ] = tile.bg;
 			if ( typeof tile.coll !== "undefined" ) newTile[ 3 ] = !!tile.coll;
 			if ( typeof tile.data !== "undefined" ) newTile[ 4 ] = tile.data;
-			if ( typeof tile.wallMask !== "undefined" ) newTile[ b8.Tilemap.MAP_WALL_MASK ] = tile.wallMask;
+			if ( typeof tile.autotileMask !== "undefined" ) newTile[ b8.Tilemap.MAP_AUTOTILE_MASK ] = tile.autotileMask;
+			if ( autotileType_( tile.t ) ) {
+				newTile[ b8.Tilemap.MAP_AUTOTILE ] = { type: autotileType_( tile.t ), fg: tile.fg ?? 15, bg: tile.bg ?? 0, colours: tile.colours ?? tile.colors ?? null };
+			}
 
 			return newTile;
 		}
@@ -606,6 +687,33 @@
 		return newTile;
 
 	};
+
+
+	/**
+	 * Recalculate one autotile, stopping before random picks if its mask is unchanged.
+	 * Collision and game data are deliberately left intact.
+	 *
+	 * @param {Array} tilemap The resolved map.
+	 * @param {number} col Cell column.
+	 * @param {number} row Cell row.
+	 * @param {boolean} [force=false] Resolve newly assigned definitions even if the mask matches.
+	 * @returns {void}
+	 */
+	function refreshAutotile_( tilemap, col, row, force = false ) {
+		const tile = tilemap[ row ][ col ];
+		const autotile = tile?.[ b8.Tilemap.MAP_AUTOTILE ];
+		if ( !autotile ) return;
+		const selected = pickAutotile( col, row, tilemap, autotile.type, cell => autotileType_( cell?.[ b8.Tilemap.MAP_AUTOTILE ]?.type ) );
+		if ( !force && tile[ b8.Tilemap.MAP_AUTOTILE_MASK ] === selected.mask ) return;
+		const variant = autotile.colours?.[ selected.mask ];
+		const values = [ selected.tileId,
+			resolveAutotileColour_( 'fg', autotile.fg, selected.colours, variant, autotile.cell ),
+			resolveAutotileColour_( 'bg', autotile.bg, selected.colours, variant, autotile.cell ) ];
+		for ( let i = 0; i < values.length; i++ ) {
+			tile[ i ] = Array.isArray( values[ i ] ) ? b8.Random.pickWeighted( values[ i ] ) : values[ i ];
+		}
+		tile[ b8.Tilemap.MAP_AUTOTILE_MASK ] = selected.mask;
+	}
 
 
 	/**
@@ -618,8 +726,8 @@
 	 *    # 2 2 #
 	 *    #######
 	 *
-	 * The tilemap array will include the tile character code, foreground color,
-	 * background color, collision flag, and additional data.
+	 * Returns unresolved symbols. Optionally pass this grid through applyRules
+	 * before createFromArray resolves artwork, colours, collision, and data.
 	 *
 	 * @param {string} mapText The text map to convert.
 	 * @returns {Array} The converted tilemap array.
@@ -640,6 +748,108 @@
 
 		return map;
 
+	}
+
+
+	/**
+	 * Apply ordered decoration rules to an unresolved symbol grid once.
+	 * Each rule matches a snapshot, then commits its changes before the next rule.
+	 * Null matches any existing cell in match, and leaves a cell alone in replace.
+	 * Spaces are literal symbols in both grids. Patterns never wrap map edges.
+	 * The source grid is not changed; the returned grid can use createFromArray.
+	 *
+	 * @param {string[][]} grid Unresolved map symbols, such as convertFromText's output.
+	 * @param {Array<{match: Array, replace: Array}>} rules Ordered rectangular patterns.
+	 * @returns {string[][]} A decorated copy of the symbol grid.
+	 * @throws {Error} Invalid patterns or conflicting writes within a single rule.
+	 */
+	b8.Tilemap.applyRules = function( grid, rules ) {
+		b8.Utilities.checkArray( 'grid', grid );
+		b8.Utilities.checkArray( 'rules', rules );
+		for ( const row of grid ) b8.Utilities.checkArray( 'grid row', row );
+		for ( const rule of rules ) validateTileRule_( rule );
+		const result = grid.map( row => row.slice() );
+
+		for ( const rule of rules ) {
+			const height = rule.match.length;
+			const width = rule.match[ 0 ].length;
+			const changes = new Map();
+			for ( let row = 0; row <= result.length - height; row++ ) {
+				for ( let col = 0; col <= result[ row ].length - width; col++ ) {
+					if ( !matchesTileRule_( result, col, row, rule.match ) ) continue;
+					for ( let y = 0; y < height; y++ ) {
+						for ( let x = 0; x < width; x++ ) {
+							const symbol = rule.replace[ y ][ x ];
+							if ( symbol === null ) continue;
+							const key = `${row + y},${col + x}`;
+							const previous = changes.get( key );
+							// Identical overlapping writes are harmless; different writes
+							// indicate an ambiguous rule rather than a priority decision.
+							if ( previous && previous.symbol !== symbol ) {
+								b8.Utilities.fatal( `Conflicting tile rule replacements at ${key}.` );
+							}
+							changes.set( key, { row: row + y, col: col + x, symbol } );
+						}
+					}
+				}
+			}
+			// Defer every write so this rule cannot trigger itself during its scan.
+			for ( const change of changes.values() ) {
+				result[ change.row ][ change.col ] = change.symbol;
+			}
+		}
+		return result;
+	};
+
+
+	/**
+	 * Require equally sized, nonempty rectangles with explicit strings or null.
+	 * This catches missing cells rather than interpreting undefined as a wildcard.
+	 *
+	 * @param {Object} rule A match/replace definition.
+	 * @returns {void}
+	 */
+	function validateTileRule_( rule ) {
+		b8.Utilities.checkObject( 'rule', rule );
+		const match = rule.match;
+		const replace = rule.replace;
+		b8.Utilities.checkArray( 'rule.match', match );
+		b8.Utilities.checkArray( 'rule.replace', replace );
+		const width = match[ 0 ]?.length;
+		b8.Utilities.assert( match.length > 0 && width > 0 && replace.length === match.length,
+			'Tile rules require nonempty match and replace grids of the same size.' );
+		for ( const pattern of [ match, replace ] ) {
+			for ( const row of pattern ) {
+				b8.Utilities.checkArray( 'rule row', row );
+				b8.Utilities.assert( row.length === width, 'Tile rule rows must have the same width.' );
+				for ( const symbol of row ) {
+					b8.Utilities.assert( symbol === null || typeof symbol === 'string',
+						'Tile rule cells must be strings or null.' );
+				}
+			}
+		}
+	}
+
+
+	/**
+	 * Match a whole rectangle against existing cells, including on ragged maps.
+	 * Wildcards never match outside the map.
+	 *
+	 * @param {Array} grid The current unresolved symbol grid.
+	 * @param {number} col Pattern's left column.
+	 * @param {number} row Pattern's top row.
+	 * @param {Array} pattern The rule's match rectangle.
+	 * @returns {boolean} Whether the entire pattern matches here.
+	 */
+	function matchesTileRule_( grid, col, row, pattern ) {
+		for ( let y = 0; y < pattern.length; y++ ) {
+			if ( col + pattern[ y ].length > grid[ row + y ].length ) return false;
+			for ( let x = 0; x < pattern[ y ].length; x++ ) {
+				const symbol = pattern[ y ][ x ];
+				if ( symbol !== null && symbol !== grid[ row + y ][ col + x ] ) return false;
+			}
+		}
+		return true;
 	}
 
 
@@ -675,16 +885,23 @@
 	/**
 	 * Create a tilemap from an array of arrays.
 	 * The tilePattern is an object that maps tile characters to tile properties.
+	 * Cells using the same autotile type connect, even if their source characters differ.
 	 *
 	 * @param {Array} grid The grid array to create the tilemap from.
 	 * @param {Object} tilePattern The tile pattern object.
 	 * @param {Object} [defaultTilePattern=null] The default tile pattern to use for empty tiles.
+	 * @param {Array|null} [colourOverrides=null] Sparse rows of per-cell {fg, bg} overrides.
+	 * Tile patterns may supply colours (or colors), keyed by autotile mask. Each
+	 * entry accepts numeric or random-array fg/bg values. Null resets that
+	 * entry or channel to the tile pattern's normal colours. Missing channels
+	 * inherit the autotile set's colours. Per-cell overrides take final precedence.
 	 * @returns {Array} The created tilemap array.
 	 */
-	b8.Tilemap.createFromArray = function( grid, tilePattern, defaultTilePattern = null ) {
+	b8.Tilemap.createFromArray = function( grid, tilePattern, defaultTilePattern = null, colourOverrides = null ) {
 
 		b8.Utilities.checkArray( "grid", grid );
 		b8.Utilities.checkObject( "tilePattern", tilePattern );
+		if ( colourOverrides !== null ) b8.Utilities.checkArray( "colourOverrides", colourOverrides );
 
 		if ( defaultTilePattern !== null ) {
 			b8.Utilities.checkObject( "defaultTilePattern", defaultTilePattern );
@@ -712,14 +929,16 @@
 
 				// Tile character code.
 				let tileId = tile.t;
-				let wallMask = null;
+				let autotileMask = null;
+				let autotileColours = null;
 
-				// If tileId is a string and begins with "wall:" then compute bitmask.
-				if ( typeof tileId === "string" && tileId.startsWith( "wall:" ) ) {
+				// Both prefixes describe the same neighbour-based artwork selection.
+				if ( autotileType_( tileId ) ) {
 					// Keep the same mask used to choose the artwork, including edgeMode.
-					const wall = pickWallTile( x, y, grid, tileId );
-					tileId = wall.tileId;
-					wallMask = wall.mask;
+					const autotile = pickAutotile( x, y, grid, tileId, cell => autotileType_( tilePattern[ cell ]?.t ) );
+					tileId = autotile.tileId;
+					autotileMask = autotile.mask;
+					autotileColours = autotile.colours;
 				}
 
 				// If is an array of ids then do a weighted pick from those.
@@ -728,15 +947,18 @@
 				}
 
 				// Foreground colour.
-				if ( typeof tile.fg === 'undefined' ) tile.fg = 15;
-				let fg = tile.fg;
+				const baseFg = tile.fg ?? 15;
+				const baseBg = tile.bg ?? 0;
+				const colours = tile.colours ?? tile.colors;
+				const variant = autotileMask === null ? undefined : colours?.[ autotileMask ];
+				const cell = colourOverrides?.[ y ]?.[ x ];
+				let fg = resolveAutotileColour_( 'fg', baseFg, autotileColours, variant, cell );
 				if ( Array.isArray( fg ) ) {
 					fg = b8.Random.pickWeighted( fg );
 				}
 
 				// Background colour.
-				if ( typeof tile.bg === 'undefined' ) tile.bg = 0;
-				let bg = tile.bg;
+				let bg = resolveAutotileColour_( 'bg', baseBg, autotileColours, variant, cell );
 				if ( Array.isArray( bg ) ) {
 					bg = b8.Random.pickWeighted( bg );
 				}
@@ -747,7 +969,12 @@
 					bg,
 					tile.coll || false,
 					tile.data || {},
-					wallMask,
+					autotileMask,
+					autotileMask === null ? null : {
+						type: autotileType_( tile.t ), fg: baseFg, bg: baseBg,
+						// Missing overrides inherit; explicit null resets to base colours.
+						colours: colours ?? null, cell: cell === undefined ? {} : cell
+					},
 				];
 
 			}
@@ -759,7 +986,29 @@
 
 
 	/**
-	 * Add a wall tile set to the tilemap system.
+	 * Resolve one colour channel without treating zero or transparent -1 as absent.
+	 * Undefined inherits the previous layer; null explicitly restores the base.
+	 * Random arrays are returned intact for the existing weighted picker.
+	 *
+	 * @param {string} channel The fg or bg channel.
+	 * @param {number|Array} base The map tile's normal colour.
+	 * @param {Object|null} autotile The autotile-set variant's colours.
+	 * @param {Object|null|undefined} variant The map pattern's variant override.
+	 * @param {Object|null|undefined} cell The individual cell's final override.
+	 * @returns {number|Array} The selected colour or random choices.
+	 */
+	function resolveAutotileColour_( channel, base, autotile, variant, cell ) {
+		let value = autotile?.[ channel ] ?? base;
+		for ( const override of [ variant, cell ] ) {
+			if ( override === null ) value = base;
+			else if ( override?.[ channel ] !== undefined ) value = override[ channel ] ?? base;
+		}
+		return value;
+	}
+
+
+	/**
+	 * Add an autotile set for terrain, walls, roads, or other connected artwork.
 	 *
 	 * The tile set should contain a `tiles` object with up to 16 tile ids,
 	 * corresponding to the 16 possible bitmask values.
@@ -772,94 +1021,101 @@
 	 * - "connect": outside the map always counts as a matching tile.
 	 * - "wrap": outside the map wraps around to the opposite edge.
 	 *
-	 * @param {string} name The name of the wall tile set. This should match the name used in the tile pattern, e.g. "wall:brick".
-	 * @param {Object} tileSet The wall tile set definition.
+	 * @param {string} name The unprefixed set name, e.g. 'brick' for 'auto:brick'.
+	 * @param {Object} tileSet The autotile set definition. Also available via wall:brick.
 	 * @param {Object} tileSet.tiles The tile ids for each bitmask value.
+	 * @param {Object} [tileSet.colours] Optional {fg, bg} entries keyed by mask; colors is an alias.
+	 * Each channel can be a number or a weighted random array. Missing/null
+	 * colours fall back to the map tile's normal foreground/background.
 	 * @param {string} [tileSet.edgeMode="open"] How map edges are handled: "open", "connect", or "wrap".
 	 * @returns {void}
 	 */
-	b8.Tilemap.addWallTileSet = function( name, tileSet ) {
+	b8.Tilemap.addAutotileSet = function( name, tileSet ) {
 
 		b8.Utilities.checkString( "name", name );
 		b8.Utilities.checkObject( "tileSet", tileSet );
 
-		if ( wallTiles[ name ] ) {
-			b8.Utilities.fatal( `Wall tile set with name ${name} already exists.` );
+		if ( autotileSets[ name ] ) {
+			b8.Utilities.fatal( `Autotile tile set with name ${name} already exists.` );
 		}
 
-		wallTiles[ name ] = normaliseWallTileSet( tileSet );
+		autotileSets[ name ] = normaliseAutotileSet( tileSet );
 
 	}
 
 
 	/**
-	 * Get a wall tile set by name.
+	 * Get an autotile set by its unprefixed name.
 	 *
-	 * @param {string} name The name of the wall tile set to get.
-	 * @returns {Array} The wall tile set array.
+	 * @param {string} name The name of the autotile set to get.
+	 * @returns {Object} The autotile set definition.
 	 */
-	b8.Tilemap.getWallTileSet = function( name ) {
+	b8.Tilemap.getAutotileSet = function( name ) {
 
 		b8.Utilities.checkString( "name", name );
 
-		if ( !wallTiles[ name ] ) {
-			b8.Utilities.fatal( `Wall tile set with name ${name} does not exist.` );
+		if ( !autotileSets[ name ] ) {
+			b8.Utilities.fatal( `Autotile tile set with name ${name} does not exist.` );
 		}
 
-		return { ...wallTiles[ name ] };
+		return { ...autotileSets[ name ] };
 
 	}
 
 
 	/**
-	 * Select a wall tile from a predefined list based on the surrounding tiles.
+	 * Select an autotile tile from a predefined list based on the surrounding tiles.
 	 * The grid is the 2D array of tile ids.
 	 * The x and y are the coordinates of the tile to check.
 	 *
 	 * @param {number} x The x coordinate of the tile.
 	 * @param {number} y The y coordinate of the tile.
 	 * @param {Array} grid The 2D array of tile ids.
-	 * @param {string} name The name of the wall tile to select. Picked from the default lists of wall patterns.
-	 * @returns {{tileId: number|Array, mask: number}} The artwork choice and its connectivity mask.
+	 * @param {string} name The name of the autotile tile to select. Picked from the default lists of autotile patterns.
+	 * @param {Function} [getType] Read autotile identity from a source character or resolved cell.
+	 * @returns {{tileId: number|Array, mask: number, colours: Object|undefined}} Artwork, connectivity and optional colours.
 	 */
-	function pickWallTile( col, row, grid, name = null ) {
+	function pickAutotile( col, row, grid, name = null, getType = value => value ) {
 
 		const tileType = name.substring( 5 );
 
-		if ( !wallTiles[ tileType ] ) {
-			b8.Utilities.fatal( "Wall tile type not found: " + tileType );
+		if ( !autotileSets[ tileType ] ) {
+			b8.Utilities.fatal( "Autotile tile type not found: " + tileType );
 		}
 
-		const wallTileSet = wallTiles[ tileType ];
+		const autotileSet = autotileSets[ tileType ];
 
 		const mask = computeBitmask(
 			grid,
 			col,
 			row,
-			wallTileSet.edgeMode || "open"
+			autotileSet.edgeMode || "open",
+			getType
 		);
 
-		return { tileId: wallTileSet.tiles[ mask ], mask };
+		return { tileId: autotileSet.tiles[ mask ], mask, colours: ( autotileSet.colours ?? autotileSet.colors )?.[ mask ] };
 
 	};
 
 
 	/**
-	 * Normalise a wall tile set to ensure it has 16 entries, one for each bitmask value.
+	 * Normalise an autotile tile set to ensure it has 16 entries, one for each bitmask value.
 	 * If any entries are missing, they will be filled in with the corresponding entry from the default "solid" tile set.
 	 *
-	 * @param {Array} tileSet The wall tile set to normalise.
-	 * @returns {Array} The normalised wall tile set.
+	 * @param {Object} tileSet The autotile set to normalise.
+	 * @returns {Object} The normalised autotile set.
 	 */
-	function normaliseWallTileSet( tileSet ) {
+	function normaliseAutotileSet( tileSet ) {
 
 		if ( !tileSet.tiles ) {
-			b8.Utilities.fatal( "Wall tile set must include a tiles object. eg { tiles: { 0: 1, 1: 2, ... } }" );
+			b8.Utilities.fatal( "Autotile tile set must include a tiles object. eg { tiles: { 0: 1, 1: 2, ... } }" );
 		}
 
-		const defaultTileSet = wallTiles[ 'solid' ];
+		const defaultTileSet = autotileSets[ 'solid' ];
 		const normalisedTileSet = {
 			edgeMode: tileSet.edgeMode || "open",
+			// Keep one canonical spelling internally; accept both at the API boundary.
+			colours: tileSet.colours ?? tileSet.colors,
 			tiles: {}
 		};
 
@@ -877,10 +1133,10 @@
 
 
 	/**
-	 * Compute a 4-bit bitmask for a wall tile based on its surrounding tiles.
+	 * Compute a 4-bit bitmask for an autotile tile based on its surrounding tiles.
 	 *
 	 * The bitmask checks the four adjacent tiles: north, east, south, and west.
-	 * If an adjacent tile matches the current map character, the corresponding
+	 * If an adjacent tile matches the current autotile type, the corresponding
 	 * bit is added to the mask.
 	 *
 	 * Edge modes control how tiles outside the map bounds are treated:
@@ -894,17 +1150,18 @@
 	 * @param {number} col The x coordinate of the tile.
 	 * @param {number} row The y coordinate of the tile.
 	 * @param {string} [edgeMode="open"] How map edges are handled: "open", "connect", or "wrap".
+	 * @param {Function} [getType] Read the identity used for connectivity.
 	 * @returns {number} The computed bitmask value from 0 to 15.
 	 */
-	function computeBitmask( grid, col, row, edgeMode = "open" ) {
+	function computeBitmask( grid, col, row, edgeMode = "open", getType = value => value ) {
 
 		let bitmask = 0;
-		const tileId = grid[ row ][ col ];
+		const tileId = getType( grid[ row ][ col ] );
 
-		if ( matchesTile( grid, col, row - 1, tileId, edgeMode ) ) bitmask += 1;
-		if ( matchesTile( grid, col + 1, row, tileId, edgeMode ) ) bitmask += 2;
-		if ( matchesTile( grid, col, row + 1, tileId, edgeMode ) ) bitmask += 4;
-		if ( matchesTile( grid, col - 1, row, tileId, edgeMode ) ) bitmask += 8;
+		if ( matchesTile( grid, col, row - 1, tileId, edgeMode, getType ) ) bitmask += 1;
+		if ( matchesTile( grid, col + 1, row, tileId, edgeMode, getType ) ) bitmask += 2;
+		if ( matchesTile( grid, col, row + 1, tileId, edgeMode, getType ) ) bitmask += 4;
+		if ( matchesTile( grid, col - 1, row, tileId, edgeMode, getType ) ) bitmask += 8;
 
 		return bitmask;
 
@@ -924,9 +1181,10 @@
 	 * @param {number} row The y coordinate to check.
 	 * @param {string|number} tileId The tile id to match against.
 	 * @param {string} edgeMode How map edges are handled: "open", "connect", or "wrap".
+	 * @param {Function} [getType] Read the identity used for connectivity.
 	 * @returns {boolean} True if the tile matches.
 	 */
-	function matchesTile( grid, col, row, tileId, edgeMode ) {
+	function matchesTile( grid, col, row, tileId, edgeMode, getType = value => value ) {
 
 		// Wrap coordinates around the map.
 		if ( edgeMode === "wrap" ) {
@@ -952,7 +1210,7 @@
 
 		}
 
-		return grid[ row ][ col ] === tileId;
+		return getType( grid[ row ][ col ] ) === tileId;
 
 	}
 

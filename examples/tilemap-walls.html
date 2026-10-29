@@ -9,6 +9,9 @@
 
 	<link rel="stylesheet" href="example.css">
 	<script src="../dist/b8.min.js"></script>
+	<!-- Use the current autotile API directly without rebuilding dist files. -->
+	<script src="../src/internal/utilities.js"></script>
+	<script src="../src/internal/tilemap.js"></script>
 
 	<script>
 
@@ -39,7 +42,8 @@
 		];
 
 		const TILES = {
-			"#": { fg: 3, t: 'wall:solid' },
+			// Reuse the shaded wall set, with a different colour for mask 5 here.
+			"#": { fg: 3, t: 'wall:shaded', colors: { 5: { fg: [ 6, 7 ] } } },
 			"$": { fg: 12, t: 'wall:pipe' },
 			"%": { fg: 7, t: 'wall:half' },
 			"D": { fg: 4, t: 221 }, // Door.
@@ -52,9 +56,25 @@
 
 		function load() {
 
+			// Existing tile IDs and random tile arrays remain unchanged. Colours
+			// independently override foreground/background for each neighbour mask.
+			b8.Tilemap.addAutotileSet( 'shaded', {
+				tiles: b8.Tilemap.getAutotileSet( 'solid' ).tiles,
+				colours: {
+					6: { fg: 15 },
+					10: { fg: [ 7, 15 ], bg: 0 },
+					12: { fg: 7 }
+				}
+			} );
+
 			const mapDataString = MAP.join( '\n' );
 			const mapArray = b8.Tilemap.convertFromText( mapDataString );
-			const map = b8.Tilemap.createFromArray( mapArray, TILES );
+			// A sparse override grid changes individual cells without introducing
+			// different map characters, so connected walls still join normally.
+			const colourOverrides = [];
+			colourOverrides[ 1 ] = [];
+			colourOverrides[ 1 ][ 3 ] = { fg: 10, bg: 0 };
+			const map = b8.Tilemap.createFromArray( mapArray, TILES, null, colourOverrides );
 
 			b8.Tilemap.draw( map );
 

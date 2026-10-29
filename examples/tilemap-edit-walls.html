@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Live autotile editing</title>
+	<style>
+		/* Keep the tools outside the canvas so they also work on touch screens. */
+		body { margin: 0; padding: 24px; background: #15151b; color: #eee; font: 16px/1.5 system-ui, sans-serif; }
+		main { max-width: 680px; margin: auto; }
+		h1 { margin: 0; font-size: 24px; }
+		.tools { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+		button { padding: 9px 14px; border: 1px solid #777; border-radius: 5px; background: #25252f; color: inherit; cursor: pointer; font: inherit; }
+		button[aria-pressed="true"] { background: #eee; color: #15151b; }
+		button:focus-visible { outline: 3px solid #77ccff; outline-offset: 3px; }
+		#screen { max-width: 576px; margin: auto; }
+		#screen canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; touch-action: none; }
+		#status { min-height: 3em; font-family: monospace; }
+		code { color: #a6dcff; }
+	</style>
+	<script src="../dist/b8.js"></script>
+	<!-- Use the current source modules so this development example needs no rebuild.
+	     Utilities includes the fast array validation used by local wall edits. -->
+	<script src="../src/internal/utilities.js"></script>
+	<script src="../src/internal/tilemap.js"></script>
+</head>
+<body>
+	<main>
+		<h1>Live autotile editing</h1>
+		<p>Choose a brush, then click or drag on the map. Join the gaps, erase a corner,
+			or replace a wall with another type. Neighbours reshape automatically.</p>
+		<div class="tools" role="group" aria-label="Wall brush">
+			<button type="button" data-brush="thin" aria-pressed="true">1: Thin</button>
+			<button type="button" data-brush="half" aria-pressed="false">2: Half</button>
+			<button type="button" data-brush="pipe" aria-pressed="false">3: Pipe</button>
+			<button type="button" data-brush="erase" aria-pressed="false">0: Erase</button>
+		</div>
+		<div id="screen" aria-label="Editable wall map"></div>
+		<p id="status">Loading engine…</p>
+		<div class="tools">
+			<button type="button" id="reset">Reset example</button>
+			<button type="button" id="clear">Clear map</button>
+		</div>
+		<p>Each edit uses <code>b8.Tilemap.setTile(map, col, row, tile)</code>.
+			Only the edited cell and its four neighbours need checking. Different types stay separate.
+			Use <code>auto:name</code> for walls, terrain, or roads; <code>wall:name</code> remains an interchangeable alias.</p>
+	</main>
+	<script>
+		const WIDTH = 24;
+		const HEIGHT = 16;
+		const brushes = {
+			thin: { t: 'auto:thin', fg: 10, bg: 0, coll: true },
+			half: { t: 'auto:half', fg: 12, bg: 0, coll: true },
+			pipe: { t: 'auto:pipe', fg: 14, bg: 0, coll: true },
+			erase: { t: 0, fg: 15, bg: 0, coll: false }
+		};
+		let map;
+		let selected = 'thin';
+		let lastCell = '';
+		let edits = 0;
+
+		/**
+		 * Build three broken wall shapes through the normal map creation API.
+		 * Their metadata lets setTile update the existing walls during editing.
+		 */
+		function resetMap() {
+			const grid = Array.from( { length: HEIGHT }, () => Array( WIDTH ).fill( '.' ) );
+			for ( const [ start, symbol ] of [ [ 1, '#' ], [ 9, '+' ], [ 17, '$' ] ] ) {
+				for ( let x = start; x < start + 6; x++ ) {
+					grid[ 3 ][ x ] = symbol;
+					grid[ 12 ][ x ] = symbol;
+				}
+				for ( let y = 3; y <= 12; y++ ) {
+					grid[ y ][ start ] = symbol;
+					grid[ y ][ start + 5 ] = symbol;
+				}
+				// Fill this gap to turn the two ends back into a connected wall.
+				grid[ 3 ][ start + 3 ] = '.';
+			}
+			map = b8.Tilemap.createFromArray( grid, {
+				'#': brushes.thin, '+': brushes.half, '$': brushes.pipe, '.': brushes.erase
+			} );
+			edits = 0;
+			lastCell = '';
+		}
+
+		/** Select a brush and keep the accessible button state in sync. */
+		function selectBrush( name ) {
+			selected = name;
+			lastCell = '';
+			for ( const button of document.querySelectorAll( '[data-brush]' ) ) {
+				button.setAttribute( 'aria-pressed', String( button.dataset.brush === name ) );
+			}
+		}
+
+		/**
+		 * Poll input once per update. Avoid repeatedly assigning the same tile
+		 * while holding still, which would reroll random pipe artwork.
+		 */
+		function update() {
+			for ( const [ key, name ] of [ [ '1', 'thin' ], [ '2', 'half' ], [ '3', 'pipe' ], [ '0', 'erase' ] ] ) {
+				if ( b8.keyp( key ) ) selectBrush( name );
+			}
+			const { col, row } = b8.Input.pointerTile();
+			const inside = col >= 0 && row >= 0 && col < WIDTH && row < HEIGHT;
+			const down = b8.Input.pointerHeld() || b8.Input.pointerJustPressed();
+			const cell = `${col},${row}`;
+			if ( down && inside && cell !== lastCell ) {
+				// This single call resolves the brush and refreshes matching neighbours.
+				b8.Tilemap.setTile( map, col, row, brushes[ selected ] );
+				lastCell = cell;
+				edits++;
+			}
+			if ( !down || !inside ) lastCell = '';
+			const mask = inside ? map[ row ][ col ][ b8.Tilemap.MAP_AUTOTILE_MASK ] : null;
+			document.getElementById( 'status' ).textContent =
+				`Brush: ${selected} | Edits: ${edits} | Cell: ${inside ? cell : 'outside'} | Mask: ${mask ?? 'ordinary tile'}`;
+		}
+
+		/** Draw the complete map; connectivity updates happen only during editing. */
+		function render() {
+			b8.color( 15, 0 );
+			b8.cls();
+			b8.locate( 0, 0 );
+			b8.Tilemap.draw( map );
+		}
+
+		/** Connect the HTML controls after engine initialization has completed. */
+		function main() {
+			resetMap();
+			for ( const button of document.querySelectorAll( '[data-brush]' ) ) {
+				button.addEventListener( 'click', () => selectBrush( button.dataset.brush ) );
+			}
+			document.getElementById( 'reset' ).addEventListener( 'click', resetMap );
+			document.getElementById( 'clear' ).addEventListener( 'click', () => {
+				map = b8.Tilemap.createEmptyTilemap( WIDTH, HEIGHT );
+				edits = 0;
+				lastCell = '';
+			} );
+			b8.frame( render, update );
+		}
+
+		// Use the existing engine container option to leave room for HTML controls.
+		window.addEventListener( 'load', () => b8.init( main, {
+			NAME: 'Live autotile editing', SCREEN_COLS: WIDTH, SCREEN_ROWS: HEIGHT,
+			TOUCH_VJOY: false, CANVAS_SETTINGS: { CONTAINER: 'screen' }
+		} ) );
+	</script>
+</body>
+</html>

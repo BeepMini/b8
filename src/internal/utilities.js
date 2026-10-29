@@ -278,7 +278,11 @@
 	 */
 	b8.Utilities.checkArray = function( varName, varValue ) {
 
-		b8.Utilities.assert( Array.isArray( varValue ), `${varName} should be an array, but was: ${varValue}` );
+		// Build the error message only on failure: stringifying a valid tilemap
+		// here would otherwise visit every cell on each local setTile edit.
+		if ( !Array.isArray( varValue ) ) {
+			b8.Utilities.fatal( `${varName} should be an array, but was: ${varValue}` );
+		}
 
 		return varValue;
 
