@@ -68,15 +68,15 @@
 
 		return grid[ row ]?.[ col ] ?? [];
 
-	}
+	};
 
 
 	/**
 	 * Register a system that runs every frame.
 	 *
-	 * @param {Function} fn   System function (dt)=>void
 	 * @param {string} name Unique system name
-	 * @param {number} [order=0] Lower numbers run first
+	 * @param {Function} fn System function (dt)=>void
+	 * @param {number} [order=100] Lower numbers run first
 	 */
 	b8.ECS.addSystem = function( name, fn, order = 100 ) {
 
@@ -94,11 +94,15 @@
 	/**
 	 * Add a system a single time. Don't overwite existing systems or add multiple copies.
 	 *
-	 * @param {Function} fn System function (dt)=>void
 	 * @param {string} name Unique system name
+	 * @param {Function} fn System function (dt)=>void
 	 * @param {number} [order=0] Lower numbers run first
+	 * @note The previous (fn, name, order) argument order is also supported.
 	 */
-	b8.ECS.addSystemOnce = function( fn, name, order = 0 ) {
+	b8.ECS.addSystemOnce = function( name, fn, order = 0 ) {
+
+		// Keep existing callers working while matching addSystem's name-first API.
+		if ( typeof name === 'function' ) [ name, fn ] = [ fn, name ];
 
 		b8.Utilities.checkFunction( 'fn', fn );
 		b8.Utilities.checkString( 'name', name );
@@ -106,7 +110,7 @@
 
 		if ( systems.has( name ) ) return;
 
-		b8.ECS.addSystem( fn, name, order );
+		b8.ECS.addSystem( name, fn, order );
 
 	};
 
@@ -161,13 +165,16 @@
 		b8.Utilities.checkString( 'name', name );
 		b8.Utilities.checkObject( 'data', data );
 
+		// Remove the old grid entry before replacing its location coordinates.
+		if ( 'Loc' === name ) b8.ECS.removeComponent( id, name );
+
 		// Add the new component to the store.
 		bucket( name ).set( id, data );
 
 		// If the component is Loc (location), update the position grid.
 		if ( 'Loc' === name ) b8.ECS.setLoc( id, data.col, data.row );
 
-	}
+	};
 
 
 	/**
@@ -183,7 +190,7 @@
 
 		b8.ECS.addComponent( id, name, data );
 
-	}
+	};
 
 
 	/**
@@ -224,7 +231,7 @@
 		if ( !grid[ row ][ col ] ) grid[ row ][ col ] = [];
 		grid[ row ][ col ].push( id );
 
-	}
+	};
 
 
 	/**
@@ -239,7 +246,7 @@
 
 		return components.get( name ) ?? new Map();
 
-	}
+	};
 
 
 	/**
@@ -259,7 +266,7 @@
 		}
 		return out;
 
-	}
+	};
 
 
 	/**
@@ -285,7 +292,7 @@
 
 		return [ ...entitySet ];
 
-	}
+	};
 
 
 	/**
@@ -302,7 +309,7 @@
 
 		return components.get( name )?.get( id );
 
-	}
+	};
 
 
 	/**
@@ -319,7 +326,7 @@
 
 		return components.get( name )?.has( id ) ?? false;
 
-	}
+	};
 
 
 	/**
@@ -336,18 +343,20 @@
 		b8.Utilities.checkInt( 'id', id );
 		b8.Utilities.checkString( 'name', name );
 
-		components.get( name )?.delete( id );
-
 		// If removing a Loc component, also update the position grid.
 		if ( 'Loc' === name ) {
 			const loc = this.getComponent( id, 'Loc' );
 			if ( loc ) {
 				const cell = grid[ loc.row ]?.[ loc.col ];
-				if ( cell ) cell.splice( cell.indexOf( id ), 1 );
+				const index = cell ? cell.indexOf( id ) : -1;
+				if ( index !== -1 ) cell.splice( index, 1 );
 			}
 		}
 
-	}
+		// Keep the coordinates available until the spatial entry is removed.
+		components.get( name )?.delete( id );
+
+	};
 
 
 	/**
@@ -367,7 +376,7 @@
 
 		for ( const store of components.values() ) store.delete( id );
 
-	}
+	};
 
 
 	/**
@@ -386,7 +395,7 @@
 		}
 		return id;
 
-	}
+	};
 
 
 	/**
@@ -417,7 +426,7 @@
 			names.every( n => components.get( n )?.has( id ) )
 		);
 
-	}
+	};
 
 
 	/**
@@ -440,7 +449,7 @@
 
 		return count;
 
-	}
+	};
 
 
 	/**
@@ -455,8 +464,6 @@
 		grid = [];
 		nextId = 1;
 
-	}
+	};
 
 } )( b8 );
-
-

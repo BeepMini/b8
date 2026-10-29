@@ -9,9 +9,9 @@
 
 
 	/**
-	 * Holds the current active scene object.
+	 * Holds the current active scene name.
 	 *
-	 * @type {Object|null}
+	 * @type {string|null}
 	 */
 	let activeScene = null;
 
@@ -80,7 +80,7 @@
 
 		activeScene = null;
 
-	}
+	};
 
 
 	/**
@@ -132,7 +132,6 @@
 	/**
 	 * Pauses the current scene.
 	 *
-	 * @param {string} name - The name of the scene to pause.
 	 * @returns {void}
 	 */
 	b8.Scene.pause = function() {
@@ -170,9 +169,9 @@
 
 
 	/**
-	 * Gets the current active scene.
+	 * Gets the current active scene name.
 	 *
-	 * @returns {Object|null} The active scene object, or null if no scene is active.
+	 * @returns {string|null} The active scene name, or null if no scene is active.
 	 */
 	b8.Scene.get = function() {
 
