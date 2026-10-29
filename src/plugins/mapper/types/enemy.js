@@ -7,6 +7,14 @@ mapper.types.enemy = {
 		'Hard': [ 8, 3, 8 ],
 	},
 
+	/**
+	 * Spawn an enemy with difficulty settings and an optional patrol path.
+	 *
+	 * @param {number} col Tile column.
+	 * @param {number} row Tile row.
+	 * @param {Object} [props={}] Type-specific settings read from the map object.
+	 * @returns {number} The new entity ID.
+	 */
 	spawn: function( col, row, props = {} ) {
 
 		const initialDirection = 'D';
@@ -80,6 +88,15 @@ mapper.types.enemy = {
 	},
 
 
+	/**
+	 * Replace an enemy patrol path and reset its follower state.
+	 *
+	 * @param {number} id Enemy entity ID.
+	 * @param {Array<{col:number,row:number}>} steps Ordered tile destinations.
+	 * @param {number|null} [animationMode=null] Path.AnimationMode; null infers loop or ping-pong.
+	 * @param {number} [index=0] First path step to follow.
+	 * @returns {void}
+	 */
 	setPath: function( id, steps, animationMode = null, index = 0 ) {
 
 		// Determine animation mode if not provided.

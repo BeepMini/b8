@@ -1,5 +1,13 @@
 mapper.types.pickup = {
 
+	/**
+	 * Spawn a consumable reward with a sprite and type-specific pickup properties.
+	 *
+	 * @param {number} col Tile column.
+	 * @param {number} row Tile row.
+	 * @param {Object} [props={}] Type-specific settings read from the map object.
+	 * @returns {number|undefined} New entity ID; undefined when props.type is missing.
+	 */
 	spawn: function( col, row, props = {} ) {
 
 		if ( !props.type ) return;

@@ -5,7 +5,7 @@ mapper.types.coin = {
 	 *
 	 * @param {number} col - The column to spawn the coin at.
 	 * @param {number} row - The row to spawn the coin at.
-	 * @param {Object} props - Additional properties for the coin.
+	 * @param {Object} [props={}] - Additional properties for the coin.
 	 * @returns {number} The entity ID of the spawned coin.
 	 */
 	spawn: function( col, row, props = {} ) {

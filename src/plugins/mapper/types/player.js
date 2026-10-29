@@ -1,5 +1,13 @@
 mapper.types.player = {
 
+	/**
+	 * Spawn the player with health, combat, direction, and animation components.
+	 *
+	 * @param {number} [col=0] Tile column.
+	 * @param {number} [row=0] Tile row.
+	 * @param {Object} [props={}] Type-specific settings read from the map object.
+	 * @returns {number} The new entity ID.
+	 */
 	spawn: function( col = 0, row = 0, props = {} ) {
 
 		const player = b8.ECS.create(

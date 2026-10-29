@@ -1,5 +1,13 @@
 mapper.types.healthFull = {
 
+	/**
+	 * Spawn a pickup that restores health up to the player maximum.
+	 *
+	 * @param {number} col Tile column.
+	 * @param {number} row Tile row.
+	 * @param {Object} [props={}] Unused; accepted for the shared spawn interface.
+	 * @returns {number} The new entity ID.
+	 */
 	spawn: function( col, row, props = {} ) {
 
 		return mapper.types.pickup.spawn(

@@ -1,3 +1,9 @@
+/**
+ * Open the first eligible object ahead, award its rewards, and update its saved type.
+ *
+ * @param {number} playerId Entity ID of the acting player.
+ * @returns {boolean} Whether an interaction was performed.
+ */
 mapper.actions.open = function( playerId ) {
 
 	const entities = mapper.entitiesAhead( playerId );

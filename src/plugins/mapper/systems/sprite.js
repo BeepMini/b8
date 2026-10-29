@@ -1,3 +1,9 @@
+/**
+ * Ease sprite nudge offsets back toward their resting tile position.
+ *
+ * @param {number} dt Frame delta in seconds; accepted for the ECS system interface but not used here.
+ * @returns {void} Updates entity components in place.
+ */
 mapper.systems.sprite = function( dt ) {
 
 	const ids = b8.ECS.query( 'Sprite' );

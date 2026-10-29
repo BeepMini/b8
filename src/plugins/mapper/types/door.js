@@ -5,6 +5,14 @@ mapper.types.door = {
 
 	FLAMMABLE_DOOR_TILES: [ 221 ],
 
+	/**
+	 * Spawn a door with collision, portal destination, and optional flammability.
+	 *
+	 * @param {number} col Tile column.
+	 * @param {number} row Tile row.
+	 * @param {Object} [props={}] Type-specific settings read from the map object.
+	 * @returns {number} The new entity ID.
+	 */
 	spawn: function( col, row, props = {} ) {
 
 		const icon = parseInt( props.icon ) || mapper.types.door.TILE_DOOR_DEFAULT;
@@ -38,6 +46,16 @@ mapper.types.door = {
 	},
 
 
+	/**
+	 * Handle a move onto this door, opening it or requesting a portal transition.
+	 *
+	 * @param {number} id Door entity ID.
+	 * @param {number} newCol Destination tile column.
+	 * @param {number} newRow Destination tile row.
+	 * @param {number} dx Horizontal movement direction.
+	 * @param {number} dy Vertical movement direction.
+	 * @returns {boolean} Whether this move is blocked.
+	 */
 	onCharacterCollision: function( id, newCol, newRow, dx, dy ) {
 
 		// If the door is open, allow passing through.

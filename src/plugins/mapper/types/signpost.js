@@ -1,5 +1,13 @@
 mapper.types.signpost = {
 
+	/**
+	 * Spawn a solid signpost with readable and triggerable message actions.
+	 *
+	 * @param {number} col Tile column.
+	 * @param {number} row Tile row.
+	 * @param {Object} [props={}] Type-specific settings read from the map object.
+	 * @returns {number} The new entity ID.
+	 */
 	spawn: function( col, row, props = {} ) {
 
 		return b8.ECS.create(
@@ -26,6 +34,7 @@ mapper.types.signpost = {
 	/**
 	 * Handle the signpost being triggered (Button A).
 	 *
+	 * @param {number} playerId - Acting player entity ID; unused by this handler.
 	 * @param {number} id - The entity ID of the signpost.
 	 * @returns {void}
 	 */

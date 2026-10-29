@@ -1,5 +1,13 @@
 mapper.types.crate = {
 
+	/**
+	 * Spawn a solid, pushable crate that can catch fire.
+	 *
+	 * @param {number} col Tile column.
+	 * @param {number} row Tile row.
+	 * @param {Object} [props={}] Type-specific settings read from the map object.
+	 * @returns {number} The new entity ID.
+	 */
 	spawn: function( col, row, props = {} ) {
 
 		return b8.ECS.create(

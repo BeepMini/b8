@@ -1,3 +1,8 @@
+/**
+ * Update pressure plate sprites and targets when qualifying occupancy changes.
+ *
+ * @returns {void} Updates entity components in place.
+ */
 mapper.systems.pressurePlate = function() {
 
 	/**

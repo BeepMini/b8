@@ -1,3 +1,9 @@
+/**
+ * Restore each completed temporary animation to its direction-specific default.
+ *
+ * @param {number} dt Frame delta in seconds.
+ * @returns {void} Updates entity components in place.
+ */
 mapper.systems.characterAnimation = function( dt ) {
 
 	const anims = b8.ECS.query( 'CharacterAnimation' );
@@ -34,4 +40,4 @@ mapper.systems.characterAnimation = function( dt ) {
 
 	}
 
-}
+};

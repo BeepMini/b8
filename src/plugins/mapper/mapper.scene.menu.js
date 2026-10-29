@@ -21,9 +21,9 @@ mapper.sceneMenu = {
 
 
 	/**
-	 * Draw the main menu.
+	 * Display the menu, await a choice, and transition to the selected scene.
 	 *
-	 * @returns {void}
+	 * @returns {Promise<void>} Resolves after handling the menu choice.
 	 */
 	main: async () => {
 

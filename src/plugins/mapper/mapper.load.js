@@ -154,9 +154,10 @@ mapper.upgradeMapDataV1toV2 = function( mapData ) {
 
 
 /**
- * Set the current active map by name.
+ * Set the active map by its numeric index, rebuilding its entities when needed.
  *
- * @param {string} mapName - The name of the map to set as current.
+ * @param {number} mapId - Index in mapper.maps.
+ * @param {boolean} [forceLoad=false] - Reload even when this map is already active.
  * @returns {void}
  */
 mapper.setCurrentMap = function( mapId, forceLoad = false ) {

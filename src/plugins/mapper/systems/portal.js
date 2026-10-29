@@ -24,7 +24,7 @@ mapper.systems.tryPortal = function( col, row ) {
 
 	return false;
 
-}
+};
 
 
 /**

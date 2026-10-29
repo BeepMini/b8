@@ -2,6 +2,8 @@
  * Mapper system: Pickups
  *
  * Handles player picking up items in the game world.
+ *
+ * @returns {void}
  */
 mapper.systems.pickup = function() {
 

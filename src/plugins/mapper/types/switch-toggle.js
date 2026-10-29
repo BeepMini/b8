@@ -8,7 +8,7 @@ mapper.types.switchToggle = {
 	 *
 	 * @param {number} col The map column.
 	 * @param {number} row The map row.
-	 * @param {Object} props Saved object properties from the map editor.
+	 * @param {Object} [props={}] Saved object properties from the map editor.
 	 * @returns {number} The created entity ID.
 	 */
 	spawn: function( col, row, props = {} ) {

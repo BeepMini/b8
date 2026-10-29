@@ -3,6 +3,14 @@ mapper.types.bomb = {
 	color: 8,
 	flickerColor: 15,
 
+	/**
+	 * Spawn a solid, pushable bomb with an unlit fuse and configurable radius.
+	 *
+	 * @param {number} col Tile column.
+	 * @param {number} row Tile row.
+	 * @param {Object} [props={}] Type-specific settings read from the map object.
+	 * @returns {number} The new entity ID.
+	 */
 	spawn: function( col, row, props = {} ) {
 
 		return b8.ECS.create(
@@ -63,6 +71,12 @@ mapper.types.bomb = {
 
 
 
+	/**
+	 * Start a short fuse when an unlit bomb catches fire.
+	 *
+	 * @param {number} id Bomb entity ID.
+	 * @returns {void}
+	 */
 	burnHandler: function( id ) {
 
 		const bomb = b8.ECS.getComponent( id, 'Bomb' );

@@ -1,3 +1,9 @@
+/**
+ * Show the first readable message ahead and delay repeated interaction.
+ *
+ * @param {number} playerId Entity ID of the acting player.
+ * @returns {boolean} Whether an interaction was performed.
+ */
 mapper.actions.read = function( playerId ) {
 
 	const entities = mapper.entitiesAhead( playerId );

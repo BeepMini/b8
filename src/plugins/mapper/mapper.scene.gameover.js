@@ -15,9 +15,9 @@ mapper.sceneGameOver = {
 
 
 	/**
-	 * Draw the main menu.
+	 * Display the game-over menu and await a continue or main-menu choice.
 	 *
-	 * @returns {void}
+	 * @returns {Promise<void>} Resolves after handling the menu choice.
 	 */
 	main: async () => {
 

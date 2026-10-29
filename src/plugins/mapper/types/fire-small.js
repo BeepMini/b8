@@ -1,5 +1,13 @@
 mapper.types.fireSmall = {
 
+	/**
+	 * Attach a temporary fire outline to the parent entity.
+	 *
+	 * @param {number} col Tile column.
+	 * @param {number} row Tile row.
+	 * @param {Object} [props={}] Type-specific settings read from the map object.
+	 * @returns {number|undefined} New entity ID; undefined when props.parent is missing.
+	 */
 	spawn: function( col, row, props = {} ) {
 
 		if ( !props.parent ) return;

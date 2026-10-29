@@ -1,5 +1,13 @@
 mapper.types.chestOpen = {
 
+	/**
+	 * Spawn an opened chest, optionally retaining a readable message.
+	 *
+	 * @param {number} col Tile column.
+	 * @param {number} row Tile row.
+	 * @param {Object} [props={}] Type-specific settings read from the map object.
+	 * @returns {number} The new entity ID.
+	 */
 	spawn: function( col, row, props = {} ) {
 
 		const entitySettings = {

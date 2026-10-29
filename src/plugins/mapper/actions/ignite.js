@@ -1,3 +1,9 @@
+/**
+ * Light unlit bombs ahead of the player using the configured fuse duration.
+ *
+ * @param {number} playerId Entity ID of the acting player.
+ * @returns {boolean} Whether an interaction was performed.
+ */
 mapper.actions.ignite = function( playerId ) {
 
 	const ids = mapper.entitiesAhead( playerId );

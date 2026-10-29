@@ -5,7 +5,7 @@ mapper.types.key = {
 	 *
 	 * @param {number} col - The column to spawn the key at.
 	 * @param {number} row - The row to spawn the key at.
-	 * @param {Object} props - Additional properties for the key (e.g., fg, bg colors).
+	 * @param {Object} [props={}] - Additional properties for the key (e.g., fg, bg colors).
 	 * @returns {number} The entity ID of the spawned key.
 	 */
 	spawn: function( col, row, props = {} ) {

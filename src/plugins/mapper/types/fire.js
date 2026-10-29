@@ -7,7 +7,7 @@ mapper.types.fire = {
 	 *
 	 * @param {number} col - The tile column for the fire.
 	 * @param {number} row - The tile row for the fire.
-	 * @param {Object} props - Optional fire configuration overrides.
+	 * @param {Object} [props={}] - Optional fire configuration overrides.
 	 * @param {number} [props.duration] - Seconds the fire should live.
 	 * @param {number} [props.startDelayMs] - Visual delay before the fire VFX starts.
 	 * @returns {number|null} The spawned fire entity ID, or null if blocked.

@@ -101,6 +101,7 @@ const mapper = {
 	/**
 	 * Set a delay for key presses to prevent rapid actions.
 	 *
+	 * @param {number} id Entity receiving the ActionCooldown component.
 	 * @returns {void}
 	 */
 	delayKeyPress: function( id ) {
@@ -135,8 +136,8 @@ const mapper = {
 	/**
 	 * Render all entities on the screen with optional offsets.
 	 *
-	 * @param {number} offsetX - Horizontal offset for rendering.
-	 * @param {number} offsetY - Vertical offset for rendering.
+	 * @param {number} [offsetX=0] - Horizontal offset for rendering.
+	 * @param {number} [offsetY=0] - Vertical offset for rendering.
 	 * @returns {void}
 	 */
 	render: function( offsetX = 0, offsetY = 0 ) {
@@ -389,7 +390,7 @@ const mapper = {
 	 * @param {number} newRow - The target y-coordinate (row) the player is moving to.
 	 * @param {number} dx - The change in x (column) direction.
 	 * @param {number} dy - The change in y (row) direction.
-	 * @return {boolean} True if the movement is blocked by a collision, false otherwise.
+	 * @returns {boolean} True if the movement is blocked by a collision, false otherwise.
 	 */
 	doCollision: function( x, y, newCol, newRow, dx, dy ) {
 
@@ -475,7 +476,7 @@ const mapper = {
 	/**
 	 * Update the move delay to control player movement speed.
 	 *
-	 * @param {number} amount - The amount of delay to set (in seconds).
+	 * @param {number} [amount=mapper.CONFIG.moveDelay] - The amount of delay to set (in seconds).
 	 * @returns {void}
 	 */
 	updateMoveDelay: function( amount = mapper.CONFIG.moveDelay ) {
@@ -547,7 +548,7 @@ const mapper = {
 	 * @param {number} col - The column coordinate of the object to change.
 	 * @param {number} row - The row coordinate of the object to change.
 	 * @param {string} type - The current type of the object to change.
-	 * @param {Object} properties - An object containing the properties to update.
+	 * @param {Object} [properties={}] - An object containing the properties to update.
 	 * @returns {void}
 	 */
 	changeObjectPropertiesAt: function( col, row, type, properties = {} ) {
@@ -593,7 +594,7 @@ const mapper = {
 	 * Give rewards to the player.
 	 *
 	 * @param {number} playerId - The entity ID of the player.
-	 * @param {Array} rewards - An array of reward objects to give to the player.
+	 * @param {Array} [rewards=[]] - An array of reward objects to give to the player.
 	 * @returns {void}
 	 */
 	giveRewards: function( playerId, rewards = [] ) {
@@ -620,7 +621,8 @@ const mapper = {
 	 *
 	 * @param {number} entityId - The entity ID to invoke the handler for.
 	 * @param {string} handlerName - The name of the handler function to invoke.
-	 * @returns {boolean} The result of the handler function, or false if not found.
+	 * @param {...*} args Arguments forwarded to the type handler.
+	 * @returns {*} The handler result, or false if no handler is registered.
 	 */
 	doHandler: function( entityId, handlerName, ...args ) {
 
@@ -659,7 +661,7 @@ const mapper = {
 	 * Ignite a living entity by attaching a fire-small effect to it.
 	 *
 	 * @param {number} entityId - The entity to ignite.
-	 * @param {number} duration - How long the burn should last in turns.
+	 * @param {number} [duration=3] - How long the burn should last in turns.
 	 * @returns {boolean} True if a fire effect was attached, false otherwise.
 	 */
 	igniteLivingEntity: function( entityId, duration = 3 ) {
@@ -693,7 +695,7 @@ const mapper = {
 	 * Apply a single fire interaction to an entity.
 	 *
 	 * @param {number} entityId - The entity being affected by fire.
-	 * @param {Object} options - Fire interaction options.
+	 * @param {Object} [options={}] - Fire interaction options.
 	 * @param {number} [options.heatAmount=0] - Heat to add to Flammable entities.
 	 * @param {boolean} [options.igniteLiving=false] - Whether living entities should catch fire.
 	 * @param {number} [options.burnDuration=3] - Duration for attached fire-small effects.
@@ -741,7 +743,7 @@ const mapper = {
 	 * Finalize what happens when a flammable entity ignites.
 	 *
 	 * @param {number} entityId - The flammable entity that reached ignition temperature.
-	 * @param {number|null} sourceId - The entity that caused the ignition.
+	 * @param {number|null} [sourceId=null] - The entity that caused the ignition.
 	 * @returns {boolean} True if the entity was removed, false if it stayed alive.
 	 */
 	handleFlammableIgnition: function( entityId, sourceId = null ) {

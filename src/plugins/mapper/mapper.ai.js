@@ -50,8 +50,8 @@ mapper.ai = {
 	/**
 	 * Is the 'from' location facing the to location based on direction?
 	 *
-	 * @param {Object} from - The id of the entity in the from location.
-	 * @param {Object} to - The id of the entity in the to location.
+	 * @param {number} from - Entity ID at the starting location.
+	 * @param {number} to - Entity ID at the target location.
 	 * @returns {boolean} True if 'to' is in front of 'from', false otherwise.
 	 */
 	isFacing: ( from, to ) => {
@@ -70,6 +70,14 @@ mapper.ai = {
 	},
 
 
+	/**
+	 * Set the source entity direction toward a target.
+	 *
+	 * @param {number} from Source entity ID.
+	 * @param {Object} to Target tile location.
+	 * @returns {void}
+	 * @todo Resolve the source Loc component before passing it to dirTo.
+	 */
 	face: ( from, to ) => {
 
 		const direction = mapper.ai.dirTo( from, to );
@@ -119,11 +127,12 @@ mapper.ai = {
 	 *
 	 * @see https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
 	 *
-	 * @param { Object } from - The starting location with col and row properties.
-	 * @param { Object } to - The target location with col and row properties.
-	 * @param { number } range - The maximum range for line of sight.
-	 * @param { Function } solidsFn - A function that takes( col, row ) and returns true if the tile is solid.
-	 * @returns { boolean } True if there is line of sight, false otherwise.
+	 * @param {number} fromId - Starting entity ID.
+	 * @param {number} toId - Target entity ID.
+	 * @param {number} [range=5] - Maximum visibility distance in tiles.
+	 * @param {Function} [solidsFn=mapper.collision.isFree] - Walkability predicate; currently bypassed.
+	 * @returns {boolean} Whether the target is within range.
+	 * @note The current implementation bypasses obstacle checks after the range test.
 	 */
 	hasLineOfSight: ( fromId, toId, range = 5, solidsFn = mapper.collision.isFree ) => {
 
@@ -209,12 +218,11 @@ mapper.ai = {
 
 
 	/**
-	 * Perform A* pathfinding from start to goal and set the PathIntent component.
+	 * Return an A* path between tile locations without modifying an entity.
 	 *
-	 * @param {number} id - The entity ID of the character to move.
 	 * @param {Object} start - The starting location with col and row properties.
 	 * @param {Object} goal - The target location with col and row properties.
-	 * @returns {void}
+	 * @returns {Array<{col:number,row:number}>|null} Steps after the start, or null when no path exists.
 	 */
 	doAstar: ( start, goal ) => {
 
@@ -348,6 +356,12 @@ mapper.ai = {
 	},
 
 
+	/**
+	 * Choose the next AI mode from fire, combat, visibility, and patrol state.
+	 *
+	 * @param {number} id Entity ID with an AI component.
+	 * @returns {string} A value from mapper.ai.MODE.
+	 */
 	think: ( id ) => {
 
 		const ai = b8.ECS.getComponent( id, 'AI' );
@@ -378,8 +392,20 @@ mapper.ai = {
 	},
 
 
+	/**
+	 * Convert tile location names into x/y coordinate names.
+	 *
+	 * @param {Object} loc Tile location with col and row properties.
+	 * @returns {{x:number,y:number}}
+	 */
 	toXY: ( loc ) => ( { x: loc.col, y: loc.row } ),
 
+	/**
+	 * Convert x/y coordinate names into tile location names.
+	 *
+	 * @param {Object} xy Coordinates with x and y properties.
+	 * @returns {{col:number,row:number}}
+	 */
 	toLoc: ( xy ) => ( { col: xy.x, row: xy.y } ),
 
 
