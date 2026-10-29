@@ -257,16 +257,21 @@
 	 * @param {string} fontImageFile - The URL of the font image file.
 	 * @param {number} [tileSizeWidthMultiplier=1] - The width multiplier for the tile size.
 	 * @param {number} [tileSizeHeightMultiplier=1] - The height multiplier for the tile size.
+	 * @param {object} [options={}] - Font loading options.
+	 * @param {boolean} [options.multicolor=false] - Preserve multiple colours, matched to the engine palette without dithering.
 	 * @returns {Promise<string>} The font ID.
 	 */
-	b8.Async.loadFont = async function( fontImageFile, tileSizeWidthMultiplier = 1, tileSizeHeightMultiplier = 1 ) {
+	b8.Async.loadFont = async function( fontImageFile, tileSizeWidthMultiplier = 1, tileSizeHeightMultiplier = 1, options = {} ) {
 
 		b8.Utilities.checkString( "fontImageFile", fontImageFile );
 		b8.Utilities.checkNumber( "tileSizeWidthMultiplier", tileSizeWidthMultiplier );
 		b8.Utilities.checkNumber( "tileSizeHeightMultiplier", tileSizeHeightMultiplier );
+		b8.Utilities.checkObject( "options", options );
+		b8.Utilities.checkBoolean( "options.multicolor", options.multicolor ?? false );
 
-		const fontName = "FONT@" + b8.Utilities.makeUrlPretty( fontImageFile );
-		await b8.TextRenderer.loadFontAsync( fontName, fontImageFile, tileSizeWidthMultiplier, tileSizeHeightMultiplier );
+		// Separate colour modes so the same file can also be loaded as a tinted font.
+		const fontName = "FONT@" + b8.Utilities.makeUrlPretty( fontImageFile ) + ( options.multicolor ? "@multicolor" : "" );
+		await b8.TextRenderer.loadFontAsync( fontName, fontImageFile, tileSizeWidthMultiplier, tileSizeHeightMultiplier, options );
 
 		return fontName;
 

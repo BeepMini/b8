@@ -164,7 +164,8 @@
 			b8.State.load();
 		}
 
-		b8.data = b8.Utilities.deepMergeByIndex( defaults, b8.data );
+		// Merging creates a plain object; wrap it again so all changes stay reactive.
+		b8.data = createProxy( b8.Utilities.deepMergeByIndex( defaults, b8.data ) );
 
 		b8.Utilities.log( 'State initialized:', b8.data );
 
