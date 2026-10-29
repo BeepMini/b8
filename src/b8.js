@@ -81,12 +81,12 @@
  * Coordinates (x, y) are pixels from the top-left.
  * Text grid uses (col, row) in 12×12 tile units.
  * All text widths (maxWidth, widthCols, heightRows) are in columns/rows, not pixels.
- * Time: dt and durations are in seconds. Core.getNow() returns seconds.
+ * Time: frame dt and waits are in seconds. Core.getNow() and animation start times are in milliseconds.
  * Fonts: fontName is the name passed to TextRenderer.loadFontAsync.
  * Public API is b8.* and b8.Async.*; arguments are validated.
  * Actors have animations; tiles do not.
  * ECS locations and queries use tile coordinates (col, row).
- * setTile origin: locate(col,row) offsets draw*, and print* by tile origin.
+ * locate(col,row) positions cursor-based printing and Tilemap.draw; pixel drawing uses explicit coordinates.
  * Actor ids go from 1 to 20. Animations include idle, move-left, move-right, move-up, move-down.
  * Useful tile ids 0 = blank, 1 = solid, 330 = wall, 206 = water, 268 = fire, 182 = tree, 352 = crate, 256 = gem.
  * Handy color ids: 0 = black, 5=blue, 8=red, 10=yellow, 12=green, 15 = white.
@@ -96,4 +96,3 @@
  */
 
 const b8 = {};
-

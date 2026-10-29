@@ -1,3 +1,6 @@
+/**
+ * @file Promise-based b8.Async entry points for loading assets and interactive flows.
+ */
 ( function( b8 ) {
 
 	// Initialize a flag to track if we're already paused.
@@ -90,7 +93,7 @@
 
 		return await b8.Input.readKeyAsync();
 
-	}
+	};
 
 
 	/**
@@ -102,7 +105,7 @@
 
 		return await b8.Input.readPointerAsync();
 
-	}
+	};
 
 
 	/**
@@ -123,7 +126,7 @@
 
 		return await b8.Input.readLine( prompt, initString, maxLen, maxWidth );
 
-	}
+	};
 
 
 	/**
@@ -140,7 +143,7 @@
 
 		return await b8.Menu.display( choices, options );
 
-	}
+	};
 
 
 	/**
@@ -151,7 +154,7 @@
 	 * choice answers.
 	 *
 	 * @param {string} prompt - The text to show.
-	 * @param {string[]} [choices=["OK"]] - The choices to present to the user.
+	 * @param {string[]} [choices=[ "OK" ]] - The choices to present to the user.
 	 * @param {Object} [options={}] - Additional options for the dialog. Uses b8.Menu.display options.
 	 * @returns {Promise<number>} The index of the selected item.
 	 */
@@ -162,14 +165,14 @@
 
 		return b8.Async.menu( choices, { prompt, center: true, ...options } );
 
-	}
+	};
 
 
 	/**
 	 * Displays a dialog with the given prompt and choices, showing the text character by character.
 	 *
 	 * @param {string} prompt - The text to show.
-	 * @param {string[]} [choices=["OK"]] - The choices to present to the user.
+	 * @param {string[]} [choices=[ "OK" ]] - The choices to present to the user.
 	 * @param {number} [wrapWidth=-1] - The width at which to wrap the text.
 	 * @param {number} [delay=0.05] - The delay between characters in seconds.
 	 * @param {Object} [options={}] - Additional options for the dialog. Uses b8.Menu.display options.
@@ -187,14 +190,16 @@
 
 		return await b8.Async.menu( choices, { prompt, typewriter: true, center: true, ...options } );
 
-	}
+	};
 
 
 	/**
 	 * Shows text slowly, character by character, as in a typewriter.
 	 *
 	 * @param {string} text - The text to print.
-	 * @param {number} [delay=0.05] - The delay between characters in seconds.
+	 * @param {number} [wrapWidth=-1] - Wrapping width in columns; -1 disables wrapping.
+	 * @param {number} [delay=0.035] - The delay between characters in seconds.
+	 * @param {string|null} [fontName=null] - Loaded font name; null uses the current font.
 	 * @returns {Promise<void>} Resolves after the text is printed.
 	 */
 	b8.Async.typewriter = async function( text, wrapWidth = -1, delay = 0.035, fontName = null, ) {
@@ -211,7 +216,7 @@
 
 		await b8.TextRenderer.printTypewriter( text, wrapWidth, delay, font );
 
-	}
+	};
 
 
 	/**
@@ -226,7 +231,7 @@
 
 		return await b8.Core.loadImage( url );
 
-	}
+	};
 
 
 	/**
@@ -248,7 +253,7 @@
 			}
 		);
 
-	}
+	};
 
 
 	/**
@@ -257,7 +262,7 @@
 	 * @param {string} fontImageFile - The URL of the font image file.
 	 * @param {number} [tileSizeWidthMultiplier=1] - The width multiplier for the tile size.
 	 * @param {number} [tileSizeHeightMultiplier=1] - The height multiplier for the tile size.
-	 * @param {object} [options={}] - Font loading options.
+	 * @param {Object} [options={}] - Font loading options.
 	 * @param {boolean} [options.multicolor=false] - Preserve multiple colours, matched to the engine palette without dithering.
 	 * @returns {Promise<string>} The font ID.
 	 */
@@ -275,7 +280,7 @@
 
 		return fontName;
 
-	}
+	};
 
 
 	/**
@@ -291,7 +296,7 @@
 
 		return await new Promise( resolve => setTimeout( resolve, Math.round( seconds * 1000 ) ) );
 
-	}
+	};
 
 
 	/**
@@ -306,6 +311,6 @@
 			if ( key.includes( "Enter" ) || key.includes( "ButtonA" ) || key.includes( " " ) ) break;
 		}
 
-	}
+	};
 
 } )( b8 );

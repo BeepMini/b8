@@ -1,3 +1,6 @@
+/**
+ * @file Synchronous b8 entry points with argument validation and engine delegation.
+ */
 ( function( b8 ) {
 
 	/**
@@ -11,7 +14,7 @@
 	 * their default values, and information about how the options are used.
 	 *
 	 * @param {Function} callback - The callback to call when initialization is done.
-	 * @param {Object} [options] - Optional options object.
+	 * @param {Object} [options={}] - Optional options object.
 	 * @returns {void}
 	 */
 	b8.init = function( callback, options = {} ) {
@@ -26,7 +29,7 @@
 
 		return b8.Core.init( callback );
 
-	}
+	};
 
 
 	/**
@@ -61,7 +64,7 @@
 
 		return b8.Core.setFrameHandlers( renderHandler, updateHandler, fps );
 
-	}
+	};
 
 
 	/**
@@ -81,7 +84,7 @@
 
 		return b8.Renderer.render();
 
-	}
+	};
 
 
 	/**
@@ -104,7 +107,7 @@
 
 		b8.Core.setColor( fg, bg );
 
-	}
+	};
 
 
 	/**
@@ -118,7 +121,7 @@
 
 		return b8.Core.drawState.fgColor;
 
-	}
+	};
 
 
 	/**
@@ -133,7 +136,7 @@
 
 		return b8.Core.drawState.bgColor;
 
-	}
+	};
 
 
 	/**
@@ -156,7 +159,7 @@
 
 		b8.Core.cls();
 
-	}
+	};
 
 
 	/**
@@ -178,7 +181,7 @@
 
 		b8.Core.setCursorLocation( col, row );
 
-	}
+	};
 
 
 	/**
@@ -192,7 +195,7 @@
 
 		return b8.Core.drawState.cursorCol;
 
-	}
+	};
 
 
 	/**
@@ -206,7 +209,7 @@
 
 		return b8.Core.drawState.cursorRow;
 
-	}
+	};
 
 
 	/**
@@ -223,7 +226,7 @@
 
 		b8.CursorRenderer.setCursorVisible( visible );
 
-	}
+	};
 
 
 	/**
@@ -250,6 +253,7 @@
 	 *
 	 * @param {string} text - The text to print.
 	 * @param {number} [maxWidth=-1] - The maximum width to wrap text at. -1 for no wrapping.
+	 * @param {string|null} [fontName=null] - Loaded font name; null uses the current font.
 	 * @returns {void}
 	 */
 	b8.print = function( text, maxWidth = -1, fontName = null ) {
@@ -267,7 +271,7 @@
 
 		b8.TextRenderer.print( text, font, maxWidth );
 
-	}
+	};
 
 
 	/**
@@ -276,7 +280,8 @@
 	 * If the text is bigger than the width, it will wrap.
 	 *
 	 * @param {string} text - The text to print.
-	 * @param {number} width - The width of the space to place the text in, measured in Columns. Defaults to the screen width.
+	 * @param {number} [width=b8.CONFIG.SCREEN_COLS] - The width of the space to place the text in, measured in Columns. Defaults to the screen width.
+	 * @param {string|null} [fontName=null] - Loaded font name; null uses the current font.
 	 * @returns {void}
 	 */
 	b8.printCentered = function( text, width = b8.CONFIG.SCREEN_COLS, fontName = null ) {
@@ -294,7 +299,7 @@
 
 		b8.TextRenderer.printCentered( text, width, font );
 
-	}
+	};
 
 
 	/**
@@ -302,7 +307,7 @@
 	 * If the text is bigger than the width, it will wrap.
 	 *
 	 * @param {string} text - The text to print.
-	 * @param {number} width - The width of the space to place the text in, measured in Columns. Defaults to the screen width.
+	 * @param {number} [width=b8.CONFIG.SCREEN_COLS] - The width of the space to place the text in, measured in Columns. Defaults to the screen width.
 	 * @param {string} [fontName=null] - The font ID to use.
 	 * @returns {void}
 	 */
@@ -321,7 +326,7 @@
 
 		b8.TextRenderer.printRight( text, width, font );
 
-	}
+	};
 
 
 	/**
@@ -347,7 +352,7 @@
 
 		b8.TextRenderer.drawText( x, y, text, fontName );
 
-	}
+	};
 
 
 	/**
@@ -363,7 +368,7 @@
 
 		return b8.TextRenderer.measure( text );
 
-	}
+	};
 
 
 	/**
@@ -373,7 +378,7 @@
 	 * @param {number|string} charCode - The character to print, as an integer
 	 * (ASCII code) or a one-character string.
 	 * @param {number} [numTimes=1] - How many times to print the character.
-	 * @param {string} fontName - The font id for the font to draw with.
+	 * @param {string} [fontName=null] - The font id for the font to draw with.
 	 * @returns {void}
 	 */
 	b8.printChar = function( charCode, numTimes = 1, fontName = null ) {
@@ -401,7 +406,7 @@
 
 		b8.TextRenderer.printChar( charCode, numTimes, font );
 
-	}
+	};
 
 
 	/**
@@ -424,7 +429,7 @@
 
 		b8.TextRenderer.printRect( widthCols, heightRows, charCode );
 
-	}
+	};
 
 
 	/**
@@ -436,7 +441,7 @@
 	 * @param {number} heightRows - Height of the box in screen rows, including
 	 * the border.
 	 * @param {boolean} [fill=true] - If true, fill the interior with spaces.
-	 * @param {number} [borderChar=54] - The first border-drawing character to
+	 * @param {number} [borderChar=b8.CONFIG.BORDER_CHAR] - The first border-drawing character to
 	 * use.
 	 * @returns {void}
 	 */
@@ -452,7 +457,7 @@
 
 		b8.TextRenderer.printBox( widthCols, heightRows, fill, borderChar );
 
-	}
+	};
 
 
 	/**
@@ -471,7 +476,7 @@
 
 		b8.Core.drawImage( image, x, y );
 
-	}
+	};
 
 
 	/**
@@ -502,7 +507,7 @@
 
 		b8.Core.drawImage( image, x, y, srcX, srcY, width, height );
 
-	}
+	};
 
 
 	/**
@@ -512,6 +517,7 @@
 	 * @param {number} y - The Y coordinate of the top-left corner.
 	 * @param {number} width - The width of the rectangle in pixels.
 	 * @param {number} height - The height of the rectangle in pixels.
+	 * @param {number} [lineWidth=1] - Border thickness in pixels, clamped to fit the rectangle.
 	 * @returns {void}
 	 */
 	b8.drawRect = function( x, y, width, height, lineWidth = 1 ) {
@@ -524,7 +530,7 @@
 
 		b8.Core.drawRect( x, y, width, height, lineWidth );
 
-	}
+	};
 
 
 	/**
@@ -545,7 +551,7 @@
 
 		b8.Core.fillRect( x, y, width, height );
 
-	}
+	};
 
 
 	/**
@@ -566,7 +572,7 @@
 
 		sfx.play();
 
-	}
+	};
 
 
 	/**
@@ -593,7 +599,7 @@
 		// The renderer keeps zero-degree drawing on the normal sprite path.
 		b8.TextRenderer.sprRotated( ch, x, y, degrees );
 
-	}
+	};
 
 
 	/**
@@ -623,7 +629,7 @@
 
 		b8.Actors.draw( ch, animation, offsetCol, offsetRow );
 
-	}
+	};
 
 
 	/**
@@ -633,7 +639,7 @@
 	 * @param {string} animation - The animation to play.
 	 * @param {number} x - The X position at which to draw.
 	 * @param {number} y - The Y position at which to draw.
-	 * @param {number|null} startTime - The start time of the animation in milliseconds.
+	 * @param {number|null} [startTime=null] - The start time of the animation in milliseconds.
 	 * @returns {boolean} True if the sprite was drawn, otherwise false.
 	 */
 	b8.sprActor = function( ch, animation, x, y, startTime = null ) {
@@ -648,7 +654,7 @@
 
 		return b8.Actors.spr( ch, animation, x, y, startTime );
 
-	}
+	};
 
 
 	/**
@@ -665,7 +671,7 @@
 
 		return b8.Input.keyHeld( keyName );
 
-	}
+	};
 
 
 	/**
@@ -682,7 +688,7 @@
 
 		return b8.Input.keyJustPressed( keyName );
 
-	}
+	};
 
 
 
@@ -698,7 +704,7 @@
 
 		b8.Sound.playSong( song );
 
-	}
+	};
 
 
 	/**
@@ -713,7 +719,7 @@
 
 		b8.Sfx.play( sfx );
 
-	}
+	};
 
 
 	/**
@@ -730,7 +736,7 @@
 
 		b8.Core.defineColors( colors );
 
-	}
+	};
 
 
 	/**
@@ -749,7 +755,7 @@
 
 		b8.TextRenderer.setFont( fontName );
 
-	}
+	};
 
 
 	/**
@@ -763,7 +769,7 @@
 
 		b8.TextRenderer.getFont();
 
-	}
+	};
 
 
 	/**
@@ -778,7 +784,7 @@
 
 		return b8.TextRenderer.getFontByName( fontName );
 
-	}
+	};
 
 
 	/**
@@ -797,7 +803,7 @@
 
 		b8.TextRenderer.setTileFont( fontName );
 
-	}
+	};
 
 
 	/**
@@ -814,7 +820,7 @@
 
 		return charCode;
 
-	}
+	};
 
 
 	/**
@@ -829,7 +835,7 @@
 		sfx.currentTime = 0;
 		sfx.pause();
 
-	}
+	};
 
 
 	/**
@@ -841,7 +847,7 @@
 
 		return b8.Core.getContext();
 
-	}
+	};
 
 
 	/**
@@ -853,13 +859,13 @@
 
 		return b8.Core.saveScreen();
 
-	}
+	};
 
 
 	/**
 	 * Run a screenshake effect.
 	 *
-	 * @param {number} duration - The duration of the screenshake effect in seconds.
+	 * @param {number} [duration=0.5] - The duration of the screenshake effect in seconds.
 	 * @returns {boolean} Returns true if the screenshake effect was successfully triggered.
 	 */
 	b8.screenShake = function( duration = 0.5 ) {
@@ -868,7 +874,7 @@
 
 		return b8.Renderer.shakeScreen( duration );
 
-	}
+	};
 
 
 	/**
@@ -882,7 +888,7 @@
 
 		return b8.Core.restoreScreen( screenData );
 
-	}
+	};
 
 
 	/**
@@ -900,14 +906,14 @@
 
 		return b8.TextRenderer.wrapText( text, maxWidth );
 
-	}
+	};
 
 
 	/**
 	 * Speaks the given text using the Web Speech API.
 	 *
 	 * @param {string} text - The text to speak.
-	 * @param {Object} [options] - Optional settings for speech synthesis.
+	 * @param {Object} [options={}] - Optional settings for speech synthesis.
 	 * @param {number} [options.pitch=1] - The pitch of the voice.
 	 * @param {number} [options.rate=1] - The rate of speech.
 	 * @param {number} [options.volume=1] - The volume of the speech.
